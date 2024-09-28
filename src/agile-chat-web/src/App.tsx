@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
+import { Button } from "@/components/ui/button"
+
 import './App.css'
 
 function App() {
@@ -19,8 +21,11 @@ function App() {
       <h1>Vite + React</h1>
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+          Default button - count is {count}
         </button>
+        <Button onClick={() => setCount((count) => count + 1)}>
+          Accessible Button - Count is {count}
+        </Button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
