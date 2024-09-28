@@ -1,0 +1,14 @@
+name: agile-chat
+metadata:
+  template: agile-chat@0.0.1
+services:
+  agilechat-web:
+    project: ./src/agile-chat-web
+    language: ts
+    host: appservice
+    deploy:
+      appService: # this deploys the React app on App Service
+        runtime: "node|18-lts"
+        outputPath: dist
+        startCommand: "npm run build && npx serve -s dist"
+        os: Linux
