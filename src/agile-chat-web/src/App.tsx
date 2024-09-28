@@ -2,6 +2,7 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import { Button } from "@/components/ui/button"
+import ToolsComponent from  "@/components/ToolsComponent"
 
 import './App.css'
 
@@ -30,6 +31,7 @@ function App() {
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
       </div>
+      <ToolsComponent />
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>

@@ -1,4 +1,5 @@
 # Packages
 
 ## npm packages
-serve - used to serve the static content on the azure web app
+axios - simplifies making api requests to api endpoints
+serve - serves the static content on the azure web app
