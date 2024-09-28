@@ -4,6 +4,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IToolService, ToolService>();
 
 
+// Define the CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173", "https://agc0928-apiapp.azurewebsites.net") // Allow specific origins
+                  .AllowAnyMethod() // Allow all HTTP methods (GET, POST, etc.)
+                  .AllowAnyHeader() // Allow all headers (Authorization, Content-Type, etc.)
+                  .AllowCredentials(); // If needed, allow credentials (cookies, authorization headers)
+        });
+});
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -19,28 +32,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// Apply the CORS Policy
+app.UseCors("AllowSpecificOrigins"); // Apply the CORS policy globally to all routes
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
 
 // Register the API endpoints from ToolEndpoints
-app.MapToolEndpoints();
+app.MapToolEndpoints(); //.WithOpenApi();
 
 app.Run();
 
