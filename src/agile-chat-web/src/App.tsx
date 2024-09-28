@@ -3,6 +3,7 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import { Button } from "@/components/ui/button"
 import ToolsComponent from  "@/components/ToolsComponent"
+import LeftIconMenu from "@/components/LeftIconMenu"
 
 import './App.css'
 
@@ -11,6 +12,10 @@ function App() {
 
   return (
     <>
+    <div className="flex">
+      <LeftIconMenu />
+      <main className="flex-1">
+        {/* Your main content goes here */}
       <div>
         <a href="https://vitejs.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
@@ -35,6 +40,8 @@ function App() {
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
+      </main>
+    </div>
     </>
   )
 }
