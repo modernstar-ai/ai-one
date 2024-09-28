@@ -6,7 +6,7 @@ param tags object = {}
 //calculate names
 var appservice_name = toLower('${name}-app')
 var webapp_name = toLower('${name}-webapp')
-
+var apiapp_name = toLower('${name}-apiapp')
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
   name: appservice_name
@@ -53,4 +53,23 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
+resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
+  name: apiapp_name
+  location: location
+  tags: union(tags, { 'azd-service-name': 'agilechat-api' })
+  properties: {
+    serverFarmId: appServicePlan.id
+    httpsOnly: true
+    siteConfig: {
+      linuxFxVersion: 'DOTNET|8.0'
+      alwaysOn: true
+      appCommandLine: 'dotnet agile-chat-api.dll'
+      ftpsState: 'Disabled'
+      minTlsVersion: '1.2'      
+    }
+  }
+  identity: { type: 'SystemAssigned'}
+}
+
 output url string = 'https://${webApp.properties.defaultHostName}'
+output api_url string = 'https://${apiApp.properties.defaultHostName}'

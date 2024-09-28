@@ -12,3 +12,12 @@ services:
         outputPath: dist
         startCommand: "npm run build && npx serve -s dist"
         os: Linux
+  agilechat-api:
+    project: ./src/agile-chat-api
+    language: csharp
+    host: appservice
+    deploy:
+      appService:
+        runtime: "DOTNET|8.0"
+        startCommand: "dotnet agile-chat-api.dll"
+        os: Linux
