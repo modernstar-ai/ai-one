@@ -1,72 +1,58 @@
-import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Book, Paperclip } from 'lucide-react'
-import LeftMenu from '@/components/Menu-Left';
-import SimpleHeading from '@/components/Heading-Simple';
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const ChatPage = () => {
-  // State for managing chat messages
   const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
 
-  // Function to handle sending a message
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (inputValue.trim()) {
-      // Add user message to the chat
+      // Add the user's message to the chat
       const newMessages = [...messages, { text: inputValue, sender: "user" }];
       setMessages(newMessages);
+      setIsStreaming(true); // Set the streaming flag to true
 
-      // Simulate bot response
-      setTimeout(() => {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { text: "response", sender: "bot" },
-        ]);
-      }, 500); // Simulate delay for the bot response
+      // Establish an SSE connection for the bot's response
+      const eventSource = new EventSource(`https://localhost:7163/api/chatcompletions?prompt=${encodeURIComponent(inputValue)}`);
+      
+       // Add the bot's message placeholder to the chat
+       setMessages((prevMessages) => [
+        ...prevMessages,
+        { text: "", sender: "bot" } // Start with an empty message for the bot
+      ]);
 
-      // Clear input
+      eventSource.onmessage = (event) => {
+        // Update the last bot message with the streamed data
+        setMessages((prevMessages) => {
+          const lastMessage = prevMessages[prevMessages.length - 1];
+          const updatedBotMessage = { ...lastMessage, text: lastMessage.text + event.data };
+          return [...prevMessages.slice(0, prevMessages.length - 1), updatedBotMessage];
+        });
+      };
+
+      eventSource.onerror = (error) => {
+        console.error("EventSource failed:", error);
+        eventSource.close();
+        setIsStreaming(false); // End the streaming
+      };
+
+      // Clear the input field after sending the message
       setInputValue("");
     }
   };
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      {/* Left Sidebar */}
-      <LeftMenu isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />
-      
-      {/* Search History Panel */}
-      {isHistoryOpen && (
-        <div className="w-64 bg-secondary p-4 overflow-auto">
-          <h2 className="text-lg font-semibold mb-4">Search History</h2>
-          <ScrollArea className="h-[calc(100vh-2rem)]">
-            {/* Add your search history items here */}
-            <div className="space-y-2">
-              <div className="p-2 hover:bg-accent rounded">Previous search 1</div>
-              <div className="p-2 hover:bg-accent rounded">Previous search 2</div>
-              {/* ... more items ... */}
-            </div>
-          </ScrollArea>
-        </div>
-      )}
-
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <SimpleHeading Title="Chat" Subtitle='Making your data fun again' DocumentCount={0} />
-
-        {/* Chat Messages */}
         <ScrollArea className="flex-1 p-4 space-y-4">
           {messages.map((message, index) => (
             <div
               key={index}
-              className={`w-full flex ${
-                message.sender === "user"
-                  ? "justify-end"  // Align user messages to the right
-                  : "justify-start"  // Align bot messages to the left
-              }`}
+              className={`w-full flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
                 className={`max-w-xs p-3 rounded-lg`}
@@ -80,7 +66,6 @@ const ChatPage = () => {
             </div>
           ))}
         </ScrollArea>
-
         {/* Input Area */}
         <div className="p-4 border-t">
           <Textarea
@@ -90,13 +75,7 @@ const ChatPage = () => {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
           />
-          <div className="flex justify-between items-center">
-            <div className="flex space-x-2">
-              <Button variant="outline" size="icon"><Paperclip className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon"><Book className="h-4 w-4" /></Button>
-            </div>
-            <Button onClick={handleSendMessage}><Book className="h-4 w-4 mr-2" />Send</Button>
-          </div>
+          <Button onClick={handleSendMessage}>Send</Button>
         </div>
       </div>
     </div>
