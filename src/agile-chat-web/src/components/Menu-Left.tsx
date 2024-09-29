@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button } from "@/components/ui/button"
-import { Home, History, MessageSquare, Settings } from 'lucide-react'
+import { Home, History, MessageSquare, Settings, VenetianMask } from 'lucide-react'
 import { Link } from 'react-router-dom';
 
 interface LeftMenuProps {
@@ -18,6 +18,7 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ isHistoryOpen, setIsHistoryOpen }) 
             <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(!isHistoryOpen)}>
                 <History className="h-6 w-6" />
             </Button>
+            <Link to="/personas"><Button variant="ghost" size="icon"><VenetianMask className="h-6 w-6" /></Button></Link>
             <Link to="/tools"><Button variant="ghost" size="icon"><Settings className="h-6 w-6" /></Button></Link>
         </div>
     );

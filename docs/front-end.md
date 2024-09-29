@@ -78,3 +78,9 @@ https://vitejs.dev/guide/why.html
 
 ### React
 https://react.dev/
+
+### Forms
+
+shadcn form doco: https://ui.shadcn.com/docs/components/form
+
+We are using Zod for form validation: https://zod.dev/
