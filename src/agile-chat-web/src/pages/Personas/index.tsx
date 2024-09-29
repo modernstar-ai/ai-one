@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { PlusCircle, Trash2 } from "lucide-react";
 import LeftMenu from '@/components/Menu-Left';
 import SimpleHeading from '@/components/Heading-Simple';
+import { useEffect, useState } from "react";
 
 interface Persona {
   id: string;
@@ -127,6 +127,19 @@ function PersonaForm({ initialPersona, onSubmit }: PersonaFormProps) {
   const [name, setName] = useState(initialPersona?.name || "");
   const [greeting, setGreeting] = useState(initialPersona?.greeting || "");
   const [systemmessage, setSystemmessage] = useState(initialPersona?.systemmessage || "");
+
+  // This useEffect ensures the form updates whenever a new persona is selected
+  useEffect(() => {
+    if (initialPersona) {
+      setName(initialPersona.name);
+      setGreeting(initialPersona.greeting);
+      setSystemmessage(initialPersona.systemmessage);
+    } else {
+      setName("");
+      setGreeting("");
+      setSystemmessage("");
+    }
+  }, [initialPersona]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
