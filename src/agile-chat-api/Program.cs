@@ -1,8 +1,17 @@
+using Azure.AI.OpenAI;
+using Azure;
+using Azure.Identity;
+using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
+using DotNetEnv;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddSingleton<IToolService, ToolService>();
 
+// Ensure the environment variables are loaded for OpenAI Endpoint access
+DotNetEnv.Env.Load();
 
 // Define the CORS policy
 builder.Services.AddCors(options =>
@@ -30,18 +39,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
 // Apply the CORS Policy
 app.UseCors("AllowSpecificOrigins"); // Apply the CORS policy globally to all routes
 
-
 // Register the API endpoints from ToolEndpoints
 app.MapToolEndpoints(); //.WithOpenApi();
+app.MapChatCompletionsEndpoint();
+
+app.UseHttpsRedirection();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
