@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Menu, Book, Paperclip, Heading } from 'lucide-react'
+import { Book, Paperclip, } from 'lucide-react'
 import LeftMenu from '@/components/Menu-Left';
 import SimpleHeading from '@/components/Heading-Simple';
 

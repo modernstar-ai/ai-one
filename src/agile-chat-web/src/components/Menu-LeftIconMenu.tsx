@@ -1,4 +1,5 @@
-//white background - attempt to look like azure chat
+// white background - attempt to look like azure chat
+// not currently used
 import React from 'react'
 import { 
   PanelLeftClose, 
