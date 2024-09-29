@@ -81,13 +81,14 @@ const ChatPage = () => {
           {messages.map((message, index) => (
             <div
               key={index}
-              className={`w-full flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+              className={`w-full my-4 p-4 flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-xs p-3 rounded-lg`}
+                className={`p-6 rounded-lg`}
                 style={{
                   backgroundColor: message.sender === "user" ? "var(--chat-user-bg-color)" : "var(--chat-bot-bg-color)",
-                  color: message.sender === "user" ? "var(--chat-user-text-color)" : "var(--chat-bot-text-color)"
+                  color: message.sender === "user" ? "var(--chat-user-text-color)" : "var(--chat-bot-text-color)",
+                  width: "60%"
                 }}
               >
                 {message.text}
