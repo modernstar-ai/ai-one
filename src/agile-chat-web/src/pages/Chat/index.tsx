@@ -1,26 +1,19 @@
-
 import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Home, History, MessageSquare, Settings, Menu } from 'lucide-react'
+import { Menu, Book, Paperclip } from 'lucide-react'
+import LeftMenu from '@/components/Menu-Left';
 
 const ChatPage = () => {
+  
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-
      
   return (
     <div className="flex h-screen bg-background text-foreground">
+      
       {/* Left Sidebar */}
-      <div className="w-16 bg-primary text-primary-foreground flex flex-col items-center py-4 space-y-4">
-        <Button variant="ghost" size="icon" ><Home  className="h-6 w-6" /></Button>
-        <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(!isHistoryOpen)}>
-          <History className="h-6 w-6" />
-        </Button>
-        <Button variant="ghost" size="icon"><MessageSquare className="h-6 w-6"  /></Button>
-        <Button variant="ghost" size="icon"><Settings className="h-6 w-6" /></Button>
-      </div>
+      <LeftMenu isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />   
 
       {/* Search History Panel */}
       {isHistoryOpen && (
@@ -64,11 +57,11 @@ const ChatPage = () => {
             rows={4}
           />
           <div className="flex justify-between items-center">
-            <div className="flex space-x-2">
-              <Button variant="outline" size="icon">📎</Button>
-              <Button variant="outline" size="icon">📄</Button>
+            <div className="flex space-x-2">            
+              <Button variant="outline" size="icon"><Paperclip className="h-4 w-4"  /></Button>
+              <Button variant="outline" size="icon"><Book className="h-4 w-4"  /></Button>
             </div>
-            <Button>Send</Button>
+            <Button><Book size="icon" className="h-4 w-4 mr-2"/>Send </Button>
           </div>
         </div>
       </div>

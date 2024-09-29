@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import ToolsComponent from "@/components/ToolsComponent"
-import LeftIconMenu from "@/components/LeftIconMenu"
+import LeftIconMenu from "@/components/Menu-LeftIconMenu"
 
 
 const ToolsPage = () => {
