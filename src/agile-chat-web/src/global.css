@@ -29,6 +29,11 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+
+    --chat-user-bg-color: #2f4466; /* Equivalent to bg-blue-500 */
+    --chat-user-text-color: #ffffff; /* Equivalent to text-white */
+    --chat-bot-bg-color: #d1d5db; /* Equivalent to bg-gray-300 */
+    --chat-bot-text-color: #000000; /* Equivalent to text-black */
   }
   .dark {
     --background: 224 71.4% 4.1%;
@@ -55,6 +60,11 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    --chat-user-bg-color: #3b82f6; /* Equivalent to bg-blue-500 */
+    --chat-user-text-color: #ffffff; /* Equivalent to text-white */
+    --chat-bot-bg-color: #d1d5db; /* Equivalent to bg-gray-300 */
+    --chat-bot-text-color: #000000; /* Equivalent to text-black */
   }
 }
 
