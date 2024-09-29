@@ -14,7 +14,7 @@ using static System.Net.WebRequestMethods;
         public static void MapChatCompletionsEndpoint(this IEndpointRouteBuilder app)
         {
             // Map the GET endpoint for SSE-based streaming
-            app.MapGet("/api/chatcompletions", async (HttpContext context, string prompt) =>
+            app.MapGet("/chatcompletions", async (HttpContext context, string prompt) =>
             {
                 if (string.IsNullOrEmpty(prompt))
                 {

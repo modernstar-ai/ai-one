@@ -1,10 +1,9 @@
-// src/services/api.ts
 import axios from 'axios';
 import { Tool } from '../types/Tool';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
-  return `${rootApiUrl}/api/${endpoint}`;
+  return `${rootApiUrl}/${endpoint}`;
 }
 
 export async function fetchTools(): Promise<Tool[] | null> {  

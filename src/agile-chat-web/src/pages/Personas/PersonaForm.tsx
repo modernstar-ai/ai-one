@@ -1,103 +1,70 @@
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Persona } from "@/types/Persona";
 
-import { Button } from "@/components/ui/button"
-import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-
-// Define schema
-const formSchema = z.object({
-    name: z.string().min(2, {
-        message: "Name must be at least 2 characters.",
-    }),
-    greeting: z.string().min(2, {
-        message: "Greeting must be at least 2 characters.",
-    }),
-    systemmessage: z.string().min(20, {
-        message: "System message must be at least 20 characters.",
-    }),
-})
-
-// Infer type from schema
-type FormSchema = z.infer<typeof formSchema>
-
-export function ProfileForm() {
-    const form = useForm<FormSchema>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            name: "",
-            greeting: "Hi. How can I help you today?",
-            systemmessage: "You are a helpful AI assistant.",
-        },
-    })
-
-    const onSubmit = (values: FormSchema) => {
-        console.log(values)
-    }
-
-    return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Name</FormLabel>
-                            <FormControl>
-                                <Input placeholder="shadcn" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                                This is your public display name.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="greeting"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Greeting</FormLabel>
-                            <FormControl>
-                                <Input placeholder="shadcn" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                                This is your public display name.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="systemmessage"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>System Message</FormLabel>
-                            <FormControl>
-                                <Textarea placeholder="shadcn" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                                This is your public display name.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <Button type="submit">Submit</Button>
-            </form>
-        </Form>
-    )
+interface PersonaFormProps {
+  initialPersona: Persona | null;
+  onSubmit: (persona: Persona | Omit<Persona, "id">) => void;
 }
+
+const PersonaForm: React.FC<PersonaFormProps> = ({ initialPersona, onSubmit }) => {
+  const [name, setName] = useState(initialPersona?.name || "");
+  const [greeting, setGreeting] = useState(initialPersona?.greeting || "");
+  const [systemmessage, setSystemmessage] = useState(initialPersona?.systemmessage || "");
+
+  useEffect(() => {
+    if (initialPersona) {
+      setName(initialPersona.name);
+      setGreeting(initialPersona.greeting);
+      setSystemmessage(initialPersona.systemmessage);
+    } else {
+      setName("");
+      setGreeting("");
+      setSystemmessage("");
+    }
+  }, [initialPersona]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(initialPersona ? { ...initialPersona, name, greeting, systemmessage } : { name, greeting, systemmessage });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">Name</Label>
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="greeting">Greeting</Label>
+        <Input
+          id="greeting"
+          value={greeting}
+          onChange={(e) => setGreeting(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="systemmessage">System Message</Label>
+        <Textarea
+          id="systemmessage"
+          value={systemmessage}
+          onChange={(e) => setSystemmessage(e.target.value)}
+          className="min-h-[200px]"
+          required
+        />
+      </div>
+      <Button type="submit">{initialPersona ? "Update Persona" : "Add Persona"}</Button>
+    </form>
+  );
+};
+
+export default PersonaForm;

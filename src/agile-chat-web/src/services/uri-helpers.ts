@@ -2,7 +2,7 @@ export function getApiUri(endpoint: string, params?: Record<string, string | num
     const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
     console.log('rootApiUrl:', rootApiUrl);
     
-    let url = `${rootApiUrl}/api/${endpoint}`;
+    let url = `${rootApiUrl}/${endpoint}`;
     console.log('url:', url);
     
     if (params && Object.keys(params).length > 0) {

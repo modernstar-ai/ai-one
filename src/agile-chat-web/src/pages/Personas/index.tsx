@@ -1,46 +1,54 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PlusCircle, Trash2 } from "lucide-react";
 import LeftMenu from '@/components/Menu-Left';
 import SimpleHeading from '@/components/Heading-Simple';
 import { useEffect, useState } from "react";
-
-interface Persona {
-  id: string;
-  name: string;
-  greeting: string;
-  systemmessage: string;
-}
+import { fetchPersonas, addPersona, updatePersona, deletePersona } from "@/services/personaservice";
+import PersonaForm from '@/pages/Personas/PersonaForm';
+import { Persona } from "@/types/Persona";
 
 export default function PersonaManager() {
-  const [personas, setPersonas] = useState<Persona[]>([
-    { id: "1", name: "Private Chatbot", greeting: "Welcome to our platform!", systemmessage: "You are a helpful assistant welcoming new users." },
-    { id: "2", name: "HR Staff Lookup", greeting: "Look up HR Details given a persons name", systemmessage: "You are a knowledgeable support agent helping users with their queries." },
-  ]);
+  const [personas, setPersonas] = useState<Persona[]>([]);
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
-  const handleAddPersona = (newPersona: Omit<Persona, "id">) => {
-    const persona = { ...newPersona, id: crypto.randomUUID() };
-    setPersonas([...personas, persona]);
-    setSelectedPersona(persona);
+  useEffect(() => {
+    async function loadPersonas() {
+      const personasData = await fetchPersonas();
+      if (personasData) {
+        setPersonas(personasData);
+      }
+    }
+    loadPersonas();
+  }, []);
+
+  const handleAddPersona = async (newPersona: Omit<Persona, "id">) => {
+    const persona = await addPersona(newPersona);
+    if (persona) {
+      setPersonas([...personas, persona]);
+      setSelectedPersona(persona);
+    }
     setIsAddingNew(false);
   };
 
-  const handleUpdatePersona = (updatedPersona: Persona) => {
-    setPersonas(personas.map(p => p.id === updatedPersona.id ? updatedPersona : p));
-    setSelectedPersona(updatedPersona);
+  const handleUpdatePersona = async (updatedPersona: Persona) => {
+    const updated = await updatePersona(updatedPersona);
+    if (updated) {
+      setPersonas(personas.map(p => p.id === updated.id ? updated : p));
+      setSelectedPersona(updated);
+    }
   };
 
-  const handleDeletePersona = (id: string) => {
-    setPersonas(personas.filter(p => p.id !== id));
-    if (selectedPersona?.id === id) {
-      setSelectedPersona(null);
+  const handleDeletePersona = async (id: string) => {
+    const success = await deletePersona(id);
+    if (success) {
+      setPersonas(personas.filter(p => p.id !== id));
+      if (selectedPersona?.id === id) {
+        setSelectedPersona(null);
+      }
     }
   };
 
@@ -58,7 +66,6 @@ export default function PersonaManager() {
         <div className="flex-1 p-4 flex">
           {/* Personas List */}
           <div className="w-1/4 pr-4 border-r">
-            
             <ScrollArea className="h-[calc(100vh-8rem)]">
               <div className="space-y-2">
                 {personas.map(persona => (
@@ -88,11 +95,11 @@ export default function PersonaManager() {
                 <CardContent>
                   <PersonaForm
                     initialPersona={isAddingNew ? null : selectedPersona}
-                    onSubmit={(persona) => {
+                    onSubmit={async (persona) => {
                       if (isAddingNew) {
-                        handleAddPersona(persona as Omit<Persona, "id">);
+                        await handleAddPersona(persona as Omit<Persona, "id">);
                       } else {
-                        handleUpdatePersona(persona as Persona);
+                        await handleUpdatePersona(persona as Persona);
                       }
                     }}
                   />
@@ -115,68 +122,5 @@ export default function PersonaManager() {
         </div>
       </div>
     </div>
-  );
-}
-
-interface PersonaFormProps {
-  initialPersona: Persona | null;
-  onSubmit: (persona: Persona | Omit<Persona, "id">) => void;
-}
-
-function PersonaForm({ initialPersona, onSubmit }: PersonaFormProps) {
-  const [name, setName] = useState(initialPersona?.name || "");
-  const [greeting, setGreeting] = useState(initialPersona?.greeting || "");
-  const [systemmessage, setSystemmessage] = useState(initialPersona?.systemmessage || "");
-
-  // This useEffect ensures the form updates whenever a new persona is selected
-  useEffect(() => {
-    if (initialPersona) {
-      setName(initialPersona.name);
-      setGreeting(initialPersona.greeting);
-      setSystemmessage(initialPersona.systemmessage);
-    } else {
-      setName("");
-      setGreeting("");
-      setSystemmessage("");
-    }
-  }, [initialPersona]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(initialPersona ? { ...initialPersona, name, greeting, systemmessage } : { name, greeting, systemmessage });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="greeting">Greeting</Label>
-        <Input
-          id="greeting"
-          value={greeting}
-          onChange={(e) => setGreeting(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="systemmessage">System Message</Label>
-        <Textarea
-          id="systemmessage"
-          value={systemmessage}
-          onChange={(e) => setSystemmessage(e.target.value)}
-          className="min-h-[200px]"
-          required
-        />
-      </div>
-      <Button type="submit">{initialPersona ? "Update Persona" : "Add Persona"}</Button>
-    </form>
   );
 }

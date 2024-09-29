@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddSingleton<IToolService, ToolService>();
+builder.Services.AddSingleton<IPersonaService, PersonaService>();
 
 // Ensure the environment variables are loaded for OpenAI Endpoint access
 DotNetEnv.Env.Load();
@@ -45,6 +46,7 @@ app.UseCors("AllowSpecificOrigins"); // Apply the CORS policy globally to all ro
 // Register the API endpoints from ToolEndpoints
 app.MapToolEndpoints(); //.WithOpenApi();
 app.MapChatCompletionsEndpoint();
+app.MapPersonaEndpoints();
 
 app.UseHttpsRedirection();
 
