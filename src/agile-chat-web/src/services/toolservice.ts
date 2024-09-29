@@ -2,11 +2,17 @@
 import axios from 'axios';
 import { Tool } from '../types/Tool';
 
+function getApiUrl(endpoint: string): string {
+  const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
+  return `${rootApiUrl}/api/${endpoint}`;
+}
+
 export async function fetchTools(): Promise<Tool[] | null> {  
-    const apiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
-    // console.log('API URL:', apiUrl);
+ 
+  const apiUrl = getApiUrl('tools');
+   
   try {
-    const response = await axios.get<Tool[]>(`${apiUrl}/tools`); // axios returns a response typed as Tool[]
+    const response = await axios.get<Tool[]>(apiUrl); // axios returns a response typed as Tool[]
     return response.data; // The data is directly available in response.data
   } catch (error) {
     console.error('Error fetching tools:', error);

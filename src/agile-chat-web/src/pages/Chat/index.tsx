@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import LeftMenu from '@/components/Menu-Left';
+import SimpleHeading from '@/components/Heading-Simple';
+import { getApiUri } from '@/services/uri-helpers';
 
 const ChatPage = () => {
   const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const handleSendMessage = async () => {
     if (inputValue.trim()) {
@@ -16,8 +20,9 @@ const ChatPage = () => {
       setIsStreaming(true); // Set the streaming flag to true
 
       // Establish an SSE connection for the bot's response
-      const eventSource = new EventSource(`https://localhost:7163/api/chatcompletions?prompt=${encodeURIComponent(inputValue)}`);
-      
+      const apiUrl = getApiUri('chatcompletions',{prompt:encodeURIComponent(inputValue)});
+      const eventSource = new EventSource(apiUrl);
+
        // Add the bot's message placeholder to the chat
        setMessages((prevMessages) => [
         ...prevMessages,
@@ -46,8 +51,32 @@ const ChatPage = () => {
 
   return (
     <div className="flex h-screen bg-background text-foreground">
+
+
+      {/* Left Sidebar */}
+      <LeftMenu isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />
+
+      {/* Search History Panel */}
+      {isHistoryOpen && (
+        <div className="w-64 bg-secondary p-4 overflow-auto">
+          <h2 className="text-lg font-semibold mb-4">Search History</h2>
+          <ScrollArea className="h-[calc(100vh-2rem)]">
+            {/* Add your search history items here */}
+            <div className="space-y-2">
+              <div className="p-2 hover:bg-accent rounded">Previous search 1</div>
+              <div className="p-2 hover:bg-accent rounded">Previous search 2</div>
+              {/* ... more items ... */}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
+
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
+      {/* Header */}
+      <SimpleHeading Title="Chat" Subtitle='Why not have a chat' DocumentCount={0} />
+
+
         <ScrollArea className="flex-1 p-4 space-y-4">
           {messages.map((message, index) => (
             <div
@@ -75,7 +104,7 @@ const ChatPage = () => {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
           />
-          <Button onClick={handleSendMessage}>Send</Button>
+          <Button onClick={handleSendMessage} disabled={isStreaming} >Send</Button>
         </div>
       </div>
     </div>
