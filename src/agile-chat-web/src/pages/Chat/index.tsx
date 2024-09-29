@@ -2,8 +2,9 @@ import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Menu, Book, Paperclip } from 'lucide-react'
+import { Menu, Book, Paperclip, Heading } from 'lucide-react'
 import LeftMenu from '@/components/Menu-Left';
+import SimpleHeading from '@/components/Heading-Simple';
 
 const ChatPage = () => {
   
@@ -33,16 +34,7 @@ const ChatPage = () => {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="bg-muted p-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Detailed Image Descriptions</h1>
-            <p className="text-sm text-muted-foreground">Subtitle goes here</p>
-          </div>
-          <div className="flex space-x-2">
-            <Button variant="outline" size="icon"><Menu className="h-4 w-4" /></Button>
-            <Button variant="outline" size="icon">0</Button>
-          </div>
-        </div>
+        <SimpleHeading />
 
         {/* Chat Messages */}
         <ScrollArea className="flex-1 p-4">
@@ -61,7 +53,7 @@ const ChatPage = () => {
               <Button variant="outline" size="icon"><Paperclip className="h-4 w-4"  /></Button>
               <Button variant="outline" size="icon"><Book className="h-4 w-4"  /></Button>
             </div>
-            <Button><Book size="icon" className="h-4 w-4 mr-2"/>Send </Button>
+            <Button><Book  className="h-4 w-4 mr-2"/>Sends </Button>
           </div>
         </div>
       </div>
