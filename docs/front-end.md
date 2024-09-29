@@ -1,5 +1,8 @@
 # Front End
 
+## Style Sheets
+Global Style Sheet is in /src/agile-chat-web/src/global.css
+
 ## Tool Choice
 
 ## lucide-react
@@ -59,6 +62,9 @@ import { Button } from "@/components/ui/button"
 
 
 ## TailwindCSS
+
+The colors and other design tokens used in the themes and buttonVariants are defined in the Tailwind CSS configuration file 
+src/agile-chat-web/tailwind.config.js:
 
 ### postcss 
 - Tailwind dependency
