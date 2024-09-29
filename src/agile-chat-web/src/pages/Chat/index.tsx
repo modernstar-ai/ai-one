@@ -34,7 +34,7 @@ const ChatPage = () => {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <SimpleHeading />
+        <SimpleHeading Title="Chat" Subtitle='Making your data fun again' DocumentCount={0} />
 
         {/* Chat Messages */}
         <ScrollArea className="flex-1 p-4">
