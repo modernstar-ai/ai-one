@@ -14,6 +14,47 @@ param environmentName string
 @description('Primary location for all resources')
 param location string
 
+// azure open ai -- regions currently support gpt-4o global-standard
+@description('Location for the OpenAI resource group')
+@allowed(['australiaeast', 'brazilsouth', 'canadaeast', 'eastus', 'eastus2', 'francecentral', 'germanywestcentral', 'japaneast', 'koreacentral', 'northcentralus', 'norwayeast', 'polandcentral', 'spaincentral', 'southafricanorth', 'southcentralus', 'southindia', 'swedencentral', 'switzerlandnorth', 'uksouth', 'westeurope', 'westus', 'westus3'])
+@metadata({
+  azd: {
+    type: 'location'
+  }
+})
+param openAILocation string
+
+
+param openAISku string = 'S0'
+param openAIApiVersion string ='2024-08-01-preview'
+
+param chatGptDeploymentCapacity int = 8 //30
+param chatGptDeploymentName string = 'gpt-4o'
+param chatGptModelName string = 'gpt-4o'
+param chatGptModelVersion string = '2024-05-13'
+param embeddingDeploymentName string = 'embedding'
+param embeddingDeploymentCapacity int = 120
+param embeddingModelName string = 'text-embedding-ada-002'
+
+// DALL-E v3 only supported in limited regions for now
+@description('Location for the OpenAI DALL-E 3 instance resource group')
+@allowed(['swedencentral', 'eastus', 'australiaeast'])
+param dalleLocation string
+
+param dalleDeploymentCapacity int = 1
+param dalleDeploymentName string = 'dall-e-3'
+param dalleModelName string = 'dall-e-3'
+param dalleApiVersion string = '2023-12-01-preview'
+
+param formRecognizerSkuName string = 'S0'
+param searchServiceIndexName string = 'azure-chat'
+param searchServiceSkuName string = 'standard'
+
+// TODO: define good default Sku and settings for storage account
+param storageServiceSku object = { name: 'Standard_LRS' } 
+param storageServiceImageContainerName string = 'images'
+
+
 //other
 var tags = { 'azd-env-name': environmentName }
 
@@ -24,6 +65,28 @@ module resources 'resources.bicep' = {
     projectName: projectName
     environmentName:environmentName
     tags: tags  
+
+    openai_api_version: openAIApiVersion
+    openAiLocation: openAILocation
+    openAiSkuName: openAISku
+    chatGptDeploymentCapacity: chatGptDeploymentCapacity
+    chatGptDeploymentName: chatGptDeploymentName
+    chatGptModelName: chatGptModelName
+    chatGptModelVersion: chatGptModelVersion
+    embeddingDeploymentName: embeddingDeploymentName
+    embeddingDeploymentCapacity: embeddingDeploymentCapacity
+    embeddingModelName: embeddingModelName
+    dalleLocation: dalleLocation
+    dalleDeploymentCapacity: dalleDeploymentCapacity
+    dalleDeploymentName: dalleDeploymentName
+    dalleModelName: dalleModelName
+    dalleApiVersion: dalleApiVersion
+    formRecognizerSkuName: formRecognizerSkuName
+    searchServiceIndexName: searchServiceIndexName
+    searchServiceSkuName: searchServiceSkuName
+    storageServiceSku: storageServiceSku
+    storageServiceImageContainerName: storageServiceImageContainerName
+
     location: location
   }
 }
