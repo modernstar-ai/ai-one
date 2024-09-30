@@ -1,12 +1,14 @@
 //parms
-param name string = 'azurechat-demo'
+param projectName string = 'agilechat'
+param environmentName string = 'dev'
 param location string = resourceGroup().location
 param tags object = {}
 
 //calculate names
-var appservice_name = toLower('${name}-app')
-var webapp_name = toLower('${name}-webapp')
-var apiapp_name = toLower('${name}-apiapp')
+var resourcePrefix = toLower('${projectName}-${environmentName}') 
+var appservice_name = toLower('${resourcePrefix}-app')
+var webapp_name = toLower('${resourcePrefix}-webapp')
+var apiapp_name = toLower('${resourcePrefix}-apiapp')
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
   name: appservice_name

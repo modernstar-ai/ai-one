@@ -1,6 +1,6 @@
 // src/services/personaservice.ts
 import axios from 'axios';
-import { Persona } from '../types/Persona';
+import { Persona } from '@/types/Persona';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;

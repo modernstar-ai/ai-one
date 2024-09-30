@@ -1,22 +1,28 @@
 targetScope = 'resourceGroup'
 
 @minLength(1)
-@maxLength(64)
-@description('Name of the the environment which is used to generate a short unique hash used in all resources.')
-param name string
+@maxLength(9)
+@description('The name of the solution.')
+param projectName string 
+
+@minLength(1)
+@maxLength(4)
+@description('The type of environment. e.g. local, dev, uat, prod.')
+param environmentName string
 
 @minLength(1)
 @description('Primary location for all resources')
 param location string
 
 //other
-var tags = { 'azd-env-name': name }
+var tags = { 'azd-env-name': environmentName }
 
 
 module resources 'resources.bicep' = {
   name: 'all-resources'
   params: {
-    name: name
+    projectName: projectName
+    environmentName:environmentName
     tags: tags  
     location: location
   }
