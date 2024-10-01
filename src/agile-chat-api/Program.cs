@@ -20,7 +20,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigins",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "https://agc0928-apiapp.azurewebsites.net") // Allow specific origins
+            //todo: load the allowed origins from the environment
+            policy.WithOrigins("http://localhost:3000", "https://agilechat-dev-webapp.azurewebsites.net") // Allow specific origins
                   .AllowAnyMethod() // Allow all HTTP methods (GET, POST, etc.)
                   .AllowAnyHeader() // Allow all headers (Authorization, Content-Type, etc.)
                   .AllowCredentials(); // If needed, allow credentials (cookies, authorization headers)
