@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "agile-chat-api", "agile-chat-api\agile-chat-api.csproj", "{AEAB0478-C0F9-40EC-9098-8042534231B6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "agile-chat-semanticchat", "agile-chat-semanticchat\agile-chat-semanticchat.csproj", "{1160BDD5-97FE-4E49-9B43-BA84A9112071}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AEAB0478-C0F9-40EC-9098-8042534231B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AEAB0478-C0F9-40EC-9098-8042534231B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AEAB0478-C0F9-40EC-9098-8042534231B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AEAB0478-C0F9-40EC-9098-8042534231B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1160BDD5-97FE-4E49-9B43-BA84A9112071}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1160BDD5-97FE-4E49-9B43-BA84A9112071}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1160BDD5-97FE-4E49-9B43-BA84A9112071}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1160BDD5-97FE-4E49-9B43-BA84A9112071}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
