@@ -34,3 +34,6 @@ next-env.d.ts
 .azure/
 infra/aad_setup.sh
 .vscode
+
+# Visual Studio 2015/2017 cache/options directory
+.vs/
