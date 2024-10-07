@@ -42,7 +42,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // Apply the CORS Policy
-app.UseCors("AllowSpecificOrigins"); // Apply the CORS policy globally to all routes
+app.UseCors("AllowSpecificOrigins"); // Apply the CORS policy defined above globally to all routes
 
 // Register the API endpoints from ToolEndpoints
 app.MapToolEndpoints(); //.WithOpenApi();

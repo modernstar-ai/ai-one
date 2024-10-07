@@ -6,7 +6,21 @@ using Microsoft.AspNetCore.Antiforgery;
 var builder = WebApplication.CreateBuilder(args);
 
 // Ensure the environment variables are loaded so they can be referenced during configuration
-DotNetEnv.Env.Load(); 
+DotNetEnv.Env.Load();
+
+// Define the CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins",
+        policy =>
+        {
+            //todo: load the allowed origins from the environment
+            policy.WithOrigins("http://localhost:3000", "https://agilechat-dev-webapp.azurewebsites.net") // Allow specific origins
+                  .AllowAnyMethod() // Allow all HTTP methods (GET, POST, etc.)
+                  .AllowAnyHeader() // Allow all headers (Authorization, Content-Type, etc.)
+                  .AllowCredentials(); // If needed, allow credentials (cookies, authorization headers)
+        });
+});
 
 
 builder.Configuration.ConfigureAzureKeyVault();
@@ -62,7 +76,7 @@ else
     //        """;
     //    options.InstanceName = "content";
 
-        
+
     //});
 
     // set application telemetry
@@ -82,7 +96,7 @@ if (app.Environment.IsDevelopment())
     //todo:adam - removed to resolve error
     //app.UseSwagger();
     //app.UseSwaggerUI();
-    
+
 }
 else
 {
@@ -94,7 +108,10 @@ app.UseHttpsRedirection();
 app.UseOutputCache();
 app.UseRouting();
 app.UseStaticFiles();
-app.UseCors();
+
+// Apply the CORS Policy
+app.UseCors("AllowSpecificOrigins"); // Apply the CORS policy defined above globally to all routes
+
 
 app.UseAntiforgery();
 app.MapRazorPages();
@@ -102,7 +119,7 @@ app.MapControllers();
 
 //todo: adam - I added this. verify loatoin
 app.MapGet("/echo/{prompt}", (string prompt) =>
-{    
+{
     return Results.Ok(prompt);
 });
 app.MapGet("/echochat/{prompt}", async (string prompt, EchoChatService chatService) =>
