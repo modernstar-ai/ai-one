@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import LeftMenu from '@/components/Menu-Left';
 import SimpleHeading from '@/components/Heading-Simple';
-import { getApiUri } from '@/services/uri-helpers';
+import { getRagApiUri } from '@/services/uri-helpers';
 
 const RagChatPage = () => {
   const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
@@ -17,10 +17,10 @@ const RagChatPage = () => {
       // Add the user's message to the chat
       const newMessages = [...messages, { text: inputValue, sender: "user" }];
       setMessages(newMessages);
-      setIsStreaming(true); // Set the streaming flag to true
+      setIsStreaming(false); // Set the streaming flag to true
 
       // Establish an SSE connection for the bot's response
-      const apiUrl = getApiUri('chatcompletions',{prompt:encodeURIComponent(inputValue)});
+      const apiUrl = getRagApiUri('chatcompletions',{prompt:encodeURIComponent(inputValue)});
       const eventSource = new EventSource(apiUrl);
 
        // Add the bot's message placeholder to the chat
