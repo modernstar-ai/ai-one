@@ -13,18 +13,12 @@ export function getApiUri(endpoint: string, params?: Record<string, string | num
     return url;
   }
   
-  export function getRagApiUri(endpoint: string, params?: Record<string, string | number>): string {
+  export function getRagApiUri(endpoint: string, prompt: string): string {
     const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
     console.log('rootApiUrl:', rootApiUrl);
     
-    let url = `${rootApiUrl}/${endpoint}`;
-    console.log('url:', url);
-    
-    if (params && Object.keys(params).length > 0) {
-      const queryString = new URLSearchParams(params as Record<string, string>).toString();
-      url = `${url}?${queryString}`;
-    }
-  
+    const url = `${rootApiUrl}/${endpoint}/${prompt}`;
+    console.log('url:', url);  
     return url;
   }
   
