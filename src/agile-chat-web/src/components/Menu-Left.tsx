@@ -13,14 +13,14 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ isHistoryOpen, setIsHistoryOpen }) 
 
     return (
         <div className="w-16 bg-primary text-primary-foreground flex flex-col items-center py-4 space-y-4">
-            <Link to="/"><Button variant="ghost" size="icon"><Home className="h-6 w-6" /></Button></Link>
-            <Link to="/chat"><Button variant="ghost" size="icon"><MessageSquare className="h-6 w-6" /></Button></Link>
-            <Link to="/ragchat"><Button variant="ghost" size="icon"><MessageSquareCode className="h-6 w-6" /></Button></Link>
-            <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(!isHistoryOpen)}>
+            <Link aria-label="Home" to="/" accessKey="h"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Home Button"><Home className="h-6 w-6" /></Button></Link>
+            <Link aria-label="Chat" to="/chat" accessKey="c"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chat Button"><MessageSquare className="h-6 w-6" /></Button></Link>
+            <Link aria-label="Chat over data" to="/ragchat" accessKey="r"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chat over Data Button"><MessageSquareCode className="h-6 w-6" /></Button></Link>
+            <Button aria-label="Chat History" variant="ghost" size="icon" onClick={() => setIsHistoryOpen(!isHistoryOpen)} accessKey="s">
                 <History className="h-6 w-6" />
             </Button>
-            <Link to="/personas"><Button variant="ghost" size="icon"><VenetianMask className="h-6 w-6" /></Button></Link>
-            <Link to="/tools"><Button variant="ghost" size="icon"><Settings className="h-6 w-6" /></Button></Link>
+            <Link aria-label="Personas" to="/personas" accessKey="p"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Personas Button"><VenetianMask className="h-6 w-6" /></Button></Link>
+            <Link aria-label="Tools" to="/tools" accessKey="t"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Tools Button"><Settings className="h-6 w-6" /></Button></Link>
         </div>
     );
 };

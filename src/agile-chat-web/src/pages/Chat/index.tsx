@@ -104,8 +104,11 @@ const ChatPage = () => {
             rows={4}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
+            autoFocus
+            aria-label="Chat Input"
+            accessKey="i"
           />
-          <Button onClick={handleSendMessage} disabled={isStreaming} >Send</Button>
+          <Button onClick={handleSendMessage} disabled={isStreaming} aria-label="Send Chat" accessKey="j" >Send</Button>
         </div>
       </div>
     </div>
