@@ -48,6 +48,7 @@ app.UseCors("AllowSpecificOrigins"); // Apply the CORS policy defined above glob
 app.MapToolEndpoints(); //.WithOpenApi();
 app.MapChatCompletionsEndpoint();
 app.MapPersonaEndpoints();
+app.MapFileEndpoints();
 
 app.UseHttpsRedirection();
 

@@ -16,6 +16,7 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ isHistoryOpen, setIsHistoryOpen }) 
             <Link to="/"><Button variant="ghost" size="icon"><Home className="h-6 w-6" /></Button></Link>
             <Link to="/chat"><Button variant="ghost" size="icon"><MessageSquare className="h-6 w-6" /></Button></Link>
             <Link to="/ragchat"><Button variant="ghost" size="icon"><MessageSquareCode className="h-6 w-6" /></Button></Link>
+            <Link to="/fileupload"><Button variant="ghost" size="icon"><MessageSquare className="h-6 w-6" /></Button></Link>
             <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(!isHistoryOpen)}>
                 <History className="h-6 w-6" />
             </Button>
