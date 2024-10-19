@@ -7,44 +7,58 @@ import SimpleHeading from '@/components/Heading-Simple';
 import { getRagApiUri } from '@/services/uri-helpers';
 
 const RagChatPage = () => {
-  const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
+  const [messages, setMessages] = useState<{ content: string; role: string }[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
-    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const handleSendMessage = async () => {
+
+    console.log('ragchat inputValue:', inputValue);
+
     if (inputValue.trim()) {
       // Add the user's message to the chat
-      const newMessages = [...messages, { text: inputValue, sender: "user" }];
+      const newMessages = [...messages, { content: inputValue, role: "user" }];
       setMessages(newMessages);
-      setIsStreaming(false); // Set the streaming flag to true
+      console.log('ragchat newMessages:', newMessages);
 
-      // Establish an SSE connection for the bot's response
-      const apiUrl = getRagApiUri('chatoverdata',encodeURIComponent(inputValue));
-      const eventSource = new EventSource(apiUrl);
 
-       // Add the bot's message placeholder to the chat
-       setMessages((prevMessages) => [
-        ...prevMessages,
-        { text: "", sender: "bot" } // Start with an empty message for the bot
-      ]);
+      const apiUrl = getRagApiUri('chatoverdata');
+      console.log('ragchat apiUrl:', apiUrl);
+      console.log('ragchat messages:', messages);
+      console.log('ragchat newMessages:', newMessages);
 
-      eventSource.onmessage = (event) => {
-        // Update the last bot message with the streamed data
-        setMessages((prevMessages) => {
-          const lastMessage = prevMessages[prevMessages.length - 1];
-          const updatedBotMessage = { ...lastMessage, text: lastMessage.text + event.data };
-          return [...prevMessages.slice(0, prevMessages.length - 1), updatedBotMessage];
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newMessages),
         });
-      };
 
-      eventSource.onerror = (error) => {
-        console.error("EventSource failed:", error);
-        eventSource.close();
-        setIsStreaming(false); // End the streaming
-      };
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
 
+        const data = await response.json();
+        console.log('ragchat data:', data);
+
+        // Add the bot's response to the chat
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { content: data.response, role: "assistant" }
+        ]);
+      } catch (error) {
+        console.error("Fetch error:", error);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { content: "Error: Unable to fetch response from the server.", role: "assistant" }
+        ]);
+
+      }
       // Clear the input field after sending the message
+      console.log('clearing inputValue');
       setInputValue("");
     }
   };
@@ -73,25 +87,25 @@ const RagChatPage = () => {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-      {/* Header */}
-      <SimpleHeading Title="Chat Over Your Data" Subtitle="Let's have a chat to your data " DocumentCount={0} />
+        {/* Header */}
+        <SimpleHeading Title="Chat Over Your Data" Subtitle="Let's have a chat to your data " DocumentCount={0} />
 
 
         <ScrollArea className="flex-1 p-4 space-y-4">
           {messages.map((message, index) => (
             <div
               key={index}
-              className={`w-full my-4 p-4 flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+              className={`w-full my-4 p-4 flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
                 className={`p-6 rounded-lg`}
                 style={{
-                  backgroundColor: message.sender === "user" ? "var(--chat-user-bg-color)" : "var(--chat-bot-bg-color)",
-                  color: message.sender === "user" ? "var(--chat-user-text-color)" : "var(--chat-bot-text-color)",
+                  backgroundColor: message.role === "user" ? "var(--chat-user-bg-color)" : "var(--chat-bot-bg-color)",
+                  color: message.role === "user" ? "var(--chat-user-text-color)" : "var(--chat-bot-text-color)",
                   width: "60%"
                 }}
               >
-                {message.text}
+                {message.content}
               </div>
             </div>
           ))}
@@ -108,7 +122,7 @@ const RagChatPage = () => {
             aria-label="Chat Input"
             accessKey="i"
           />
-          <Button onClick={handleSendMessage} disabled={isStreaming} >Send</Button>
+          <Button onClick={handleSendMessage}  >Send</Button>
         </div>
       </div>
     </div>
