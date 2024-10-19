@@ -45,10 +45,31 @@ const RagChatPage = () => {
         console.log('ragchat data:', data);
 
         // Add the bot's response to the chat
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { content: data.response, role: "assistant" }
-        ]);
+        // setMessages((prevMessages) => [
+        //   ...prevMessages,
+        //   { content: data.response, role: "assistant" }
+        // ]);
+
+         // Extract the relevant details from the response
+         if (data.choices && data.choices.length > 0) {
+          const choice = data.choices[0];
+          const assistantMessage = choice.message.content;
+
+          // Add the bot's response to the chat
+          setMessages((prevMessages) => [
+              ...prevMessages,
+              { role: "assistant", content: assistantMessage }
+          ]);
+
+          // Optionally, you can use choice.context and other details if you want to display more data
+          if (choice.context) {
+              console.log("Context Data Points:", choice.context.dataPointsContent);
+              console.log("Thoughts:", choice.context.thoughts);
+          }
+      }
+
+
+
       } catch (error) {
         console.error("Fetch error:", error);
         setMessages((prevMessages) => [
