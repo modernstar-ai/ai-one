@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\agile-chat-semanticchat\agile-chat-semanticchat.csproj" />
+   
   </ItemGroup>
 
 </Project>

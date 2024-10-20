@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, MailIcon } from "lucide-react";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast";
 import axios from 'axios';
 import  SidebarMenu from '@/components/Sidebar'
 
@@ -17,9 +17,15 @@ function getApiUrl(endpoint: string): string {
 
 export default function Component() {
 
+  const { toast } = useToast(); // Initialize the Shadcn toast
+  
   const uploadFiles = async () => {
     if (files.length === 0) {
-      toast.error("No files selected for upload.");
+      toast({
+        title: "Error",
+        description: "No files selected for upload.",
+        variant: "destructive", 
+      });
       return;
     }
   
@@ -38,18 +44,34 @@ export default function Component() {
       });
       console.log(response);
       if (response.status != 200) {
-        throw new Error("File upload failed.");
+        toast({
+          title: "Error",
+          description: "File upload failed.",
+          variant: "destructive", 
+        });
       }
-  
-      toast.success("Files uploaded successfully!");
+      toast({
+        title: "Success",
+        description: "Files uploaded successfully!",
+        variant: "default", 
+      });
+      
       setFiles([]); // Clear files after upload
     } catch (error) {
      // Check if the error is an instance of Error
      console.log(error);
     if (error instanceof Error) {
-      toast.error(error.message);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive", 
+      });
       } else {
-        toast.error("An unknown error occurred during upload.");
+        toast({
+          title: "Error",
+          description: "An unknown error occurred during upload.",
+          variant: "destructive", 
+        });
       }
     }
   };
@@ -62,7 +84,11 @@ export default function Component() {
 
   const onDrop = (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
     if ((files.length + acceptedFiles.length) > maxFileCount) {
-      toast.error(`Cannot upload more than ${maxFileCount} files`);
+      toast({
+        title: "Error",
+        description: `Cannot upload more than ${maxFileCount} files`,
+        variant: "destructive", 
+      });
       return;
     }
 
@@ -72,7 +98,11 @@ export default function Component() {
 
     if (rejectedFiles.length > 0) {
       rejectedFiles.forEach(({ file }) => {
-        toast.error(`File ${file.name} was rejected`);
+        toast({
+          title: "Error",
+          description: `File ${file.name} was rejected`,  // Use backticks for template literal
+          variant: "destructive",
+        });
       });
     }
   };
