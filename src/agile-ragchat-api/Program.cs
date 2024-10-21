@@ -32,7 +32,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOutputCache();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
-builder.Services.AddCrossOriginResourceSharing();
+//builder.Services.AddCrossOriginResourceSharing(); //cors
 builder.Services.AddAzureServices();
 builder.Services.AddAntiforgery(options => { options.HeaderName = "X-CSRF-TOKEN-HEADER"; options.FormFieldName = "X-CSRF-TOKEN-FORM"; });
 builder.Services.AddHttpClient();
@@ -113,7 +113,7 @@ app.UseStaticFiles();
 app.UseCors("AllowSpecificOrigins"); // Apply the CORS policy defined above globally to all routes
 
 
-app.UseAntiforgery();
+//app.UseAntiforgery();
 app.MapRazorPages();
 app.MapControllers();
 
@@ -145,6 +145,7 @@ app.MapGet("/simplechat/{prompt}", async (string prompt, SimpleChatService chatS
     return Results.Ok(response);
 });
 
+//used to test resopnses - the service uses a post
 app.MapGet("/chatoverdata/{prompt}", async (string prompt, ReadRetrieveReadChatService chatService) =>
 {
     var history = new ChatMessage[]
@@ -156,13 +157,51 @@ app.MapGet("/chatoverdata/{prompt}", async (string prompt, ReadRetrieveReadChatS
     return Results.Ok(response);
 });
 
-app.Use(next => context =>
+//used to test resopnses - the service uses a post
+app.MapPost("/chatoverdata", async (HttpContext context, ReadRetrieveReadChatService chatService) =>
 {
-    var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
-    var tokens = antiforgery.GetAndStoreTokens(context);
-    context.Response.Cookies.Append("XSRF-TOKEN", tokens?.RequestToken ?? string.Empty, new CookieOptions() { HttpOnly = false });
-    return next(context);
+     try
+    {
+        // Deserialize the request body into an appropriate object
+        
+        var history = await context.Request.ReadFromJsonAsync<ChatMessage[]>();
+        //var history = request?.History;
+       // var history = request?.History;
+
+        var question = history?.LastOrDefault(m => m.IsUser)?.Content is { } userQuestion
+            ? userQuestion
+            : throw new InvalidOperationException("Use question is null");
+        if (history == null || string.IsNullOrEmpty(question))
+        {
+            return Results.BadRequest("Invalid request. The message cannot be empty.");
+        }
+
+        // Create a ChatMessage array using the prompt received in the request
+        // var history = new ChatMessage[]
+        // {
+        //     new ChatMessage("user", userQuestion)
+        // };
+
+        // Set up request overrides if any (for simplicity, using default for now)
+       // var overrides = request.Overrides ?? new RequestOverrides();
+
+        // Call the chat service to get a response
+        var response = await chatService.ReplyAsync(history, null);
+        return Results.Ok(response);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"An error occurred: {ex.Message}");
+    }
 });
+
+//app.Use(next => context =>
+//{
+//    var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
+//    var tokens = antiforgery.GetAndStoreTokens(context);
+//    context.Response.Cookies.Append("XSRF-TOKEN", tokens?.RequestToken ?? string.Empty, new CookieOptions() { HttpOnly = false });
+//    return next(context);
+//});
 app.MapFallbackToFile("index.html");
 
 app.MapApi();

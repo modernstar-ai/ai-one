@@ -20,7 +20,7 @@ const RagChatPage = () => {
       setIsStreaming(false); // Set the streaming flag to true
 
       // Establish an SSE connection for the bot's response
-      const apiUrl = getRagApiUri('chatcompletions',{prompt:encodeURIComponent(inputValue)});
+      const apiUrl = getRagApiUri('chatoverdata',encodeURIComponent(inputValue));
       const eventSource = new EventSource(apiUrl);
 
        // Add the bot's message placeholder to the chat
@@ -104,6 +104,9 @@ const RagChatPage = () => {
             rows={4}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
+            autoFocus
+            aria-label="Chat Input"
+            accessKey="i"
           />
           <Button onClick={handleSendMessage} disabled={isStreaming} >Send</Button>
         </div>
