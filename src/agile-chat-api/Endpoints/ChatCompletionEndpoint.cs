@@ -57,7 +57,7 @@ using static System.Net.WebRequestMethods;
                 // Prepare chat messages based on your prompt and initial context
                 var messages = new List<ChatMessage>
                 {
-                    new SystemChatMessage("You are a helpful assistant that talks like a pirate."),
+                    new SystemChatMessage("You are a helpful assistant."), // that talks like a pirate
                     new UserChatMessage(prompt) // The user-provided prompt
                 };
 

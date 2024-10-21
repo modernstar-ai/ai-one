@@ -15,4 +15,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\agile-chat-semanticchat\agile-chat-semanticchat.csproj" />
+  </ItemGroup>
+
 </Project>

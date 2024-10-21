@@ -4,9 +4,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import LeftMenu from '@/components/Menu-Left';
 import SimpleHeading from '@/components/Heading-Simple';
-import { getApiUri } from '@/services/uri-helpers';
+import { getRagApiUri } from '@/services/uri-helpers';
 
-const ChatPage = () => {
+const RagChatPage = () => {
   const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -17,10 +17,10 @@ const ChatPage = () => {
       // Add the user's message to the chat
       const newMessages = [...messages, { text: inputValue, sender: "user" }];
       setMessages(newMessages);
-      setIsStreaming(true); // Set the streaming flag to true
+      setIsStreaming(false); // Set the streaming flag to true
 
       // Establish an SSE connection for the bot's response
-      const apiUrl = getApiUri('chatcompletions',{prompt:encodeURIComponent(inputValue)});
+      const apiUrl = getRagApiUri('chatoverdata',encodeURIComponent(inputValue));
       const eventSource = new EventSource(apiUrl);
 
        // Add the bot's message placeholder to the chat
@@ -74,7 +74,7 @@ const ChatPage = () => {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
       {/* Header */}
-      <SimpleHeading Title="Chat" Subtitle='Why not have a chat' DocumentCount={0} />
+      <SimpleHeading Title="Chat Over Your Data" Subtitle="Let's have a chat to your data " DocumentCount={0} />
 
 
         <ScrollArea className="flex-1 p-4 space-y-4">
@@ -108,11 +108,11 @@ const ChatPage = () => {
             aria-label="Chat Input"
             accessKey="i"
           />
-          <Button onClick={handleSendMessage} disabled={isStreaming} aria-label="Send Chat" accessKey="j" >Send</Button>
+          <Button onClick={handleSendMessage} disabled={isStreaming} >Send</Button>
         </div>
       </div>
     </div>
   );
 };
 
-export default ChatPage;
+export default RagChatPage;
