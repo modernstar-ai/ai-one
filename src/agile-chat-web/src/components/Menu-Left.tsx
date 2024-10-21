@@ -21,7 +21,7 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ isHistoryOpen, setIsHistoryOpen }) 
             </Button>
             <Link aria-label="Personas" to="/personas" accessKey="p"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Personas Button"><VenetianMask className="h-6 w-6" /></Button></Link>
             
-            <Link aria-label="File Management" to="/files" accessKey="l"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Files Button"><FileBox className="h-6 w-6" /></Button></Link>
+            <Link aria-label="File Management" to="/filelist" accessKey="l"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Files Button"><FileBox className="h-6 w-6" /></Button></Link>
             <Link aria-label="Tools" to="/tools" accessKey="t"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Tools Button"><Settings className="h-6 w-6" /></Button></Link>
         </div>
     );
