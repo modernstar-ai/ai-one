@@ -19,9 +19,9 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ isHistoryOpen, setIsHistoryOpen }) 
             <Button aria-label="Chat History" variant="ghost" size="icon" onClick={() => setIsHistoryOpen(!isHistoryOpen)} accessKey="s">
                 <History className="h-6 w-6" />
             </Button>
-            <Link aria-label="Personas" to="/personas" accessKey="p"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Personas Button"><VenetianMask className="h-6 w-6" /></Button></Link>
-            
-            <Link aria-label="File Management" to="/filelist" accessKey="l"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Files Button"><FileBox className="h-6 w-6" /></Button></Link>
+            <Link to="/filelist" aria-label="Home" accessKey="f"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="File Button"> <FileBox className=" w-6 h-6" /></Button></Link>
+            <Link to="/assistantlist" aria-label="Home" accessKey="p"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chatbot Button"><VenetianMask className="h-6 w-6" /></Button></Link>
+        
             <Link aria-label="Tools" to="/tools" accessKey="t"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Tools Button"><Settings className="h-6 w-6" /></Button></Link>
         </div>
     );

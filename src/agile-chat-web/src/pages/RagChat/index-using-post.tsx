@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import LeftMenu from '@/components/Menu-Left';
+import SidebarMenu from '@/components/Sidebar'
 import SimpleHeading from '@/components/Heading-Simple';
 import { getRagApiUri } from '@/services/uri-helpers';
 import SearchResultComponent from '@/components/Search-Result';
@@ -32,7 +32,7 @@ const createMessage = (overrides: Partial<SearchMessage> = {}): SearchMessage =>
 const RagChatPage = () => {
   const [messages, setMessages] = useState<SearchMessage[]>(() => [createMessage()]);
   const [inputValue, setInputValue] = useState("");
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
 
 
   //  Purpose: The addSearchMessage function is used to add a new message to the state. It uses the createMessage function to create the new message with default values and then updates the state.
@@ -145,22 +145,8 @@ const RagChatPage = () => {
 
 
       {/* Left Sidebar */}
-      <LeftMenu isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />
+      <SidebarMenu />
 
-      {/* Search History Panel */}
-      {isHistoryOpen && (
-        <div className="w-64 bg-secondary p-4 overflow-auto">
-          <h2 className="text-lg font-semibold mb-4">Search History</h2>
-          <ScrollArea className="h-[calc(100vh-2rem)]">
-            {/* Add your search history items here */}
-            <div className="space-y-2">
-              <div className="p-2 hover:bg-accent rounded">Previous search 1</div>
-              <div className="p-2 hover:bg-accent rounded">Previous search 2</div>
-              {/* ... more items ... */}
-            </div>
-          </ScrollArea>
-        </div>
-      )}
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
