@@ -1,8 +1,6 @@
-'use client'
-
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
-import { Home, MessageCircleMore, FileBox, User, VenetianMask, LogOut, Columns2  } from 'lucide-react'
+import { Home, MessageCircleMore, FileBox, User, VenetianMask, LogOut, Columns2, MessageSquareCode  } from 'lucide-react'
 import { Link } from 'react-router-dom';
 import {
     Popover,    
@@ -34,6 +32,7 @@ export default function Sidebar() {
         {/* Middle icons, flex-grow ensures they are in the center */}
         <div className="flex-grow flex flex-col justify-center space-y-4">
         <Link to="/chat" aria-label="Home" accessKey="c"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chat Button"><MessageCircleMore className="h-6 w-6" /></Button></Link>
+        <Link aria-label="Chat over data" to="/ragchat" accessKey="r"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chat over Data Button"><MessageSquareCode className="h-6 w-6" /></Button></Link>            
         <Link to="/filelist" aria-label="Home" accessKey="f"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="File Button"> <FileBox className=" w-6 h-6" /></Button></Link>
         <Link to="/assistantlist" aria-label="Home" accessKey="p"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chatbot Button"><VenetianMask className="h-6 w-6" /></Button></Link>
         </div>
@@ -61,7 +60,7 @@ export default function Sidebar() {
       {isSidebarExpanded && (
         <div className="bg-gray-100 w-64 p-4 overflow-y-auto">
           <div className="flex items-center mb-6">
-            <div className="text-3xl font-bold mr-2">UTS</div>
+            <div className="text-3xl font-bold mr-2">[logo]</div>
           </div>
           <div className="text-sm font-semibold mb-2">Your AI Assistants</div>
           <div className="space-y-2">
