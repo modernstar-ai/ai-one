@@ -10,7 +10,7 @@ interface SimpleHeadingProps {
 
 const SimpleHeading: React.FC<SimpleHeadingProps> = ({Title, Subtitle, DocumentCount}) => {
     return (
-        <div className="bg-muted p-4 flex justify-between items-center">
+        <div className="bg-muted p-4 flex justify-between items-center w-full">
           <div>
             <h1 className="text-2xl font-bold">{Title}</h1>
             <p className="text-sm">{Subtitle}</p>

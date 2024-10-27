@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ChevronsUpDown } from "lucide-react"
-import SidebarMenu from '@/components/Sidebar'
+import LeftMenu from '@/components/LeftMenu'
 
 const folders = [
   { id: "folder1", name: "Folder 1" },
@@ -48,7 +48,7 @@ export default function CreateAIAssistant() {
 
   return (
     <div className="flex h-screen bg-background">
-      <SidebarMenu />
+      
       <div className="flex-1 p-8 overflow-y-auto">
         <h1 className="text-3xl font-bold mb-6">Create a new AI Assistant</h1>
         <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
