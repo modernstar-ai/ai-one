@@ -1,8 +1,11 @@
+//note: in-progress. 
+//this file is the streaming implmemetation
+//index-using-post.tsx is the post implementation that is working
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import LeftMenu from '@/components/LeftMenu'
 import SimpleHeading from '@/components/Heading-Simple';
 import { getRagApiUri } from '@/services/uri-helpers';
 
@@ -10,7 +13,6 @@ const RagChatPage = () => {
   const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const handleSendMessage = async () => {
     if (inputValue.trim()) {
@@ -51,11 +53,6 @@ const RagChatPage = () => {
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-
-
-      {/* Left Sidebar */}
-      <LeftMenu />
-
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">

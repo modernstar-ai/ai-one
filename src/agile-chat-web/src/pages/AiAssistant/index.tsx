@@ -16,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ChevronsUpDown } from "lucide-react"
-import LeftMenu from '@/components/LeftMenu'
 
 const folders = [
   { id: "folder1", name: "Folder 1" },
