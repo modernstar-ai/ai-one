@@ -5,13 +5,18 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import SimpleHeading from '@/components/Heading-Simple';
 import { getRagApiUri } from '@/services/uri-helpers';
 import SearchResultComponent from '@/components/Search-Result';
+import { Citation } from '@/types/SearchTypes';
+
+
 
 interface SearchMessage {
   content: string;
   role: string;
   thoughtProcess: string;
-  citations: string[];
+  citations: Citation[];
   followUpQuestions?: string[];
+  
+  jsonData?: string;
 }
 
 // Function to create a new message with default values
@@ -24,6 +29,8 @@ const createMessage = (overrides: Partial<SearchMessage> = {}): SearchMessage =>
     role: 'welcome',
     thoughtProcess: '',
     citations: [],
+    
+    jsonData: '',
     ...overrides,
   };
 };
@@ -93,25 +100,41 @@ const RagChatPage = () => {
         // Extract the relevant details from the response
         if (data.choices && data.choices.length > 0) {
           const choice = data.choices[0];
+          console.log('ragchat choice:', choice);
+
           const assistantMessage = choice.message.content;
           const followUpQuestions = choice?.followup_questions ?? [];
-          const throughProcess = choice.thoughts?.description ?? "";
+          const throughProcess = choice.context?.thoughtsString ?? "";
+          const citationData = choice.context?.dataPointsContent ?? [];
+          const jsonData = JSON.stringify(data);
+          console.log('ragchat assistantMessage:', assistantMessage);
+          console.log('ragchat followUpQuestions:', followUpQuestions);
+          console.log('ragchat throughProcess:', throughProcess);
+          console.log('ragchat citationData:', citationData);
+
+
+
           // Extract citations from data.choices
-          //const citations = []//data.choices.map((choice) => choice.message.content);
+          const citations: Citation[] = citationData.map((citation) => ({
+            title: citation.title,
+            content: citation.content,
+            url: citation.title
+          }));
+          console.log('ragchat citations:', citations);
 
           // Add the bot's response to the chat
           console.log('ragchat messages - before add search message to state:', messages?.length, 'messages:', messages);
 
-          // addSearchMessageToState({
-          //   role: "assistant",
-          //   content: assistantMessage,
-          //   thoughtProcess: throughProcess,
-          //   citations: [],
-          //   followUpQuestions: followUpQuestions
-          // });
           setMessages((prevMessages) => [
             ...prevMessages,
-            createMessage({ role: "assistant", content: assistantMessage, thoughtProcess: throughProcess, citations: [], followUpQuestions: followUpQuestions })
+            createMessage({
+              role: "assistant",
+              content: assistantMessage,
+              thoughtProcess: throughProcess,
+              citations: citations,
+              followUpQuestions: followUpQuestions,
+              jsonData: jsonData
+            })
           ]);
           console.log('ragchat messages - after add search message to state:', messages?.length, 'messages:', messages);
 
@@ -129,7 +152,7 @@ const RagChatPage = () => {
         //addSearchMessageToState({ content: "Error: Unable to fetch response from the server.", role: "assistant" });
         setMessages((prevMessages) => [
           ...prevMessages,
-          createMessage({ role: "assistant", content: "Error: Unable to fetch response from the server."})
+          createMessage({ role: "assistant", content: "Error: Unable to fetch response from the server." })
         ]);
 
       }
@@ -161,7 +184,7 @@ const RagChatPage = () => {
                   ThoughtProcess={message.thoughtProcess || ""}
                   Citations={message.citations || []}
                   FollowUpQuestions={message.followUpQuestions || []}
-                  SupportingContent={message.followUpQuestions || []}
+                  ResponseBody={message.jsonData || ""}
                 />
 
               )}
@@ -175,7 +198,8 @@ const RagChatPage = () => {
                   }}
                 >
                   {message.content}
-                  <div><small>{JSON.stringify(message)}</small></div>
+                  {/* Debug messages */}
+                  {/* <div><small>{JSON.stringify(message)}</small></div> */}
                 </div>
               )}
 

@@ -1,3 +1,7 @@
+//note: in-progress. 
+//this file is the streaming implmemetation
+//index-using-post.tsx is the post implementation that is working
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
