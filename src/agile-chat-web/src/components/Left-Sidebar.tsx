@@ -24,10 +24,10 @@ export function LeftSidebar() {
 
             <SidebarContent >
 
-                <div className="flex h-screen w-full  bg-background text-foreground border-red-500 border-0">
+                <div className="flex h-screen w-full  bg-background text-foreground border-red-500 border-1">
                     <div id="left-icon-menu" className="w-16 bg-primary text-primary-foreground flex flex-col items-center py-4 space-y-4 h-full  border-orange-500 border-0">
 
-                        <div className="flex h-full border-green-500 border-0">
+                        <div className="flex h-full border-green-500 border-1">
                             {/* Sidebar container */}
                             {/* <div className="bg-black w-16 flex flex-col items-center py-4"> */}
                             <div className="w-16 bg-primary text-primary-foreground flex flex-col items-center py-4 space-y-4">

@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button"
 import { Home, MessageCircleMore, FileBox, User, VenetianMask, LogOut, MessageSquareCode } from 'lucide-react'
 import { Link } from 'react-router-dom';
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { LeftSidebar } from "./Left-Sidebar";
 
 import {
   Popover,
@@ -25,7 +24,7 @@ export default function LeftMenu() {
           <Link to="/" aria-label="Home" accessKey="h"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Home Button"><Home className="h-6 w-6" /></Button></Link>
           {/* <Home className="text-gray-400 w-6 h-6" /> */}
         </div>
-        <SidebarTrigger />        
+        <SidebarTrigger />       
         {/* Middle icons, flex-grow ensures they are in the center */}
         <div className="flex-grow flex flex-col justify-center space-y-4">
           <Link to="/chat" aria-label="Home" accessKey="c"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chat Button"><MessageCircleMore className="h-6 w-6" /></Button></Link>

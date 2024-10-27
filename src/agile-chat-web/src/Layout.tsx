@@ -8,10 +8,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       style={{
         "--sidebar-width-icon": "3.5rem",
         "--sidebar-width": "20rem",
-        "--sidebar-width-mobile": "20rem",
+        "--sidebar-width-mobile": "20rem",        
       }}
     >
-      <div className="flex h-screen w-full bg-background text-foreground border-blue-500 border-4">
+      <div className="flex h-screen w-full bg-background text-foreground">
 
         {/* Left Sidebar */}
         <div className="flex flex-col ">
@@ -19,11 +19,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col border-green-400 border-4">
+        <div className="flex-1 flex flex-col ">
 
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col border-green-400 border-4">
-            <main className="flex-1 p-4 border-red-500 border-8 w-full">
+          <div className="flex-1 flex flex-col ">
+            <main className="flex-1 p-2 w-full">
               {children}
             </main>
           </div>
