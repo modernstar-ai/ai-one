@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import LeftMenu from '@/components/LeftMenu'
 import SimpleHeading from '@/components/Heading-Simple';
 import { getApiUri } from '@/services/uri-helpers';
 

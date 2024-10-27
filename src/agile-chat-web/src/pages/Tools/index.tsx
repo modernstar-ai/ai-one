@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import ToolsComponent from "@/components/ToolsComponent"
-import LeftMenu from '@/components/LeftMenu'
 import SimpleHeading from '@/components/Heading-Simple';
 
 const ToolsPage = () => {
@@ -9,9 +8,6 @@ const ToolsPage = () => {
   
   return (
     <div className="flex h-screen bg-background text-foreground">
-
-      {/* Left Sidebar */}
-      <LeftMenu />      
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">

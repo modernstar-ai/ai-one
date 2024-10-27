@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/table"
 import { RefreshCw, Trash2 } from "lucide-react"
 import { useState } from "react"
-import  LeftMenu from '@/components/LeftMenu'
 import { Link } from 'react-router-dom';
 
 const files = [

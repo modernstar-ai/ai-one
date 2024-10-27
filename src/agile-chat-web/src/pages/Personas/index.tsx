@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PlusCircle, Trash2 } from "lucide-react";
-import LeftMenu from '@/components/LeftMenu'
 import SimpleHeading from '@/components/Heading-Simple';
 import { useEffect, useState } from "react";
 import { fetchPersonas, addPersona, updatePersona, deletePersona } from "@/services/personaservice";
@@ -54,9 +53,7 @@ export default function PersonaManager() {
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      {/* Left Sidebar */}
-      <LeftMenu />
-
+      
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
