@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,7 +16,7 @@ interface SearchMessage {
   thoughtProcess: string;
   citations: Citation[];
   followUpQuestions?: string[];
-  
+
   jsonData?: string;
 }
 
@@ -29,7 +30,7 @@ const createMessage = (overrides: Partial<SearchMessage> = {}): SearchMessage =>
     role: 'welcome',
     thoughtProcess: '',
     citations: [],
-    
+
     jsonData: '',
     ...overrides,
   };
@@ -38,16 +39,15 @@ const createMessage = (overrides: Partial<SearchMessage> = {}): SearchMessage =>
 const RagChatPage = () => {
   const [messages, setMessages] = useState<SearchMessage[]>(() => [createMessage()]);
   const [inputValue, setInputValue] = useState("");
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-
-
-  //  Purpose: The addSearchMessage function is used to add a new message to the state. It uses the createMessage function to create the new message with default values and then updates the state.
-  //  Usage: It is a higher-level function that abstracts the process of adding a new message to the state, ensuring that the new message is created with default values.
-  // const addSearchMessageToState = (newMessage: Partial<SearchMessage>) => {
-  //   console.log('ragchat state update start newMessage:',messages?.length ,newMessage, 'messages:', messages);
-  //   setMessages([...messages, createMessage(newMessage)]);
-  //   console.log('ragchat state update end newMessage:', messages?.length ,newMessage, 'messages:', messages);
-  // };
+  // Scroll to the bottom whenever messages change
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      console.log("Scrolling to bottom");
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const handleSendMessage = async () => {
 
@@ -59,8 +59,7 @@ const RagChatPage = () => {
       const newMessages = [...messages, newMessage];
       console.log('ragchat newMessages:', newMessages);
       console.log('ragchat messages - click:', messages?.length, 'messages:', messages);
-      //update the state
-      // addSearchMessageToState(newMessage);
+
       // Add the bot's response to the chat
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -90,12 +89,6 @@ const RagChatPage = () => {
         const data = await response.json();
         console.log('ragchat data:', data);
         console.log('ragchat messages - data returned:', messages?.length, 'messages:', messages);
-
-        // Add the bot's response to the chat
-        // setMessages((prevMessages) => [
-        //   ...prevMessages,
-        //   { content: data.response, role: "assistant" }
-        // ]);
 
         // Extract the relevant details from the response
         if (data.choices && data.choices.length > 0) {
@@ -171,7 +164,7 @@ const RagChatPage = () => {
         <SimpleHeading Title="Chat Over Your Data" Subtitle="Let's have a chat to your data " DocumentCount={0} />
 
 
-        <ScrollArea className="flex-1 p-4 space-y-4">
+        <ScrollArea ref={scrollAreaRef}  className="flex-1 p-4 space-y-4">
           {messages.map((message, index) => (
 
             <div

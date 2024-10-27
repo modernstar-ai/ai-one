@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,7 +10,15 @@ const ChatPage = () => {
   const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-    
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to the bottom whenever messages change
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      console.log("Scrolling to bottom");
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (inputValue.trim()) {
@@ -58,7 +67,7 @@ const ChatPage = () => {
       <SimpleHeading Title="Chat" Subtitle='Why not have a chat' DocumentCount={0} />
 
 
-        <ScrollArea className="flex-1 p-4 space-y-4">
+        <ScrollArea ref={scrollAreaRef}  className="flex-1 p-4 space-y-4">
           {messages.map((message, index) => (
             <div
               key={index}
