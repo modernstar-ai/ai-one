@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PlusCircle, Trash2 } from "lucide-react";
+import LeftMenu from '@/components/Menu-Left';
 import SimpleHeading from '@/components/Heading-Simple';
 import { useEffect, useState } from "react";
 import { fetchPersonas, addPersona, updatePersona, deletePersona } from "@/services/personaservice";
@@ -12,7 +13,7 @@ export default function PersonaManager() {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
-  
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   useEffect(() => {
     async function loadPersonas() {
@@ -53,7 +54,9 @@ export default function PersonaManager() {
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      
+      {/* Left Sidebar */}
+      <LeftMenu isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />
+
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}

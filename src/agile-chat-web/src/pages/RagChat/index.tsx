@@ -1,11 +1,8 @@
-//note: in-progress. 
-//this file is the streaming implmemetation
-//index-using-post.tsx is the post implementation that is working
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import LeftMenu from '@/components/Menu-Left';
 import SimpleHeading from '@/components/Heading-Simple';
 import { getRagApiUri } from '@/services/uri-helpers';
 
@@ -13,6 +10,7 @@ const RagChatPage = () => {
   const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const handleSendMessage = async () => {
     if (inputValue.trim()) {
@@ -53,6 +51,25 @@ const RagChatPage = () => {
 
   return (
     <div className="flex h-screen bg-background text-foreground">
+
+
+      {/* Left Sidebar */}
+      <LeftMenu isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />
+
+      {/* Search History Panel */}
+      {isHistoryOpen && (
+        <div className="w-64 bg-secondary p-4 overflow-auto">
+          <h2 className="text-lg font-semibold mb-4">Search History</h2>
+          <ScrollArea className="h-[calc(100vh-2rem)]">
+            {/* Add your search history items here */}
+            <div className="space-y-2">
+              <div className="p-2 hover:bg-accent rounded">Previous search 1</div>
+              <div className="p-2 hover:bg-accent rounded">Previous search 2</div>
+              {/* ... more items ... */}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
