@@ -14,9 +14,11 @@ import {
 
 import { Link } from 'react-router-dom';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useMsal } from '@azure/msal-react';
 
 export default function Sidebar() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const { accounts, instance } = useMsal();
 
   const toggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);
@@ -81,9 +83,19 @@ export default function Sidebar() {
           </PopoverTrigger>
           <PopoverContent className="w-60">
             <div className="space-y-2">
-              <h4 className="font-medium leading-none">Username</h4>
-              <p className="text-sm text-muted-foreground">test@student.test.edu.au</p>
-              <Button variant="outline" className="w-full justify-start" aria-label="Logout Button">
+              <h4 className="font-medium leading-none">{accounts[0].name}</h4>
+
+              <p className="text-xs text-muted-foreground">{accounts[0].username}</p>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                aria-label="Logout Button"
+                onClick={() => {
+                  instance.logoutRedirect().then(() => {
+                    instance.logoutPopup();
+                  });
+                }}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </Button>

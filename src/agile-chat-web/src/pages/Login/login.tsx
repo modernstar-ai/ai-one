@@ -9,7 +9,7 @@ const LoginPage = () => {
   const { instance, inProgress } = useMsal();
   const loggedIn = useIsAuthenticated();
 
-  if (inProgress === InteractionStatus.Startup) {
+  if (inProgress === InteractionStatus.Startup || inProgress === InteractionStatus.Logout) {
     return (
       <div className="flex w-full h-screen justify-center items-center bg-background text-foreground">
         <Loader2Icon className="animate-spin" size={64} />
