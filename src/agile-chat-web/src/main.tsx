@@ -9,7 +9,7 @@ const configuration: Configuration = {
   auth: {
     clientId: import.meta.env.VITE_AZURE_AD_CLIENT_ID,
     authority: `https://login.microsoftonline.com/${import.meta.env.VITE_AZURE_AD_TENANT_ID}`,
-    redirectUri: 'http://localhost:3000',
+    redirectUri: window.location.origin,
   },
   cache: {
     cacheLocation: 'localStorage',
