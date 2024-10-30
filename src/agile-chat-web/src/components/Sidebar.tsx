@@ -1,20 +1,26 @@
-import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Home, MessageCircleMore, FileBox, User, VenetianMask, Wrench, LogOut, Columns2, MessageSquareCode  } from 'lucide-react'
- 
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
-    Popover,    
-    PopoverContent,
-    PopoverTrigger,
-  } from "@/components/ui/popover"
+  Home,
+  MessageCircleMore,
+  FileBox,
+  User,
+  VenetianMask,
+  Wrench,
+  LogOut,
+  Columns2,
+  MessageSquareCode,
+} from 'lucide-react';
+
+import { Link } from 'react-router-dom';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export default function Sidebar() {
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false)
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   const toggleSidebar = () => {
-    setIsSidebarExpanded(!isSidebarExpanded)
-  }
+    setIsSidebarExpanded(!isSidebarExpanded);
+  };
 
   return (
     <div className="flex h-full">
@@ -23,27 +29,47 @@ export default function Sidebar() {
       <div className="w-16 bg-primary text-primary-foreground flex flex-col items-center py-4 space-y-4">
         {/* Top icons */}
         <div className="space-y-4">
-          <Link to="/" aria-label="Home" accessKey="h"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Home Button"><Home className="h-6 w-6" /></Button></Link>
+          <Link to="/" aria-label="Home" accessKey="h">
+            <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Home Button">
+              <Home className="h-6 w-6" />
+            </Button>
+          </Link>
           {/* <Home className="text-gray-400 w-6 h-6" /> */}
-          </div>
-          <button onClick={toggleSidebar} aria-label="Toggle Sidebar" accessKey="t">
-            <Columns2 className="w-6 h-6" />
-          </button>
-        
+        </div>
+        <button onClick={toggleSidebar} aria-label="Toggle Sidebar" accessKey="t">
+          <Columns2 className="w-6 h-6" />
+        </button>
+
         {/* Middle icons, flex-grow ensures they are in the center */}
         <div className="flex-grow flex flex-col justify-center space-y-4">
-        <Link to="/chat" aria-label="Home" accessKey="c"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chat Button"><MessageCircleMore className="h-6 w-6" /></Button></Link>
-        <Link to="/ragchat" aria-label="Chat over data"  accessKey="r"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chat over Data Button"><MessageSquareCode className="h-6 w-6" /></Button></Link>            
-        <Link to="/filelist" aria-label="file list" accessKey="f"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="File Button"> <FileBox className=" w-6 h-6" /></Button></Link>
-        <Link to="/assistantlist" aria-label="assistantlist" accessKey="p"><Button variant="ghost" size="icon" tabIndex={-1} aria-label="Assistant List Button"><VenetianMask className="h-6 w-6" /></Button></Link>
+          <Link to="/chat" aria-label="Home" accessKey="c">
+            <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chat Button">
+              <MessageCircleMore className="h-6 w-6" />
+            </Button>
+          </Link>
+          <Link to="/ragchat" aria-label="Chat over data" accessKey="r">
+            <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chat over Data Button">
+              <MessageSquareCode className="h-6 w-6" />
+            </Button>
+          </Link>
+          <Link to="/filelist" aria-label="file list" accessKey="f">
+            <Button variant="ghost" size="icon" tabIndex={-1} aria-label="File Button">
+              {' '}
+              <FileBox className=" w-6 h-6" />
+            </Button>
+          </Link>
+          <Link to="/assistantlist" aria-label="assistantlist" accessKey="p">
+            <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Assistant List Button">
+              <VenetianMask className="h-6 w-6" />
+            </Button>
+          </Link>
 
-        {/* Tools Page Button */}
-        <Link to="/tools" aria-label="Tools" accessKey="l">
+          {/* Tools Page Button */}
+          <Link to="/tools" aria-label="Tools" accessKey="l">
             <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Tools Page Button">
               <Wrench className="h-6 w-6" />
             </Button>
           </Link>
-          
         </div>
         {/* Bottom icon */}
         {/* <Link to="/"><Button variant="ghost" size="icon"><User className="h-6 w-6" /></Button></Link> */}
@@ -86,10 +112,12 @@ export default function Sidebar() {
             <div>History 4</div>
             <div>History 5</div>
           </div>
-         {/* Left-aligned Clear History button */}
-         <Button variant="secondary" className="mt-4 px-0">Clear History</Button>
+          {/* Left-aligned Clear History button */}
+          <Button variant="secondary" className="mt-4 px-0">
+            Clear History
+          </Button>
         </div>
       )}
     </div>
-  )
+  );
 }
