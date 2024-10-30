@@ -154,17 +154,7 @@ export default function Component() {
 
         {/* Dropdowns */}
         <div className="flex justify-center w-full">
-          <div className="mb-8 grid grid-cols-2 gap-4 w-1/2">
-            <Select>
-              <SelectTrigger aria-label="Select Group">
-                <SelectValue placeholder="Select Group" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="group1">Group 1</SelectItem>
-                <SelectItem value="group2">Group 2</SelectItem>
-                <SelectItem value="group3">Group 3</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="mb-2 gap-4 w-1/2">
             <Select>
               <SelectTrigger aria-label="Select Folder">
                 <SelectValue placeholder="Select Folder" />
