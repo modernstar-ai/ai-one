@@ -1,30 +1,51 @@
 using Azure.Storage.Blobs;
-using System.Runtime.InteropServices;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Extensions.Logging;
+using Models;
+using Services;
 
 public static class FileEndpoints
 {
+    /// <summary>
+    /// Maps the file endpoints.
+    /// </summary>
+    /// <param name="app">The application.</param>
+    /// <returns></returns>
     public static void MapFileEndpoints(this IEndpointRouteBuilder app)
     {
-
-        app.MapPost("/upload", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken] async (IFormFileCollection files) =>
+        app.MapPost("/upload", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
+        async (IFormFileCollection files, [FromServices] ICosmosService cosmosService, [FromServices] IStorageService blobStorageService) =>
         {
-            var connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_ACCOUNT_CONNECTION");
-            string containerName = "fileuploadsv1";
-            BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
-            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
-            await containerClient.CreateIfNotExistsAsync();
-
-            foreach (var file in files)
+            if (files == null || files.Count == 0)
             {
-                if (file.Length > 0)
-                {
-                    string fileName = Path.GetFileName(file.FileName);
-                    BlobClient blobClient = containerClient.GetBlobClient(fileName);
-                    await blobClient.UploadAsync(file.OpenReadStream(), true);
-                }
+                return Results.BadRequest("No files received for upload.");
             }
+            try
+            {
+                foreach (var file in files)
+                {
+                    if(file.Length > 0)
+                    {
+                        // Upload file to Azure Blob Storage using IBlobStorageService
+                        string blobURL = await blobStorageService.UploadFileToBlobAsync(file);
 
-            return Results.Ok("Files uploaded successfully.");
+                        // Check if the file already exists in Cosmos DB using ICosmosService & then Upload the same
+                        bool fileExists = await cosmosService.FileMetadataExistsAsync(file.FileName,blobURL);
+                        if (!fileExists)
+                        {
+                            //Save the file metadata with URL to Cosmos DB
+                            await cosmosService.SaveFileMetadataToCosmosDbAsync(file, blobURL);
+                        }
+                    }
+                }
+                return Results.Ok("Files uploaded successfully.");
+            }
+            catch (Exception ex)
+            {
+                string error = ex.Message;
+                return Results.Problem("An error occurred while processing the upload.");
+            }
         }).DisableAntiforgery();
     }
 }

@@ -2,6 +2,7 @@ using Azure.AI.OpenAI;
 using Azure.Identity;
 using DotNetEnv;
 using Microsoft.Azure.Cosmos;
+using Services;
 
 // Load environment variables for OpenAI Endpoint and Cosmos DB access
 DotNetEnv.Env.Load();
@@ -21,6 +22,8 @@ if (string.IsNullOrEmpty(cosmosDbUri) || string.IsNullOrEmpty(cosmosDbKey))
 builder.Services.AddSingleton(s => new CosmosClient(cosmosDbUri, cosmosDbKey));
 
 // Add services to the container
+builder.Services.AddSingleton<ICosmosService, CosmosService>();
+builder.Services.AddSingleton<IStorageService, StorageService>();
 builder.Services.AddSingleton<IToolService, ToolService>();
 builder.Services.AddSingleton<IPersonaService, PersonaService>();
 
