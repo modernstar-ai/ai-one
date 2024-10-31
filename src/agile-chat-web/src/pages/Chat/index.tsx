@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import SidebarMenu from '@/components/Sidebar';
 import SimpleHeading from '@/components/Heading-Simple';
 import { getApiUri } from '@/services/uri-helpers';
+import axios from '@/error-handling/axiosSetup';
 
 const ChatPage = () => {
   const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
@@ -20,28 +21,43 @@ const ChatPage = () => {
 
       // Establish an SSE connection for the bot's response
       const apiUrl = getApiUri('chatcompletions', { prompt: encodeURIComponent(inputValue) });
-      const eventSource = new EventSource(apiUrl);
+
+      axios
+        .get(apiUrl, {
+          headers: {
+            Accept: 'text/plain',
+          },
+          responseType: 'stream',
+          adapter: 'fetch',
+        })
+        .then(async (resp) => {
+          const stream: ReadableStream = resp.data;
+
+          const reader = stream.getReader();
+          const decoder = new TextDecoder('utf-8');
+          while (true) {
+            const { done, value } = await reader.read();
+            const partialChunk = decoder.decode(value, { stream: true });
+
+            // Update the last bot message with the streamed data
+            setMessages((prevMessages) => {
+              const lastMessage = prevMessages[prevMessages.length - 1];
+              const updatedBotMessage = { ...lastMessage, text: lastMessage.text + partialChunk };
+              return [...prevMessages.slice(0, prevMessages.length - 1), updatedBotMessage];
+            });
+
+            if (done) {
+              break;
+            }
+          }
+        })
+        .finally(() => setIsStreaming(false));
 
       // Add the bot's message placeholder to the chat
       setMessages((prevMessages) => [
         ...prevMessages,
         { text: '', sender: 'bot' }, // Start with an empty message for the bot
       ]);
-
-      eventSource.onmessage = (event) => {
-        // Update the last bot message with the streamed data
-        setMessages((prevMessages) => {
-          const lastMessage = prevMessages[prevMessages.length - 1];
-          const updatedBotMessage = { ...lastMessage, text: lastMessage.text + event.data };
-          return [...prevMessages.slice(0, prevMessages.length - 1), updatedBotMessage];
-        });
-      };
-
-      eventSource.onerror = (error) => {
-        console.error('EventSource failed:', error);
-        eventSource.close();
-        setIsStreaming(false); // End the streaming
-      };
 
       // Clear the input field after sending the message
       setInputValue('');

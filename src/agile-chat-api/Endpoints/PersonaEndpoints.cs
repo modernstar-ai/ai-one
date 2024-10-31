@@ -11,19 +11,19 @@ public static class PersonaEndpoints
         {
             var personas = personaService.GetAll();
             return Results.Ok(personas);
-        });
+        }).RequireAuthorization();
 
         app.MapGet("/personas/{id:guid}", (Guid id, IPersonaService personaService) =>
         {
             var persona = personaService.GetById(id);
             return persona != null ? Results.Ok(persona) : Results.NotFound();
-        });
+        }).RequireAuthorization();
 
         app.MapPost("/personas", (Persona persona, IPersonaService personaService) =>
         {
             personaService.Create(persona);
             return Results.Created($"/personas/{persona.Id}", persona);
-        });
+        }).RequireAuthorization();
 
         app.MapPut("/personas/{id:guid}", (Guid id, Persona updatedPersona, IPersonaService personaService) =>
         {
@@ -35,7 +35,7 @@ public static class PersonaEndpoints
 
             personaService.Update(id, updatedPersona);
             return Results.NoContent();
-        });
+        }).RequireAuthorization();
 
         app.MapDelete("/personas/{id:guid}", (Guid id, IPersonaService personaService) =>
         {
@@ -47,6 +47,6 @@ public static class PersonaEndpoints
 
             personaService.Delete(id);
             return Results.NoContent();
-        });
+        }).RequireAuthorization();
     }
 }

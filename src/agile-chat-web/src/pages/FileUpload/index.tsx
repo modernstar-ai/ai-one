@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, MailIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import axios from 'axios';
+import axios from '@/error-handling/axiosSetup';
 import SidebarMenu from '@/components/Sidebar';
 
 function getApiUrl(endpoint: string): string {

@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Identity.Web;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,6 +38,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddAzureServices();
 builder.Services.AddAntiforgery(options => { options.HeaderName = "X-CSRF-TOKEN-HEADER"; options.FormFieldName = "X-CSRF-TOKEN-FORM"; });
 builder.Services.AddHttpClient();
+
+builder.Services.AddAzureAdAuth();
 
 // Register services
 builder.Services.AddScoped<EchoChatService>();
@@ -107,6 +111,11 @@ else
 app.UseHttpsRedirection();
 app.UseOutputCache();
 app.UseRouting();
+
+//Add Auth
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseStaticFiles();
 
 // Apply the CORS Policy
@@ -163,7 +172,7 @@ app.MapPost("/chatoverdata", async (HttpContext context, ReadRetrieveReadChatSer
      try
     {
         // Deserialize the request body into an appropriate object
-        
+
         var history = await context.Request.ReadFromJsonAsync<ChatMessage[]>();
         //var history = request?.History;
        // var history = request?.History;

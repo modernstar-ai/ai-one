@@ -91,8 +91,8 @@ export default function Sidebar() {
                 className="w-full justify-start"
                 aria-label="Logout Button"
                 onClick={() => {
-                  instance.logoutRedirect().then(() => {
-                    instance.logoutPopup();
+                  instance.logoutRedirect({ account: accounts[0] }).then(() => {
+                    instance.logoutPopup({ account: accounts[0] });
                   });
                 }}
               >
