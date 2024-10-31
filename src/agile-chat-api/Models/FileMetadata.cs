@@ -1,6 +1,6 @@
 ﻿namespace Models
 {
-    internal class FileMetadata
+    public class FileMetadata
     {
         /// <summary>
         /// Gets or sets the identifier.
@@ -44,5 +44,19 @@
         /// The size.
         /// </value>
         public long Size { get; set; }
+        /// <summary>
+        /// Gets or sets the folder.
+        /// </summary>
+        /// <value>
+        /// The folder.
+        /// </value>
+        public string? Folder { get; set; }
+        /// <summary>
+        /// Gets or sets the submitted on.
+        /// </summary>
+        /// <value>
+        /// The submitted on.
+        /// </value>
+        public string? SubmittedOn { get; set; }
     }
 }

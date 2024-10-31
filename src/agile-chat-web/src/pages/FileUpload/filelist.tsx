@@ -19,26 +19,20 @@ import { RefreshCw, Trash2 } from "lucide-react"
 import { useState } from "react"
 import  SidebarMenu from '@/components/Sidebar'
 import { Link } from 'react-router-dom';
-
-const files = [
-  { id: 1, name: "Foundations_of_Nursing_Practice.pdf", state: "Completed", folder: "upload/temp2", submittedOn: "2024-08-10 00:15:30" },
-  { id: 2, name: "Foundations_of_Nursing_Practice_Lec1.ppt", state: "Completed", folder: "upload/temp2", submittedOn: "2024-08-10 00:15:30" },
-  { id: 3, name: "Foundations_of_Nursing_Practice_Assessment1.pdf", state: "Completed", folder: "upload/temp2", submittedOn: "2024-08-10 00:15:30" },
-  { id: 4, name: "Health_and_Society_Lec1.pdf", state: "Completed", folder: "upload/temp2", submittedOn: "2024-08-10 00:15:30" },
-  { id: 5, name: "Health_and_Society_Lec1.pdf", state: "Completed", folder: "upload/temp2", submittedOn: "2024-08-10 00:15:30" },
-  { id: 6, name: "Health_and_Society_GroupAssessment.pdf", state: "Completed", folder: "upload/temp2", submittedOn: "2024-08-10 00:15:30" },
-]
+import { useFetchFiles } from "@/hooks/use-files"
 
 export default function FileList() {
-  const [selectedFiles, setSelectedFiles] = useState<number[]>([])
-
-  const toggleFileSelection = (fileId: number) => {
-    setSelectedFiles(prev => 
-      prev.includes(fileId) 
+  // Using the custom hook to fetch files
+  const { files } = useFetchFiles();
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([])
+  // Function to toggle the selection of files
+  const toggleFileSelection = (fileId: string) => {
+    setSelectedFiles(prev =>
+      prev.includes(fileId)
         ? prev.filter(id => id !== fileId)
         : [...prev, fileId]
-    )
-  }
+    );
+  };
 
   return (
 
@@ -48,17 +42,6 @@ export default function FileList() {
           <h1 className="text-3xl font-bold mb-6">Your Files</h1>
 
           <div className="flex space-x-4 mb-4">
-            <Select>
-              <SelectTrigger className="w-[180px]" aria-label="Select Group">
-                <SelectValue placeholder="Select Group" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="group1">Group 1</SelectItem>
-                <SelectItem value="group2">Group 2</SelectItem>
-                <SelectItem value="group3">Group 3</SelectItem>
-              </SelectContent>
-            </Select>
-
             <Select>
               <SelectTrigger className="w-[180px]" aria-label="Select Folder">
                 <SelectValue placeholder="Select Folder" />
@@ -90,9 +73,10 @@ export default function FileList() {
                   <span className="sr-only">Select</span>
                 </TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>State</TableHead>
-                <TableHead>Folder</TableHead>
+                <TableHead>ContentType</TableHead>
+                <TableHead>Size</TableHead>
                 <TableHead>Submitted On</TableHead>
+                <TableHead>Folder</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -102,13 +86,14 @@ export default function FileList() {
                     <Checkbox
                       checked={selectedFiles.includes(file.id)}
                       onCheckedChange={() => toggleFileSelection(file.id)}
-                      aria-label={`Select file ${file.name}`}
+                      aria-label={`Select file ${file.fileName}`}
                     />
                   </TableCell>
-                  <TableCell>{file.name}</TableCell>
-                  <TableCell>{file.state}</TableCell>
-                  <TableCell>{file.folder}</TableCell>
+                  <TableCell>{file.fileName}</TableCell>
+                  <TableCell>{file.contentType}</TableCell>
+                  <TableCell>{file.size}</TableCell>
                   <TableCell>{file.submittedOn}</TableCell>
+                  <TableCell>{file.folder}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -117,4 +102,3 @@ export default function FileList() {
       </div>
   )
 }
-

@@ -47,5 +47,18 @@ public static class FileEndpoints
                 return Results.Problem("An error occurred while processing the upload.");
             }
         }).DisableAntiforgery();
+
+        app.MapGet("/files", async ([FromServices] ICosmosService cosmosService) =>
+        {
+            try
+            {
+                var files = await cosmosService.GetFileUploadsAsync();
+                return Results.Ok(files);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"An error occurred while retrieving files: {ex.Message}");
+            }
+        });
     }
 }

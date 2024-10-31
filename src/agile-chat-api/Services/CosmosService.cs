@@ -22,6 +22,12 @@ namespace Services
         /// <param name="blobUrl">The BLOB URL.</param>
         /// <returns></returns>
         Task SaveFileMetadataToCosmosDbAsync(IFormFile file, object blobUrl);
+
+        /// <summary>
+        /// Gets the file uploads asynchronous.
+        /// </summary>
+        /// <returns></returns>
+        Task<IEnumerable<FileMetadata>> GetFileUploadsAsync();
     }
 }
 
@@ -94,6 +100,7 @@ namespace Services
         {
             try
             {
+                var dateTimeString = DateTimeOffset.Now.ToString("dd-MM-yyyy HH:mm:ss");
                 var fileMetadata = new FileMetadata
                 {
                     id = Guid.NewGuid().ToString(), // Unique identity ID
@@ -101,9 +108,9 @@ namespace Services
                     FileName = Path.GetFileName(file.FileName),
                     BlobUrl = blobUrl,
                     ContentType = file.ContentType,
-                    Size = file.Length
+                    Size = file.Length,
+                    SubmittedOn = dateTimeString
                 };
-
                 await _cosmosContainer.CreateItemAsync(fileMetadata, new PartitionKey(fileMetadata.id));
             }
             catch (Exception ex)
@@ -111,6 +118,26 @@ namespace Services
                 _ = ex.Message;
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Gets the file uploads asynchronous.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IEnumerable<FileMetadata>> GetFileUploadsAsync()
+        {
+            var query = new QueryDefinition("SELECT * FROM c");
+            var results = new List<FileMetadata>();
+
+            using (FeedIterator<FileMetadata> feedIterator = _cosmosContainer.GetItemQueryIterator<FileMetadata>(query))
+            {
+                while (feedIterator.HasMoreResults)
+                {
+                    FeedResponse<FileMetadata> response = await feedIterator.ReadNextAsync();
+                    results.AddRange(response);
+                }
+            }
+            return results;
         }
     }
 }
