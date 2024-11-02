@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
-import { Label } from "@/components/ui/label"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { useForm } from "react-hook-form"
@@ -24,15 +23,6 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ChevronsUpDown } from "lucide-react"
 import SidebarMenu from '@/components/Sidebar'
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice'
@@ -212,22 +202,7 @@ export default function AssistantForm() {
     }
   };
 
-
-
-  // const [selectedFolders, setSelectedFolders] = useState<string[]>([])
-  const [temperature, setTemperature] = useState(form.control.getFieldState('temperature').value);
-
-
-  // const toggleFolder = (folderId: string) => {
-  //   setSelectedFolders((current) =>
-  //     current.includes(folderId)
-  //       ? current.filter((id) => id !== folderId)
-  //       : [...current, folderId]
-  //   )
-  // }
-
-
-
+  const [temperature, setTemperature] = useState(form.getValues('temperature'));
 
   return (
     <div className="flex h-screen bg-background text-foreground">
@@ -398,10 +373,10 @@ export default function AssistantForm() {
                               min={0}
                               max={2}
                               step={0.1}
-                              onChange={(e) => field.onChange(Number(e.target.value))}
+                              onChange={(e) => field.onChange(Number((e.target as HTMLInputElement).value))}
                               onValueChange={(value) => {
                                 field.onChange(Number(value));
-                                setTemperature(value);
+                                setTemperature(value[0]);
                               }}
                             />
                           </FormControl>

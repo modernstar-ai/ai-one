@@ -30,7 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Database, Workflow, Globe, Pencil, Trash2, Loader2, Info, FileSearch, FileSearch2, MessageSquare } from 'lucide-react';
+import { Pencil, Trash2, Loader2, Info, FileSearch, MessageSquare } from 'lucide-react';
 import { toast } from "@/components/ui/use-toast";
 import {
   Tooltip,
@@ -72,7 +72,7 @@ const AssistantsComponent: React.FC = () => {
     getAssistants();
   }, []);
 
-  const handleEditAssistant = (id: string,type: string) => {
+  const handleEditAssistant = (id: string) => {
 
     navigate(`/assistant?id=${id}`);
   };
@@ -182,7 +182,7 @@ const AssistantsComponent: React.FC = () => {
                                 variant="outline"
                                 size="sm"
                                 className="h-8 w-8 p-0"
-                                onClick={() => handleEditAssistant(assistant.id,assistant.type)}
+                                onClick={() => handleEditAssistant(assistant.id)}
                               >
                                 <Pencil className="h-4 w-4" />
                                 <span className="sr-only">Edit {assistant.name}</span>

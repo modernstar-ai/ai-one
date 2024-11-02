@@ -1,6 +1,5 @@
 import axios from "axios";
 import { Assistant } from "../types/Assistant";
-import { Description } from "@radix-ui/react-dialog";
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
