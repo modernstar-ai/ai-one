@@ -1,3 +1,4 @@
+using agile_chat_api.Utils;
 using Azure.AI.OpenAI;
 using Azure.Identity;
 using DotNetEnv;
@@ -22,7 +23,11 @@ builder.Services.AddSingleton(s => new CosmosClient(cosmosDbUri, cosmosDbKey));
 
 // Add services to the container
 builder.Services.AddSingleton<IToolService, ToolService>();
+builder.Services.AddSingleton<IAssistantService, AssistantService>();
 builder.Services.AddSingleton<IPersonaService, PersonaService>();
+
+// Register ConsoleLogger
+builder.Services.AddSingleton<ILogger>(s => new ConsoleLogger("ConsoleLogger", LogLevel.Debug));
 
 // Define the CORS policy with allowed origins
 // Load allowed origins from environment variables or use default values
@@ -65,6 +70,7 @@ app.UseHttpsRedirection();
 
 // Register API endpoints
 app.MapToolEndpoints();
+app.MapAssistantEndpoints();
 app.MapChatCompletionsEndpoint();
 app.MapPersonaEndpoints();
 app.MapFileEndpoints();

@@ -23,7 +23,7 @@ public class ToolService : IToolService
         string cosmosDbKey = Env.GetString("AZURE_COSMOSDB_KEY") ?? throw new InvalidOperationException("Cosmos DB Key is missing.");
 
         // Read database and container names from environment variables
-        string databaseName = Env.GetString("AZURE_COSMOSDB_DATABASE_NAME") ?? throw new InvalidOperationException("Cosmos DB Database Name is missing.");
+        string databaseName = Env.GetString("AZURE_COSMOSDB_DB_NAME") ?? throw new InvalidOperationException("Cosmos DB Database Name is missing.");
         string containerName = Env.GetString("AZURE_COSMOSDB_TOOLS_CONTAINER_NAME") ?? throw new InvalidOperationException("Cosmos DB Tools Container Name is missing.");
 
 
@@ -36,10 +36,7 @@ public class ToolService : IToolService
       
 
     }
-
-     
-
-
+    
     public IEnumerable<Tool> GetAll()
     {
         var query = _container.GetItemQueryIterator<Tool>();

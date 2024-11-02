@@ -130,7 +130,7 @@ const RagChatPage = () => {
         //addSearchMessageToState({ content: "Error: Unable to fetch response from the server.", role: "assistant" });
         setMessages((prevMessages) => [
           ...prevMessages,
-          createMessage({ role: "assistant", content: "Error: Unable to fetch response from the server."})
+          createMessage({ role: "assistant", content: "Error: Unable to fetch response from the server." })
         ]);
 
       }
@@ -181,7 +181,7 @@ const RagChatPage = () => {
                   }}
                 >
                   {message.content}
-                  <div><small>{JSON.stringify(message)}</small></div>
+                  {/* <div><small>{JSON.stringify(message)}</small></div> */}
                 </div>
               )}
 

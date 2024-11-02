@@ -28,8 +28,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { createTool, fetchToolById, updateTool } from '@/services/toolservice'
 import type { Tool } from '@/types/Tool'
 
+//todo: replace with server side implementation
 const generateGuid = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -57,7 +58,7 @@ const ConnectToDB = () => {
     lastupdateddate: ''  // Changed to lowercase
   })
   const { toast } = useToast()
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -66,7 +67,7 @@ const ConnectToDB = () => {
       status: "Active" as const,
       jsonTemplate: "",
       databaseDSN: "",
-      databaseQuery: "" 
+      databaseQuery: ""
     },
   })
 
@@ -106,7 +107,7 @@ const ConnectToDB = () => {
     setIsSubmitting(true);
     try {
       const now = new Date().toISOString();
-      
+      toast({ title: "saving", description: "Saving..." });
       const toolData: Tool = {
         id: toolId || generateGuid(),
         name: values.name,
@@ -121,13 +122,13 @@ const ConnectToDB = () => {
         createddate: toolId ? toolDates.createddate : now,
         lastupdateddate: now
       };
-  
+
       if (toolId) {
         const result = await updateTool(toolData);
         if (result) {
           toast({
             title: "Success",
-            description: "Tool updated successfully",
+            description: "Tool updated successfully",            
           });
         } else {
           throw new Error("Failed to update tool");
@@ -160,10 +161,10 @@ const ConnectToDB = () => {
       <SidebarMenu />
 
       <div className="flex-1 flex flex-col">
-        <SimpleHeading 
-          Title="Tools" 
-          Subtitle={toolId ? "Edit Database Tool" : "Create New Database Tool"} 
-          DocumentCount={0} 
+        <SimpleHeading
+          Title="Tools"
+          Subtitle={toolId ? "Edit Database Tool" : "Create New Database Tool"}
+          DocumentCount={0}
         />
 
         <div className="flex-1 p-4 overflow-auto">
@@ -276,10 +277,10 @@ const ConnectToDB = () => {
                       <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? "Submitting..." : (toolId ? "Update" : "Create")}
                       </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => form.reset()} 
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => form.reset()}
                         disabled={isSubmitting}
                       >
                         Reset

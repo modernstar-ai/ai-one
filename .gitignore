@@ -35,5 +35,9 @@ next-env.d.ts
 infra/aad_setup.sh
 .vscode
 
+# Ignore all files in .vscode except settings.json
+.vscode/*
+!.vscode/settings.json
+
 # Visual Studio 2015/2017 cache/options directory
 .vs/

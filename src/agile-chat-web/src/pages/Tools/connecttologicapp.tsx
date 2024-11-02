@@ -1,4 +1,4 @@
- 
+
 
 
 import { useEffect, useState } from "react"
@@ -33,7 +33,7 @@ import type { Tool } from '@/types/Tool'
 
 
 const generateGuid = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -61,7 +61,7 @@ const ConnectToLogicApp = () => {
     lastupdateddate: ''  // Changed to lowercase
   })
   const { toast } = useToast()
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -70,7 +70,7 @@ const ConnectToLogicApp = () => {
       status: "Active" as const,
       jsonTemplate: "",
       method: "GET" as const,
-      api: "" 
+      api: ""
     },
   })
 
@@ -110,7 +110,7 @@ const ConnectToLogicApp = () => {
     setIsSubmitting(true);
     try {
       const now = new Date().toISOString();
-      
+
       const toolData: Tool = {
         id: toolId || generateGuid(),
         name: values.name,
@@ -125,7 +125,7 @@ const ConnectToLogicApp = () => {
         createddate: toolId ? toolDates.createddate : now,
         lastupdateddate: now
       };
-  
+
       if (toolId) {
         const result = await updateTool(toolData);
         if (result) {
@@ -164,16 +164,16 @@ const ConnectToLogicApp = () => {
       <SidebarMenu />
 
       <div className="flex-1 flex flex-col">
-        <SimpleHeading 
-          Title="Tools" 
-          Subtitle={toolId ? "Edit API Tool" : "Create New API  Tool"} 
-          DocumentCount={0} 
+        <SimpleHeading
+          Title="Tools"
+          Subtitle={toolId ? "Edit API Tool" : "Create New API  Tool"}
+          DocumentCount={0}
         />
 
         <div className="flex-1 p-4 overflow-auto">
           <main className="flex-1 space-y-6">
             <Card>
-             
+
               <CardContent className="space-y-6">
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -252,7 +252,7 @@ const ConnectToLogicApp = () => {
                         </FormItem>
                       )}
                     />
-                       <FormField
+                    <FormField
                       control={form.control}
                       name="method"
                       render={({ field }) => (
@@ -290,10 +290,10 @@ const ConnectToLogicApp = () => {
                       <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? "Submitting..." : (toolId ? "Update" : "Create")}
                       </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => form.reset()} 
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => form.reset()}
                         disabled={isSubmitting}
                       >
                         Reset
