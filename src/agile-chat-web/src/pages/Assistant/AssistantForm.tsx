@@ -181,6 +181,7 @@ export default function AssistantForm() {
             title: "Success",
             description: "Assistant updated successfully",
           });
+          navigate("/assistants");
         } else {
           throw new Error("Failed to update assistant");
         }
@@ -194,6 +195,7 @@ export default function AssistantForm() {
             description: "Tool created successfully",
           });
           form.reset();
+          navigate("/assistants");
         } else {
           throw new Error("Failed to create tool");
         }
@@ -412,19 +414,9 @@ export default function AssistantForm() {
                         type="submit"
                         disabled={false}>
                         {isSubmitting ? "Submitting..." : (fileId ? "Update" : "Create")}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => form.reset()}
-                        disabled={false}
-                      >
-                        Reset
-                      </Button>
+                      </Button>                      
                     </div>
-
                   </form>
-
 
                 </Form>
               </CardContent>

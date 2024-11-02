@@ -30,7 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Database, Workflow, Globe, Pencil, Trash2, Loader2, Info } from 'lucide-react';
+import { Database, Workflow, Globe, Pencil, Trash2, Loader2, Info, FileSearch, FileSearch2, MessageSquare } from 'lucide-react';
 import { toast } from "@/components/ui/use-toast";
 import {
   Tooltip,
@@ -129,9 +129,9 @@ const AssistantsComponent: React.FC = () => {
   const getTypeIcon = (type: Assistant['type']) => {
     switch (type) {
       case AssistantType.Chat:
-        return <Database className="h-4 w-4" aria-hidden="true" />;
+        return <FileSearch className="h-4 w-4" aria-hidden="true" />;
       case AssistantType.Search:
-        return <Workflow className="h-4 w-4" aria-hidden="true" />;
+        return <MessageSquare className="h-4 w-4" aria-hidden="true" />;
       // case 'ExternalAPI':
       //   return <Globe className="h-4 w-4" aria-hidden="true" />;
       default:
@@ -244,7 +244,7 @@ const AssistantsComponent: React.FC = () => {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getTypeIcon(assistant.type)}
-                        <span>{assistant.type}</span>
+                        <span>{AssistantType[assistant.type]}</span>
                       </div>
                     </TableCell>
                     {/* <TableCell className="font-mono text-xs">
