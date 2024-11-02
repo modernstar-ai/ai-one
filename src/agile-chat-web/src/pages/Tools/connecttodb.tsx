@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { createTool, fetchToolById, updateTool } from '@/services/toolservice';
 import type { Tool } from '@/types/Tool';
 
+//todo: replace with server side implementation
 const generateGuid = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0;
@@ -93,7 +94,6 @@ const ConnectToDB = () => {
     setIsSubmitting(true);
     try {
       const now = new Date().toISOString();
-
       const toolData: Tool = {
         id: toolId || generateGuid(),
         name: values.name,

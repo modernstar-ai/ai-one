@@ -6,4 +6,11 @@
         Inactive,
         Deprecated
     }
+    public enum ToolType
+    {
+        Database,
+        LogicApp,
+        ExternalAPI
+    }
+
 }

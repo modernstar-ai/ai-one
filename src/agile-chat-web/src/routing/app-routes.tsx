@@ -2,12 +2,11 @@ import { Routes, Route } from 'react-router-dom';
 import HomePage from '../pages/Home';
 import ChatPage from '../pages/Chat';
 import RagChatPage from '../pages/RagChat/index-using-post';
-import ProfileForm from '../pages/Personas';
-import ToolsPage from '../pages/tools';
+import AssistantsPage from '../pages/Assistant';
+import AssistantForm from '../pages/Assistant/AssistantForm';
 import FileUploadPage from '../pages/FileUpload';
-import AiAssistantPage from '../pages/AiAssistant';
 import FileListPage from '../pages/FileUpload/filelist';
-import AssistantListPage from '../pages/AiAssistant/assistantlist';
+import ToolsPage from '../pages/tools/index';
 import ConnectToDB from '../pages/tools/connecttodb';
 import ConnectToLogicApp from '../pages/tools/connecttologicapp';
 import ConnectToApi from '../pages/tools/connecttoapi';
@@ -50,37 +49,30 @@ const AppRoutes = () => (
       }
     />
     <Route
-      path="/aiassistant"
+      path="/assistants"
       element={
         <ProtectedRoute>
-          <AiAssistantPage />
+          <AssistantsPage />
         </ProtectedRoute>
       }
     />
     <Route
-      path="/filelist"
+      path="/assistant"
+      element={
+        <ProtectedRoute>
+          <AssistantForm />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/files"
       element={
         <ProtectedRoute>
           <FileListPage />
         </ProtectedRoute>
       }
     />
-    <Route
-      path="/assistantlist"
-      element={
-        <ProtectedRoute>
-          <AssistantListPage />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/personas"
-      element={
-        <ProtectedRoute>
-          <ProfileForm />
-        </ProtectedRoute>
-      }
-    />
+
     <Route
       path="/tools"
       element={

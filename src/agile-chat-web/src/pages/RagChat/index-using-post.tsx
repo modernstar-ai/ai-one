@@ -175,9 +175,7 @@ const RagChatPage = () => {
                   }}
                 >
                   {message.content}
-                  <div>
-                    <small>{JSON.stringify(message)}</small>
-                  </div>
+                  {/* <div><small>{JSON.stringify(message)}</small></div> */}
                 </div>
               )}
             </div>

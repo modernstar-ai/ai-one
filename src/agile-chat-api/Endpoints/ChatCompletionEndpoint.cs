@@ -24,9 +24,9 @@ using static System.Net.WebRequestMethods;
                 }
 
                 // Set up the necessary headers for SSE
-                //context.Response.Headers.Add("Content-Type", "text/event-stream");
-                //context.Response.Headers.Add("Cache-Control", "no-cache");
-                //context.Response.Headers.Add("Connection", "keep-alive");
+                context.Response.Headers.Add("Content-Type", "text/event-stream");
+                context.Response.Headers.Add("Cache-Control", "no-cache");
+                context.Response.Headers.Add("Connection", "keep-alive");
 
                 // Initialize the AzureOpenAIClient with DefaultAzureCredential
                 //AzureOpenAIClient azureClient = new AzureOpenAIClient(
