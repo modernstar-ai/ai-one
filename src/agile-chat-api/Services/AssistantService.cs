@@ -119,7 +119,7 @@ public class AssistantService : IAssistantService
             try
             {
                 await _container.ReplaceItemAsync(existingAssistant, assistant.Id.ToString(),
-                    new PartitionKey(assistant.Type.ToString()));
+                    new PartitionKey(existingAssistant.CreatedBy));
             }
             catch (CosmosException ex)
             {
@@ -140,7 +140,7 @@ public class AssistantService : IAssistantService
         {
             try
             {
-                await _container.DeleteItemAsync<Assistant>(id.ToString(), new PartitionKey(existingAssistant.Type.ToString()));
+                await _container.DeleteItemAsync<Assistant>(id.ToString(), new PartitionKey(existingAssistant.CreatedBy));
             }
             catch (CosmosException ex)
             {

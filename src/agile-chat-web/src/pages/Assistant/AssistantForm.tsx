@@ -100,13 +100,14 @@ export default function AssistantForm() {
         toast({ title: "load", description: "Loading..." });
         const file = await fetchAssistantById(fileId) as Assistant
         console.log("Assistant loadTool", file);
-        console.log("AssistantType.Chat.toString()", AssistantType.Chat.toString());
-        
+        console.log("Load file.type", file.type);
+        console.log("Load file.status", file.status);
+
         if (file) {
           form.reset({
             name: file.name,
             description: file.description,
-            type:   file.type as AssistantType,
+            type: file.type as AssistantType,
             greeting: file.greeting || "",
             systemMessage: file.systemMessage || "",
             group: file.group || "",
@@ -115,11 +116,24 @@ export default function AssistantForm() {
             documentLimit: file.documentLimit,
             status: file.status as AssistantStatus,
           })
+          const statusValue1 = form.getValues('status');
+          console.log('Current status value 1:', statusValue1);
+          form.setValue('status', file.status);
+          const statusValue2 = form.getValues('status');
+          console.log('Current status value 2:', statusValue2);
           // Store dates separately
           setFileDates({
             createdAt: file.createdAt,
             updatedAt: file.updatedAt
           })
+
+          // Read specific form values
+          const statusValue = form.getValues('status');
+          const typeValue = form.getValues('type');
+
+          console.log('Current status value:', statusValue);
+          console.log('Current type value:', typeValue);
+
         } else {
           toast({
             variant: "destructive",
@@ -292,8 +306,8 @@ export default function AssistantForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value={AssistantType.Chat.toString()}>Chat</SelectItem>
-                              <SelectItem value={AssistantType.Search.toString()}>Search</SelectItem>
+                              <SelectItem value="0">Chat</SelectItem>
+                              <SelectItem value="1">Search</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -376,16 +390,16 @@ export default function AssistantForm() {
                           <FormLabel>Status</FormLabel>
                           <Select
                             onValueChange={(value) => field.onChange(Number(value))}
-                            defaultValue={field.value.toString()}>
+                            defaultValue={field.value?.toString()}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select status" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value={AssistantStatus.Draft.toString()}>Draft</SelectItem>
-                              <SelectItem value={AssistantStatus.Published.toString()}>Published</SelectItem>
-                              <SelectItem value={AssistantStatus.Archived.toString()}>Archived</SelectItem>
+                              <SelectItem value="0">Draft</SelectItem>
+                              <SelectItem value="1">Published</SelectItem>
+                              <SelectItem value="2">Archived</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

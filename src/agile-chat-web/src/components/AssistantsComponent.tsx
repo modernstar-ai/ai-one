@@ -114,15 +114,15 @@ const AssistantsComponent: React.FC = () => {
     switch (statusString) {
       case 'draft':
       case '0':
-        return <Badge className="bg-green-100 text-green-800">Draft</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800">Draft</Badge>;
       case 'published':
       case '1':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Published</Badge>;
+        return <Badge className="bg-green-100 text-green-800">Published</Badge>;
       case 'archived':
       case '2':
-        return <Badge variant="destructive" className="bg-red-100 text-red-800">Archived</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800">Archived</Badge>;
       default:
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800">Unknown</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>;
     }
   };
 
