@@ -6,10 +6,10 @@
 //   return `${rootApiUrl}/${endpoint}`;
 // }
 
-// export async function fetchTools(): Promise<Tool[] | null> {  
- 
+// export async function fetchTools(): Promise<Tool[] | null> {
+
 //   const apiUrl = getApiUrl('tools');
-   
+
 //   try {
 //     const response = await axios.get<Tool[]>(apiUrl); // axios returns a response typed as Tool[]
 //     return response.data; // The data is directly available in response.data
@@ -19,9 +19,7 @@
 //   }
 // }
 
-
-
-import axios from 'axios';
+import axios from '@/error-handling/axiosSetup';
 import { Tool } from '../types/Tool';
 
 function getApiUrl(endpoint: string): string {
@@ -81,26 +79,23 @@ export async function updateTool(updatedTool: Tool): Promise<Tool | null> {
       createddate: updatedTool.createddate,
       method: updatedTool.method,
       api: updatedTool.api,
-      lastupdateddate: new Date().toISOString() // Always update this timestamp
+      lastupdateddate: new Date().toISOString(), // Always update this timestamp
     };
 
     const response = await axios.put<Tool>(apiUrl, toolData, {
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
 
-    if(response.status == 204)
-    {
+    if (response.status == 204) {
       return toolData;
-    }
-    else
-    {
+    } else {
       return response.data;
     }
   } catch (error) {
     console.error(`Error updating tool with ID ${updatedTool.id}:`, error);
-     
+
     return null;
   }
 }

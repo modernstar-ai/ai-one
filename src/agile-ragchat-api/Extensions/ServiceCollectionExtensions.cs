@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Identity.Web;
 
 namespace MinimalApi.Extensions;
 
@@ -45,7 +47,7 @@ internal static class ServiceCollectionExtensions
             var config = sp.GetRequiredService<IConfiguration>();
             var azureSearchServiceEndpoint = GetEnvVar("AZURE_SEARCH_ENDPOINT") ?? throw new ArgumentNullException() ;
             var azureSearchIndex = GetEnvVar("AZURE_SEARCH_INDEX_NAME_RAG") ?? throw new ArgumentNullException();
-            
+
 
             //var searchClient = new SearchClient(
             //                   new Uri(azureSearchServiceEndpoint), azureSearchIndex, s_azureCredential);
@@ -60,7 +62,7 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<DocumentAnalysisClient>(sp =>
         {
 
-            
+
             var azureOpenAiServiceEndpoint = GetEnvVar("AZURE_OPENAI_ENDPOINT") ?? throw new ArgumentNullException();
 
             //var documentAnalysisClient = new DocumentAnalysisClient(
@@ -102,10 +104,26 @@ internal static class ServiceCollectionExtensions
             return new ReadRetrieveReadChatService(searchClient, openAIClient, config);
         });
         services.AddSingleton<SimpleChatService>(sp =>
-        {           
+        {
             var openAIClient = sp.GetRequiredService<OpenAIClient>();
             return new SimpleChatService(openAIClient);
         });
+
+        return services;
+    }
+
+    internal static IServiceCollection AddAzureAdAuth(this IServiceCollection services)
+    {
+        var azureAdConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                {"AzureAd:Instance", "https://login.microsoftonline.com/"},
+                {"AzureAd:ClientId", Environment.GetEnvironmentVariable("AZURE_CLIENT_ID")},
+                {"AzureAd:TenantId", Environment.GetEnvironmentVariable("AZURE_TENANT_ID")}
+            })
+            .Build();
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddMicrosoftIdentityWebApi(azureAdConfig);
 
         return services;
     }
