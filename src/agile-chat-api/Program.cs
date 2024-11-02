@@ -1,4 +1,5 @@
 using agile_chat_api.Utils;
+using agile_chat_api.Extensions;
 using Azure.AI.OpenAI;
 using Azure.Identity;
 using DotNetEnv;
@@ -18,6 +19,7 @@ if (string.IsNullOrEmpty(cosmosDbUri) || string.IsNullOrEmpty(cosmosDbKey))
     throw new InvalidOperationException("Cosmos DB configuration is missing. Ensure that AZURE_COSMOSDB_URI and AZURE_COSMOSDB_KEY are set in the environment variables.");
 }
 
+builder.Services.AddAzureAdAuth();
 // Register CosmosClient as a singleton
 builder.Services.AddSingleton(s => new CosmosClient(cosmosDbUri, cosmosDbKey));
 
@@ -65,6 +67,9 @@ app.Use(async (context, next) =>
     context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
     await next();
 });
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseHttpsRedirection();
 

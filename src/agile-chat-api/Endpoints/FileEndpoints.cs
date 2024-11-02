@@ -25,6 +25,6 @@ public static class FileEndpoints
             }
 
             return Results.Ok("Files uploaded successfully.");
-        }).DisableAntiforgery();
+        }).DisableAntiforgery().RequireAuthorization();
     }
 }
