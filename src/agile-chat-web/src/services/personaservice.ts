@@ -1,5 +1,5 @@
 // src/services/personaservice.ts
-import axios from 'axios';
+import axios from '@/error-handling/axiosSetup';
 import { Persona } from '@/types/Persona';
 
 function getApiUrl(endpoint: string): string {

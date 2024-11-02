@@ -6,7 +6,7 @@ internal static class WebApplicationExtensions
 {
     internal static WebApplication MapApi(this WebApplication app)
     {
-        var api = app.MapGroup("api");
+        var api = app.MapGroup("api").RequireAuthorization();
 
         // Blazor 📎 Clippy streaming endpoint
         api.MapPost("openai/chat", OnPostChatPromptAsync);

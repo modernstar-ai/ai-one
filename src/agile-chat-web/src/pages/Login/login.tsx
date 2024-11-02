@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { msalScopes } from '@/msal-configs';
 import { InteractionStatus } from '@azure/msal-browser';
 import { useIsAuthenticated, useMsal } from '@azure/msal-react';
 import { Loader2Icon } from 'lucide-react';
@@ -36,7 +37,7 @@ const LoginPage = () => {
               Login is currently in progress <Loader2Icon className="ml-auto animate-spin" />
             </div>
           ) : (
-            <Button onClick={() => instance.loginPopup()}>Login</Button>
+            <Button onClick={() => instance.loginPopup({ scopes: msalScopes })}>Login</Button>
           )}
         </CardContent>
       </Card>

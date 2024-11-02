@@ -74,7 +74,7 @@ using static System.Net.WebRequestMethods;
                         {
                             //Console.WriteLine(content);
                             // Send each chunk of the response to the client as an SSE event
-                            await context.Response.WriteAsync($"data: {content}\n\n");
+                            await context.Response.WriteAsync(content);
                             await context.Response.Body.FlushAsync();
                         }
                     }
@@ -83,7 +83,7 @@ using static System.Net.WebRequestMethods;
                 //not required when streaming. it will cause an error
                 //return Results.Ok();
                 return;
-            });
+            }).RequireAuthorization();
         }
     }
 
