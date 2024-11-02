@@ -116,6 +116,7 @@ export default function AssistantForm() {
             documentLimit: file.documentLimit,
             status: file.status as AssistantStatus,
           })
+          setTemperature(file.temperature);
           const statusValue1 = form.getValues('status');
           console.log('Current status value 1:', statusValue1);
           form.setValue('status', file.status);
@@ -212,14 +213,9 @@ export default function AssistantForm() {
   };
 
 
-  // const [name, setName] = useState('')
-  // const [greeting, setGreeting] = useState('')
-  // const [systemMessage, setSystemMessage] = useState('')
-  // const [group, setGroup] = useState('')
-  // const [selectedFolders, setSelectedFolders] = useState<string[]>([])
-  // const [temperature, setTemperature] = useState(0.7)
-  // const formatValue = (val: number) => val.toFixed(1)
 
+  // const [selectedFolders, setSelectedFolders] = useState<string[]>([])
+  const [temperature, setTemperature] = useState(form.control.getFieldState('temperature').value);
 
 
   // const toggleFolder = (folderId: string) => {
@@ -229,23 +225,8 @@ export default function AssistantForm() {
   //       : [...current, folderId]
   //   )
   // }
-  const [documentLimit, setDocumentLimit] = useState<number | "">(5)
-  const [isDocumentLimitValid, setIsDocumentLimitValid] = useState(true)
 
-  const handleDocumentLimitChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value
-    const numValue = parseInt(value, 10)
 
-    if (value === "") {
-      setDocumentLimit("")
-      setIsDocumentLimitValid(true)
-    } else if (!isNaN(numValue) && numValue >= 0 && numValue <= 1000) {
-      setDocumentLimit(numValue)
-      setIsDocumentLimitValid(true)
-    } else {
-      setIsDocumentLimitValid(false)
-    }
-  }
 
 
   return (
@@ -382,16 +363,61 @@ export default function AssistantForm() {
                     />
 
 
+                    <FormField
+                      control={form.control}
+                      name="documentLimit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Document Limit</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              id="documentLimit"
+                              placeholder="Enter a number between 0 and 1000"
+                              min={0}
+                              max={1000}
+                              onChange={(e) => field.onChange(Number(e.target.value))} // Convert to number
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-
+                    <FormField
+                      control={form.control}
+                      name="temperature"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Temperature</FormLabel>
+                          <FormControl>
+                            <Slider
+                              {...field}
+                              value={[field.value]}
+                              min={0}
+                              max={2}
+                              step={0.1}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                              onValueChange={(value) => {
+                                field.onChange(Number(value));
+                                setTemperature(value);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                          <div>Selected Temperature: {temperature}</div>
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={form.control}
                       name="status"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Status</FormLabel>
-                          <Select
-                            onValueChange={(value) => field.onChange(Number(value))}
+                          <Select                            
+                            onValueChange={(value) => field.onChange(Number(value) as AssistantStatus)}
                             defaultValue={field.value?.toString()}>
                             <FormControl>
                               <SelectTrigger>
@@ -414,7 +440,7 @@ export default function AssistantForm() {
                         type="submit"
                         disabled={false}>
                         {isSubmitting ? "Submitting..." : (fileId ? "Update" : "Create")}
-                      </Button>                      
+                      </Button>
                     </div>
                   </form>
 
