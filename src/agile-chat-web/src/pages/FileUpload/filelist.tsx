@@ -10,12 +10,11 @@ import {
 } from "@/components/ui/table"
 import { RefreshCw, Trash2 } from "lucide-react"
 import { useState } from "react"
-import  SidebarMenu from '@/components/Sidebar'
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-  { id: 2, name: "Foundations_of_Nursing_Practice_Lec1.ppt", state: "Completed", folder: "upload/temp2", submittedOn: "2024-08-10 00:15:30" },
+import { Link } from 'react-router-dom';
+import { useFetchFiles } from "@/hooks/use-files"
+import { deleteFiles } from '@/services/cosmosservice'; 
+
+export default function FileList() {
   // Using the custom hook to fetch files
   const { files, refetch, loading} = useFetchFiles();
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])
@@ -93,15 +92,16 @@ import  SidebarMenu from '@/components/Sidebar'
       setIsProcessing(false);
     }
   };
-  const toggleFileSelection = (fileId: number) => {
-    setSelectedFiles(prev => 
-      prev.includes(fileId) 
-        ? prev.filter(id => id !== fileId)
-        : [...prev, fileId]
-    )
+
+  return (
+
+      <div className="flex h-screen bg-background">
+        <div className="flex-1 p-8 overflow-y-auto">
+          <h1 className="text-3xl font-bold mb-6">Your Files</h1>
+
           <div className="flex justify-between items-center mb-4">
           <Link to="/fileupload" aria-label="Add New File" accessKey="n"><Button  tabIndex={-1} aria-label="Add New File Button">Add New</Button></Link>
-                <SelectItem value="folder3">Folder 3</SelectItem>
+          <div className="space-x-2">
               <Button 
                   variant="outline" 
                   size="icon" 
@@ -120,7 +120,7 @@ import  SidebarMenu from '@/components/Sidebar'
               </Button>
             </div>
           </div>
-                <RefreshCw className="h-4 w-4" />
+
           <Table>
             <TableHeader>
               <TableRow>
@@ -149,20 +149,6 @@ import  SidebarMenu from '@/components/Sidebar'
                   <TableCell>{formatBytesToKB(file.size)}</TableCell>
                   <TableCell>{file.submittedOn}</TableCell>
                   <TableCell>{file.folder}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-  )
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-  )
                 </TableRow>
               ))}
             </TableBody>
