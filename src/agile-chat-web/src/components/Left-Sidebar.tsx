@@ -1,9 +1,6 @@
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
-    SidebarGroup,
-    SidebarHeader,
     SidebarTrigger,
 } from "@/components/ui/sidebar"
 import {
@@ -14,8 +11,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Home, MessageCircleMore, FileBox, User, VenetianMask, LogOut, MessageSquareCode } from 'lucide-react'
 import { Link } from 'react-router-dom';
-
-
 
 export function LeftSidebar() {
     return (
@@ -78,7 +73,7 @@ export function LeftSidebar() {
                             </div>
                             <div className="text-sm font-semibold mb-2">Your AI Assistants</div>
                             <div className="space-y-2">
-                                <div>Foundations of Nursing...</div>
+                                <div>Foundations of...</div>
                                 <div>Health and Society</div>
                                 <div>Clinical Practice 2A</div>
                                 <div>Clinical Practice 3A</div>

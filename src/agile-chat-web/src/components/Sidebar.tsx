@@ -111,7 +111,7 @@ export default function Sidebar() {
           </div>
           <div className="text-sm font-semibold mb-2">Your AI Assistants</div>
           <div className="space-y-2">
-            <div>Foundations of Nursing...</div>
+            <div> of Nursing...</div>
             <div>Health and Society</div>
             <div>Clinical Practice 2A</div>
             <div>Clinical Practice 3A</div>

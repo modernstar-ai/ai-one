@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import LeftMenu from '@/components/Menu-Left';
+
 import SimpleHeading from '@/components/Heading-Simple';
 import { getRagApiUri } from '@/services/uri-helpers';
 
@@ -53,9 +53,7 @@ const RagChatPage = () => {
     <div className="flex h-screen bg-background text-foreground">
 
 
-      {/* Left Sidebar */}
-      <LeftMenu isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />
-
+      
       {/* Search History Panel */}
       {isHistoryOpen && (
         <div className="w-64 bg-secondary p-4 overflow-auto">
