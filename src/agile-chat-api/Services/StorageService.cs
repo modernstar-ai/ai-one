@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Config = agile_chat_api.Configurations.AppConfigs;
 using Constants = agile_chat_api.Configurations.Constants;
 
@@ -11,7 +12,7 @@ namespace Services
         /// </summary>
         /// <param name="file">The file.</param>
         /// <returns></returns>
-        Task<string> UploadFileToBlobAsync(IFormFile file);
+        Task<string> UploadFileToBlobAsync(IFormFile file, string folderName);
     }
 }
 
@@ -23,19 +24,34 @@ namespace Services
 
         public StorageService()
         {
-            BlobServiceClient blobServiceClient = new BlobServiceClient(Config.BlobStorageConnectionString);
+            BlobServiceClient blobServiceClient = new(Config.BlobStorageConnectionString);
             _blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.BlobContainerName);
             _blobContainerClient.CreateIfNotExists();
         }
 
-        public async Task<string> UploadFileToBlobAsync(IFormFile file)
+        public async Task<string> UploadFileToBlobAsync(IFormFile file, string folderName)
         {
             try
             {
                 string fileName = Path.GetFileName(file.FileName);
-                BlobClient blobClient = _blobContainerClient.GetBlobClient(fileName);
-                await blobClient.UploadAsync(file.OpenReadStream(), true);
-                return blobClient.Uri.ToString();
+                string blobPath = $"{folderName}/{fileName}";
+                BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
+
+                // Check if both folder and file exist
+                bool fileExists = await _blobClient.ExistsAsync();
+                bool folderExists = false;
+                await foreach (BlobItem _blobItem in _blobContainerClient.GetBlobsAsync(prefix: folderName))
+                {
+                    folderExists = true;
+                    break;
+                }
+                // If both folder and file exist, do nothing
+                if (folderExists && fileExists)
+                {
+                    return null;
+                }
+                await _blobClient.UploadAsync(file.OpenReadStream(), true);
+                return _blobClient.Uri.ToString();
             }
             catch (Exception ex)
             {

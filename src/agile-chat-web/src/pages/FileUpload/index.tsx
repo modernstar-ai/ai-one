@@ -9,6 +9,7 @@ import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, M
 import { useToast } from "@/components/ui/use-toast";
 import axios from 'axios';
 import  SidebarMenu from '@/components/Sidebar'
+import { useEffect, useState } from "react";
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -16,10 +17,14 @@ function getApiUrl(endpoint: string): string {
 }
 
 export default function Component() {
+    const { toast } = useToast(); // Initialize the Shadcn toast
+    const [files, setFiles] = useState<File[]>([]);
+    const [selectedFolder, setSelectedFolder] = useState<string | null>(null); // State for selected folder
+    const [progresses] = useState<Record<string, number>>({});
+    const maxFileCount = 5; // Maximum number of files allowed
+    const maxSize = 1024 * 1024 * 2; // 2MB
 
-  const { toast } = useToast(); // Initialize the Shadcn toast
-  
-  const uploadFiles = async () => {
+    const uploadFiles = async () => {
     if (files.length === 0) {
       toast({
         title: "Error",
@@ -29,11 +34,21 @@ export default function Component() {
       return;
     }
   
+    if (!selectedFolder) {
+      toast({
+        title: "Error",
+        description: "No folder selected.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const formData = new FormData();
+    formData.append("folder", selectedFolder); // Append selected folder value
     files.forEach((file) => {
       formData.append("files", file);
     });
-    
+
     try {
       const apiUrl = getApiUrl('upload');
       console.log(apiUrl);
@@ -76,12 +91,6 @@ export default function Component() {
     }
   };
 
-  const [files, setFiles] = React.useState<File[]>([]);
-  const [progresses] = React.useState<Record<string, number>>({});
-
-  const maxFileCount = 5; // Maximum number of files allowed
-  const maxSize = 1024 * 1024 * 2; // 2MB
-
   const onDrop = (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
     if ((files.length + acceptedFiles.length) > maxFileCount) {
       toast({
@@ -112,7 +121,7 @@ export default function Component() {
     setFiles(newFiles);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       files.forEach((file) => {
         if ("preview" in file && typeof file.preview === "string") {
@@ -155,14 +164,14 @@ export default function Component() {
         {/* Dropdowns */}
         <div className="flex justify-center w-full">
           <div className="mb-2 gap-4 w-1/2">
-            <Select>
+          <Select onValueChange={(value) => setSelectedFolder(value)}> {/* Update selected folder */}
               <SelectTrigger aria-label="Select Folder">
                 <SelectValue placeholder="Select Folder" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="folder1">Folder 1</SelectItem>
-                <SelectItem value="folder2">Folder 2</SelectItem>
-                <SelectItem value="folder3">Folder 3</SelectItem>
+                <SelectItem value="1234-2024-spr">1234_2024_SPR</SelectItem>
+                <SelectItem value="1234-2024-win">1234_2024_WIN</SelectItem>
+                <SelectItem value="4321-2024-spr">4321_2024_SPR</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -176,7 +185,10 @@ export default function Component() {
           maxSize={maxSize}
           maxFiles={maxFileCount}
         >
-         {({ getRootProps, getInputProps, isDragActive }: { getRootProps: () => React.HTMLProps<HTMLDivElement>; getInputProps: () => React.InputHTMLAttributes<HTMLInputElement>; isDragActive: boolean; }) => (
+         {({ getRootProps, getInputProps, isDragActive }: 
+                { getRootProps: () => React.HTMLProps<HTMLDivElement>; 
+                  getInputProps: () => React.InputHTMLAttributes<HTMLInputElement>; 
+                  isDragActive: boolean; }) => (
             <div
               {...getRootProps()}
               className={`group relative grid text-center h-52 w-1/2 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-2.5 text-center transition hover:bg-muted/25 ${
@@ -257,8 +269,7 @@ function FileCard({ file, progress, onRemove }: { file: File; progress?: number;
           variant="outline"
           size="icon"
           className="size-7"
-          onClick={onRemove}
-        >
+          onClick={onRemove}>
           <Cross2Icon className="size-4" aria-hidden="true" />
           <span className="sr-only">Remove file</span>
         </Button>

@@ -21,7 +21,7 @@ namespace Services
         /// <param name="file">The file.</param>
         /// <param name="blobUrl">The BLOB URL.</param>
         /// <returns></returns>
-        Task SaveFileMetadataToCosmosDbAsync(IFormFile file, object blobUrl);
+        Task SaveFileMetadataToCosmosDbAsync(IFormFile file, object blobUrl, string folderName);
 
         /// <summary>
         /// Gets the file uploads asynchronous.
@@ -96,7 +96,7 @@ namespace Services
         /// </summary>
         /// <param name="file">The file.</param>
         /// <param name="blobUrl">The BLOB URL.</param>
-        public async Task SaveFileMetadataToCosmosDbAsync(IFormFile file, object blobUrl)
+        public async Task SaveFileMetadataToCosmosDbAsync(IFormFile file, object blobUrl, string folderName)
         {
             try
             {
@@ -109,6 +109,7 @@ namespace Services
                     BlobUrl = blobUrl,
                     ContentType = file.ContentType,
                     Size = file.Length,
+                    Folder = folderName,
                     SubmittedOn = dateTimeString
                 };
                 await _cosmosContainer.CreateItemAsync(fileMetadata, new PartitionKey(fileMetadata.id));

@@ -1,13 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   Table,
   TableBody,
   TableCell,
@@ -34,25 +27,38 @@ export default function FileList() {
     );
   };
 
+   // To remove extensions from File names
+   function removeFileExtension(fileName: string): string {
+    return fileName.replace(/\.[^/.]+$/, "")
+  }
+
+  // Size conversion in KB
+  function formatBytesToKB(bytes: number): string {
+    if (bytes === 0) return "0 KB"
+    const kilobytes = bytes / 1024
+    return `${kilobytes.toFixed(2)} KB` // Round to 2 decimal places for better readability
+  }
+
+  // Simplified Content Type
+  function simplifyContentType(contentType: string): string {
+    const mimeTypeMappings: Record<string, string> = {
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "application/document",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "application/xlsx",
+      "application/pdf": "application/pdf",
+      "text/plain": "text/txt",
+      "application/msword": "application/msword",
+      "application/vnd.ms-excel": "application/xls",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation": "application/ppt",
+    }
+    return mimeTypeMappings[contentType] || contentType
+  }
+
   return (
 
       <div className="flex h-screen bg-background">
         <SidebarMenu />
         <div className="flex-1 p-8 overflow-y-auto">
           <h1 className="text-3xl font-bold mb-6">Your Files</h1>
-
-          <div className="flex space-x-4 mb-4">
-            <Select>
-              <SelectTrigger className="w-[180px]" aria-label="Select Folder">
-                <SelectValue placeholder="Select Folder" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="folder1">Folder 1</SelectItem>
-                <SelectItem value="folder2">Folder 2</SelectItem>
-                <SelectItem value="folder3">Folder 3</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="flex justify-between items-center mb-4">
           <Link to="/fileupload" aria-label="Add New File" accessKey="n"><Button  tabIndex={-1} aria-label="Add New File Button">Add New</Button></Link>
@@ -72,7 +78,7 @@ export default function FileList() {
                 <TableHead className="w-[50px]" aria-label="Select row">
                   <span className="sr-only">Select</span>
                 </TableHead>
-                <TableHead>Name</TableHead>
+                <TableHead>FileName</TableHead>
                 <TableHead>ContentType</TableHead>
                 <TableHead>Size</TableHead>
                 <TableHead>Submitted On</TableHead>
@@ -89,9 +95,9 @@ export default function FileList() {
                       aria-label={`Select file ${file.fileName}`}
                     />
                   </TableCell>
-                  <TableCell>{file.fileName}</TableCell>
-                  <TableCell>{file.contentType}</TableCell>
-                  <TableCell>{file.size}</TableCell>
+                  <TableCell>{removeFileExtension(file.fileName)}</TableCell>
+                  <TableCell>{simplifyContentType(file.contentType || "unknown")}</TableCell>
+                  <TableCell>{formatBytesToKB(file.size)}</TableCell>
                   <TableCell>{file.submittedOn}</TableCell>
                   <TableCell>{file.folder}</TableCell>
                 </TableRow>

@@ -1,3 +1,4 @@
+using Azure.Core;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
@@ -15,8 +16,11 @@ public static class FileEndpoints
     public static void MapFileEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapPost("/upload", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
-        async (IFormFileCollection files, [FromServices] ICosmosService cosmosService, [FromServices] IStorageService blobStorageService) =>
+        async (HttpRequest request, IFormFileCollection files, [FromServices] ICosmosService cosmosService, [FromServices] IStorageService blobStorageService) =>
         {
+            // Get the folder name from the form data
+            var folder = request.Form["folder"].ToString();
+
             if (files == null || files.Count == 0)
             {
                 return Results.BadRequest("No files received for upload.");
@@ -28,14 +32,14 @@ public static class FileEndpoints
                     if(file.Length > 0)
                     {
                         // Upload file to Azure Blob Storage using IBlobStorageService
-                        string blobURL = await blobStorageService.UploadFileToBlobAsync(file);
+                        string blobURL = await blobStorageService.UploadFileToBlobAsync(file, folder);
 
                         // Check if the file already exists in Cosmos DB using ICosmosService & then Upload the same
                         bool fileExists = await cosmosService.FileMetadataExistsAsync(file.FileName,blobURL);
                         if (!fileExists)
                         {
                             //Save the file metadata with URL to Cosmos DB
-                            await cosmosService.SaveFileMetadataToCosmosDbAsync(file, blobURL);
+                            await cosmosService.SaveFileMetadataToCosmosDbAsync(file, blobURL, folder);
                         }
                     }
                 }
