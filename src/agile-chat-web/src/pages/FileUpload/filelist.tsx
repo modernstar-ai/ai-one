@@ -17,8 +17,9 @@ import { deleteFiles } from '@/services/cosmosservice';
 
 export default function FileList() {
   // Using the custom hook to fetch files
-  const { files} = useFetchFiles();
+  const { files, refetch, loading} = useFetchFiles();
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])
+  const [isProcessing, setIsProcessing] = useState<boolean>(false); // Processing state for delete/refresh
   // Function to toggle the selection of files
   const toggleFileSelection = (fileId: string) => {
     setSelectedFiles(prev =>
@@ -60,7 +61,7 @@ export default function FileList() {
       alert('No files selected for deletion.');
       return;
     }
-  
+    setIsProcessing(true);
     try {
       // Sending delete request to the server
       await deleteFiles(selectedFiles);
@@ -68,9 +69,28 @@ export default function FileList() {
       alert('Selected files deleted successfully.');
       // Clear selected files
       setSelectedFiles([]);
+      // Re-fetch files to update UI
+      await refetch();
     } catch (error) {
       console.error('Error deleting files:', error);
       alert('An error occurred while deleting files.');
+    }
+    finally {
+      setIsProcessing(false);
+    }
+  };
+
+
+  // Handle Refresh Files
+  const handleRefresh = async () => {
+    setIsProcessing(true);
+    try {
+      await refetch();
+    } catch (error) {
+      console.error('Error refreshing files:', error);
+      alert('An error occurred while refreshing files.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -84,7 +104,12 @@ export default function FileList() {
           <div className="flex justify-between items-center mb-4">
           <Link to="/fileupload" aria-label="Add New File" accessKey="n"><Button  tabIndex={-1} aria-label="Add New File Button">Add New</Button></Link>
           <div className="space-x-2">
-              <Button variant="outline" size="icon" aria-label="Refresh">
+              <Button 
+                  variant="outline" 
+                  size="icon" 
+                  aria-label="Refresh"
+                  onClick={handleRefresh}
+                  disabled={loading || isProcessing}>
                 <RefreshCw className="h-4 w-4" />
               </Button>
               <Button 
