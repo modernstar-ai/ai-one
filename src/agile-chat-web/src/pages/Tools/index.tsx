@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button';
 import ToolsComponent from '@/components/ToolsComponent';
-import SidebarMenu from '@/components/Sidebar';
 import SimpleHeading from '@/components/Heading-Simple';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -25,8 +24,6 @@ const ToolsPage = () => {
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      {/* Left Sidebar */}
-      <SidebarMenu />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">

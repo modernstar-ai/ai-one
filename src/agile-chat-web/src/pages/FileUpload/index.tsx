@@ -8,7 +8,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, MailIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import axios from '@/error-handling/axiosSetup';
-import SidebarMenu from '@/components/Sidebar';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -123,8 +122,6 @@ export default function Component() {
 
   return (
     <div className="flex h-screen bg-white-100">
-      {/* Sidebar */}
-      <SidebarMenu />
 
       {/* Main Content */}
       <main className="flex-1 p-8" role="main">

@@ -4,7 +4,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import SidebarMenu from '@/components/Sidebar';
 import { Link } from 'react-router-dom';
 
 const files = [
@@ -61,7 +60,6 @@ export default function FileList() {
 
   return (
     <div className="flex h-screen bg-background">
-      <SidebarMenu />
       <div className="flex-1 p-8 overflow-y-auto">
         <h1 className="text-3xl font-bold mb-6">Your Files</h1>
 
