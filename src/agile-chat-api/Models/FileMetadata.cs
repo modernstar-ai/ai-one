@@ -59,4 +59,15 @@
         /// </value>
         public string? SubmittedOn { get; set; }
     }
+
+    public class DeleteFilesRequestDto
+    {
+        /// <summary>
+        /// Gets or sets the file ids.
+        /// </summary>
+        /// <value>
+        /// The file ids.
+        /// </value>
+        public required List<string> FileIds { get; set; }
+    }
 }

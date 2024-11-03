@@ -1,8 +1,4 @@
-using Azure.Core;
-using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos;
-using Microsoft.Extensions.Logging;
 using Models;
 using Services;
 
@@ -16,7 +12,10 @@ public static class FileEndpoints
     public static void MapFileEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapPost("/upload", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
-        async (HttpRequest request, IFormFileCollection files, [FromServices] ICosmosService cosmosService, [FromServices] IStorageService blobStorageService) =>
+        async (HttpRequest request,
+                IFormFileCollection files,
+                [FromServices] ICosmosService cosmosService,
+                [FromServices] IStorageService blobStorageService) =>
         {
             // Get the folder name from the form data
             var folder = request.Form["folder"].ToString();
@@ -35,7 +34,7 @@ public static class FileEndpoints
                         string blobURL = await blobStorageService.UploadFileToBlobAsync(file, folder);
 
                         // Check if the file already exists in Cosmos DB using ICosmosService & then Upload the same
-                        bool fileExists = await cosmosService.FileMetadataExistsAsync(file.FileName,blobURL);
+                        bool fileExists = await cosmosService.FileMetadataExistsAsync(file, blobURL,folder);
                         if (!fileExists)
                         {
                             //Save the file metadata with URL to Cosmos DB
@@ -64,5 +63,43 @@ public static class FileEndpoints
                 return Results.Problem($"An error occurred while retrieving files: {ex.Message}");
             }
         });
+
+        app.MapDelete("/files", async ([FromServices] ICosmosService cosmosService,
+                                             [FromServices] IStorageService blobStorageService,
+                                             [FromBody] DeleteFilesRequestDto request) =>
+        {
+            try
+            {
+                if (request == null || request.FileIds == null || !request.FileIds.Any())
+                {
+                    return Results.BadRequest("No file IDs provided for deletion.");
+                }
+
+                var fileToDelete = new List<FileMetadata>();
+                foreach (var fileId in request.FileIds)
+                {
+                    var file = await cosmosService.GetFileByIdAsync(fileId);
+                    fileToDelete.Add(file);
+                }
+
+                //Delete from Cosmos DB
+                await cosmosService.DeleteFileMetadataFromCosmosDbAsync(request.FileIds);
+
+                var deleteTasks = new List<Task>();
+                //Delete from BlobStorage
+                foreach (var file in fileToDelete)
+                {
+                    deleteTasks.Add(blobStorageService.DeleteFileFromBlobAsync(file));
+                }
+                return Results.Ok("Selected files deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                string error = ex.Message;
+                return Results.Problem("An error occurred while deleting the files.");
+            }
+        }
+        ).DisableAntiforgery();
+
     }
 }

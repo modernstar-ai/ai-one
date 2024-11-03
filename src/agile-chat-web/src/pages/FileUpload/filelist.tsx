@@ -13,10 +13,11 @@ import { useState } from "react"
 import  SidebarMenu from '@/components/Sidebar'
 import { Link } from 'react-router-dom';
 import { useFetchFiles } from "@/hooks/use-files"
+import { deleteFiles } from '@/services/cosmosservice'; 
 
 export default function FileList() {
   // Using the custom hook to fetch files
-  const { files } = useFetchFiles();
+  const { files} = useFetchFiles();
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])
   // Function to toggle the selection of files
   const toggleFileSelection = (fileId: string) => {
@@ -53,6 +54,26 @@ export default function FileList() {
     return mimeTypeMappings[contentType] || contentType
   }
 
+  // Handle Delete Files 
+  const handleDeleteSelected = async () => {
+    if (selectedFiles.length === 0) {
+      alert('No files selected for deletion.');
+      return;
+    }
+  
+    try {
+      // Sending delete request to the server
+      await deleteFiles(selectedFiles);
+      // Update the UI after successful deletion
+      alert('Selected files deleted successfully.');
+      // Clear selected files
+      setSelectedFiles([]);
+    } catch (error) {
+      console.error('Error deleting files:', error);
+      alert('An error occurred while deleting files.');
+    }
+  };
+
   return (
 
       <div className="flex h-screen bg-background">
@@ -66,7 +87,12 @@ export default function FileList() {
               <Button variant="outline" size="icon" aria-label="Refresh">
                 <RefreshCw className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" aria-label="Trash">
+              <Button 
+                  variant="outline" 
+                  size="icon" 
+                  aria-label="Trash"
+                  onClick={handleDeleteSelected}
+                  disabled={selectedFiles.length===0}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>

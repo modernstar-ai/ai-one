@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getAllFiles } from '@/services/cosmosservice';
+import { getFiles } from '@/services/cosmosservice';
 import { FileMetadata } from '@/models/filemetadata';
 
   export const useFetchFiles = () => {
@@ -12,7 +12,7 @@ import { FileMetadata } from '@/models/filemetadata';
         setLoading(true);
         try {
           console.log('Fetching files from backend...');
-          const data = await getAllFiles(); // This now returns FileMetadata[]
+          const data = await getFiles(); // This now returns FileMetadata[]
           setFiles(data); // TypeScript now knows that `data` is FileMetadata[]
           setError(null);
         } catch (err: unknown) {

@@ -10,7 +10,7 @@ const apiClient = axios.create({
   });
 
 // Function to fetch all files
-export const getAllFiles = async (): Promise<FileMetadata[]> => {
+export const getFiles = async (): Promise<FileMetadata[]> => {
     try {
       const url = getApiUri('files');
       const response = await apiClient.get<FileMetadata[]>(url);
@@ -20,3 +20,19 @@ export const getAllFiles = async (): Promise<FileMetadata[]> => {
       throw error;  // Re-throw the error to let the calling function know there was an issue
     }
   };
+
+// Function to delete selected files
+export const deleteFiles = async (fileIds: string[]): Promise<void> => {
+  try {
+    const url = getApiUri('files'); 
+    
+    await apiClient.request({
+      method: 'DELETE',
+      url: url,
+      data: { fileIds: fileIds }
+    });
+  } catch (error) {
+    console.error('Error deleting files from API:', error);
+    throw error;  // Re-throw the error to let the calling function know there was an issue
+  }
+};
