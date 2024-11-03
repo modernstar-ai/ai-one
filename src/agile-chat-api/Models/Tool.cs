@@ -1,22 +1,6 @@
 using agile_chat_api.Enums;
 using System.Text.Json.Serialization;
 
-//public class Tool
-//{
-//    public Guid id { get; set; } = Guid.NewGuid();
-//    public string Name { get; set; } = string.Empty;
-
-
-//    public string type { get; set; }
-//    public ToolStatus Status { get; set; }
-//    public string Description { get; set; } = string.Empty;
-//    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-//    public DateTime LastUpdatedDate { get; set; } = DateTime.UtcNow;
-
-
-//}
-
-
 public enum ToolType
 {
     Database,

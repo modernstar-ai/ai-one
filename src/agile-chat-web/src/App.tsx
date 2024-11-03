@@ -1,26 +1,23 @@
 import { BrowserRouter as Router } from 'react-router-dom';
-import AppRoutes from './routes';
-import './App.css'
-import { Toaster } from "@/components/ui/toaster"; 
+import AppRoutes from './routing/app-routes';
+import './App.css';
+import { Toaster } from '@/components/ui/toaster';
 import { ErrorBoundary } from './error-handling/ErrorBoundary';
+import Layout from './Layout';
 
 function App() {
- 
   return (
-  <ErrorBoundary>
     <>
-    <Toaster />
-    <Router>
-    <AppRoutes />
-    </Router>
+      <Toaster />
+      <ErrorBoundary>
+        <Router>
+          <Layout>
+            <AppRoutes />
+          </Layout>
+        </Router>
+      </ErrorBoundary>
     </>
-   </ErrorBoundary>
-  
-  )
+  );
 }
 
-export default App
-
-
-
-
+export default App;

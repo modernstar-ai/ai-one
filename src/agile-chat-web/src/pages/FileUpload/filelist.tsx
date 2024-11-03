@@ -11,11 +11,11 @@ import {
 import { RefreshCw, Trash2 } from "lucide-react"
 import { useState } from "react"
 import  SidebarMenu from '@/components/Sidebar'
-import { Link } from 'react-router-dom';
-import { useFetchFiles } from "@/hooks/use-files"
-import { deleteFiles } from '@/services/cosmosservice'; 
-
-export default function FileList() {
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+  { id: 2, name: "Foundations_of_Nursing_Practice_Lec1.ppt", state: "Completed", folder: "upload/temp2", submittedOn: "2024-08-10 00:15:30" },
   // Using the custom hook to fetch files
   const { files, refetch, loading} = useFetchFiles();
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])
@@ -93,17 +93,15 @@ export default function FileList() {
       setIsProcessing(false);
     }
   };
-
-  return (
-
-      <div className="flex h-screen bg-background">
-        <SidebarMenu />
-        <div className="flex-1 p-8 overflow-y-auto">
-          <h1 className="text-3xl font-bold mb-6">Your Files</h1>
-
+  const toggleFileSelection = (fileId: number) => {
+    setSelectedFiles(prev => 
+      prev.includes(fileId) 
+        ? prev.filter(id => id !== fileId)
+        : [...prev, fileId]
+    )
           <div className="flex justify-between items-center mb-4">
           <Link to="/fileupload" aria-label="Add New File" accessKey="n"><Button  tabIndex={-1} aria-label="Add New File Button">Add New</Button></Link>
-          <div className="space-x-2">
+                <SelectItem value="folder3">Folder 3</SelectItem>
               <Button 
                   variant="outline" 
                   size="icon" 
@@ -122,7 +120,7 @@ export default function FileList() {
               </Button>
             </div>
           </div>
-
+                <RefreshCw className="h-4 w-4" />
           <Table>
             <TableHeader>
               <TableRow>
@@ -151,6 +149,20 @@ export default function FileList() {
                   <TableCell>{formatBytesToKB(file.size)}</TableCell>
                   <TableCell>{file.submittedOn}</TableCell>
                   <TableCell>{file.folder}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+  )
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+  )
                 </TableRow>
               ))}
             </TableBody>

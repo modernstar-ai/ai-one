@@ -13,7 +13,7 @@ public static class ToolEndpoints
             {
                 return Results.Problem("An error occurred while fetching tools.", statusCode: 500);
             }
-        });
+        }).RequireAuthorization();
 
         app.MapGet("/tools/{id:guid}", async (Guid id, IToolService toolService) =>
         {
@@ -26,7 +26,7 @@ public static class ToolEndpoints
             {
                 return Results.Problem("An error occurred while fetching the tool.", statusCode: 500);
             }
-        });
+        }).RequireAuthorization();
 
         app.MapPost("/tools", async (Tool tool, IToolService toolService) =>
         {
@@ -39,7 +39,7 @@ public static class ToolEndpoints
             {
                 return Results.Problem("An error occurred while creating the tool.", statusCode: 500);
             }
-        });
+        }).RequireAuthorization();
 
         app.MapPut("/tools/{id:guid}", async (Guid id, Tool updatedTool, IToolService toolService) =>
         {
@@ -58,7 +58,7 @@ public static class ToolEndpoints
             {
                 return Results.Problem("An error occurred while updating the tool.", statusCode: 500);
             }
-        });
+        }).RequireAuthorization();
 
         app.MapDelete("/tools/{id:guid}", async (Guid id, IToolService toolService) =>
         {
@@ -77,7 +77,7 @@ public static class ToolEndpoints
             {
                 return Results.Problem("An error occurred while deleting the tool.", statusCode: 500);
             }
-        });
+        }).RequireAuthorization();
     }
 }
 

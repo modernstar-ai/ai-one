@@ -27,9 +27,9 @@ export default function Component() {
     const uploadFiles = async () => {
     if (files.length === 0) {
       toast({
-        title: "Error",
-        description: "No files selected for upload.",
-        variant: "destructive", 
+        title: 'Error',
+        description: 'No files selected for upload.',
+        variant: 'destructive',
       });
       return;
     }
@@ -46,7 +46,7 @@ export default function Component() {
     const formData = new FormData();
     formData.append("folder", selectedFolder); // Append selected folder value
     files.forEach((file) => {
-      formData.append("files", file);
+      formData.append('files', file);
     });
 
     try {
@@ -60,43 +60,43 @@ export default function Component() {
       console.log(response);
       if (response.status != 200) {
         toast({
-          title: "Error",
-          description: "File upload failed.",
-          variant: "destructive", 
+          title: 'Error',
+          description: 'File upload failed.',
+          variant: 'destructive',
         });
       }
       toast({
-        title: "Success",
-        description: "Files uploaded successfully!",
-        variant: "default", 
+        title: 'Success',
+        description: 'Files uploaded successfully!',
+        variant: 'default',
       });
-      
+
       setFiles([]); // Clear files after upload
     } catch (error) {
-     // Check if the error is an instance of Error
-     console.log(error);
-    if (error instanceof Error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive", 
-      });
+      // Check if the error is an instance of Error
+      console.log(error);
+      if (error instanceof Error) {
+        toast({
+          title: 'Error',
+          description: error.message,
+          variant: 'destructive',
+        });
       } else {
         toast({
-          title: "Error",
-          description: "An unknown error occurred during upload.",
-          variant: "destructive", 
+          title: 'Error',
+          description: 'An unknown error occurred during upload.',
+          variant: 'destructive',
         });
       }
     }
   };
 
   const onDrop = (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
-    if ((files.length + acceptedFiles.length) > maxFileCount) {
+    if (files.length + acceptedFiles.length > maxFileCount) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: `Cannot upload more than ${maxFileCount} files`,
-        variant: "destructive", 
+        variant: 'destructive',
       });
       return;
     }
@@ -108,9 +108,9 @@ export default function Component() {
     if (rejectedFiles.length > 0) {
       rejectedFiles.forEach(({ file }) => {
         toast({
-          title: "Error",
-          description: `File ${file.name} was rejected`,  // Use backticks for template literal
-          variant: "destructive",
+          title: 'Error',
+          description: `File ${file.name} was rejected`, // Use backticks for template literal
+          variant: 'destructive',
         });
       });
     }
@@ -124,7 +124,7 @@ export default function Component() {
   useEffect(() => {
     return () => {
       files.forEach((file) => {
-        if ("preview" in file && typeof file.preview === "string") {
+        if ('preview' in file && typeof file.preview === 'string') {
           URL.revokeObjectURL(file.preview);
         }
       });
@@ -132,9 +132,7 @@ export default function Component() {
   }, [files]);
 
   return (
-   <div className="flex h-screen bg-white-100">
-      {/* Sidebar */}
-      <SidebarMenu />
+    <div className="flex h-screen bg-white-100">
 
       {/* Main Content */}
       <main className="flex-1 p-8" role="main">
@@ -147,11 +145,11 @@ export default function Component() {
         {/* File Types */}
         <div className="mb-8 grid grid-cols-5 gap-4 text-center">
           {[
-            { icon: FileTextIcon, title: "Data", description: "xml, json, csv, txt" },
-            { icon: FileSpreadsheetIcon, title: "Productivity Software", description: "ppt, docx, xlsx" },
-            { icon: FileIcon, title: "PDF", description: "pdf" },
-            { icon: GlobeIcon, title: "Web", description: "html, html" },
-            { icon: MailIcon, title: "Email", description: "email & msg" },
+            { icon: FileTextIcon, title: 'Data', description: 'xml, json, csv, txt' },
+            { icon: FileSpreadsheetIcon, title: 'Productivity Software', description: 'ppt, docx, xlsx' },
+            { icon: FileIcon, title: 'PDF', description: 'pdf' },
+            { icon: GlobeIcon, title: 'Web', description: 'html, html' },
+            { icon: MailIcon, title: 'Email', description: 'email & msg' },
           ].map((item, index) => (
             <div key={index} className="flex flex-col items-center">
               <item.icon className="mb-2 h-12 w-12 text-primary" />
@@ -225,37 +223,29 @@ export default function Component() {
         <Button  size="lg" className="grid text-center" onClick={uploadFiles} aria-label="Add Files Button">
              Upload Files
           </Button>
-          </div>
+        </div>
 
-          
         {files.length > 0 && (
           <ScrollArea className="mt-4 h-fit w-full px-3">
             <div className="flex max-h-48 flex-col gap-4">
               {files.map((file, index) => (
-                <FileCard
-                  key={index}
-                  file={file}
-                  onRemove={() => onRemove(index)}
-                  progress={progresses[file.name]}
-                />
+                <FileCard key={index} file={file} onRemove={() => onRemove(index)} progress={progresses[file.name]} />
               ))}
             </div>
           </ScrollArea>
         )}
       </main>
     </div>
-  )
+  );
 }
 
-function FileCard({ file, progress, onRemove }: { file: File; progress?: number; onRemove: () => void; }) {
+function FileCard({ file, progress, onRemove }: { file: File; progress?: number; onRemove: () => void }) {
   return (
     <div className="relative flex items-center gap-2.5">
       <div className="flex flex-1 gap-2.5">
         <div className="flex w-full flex-col gap-2">
           <div className="flex flex-col gap-px">
-            <p className="line-clamp-1 text-sm font-medium text-foreground/80">
-              {file.name}
-            </p>
+            <p className="line-clamp-1 text-sm font-medium text-foreground/80">{file.name}</p>
             <p className="text-xs text-muted-foreground">
               {/* {formatBytes(file.size)} Optional: You can add formatBytes function if needed */}
             </p>
@@ -264,7 +254,8 @@ function FileCard({ file, progress, onRemove }: { file: File; progress?: number;
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button aria-label="Remove File Button"
+        <Button
+          aria-label="Remove File Button"
           type="button"
           variant="outline"
           size="icon"
