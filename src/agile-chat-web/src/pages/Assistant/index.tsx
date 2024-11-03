@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button"
 import AssistantsComponent from "@/components/AssistantsComponent"
-import SidebarMenu from '@/components/Sidebar'
 import SimpleHeading from '@/components/Heading-Simple'
 import { useNavigate } from "react-router-dom"
 
@@ -15,8 +14,6 @@ const AssistantsPage = () => {
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      {/* Left Sidebar */}
-      <SidebarMenu />      
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">

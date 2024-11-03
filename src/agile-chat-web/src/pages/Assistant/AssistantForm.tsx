@@ -23,7 +23,6 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
-import SidebarMenu from '@/components/Sidebar'
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice'
 import { Assistant, AssistantStatus, AssistantType } from "@/types/Assistant"
@@ -205,8 +204,7 @@ export default function AssistantForm() {
   const [temperature, setTemperature] = useState(form.getValues('temperature'));
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
-      <SidebarMenu />
+    <div className="flex h-screen bg-background text-foreground">      
       <div className="flex-1 flex flex-col">
         <SimpleHeading
           Title="AI Assistants"

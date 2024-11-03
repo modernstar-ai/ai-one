@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import SidebarMenu from '@/components/Sidebar';
 import SimpleHeading from '@/components/Heading-Simple';
 import { Card, CardContent } from '@/components/ui/card';
 import { useForm } from 'react-hook-form';
@@ -144,7 +143,6 @@ const ConnectToDB = () => {
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      <SidebarMenu />
 
       <div className="flex-1 flex flex-col">
         <SimpleHeading
