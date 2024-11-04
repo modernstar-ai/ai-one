@@ -108,6 +108,7 @@ public class AssistantService : IAssistantService
             existingAssistant.Name = assistant.Name;
             existingAssistant.Description = assistant.Description;
             existingAssistant.Type = assistant.Type;
+            existingAssistant.Status = assistant.Status;
             existingAssistant.Greeting = assistant.Greeting;
             existingAssistant.SystemMessage = assistant.SystemMessage;
             existingAssistant.Group = assistant.Group;
