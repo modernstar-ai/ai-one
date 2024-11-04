@@ -1,45 +1,37 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from "react"
-import { useSearchParams } from "react-router-dom"
-import SimpleHeading from '@/components/Heading-Simple'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import SimpleHeading from '@/components/Heading-Simple';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 
-import { Card, CardContent } from "@/components/ui/card"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { Card, CardContent } from '@/components/ui/card';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
-import * as z from "zod"
-import { useToast } from "@/components/ui/use-toast"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from "@/components/ui/form"
+import * as z from 'zod';
+import { useToast } from '@/components/ui/use-toast';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
-import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice'
-import { Assistant, AssistantStatus, AssistantType } from "@/types/Assistant"
-
+import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice';
+import { Assistant, AssistantStatus, AssistantType } from '@/types/Assistant';
 
 //todo: replace with server side implementation
 const generateGuid = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 };
 
 // Define schema with Zod
 const formSchema = z.object({
-  name: z.string().min(1, { message: "Name is required" }),
+  name: z.string().min(1, { message: 'Name is required' }),
   description: z.string(),
   type: z.nativeEnum(AssistantType),
   greeting: z.string(),
@@ -49,62 +41,60 @@ const formSchema = z.object({
   temperature: z.number(),
   documentLimit: z.number(),
   status: z.nativeEnum(AssistantStatus),
-})
+});
 
-type FormValues = z.infer<typeof formSchema>
+type FormValues = z.infer<typeof formSchema>;
 
 export default function AssistantForm() {
-
-  const [searchParams] = useSearchParams()
-  const fileId = searchParams.get('id')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [searchParams] = useSearchParams();
+  const fileId = searchParams.get('id');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileDates, setFileDates] = useState({
-    createdAt: '',  // Changed to lowercase
-    updatedAt: ''  // Changed to lowercase
-  })
-  const { toast } = useToast()
+    createdAt: '', // Changed to lowercase
+    updatedAt: '', // Changed to lowercase
+  });
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      description: "",
+      name: '',
+      description: '',
       type: AssistantType.Chat,
-      greeting: "",
-      systemMessage: "",
-      group: "",
-      folder: "",
+      greeting: '',
+      systemMessage: '',
+      group: '',
+      folder: '',
       temperature: 0.7,
       documentLimit: 5,
       status: AssistantStatus.Draft,
-
     },
-  })
+  });
 
   // Fetch existing file if editing
   useEffect(() => {
     const loadTool = async () => {
       if (fileId) {
-        toast({ title: "load", description: "Loading..." });
-        const file = await fetchAssistantById(fileId) as Assistant
-        console.log("Assistant loadTool", file);
-        console.log("Load file.type", file.type);
-        console.log("Load file.status", file.status);
+        toast({ title: 'load', description: 'Loading...' });
+        const file = (await fetchAssistantById(fileId)) as Assistant;
+        console.log('Assistant loadTool', file);
+        console.log('Load file.type', file.type);
+        console.log('Load file.status', file.status);
 
         if (file) {
           form.reset({
             name: file.name,
             description: file.description,
-            type: file.type as AssistantType,
-            greeting: file.greeting || "",
-            systemMessage: file.systemMessage || "",
-            group: file.group || "",
-            folder: file.folder || "",
+            type: file.type,
+            greeting: file.greeting || '',
+            systemMessage: file.systemMessage || '',
+            group: file.group || '',
+            folder: file.folder || '',
             temperature: file.temperature,
             documentLimit: file.documentLimit,
-            status: file.status as AssistantStatus,
-          })
+            status: file.status,
+          });
           setTemperature(file.temperature);
           const statusValue1 = form.getValues('status');
           console.log('Current status value 1:', statusValue1);
@@ -114,8 +104,8 @@ export default function AssistantForm() {
           // Store dates separately
           setFileDates({
             createdAt: file.createdAt,
-            updatedAt: file.updatedAt
-          })
+            updatedAt: file.updatedAt,
+          });
 
           // Read specific form values
           const statusValue = form.getValues('status');
@@ -123,23 +113,21 @@ export default function AssistantForm() {
 
           console.log('Current status value:', statusValue);
           console.log('Current type value:', typeValue);
-
         } else {
           toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to load assistant data",
-          })
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to load assistant data',
+          });
         }
       }
-    }
-    loadTool()
-  }, [fileId, form, toast])
-
+    };
+    loadTool();
+  }, [fileId, form, toast]);
 
   // Form submit handler
   const onSubmit = async (values: FormValues) => {
-    console.log("Assistant onSubmit", values);
+    console.log('Assistant onSubmit', values);
     setIsSubmitting(true);
     try {
       const now = new Date().toISOString();
@@ -157,44 +145,44 @@ export default function AssistantForm() {
         documentLimit: values.documentLimit,
         status: values.status,
         createdAt: fileId ? fileDates.createdAt : now,
-        createdBy: "adam@stephensen.me",
+        createdBy: 'adam@stephensen.me',
         updatedAt: now,
-        updatedBy: "adam@stephensen.me"
+        updatedBy: 'adam@stephensen.me',
       };
-      console.log("Assistant Submit filedata", fileData);
+      console.log('Assistant Submit filedata', fileData);
 
       if (fileId) {
         const result = await updateAssistant(fileData);
-        console.log("Assistant Submit update result", result);
+        console.log('Assistant Submit update result', result);
         if (result) {
           toast({
-            title: "Success",
-            description: "Assistant updated successfully",
+            title: 'Success',
+            description: 'Assistant updated successfully',
           });
-          navigate("/assistants");
+          navigate('/assistants');
         } else {
-          throw new Error("Failed to update assistant");
+          throw new Error('Failed to update assistant');
         }
       } else {
-        console.log("Assistant Submit create");
+        console.log('Assistant Submit create');
         const result = await createAssistant(fileData);
-        console.log("Assistant Submit create result", result);
+        console.log('Assistant Submit create result', result);
         if (result) {
           toast({
-            title: "Success",
-            description: "Tool created successfully",
+            title: 'Success',
+            description: 'Tool created successfully',
           });
           form.reset();
-          navigate("/assistants");
+          navigate('/assistants');
         } else {
-          throw new Error("Failed to create tool");
+          throw new Error('Failed to create tool');
         }
       }
     } catch (error) {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        variant: 'destructive',
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'An error occurred',
       });
     } finally {
       setIsSubmitting(false);
@@ -204,11 +192,11 @@ export default function AssistantForm() {
   const [temperature, setTemperature] = useState(form.getValues('temperature'));
 
   return (
-    <div className="flex h-screen bg-background text-foreground">      
+    <div className="flex h-screen bg-background text-foreground">
       <div className="flex-1 flex flex-col">
         <SimpleHeading
           Title="AI Assistants"
-          Subtitle={fileId ? "Edit AI Assistant" : "Create New AI Assistant"}
+          Subtitle={fileId ? 'Edit AI Assistant' : 'Create New AI Assistant'}
           DocumentCount={0}
         />
         <div className="flex-1 p-4 overflow-auto">
@@ -217,7 +205,6 @@ export default function AssistantForm() {
               <CardContent className="space-y-6">
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-
                     <FormField
                       control={form.control}
                       name="name"
@@ -231,7 +218,6 @@ export default function AssistantForm() {
                         </FormItem>
                       )}
                     />
-
 
                     <FormField
                       control={form.control}
@@ -253,17 +239,15 @@ export default function AssistantForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Type</FormLabel>
-                          <Select
-                            onValueChange={(value) => field.onChange(Number(value))}
-                            defaultValue={field.value.toString()}>
+                          <Select onValueChange={(value) => field.onChange(value as AssistantType)} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select Type" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="0">Chat</SelectItem>
-                              <SelectItem value="1">Search</SelectItem>
+                              <SelectItem value={AssistantType.Chat}>Chat</SelectItem>
+                              <SelectItem value={AssistantType.Search}>Search</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -278,11 +262,7 @@ export default function AssistantForm() {
                         <FormItem>
                           <FormLabel>Greeting</FormLabel>
                           <FormControl>
-                            <Textarea
-                              {...field}
-                              placeholder={`Welcome`}
-                              className="font-mono h-[80px]"
-                            />
+                            <Textarea {...field} placeholder={`Welcome`} className="font-mono h-[80px]" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -305,7 +285,6 @@ export default function AssistantForm() {
                         </FormItem>
                       )}
                     />
-
 
                     <FormField
                       control={form.control}
@@ -334,7 +313,6 @@ export default function AssistantForm() {
                         </FormItem>
                       )}
                     />
-
 
                     <FormField
                       control={form.control}
@@ -389,18 +367,19 @@ export default function AssistantForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Status</FormLabel>
-                          <Select                            
-                            onValueChange={(value) => field.onChange(Number(value) as AssistantStatus)}
-                            defaultValue={field.value?.toString()}>
+                          <Select
+                            onValueChange={(value) => field.onChange(value as AssistantStatus)}
+                            value={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select status" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="0">Draft</SelectItem>
-                              <SelectItem value="1">Published</SelectItem>
-                              <SelectItem value="2">Archived</SelectItem>
+                              <SelectItem value={AssistantStatus.Draft}>Draft</SelectItem>
+                              <SelectItem value={AssistantStatus.Published}>Published</SelectItem>
+                              <SelectItem value={AssistantStatus.Archived}>Archived</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -409,14 +388,11 @@ export default function AssistantForm() {
                     />
 
                     <div className="flex justify-between">
-                      <Button
-                        type="submit"
-                        disabled={false}>
-                        {isSubmitting ? "Submitting..." : (fileId ? "Update" : "Create")}
+                      <Button type="submit" disabled={false}>
+                        {isSubmitting ? 'Submitting...' : fileId ? 'Update' : 'Create'}
                       </Button>
                     </div>
                   </form>
-
                 </Form>
               </CardContent>
             </Card>
@@ -424,5 +400,5 @@ export default function AssistantForm() {
         </div>
       </div>
     </div>
-  )
+  );
 }
