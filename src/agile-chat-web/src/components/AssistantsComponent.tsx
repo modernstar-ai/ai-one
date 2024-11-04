@@ -76,6 +76,11 @@ const AssistantsComponent: React.FC = () => {
 
     navigate(`/assistant?id=${id}`);
   };
+  
+  const handleLaunchAssistant = (id: string) => {
+
+    navigate(`/chatrouter/${id}`);
+  };
 
   const handleDeleteAssistant = async (assistant: Assistant) => {
     setAssistantToDelete(assistant);
@@ -129,9 +134,9 @@ const AssistantsComponent: React.FC = () => {
   const getTypeIcon = (type: Assistant['type']) => {
     switch (type) {
       case AssistantType.Chat:
-        return <FileSearch className="h-4 w-4" aria-hidden="true" />;
-      case AssistantType.Search:
         return <MessageSquare className="h-4 w-4" aria-hidden="true" />;
+        case AssistantType.Search:
+        return <FileSearch className="h-4 w-4" aria-hidden="true" />;
       // case 'ExternalAPI':
       //   return <Globe className="h-4 w-4" aria-hidden="true" />;
       default:
@@ -175,6 +180,26 @@ const AssistantsComponent: React.FC = () => {
                   <TableRow key={assistant.id}>
                     <TableCell>
                       <div className="flex items-start space-x-2">
+                        
+                      <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                            
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handleLaunchAssistant(assistant.id)}
+                              >
+                                {getTypeIcon(assistant.type)}                                    
+                                <span className="sr-only">Chat with {assistant.name}</span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Edit {assistant.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -237,6 +262,7 @@ const AssistantsComponent: React.FC = () => {
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
+                        
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{assistant.name}</TableCell>
