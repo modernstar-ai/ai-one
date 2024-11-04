@@ -8,53 +8,26 @@ public enum ToolType
     ExternalAPI
 }
 
-/// <summary>
-/// Base class representing a tool with common properties
-/// </summary>
 public class Tool
 {
-    /// <summary>
-    /// Unique identifier for the tool
-    /// </summary>
-    public Guid id { get; set; }
+    public Guid id { get; set; } = Guid.NewGuid();
+    
+    public string Name { get; set; } = string.Empty;
+    
+    public string type { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Name of the tool
-    /// </summary>
-    public string Name { get; set; }
-
-    /// <summary>
-    /// Type of the tool
-    /// </summary>
-   
-
-    public string type { get; set; }
-
-    /// <summary>
-    /// Current status of the tool
-    /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public ToolStatus Status { get; set; }
-
-    /// <summary>
-    /// Optional description of the tool
-    /// </summary>
+    public ToolStatus Status { get; set; } = ToolStatus.Active;
+    
     public string? Description { get; set; }
 
-    /// <summary>
-    /// JSON template for database operations
-    /// </summary>
-    public string JsonTemplate { get; set; }
+    public string JsonTemplate { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Database connection string or DSN
-    /// </summary>
-    public string DatabaseDSN { get; set; }
+    public string DatabaseDSN { get; set; } = string.Empty;
 
-    
-    public string Method { get; set; }
-    public string Api { get; set; }
-    public string DatabaseQuery { get; set; }
-    public string CreatedDate { get; set; }  
-    public string LastUpdatedDate { get; set; }  
+    public string Method { get; set; } = string.Empty;
+    public string Api { get; set; }= string.Empty;
+    public string DatabaseQuery { get; set; }= string.Empty;
+    public string CreatedDate { get; set; }  = string.Empty;
+    public string LastUpdatedDate { get; set; }  = string.Empty;
 }

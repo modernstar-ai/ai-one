@@ -4,7 +4,8 @@ public static class AssistantEndpoints
 {
     public static void MapAssistantEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/assistants", async ([FromServices] IAssistantService assistantService) =>
+
+        app.MapGet("/assistants", async ([FromServices] IAssistantService assistantService, [FromServices] ILogger logger) =>
         {
             try
             {
@@ -14,11 +15,13 @@ public static class AssistantEndpoints
             }
             catch (Exception ex)
             {
-                return Results.Problem("An error occurred while fetching assistants.", statusCode: 500);
+                var error = "An error occurred while retrieving all assistants.";
+                logger.LogError(ex, error);
+                return Results.Problem(error, statusCode: 500);
             }
         });
 
-        app.MapGet("/assistants/{id:guid}", async (Guid id, [FromServices] IAssistantService assistantService) =>
+        app.MapGet("/assistants/{id:guid}", async (Guid id, [FromServices] IAssistantService assistantService, [FromServices] ILogger logger) =>
         {
             try
             {
@@ -28,11 +31,12 @@ public static class AssistantEndpoints
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "An error occurred while fetching the assistant.");
                 return Results.Problem("An error occurred while fetching the assistant.", statusCode: 500);
             }
         });
 
-        app.MapPost("/assistants", async (Assistant assistant, [FromServices] IAssistantService assistantService) =>
+        app.MapPost("/assistants", async (Assistant assistant, [FromServices] IAssistantService assistantService, [FromServices] ILogger logger) =>
         {
             try
             {
@@ -41,12 +45,13 @@ public static class AssistantEndpoints
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "An error occurred while creating the assistant.");
                 return Results.Problem("An error occurred while creating the assistant.", statusCode: 500);
             }
         });
 
         app.MapPut("/assistants/{id:guid}",
-            async (Guid id, Assistant updatedAssistant, [FromServices] IAssistantService assistantService) =>
+            async (Guid id, Assistant updatedAssistant, [FromServices] IAssistantService assistantService, [FromServices] ILogger logger) =>
             {
                 try
                 {
@@ -62,26 +67,29 @@ public static class AssistantEndpoints
                 }
                 catch (Exception ex)
                 {
+                    logger.LogError(ex, "An error occurred while updating the assistant.");
                     return Results.Problem("An error occurred while updating the assistant.", statusCode: 500);
                 }
             });
 
-        app.MapDelete("/assistants/{id:guid}", async (Guid id, [FromServices] IAssistantService assistantService) =>
+        app.MapDelete("/assistants/{id:guid}", async (Guid id, [FromServices] IAssistantService assistantService, [FromServices] ILogger logger) =>
         {
             try
             {
-                var assistant = await assistantService.GetByIdAsync(id); 
+                var assistant = await assistantService.GetByIdAsync(id);
                 if (assistant is null)
                 {
                     return Results.NotFound();
                 }
 
-                await assistantService.DeleteAsync(assistant.Id); 
+                await assistantService.DeleteAsync(assistant.Id);
                 return Results.NoContent();
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "An error occurred while deleting the assistant.");
                 return Results.Problem("An error occurred while deleting the assistant.", statusCode: 500);
+                
             }
         });
     }

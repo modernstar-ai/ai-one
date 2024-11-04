@@ -1,15 +1,9 @@
-using Azure.Identity;
 using Azure.AI.OpenAI;
-using Microsoft.AspNetCore.Http;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using OpenAI.Chat;
 using System.ClientModel;
 using Azure;
-using DotNetEnv;
-using static System.Net.WebRequestMethods;
 
-    public static class ChatCompletionsEndpoint
+public static class ChatCompletionsEndpoint
     {
         public static void MapChatCompletionsEndpoint(this IEndpointRouteBuilder app)
         {
@@ -24,9 +18,9 @@ using static System.Net.WebRequestMethods;
                 }
 
                 // Set up the necessary headers for SSE
-                context.Response.Headers.Add("Content-Type", "text/event-stream");
-                context.Response.Headers.Add("Cache-Control", "no-cache");
-                context.Response.Headers.Add("Connection", "keep-alive");
+                context.Response.Headers.Append("Content-Type", "text/event-stream");
+                context.Response.Headers.Append("Cache-Control", "no-cache");
+                context.Response.Headers.Append("Connection", "keep-alive");
 
                 // Initialize the AzureOpenAIClient with DefaultAzureCredential
                 //AzureOpenAIClient azureClient = new AzureOpenAIClient(
@@ -82,7 +76,7 @@ using static System.Net.WebRequestMethods;
 
                 //not required when streaming. it will cause an error
                 //return Results.Ok();
-                return;
+                //return;
             }).RequireAuthorization();
         }
     }
