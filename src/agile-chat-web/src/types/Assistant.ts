@@ -1,13 +1,12 @@
-
 export enum AssistantStatus {
-  Draft = 0,
-  Published = 1,
-  Archived = 2,
-  Deleted = 3,
+  Draft = 'Draft',
+  Published = 'Published',
+  Archived = 'Archived',
+  Deleted = 'Deleted',
 }
 export enum AssistantType {
-  Chat = 0,
-  Search = 1,
+  Chat = 'Chat',
+  Search = 'Search',
 }
 
 export type Assistant = {
@@ -20,11 +19,10 @@ export type Assistant = {
   group?: string;
   folder?: string;
   temperature: number;
-  documentLimit: number
+  documentLimit: number;
   status: AssistantStatus;
   createdAt: string;
   createdBy: string;
   updatedAt: string;
   updatedBy: string;
 };
-

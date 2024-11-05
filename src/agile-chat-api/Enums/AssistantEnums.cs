@@ -1,5 +1,8 @@
-﻿namespace agile_chat_api.Enums
+﻿using System.Text.Json.Serialization;
+
+namespace agile_chat_api.Enums
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
 
     public enum AssistantType
     {
@@ -7,6 +10,7 @@
         Search
     }
     
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum AssistantStatus
     {
         Draft,
