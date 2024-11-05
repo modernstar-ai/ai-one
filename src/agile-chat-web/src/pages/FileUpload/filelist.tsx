@@ -13,6 +13,7 @@ import { useEffect, useState } from "react"
 import { Link } from 'react-router-dom';
 import { useFetchFiles } from "@/hooks/use-files"
 import { deleteFiles } from '@/services/cosmosservice';
+import { FileMetadata } from "@/models/filemetadata"
 
 export default function FileList() {
   
