@@ -47,12 +47,12 @@ const ChatPage = () => {
       setIsStreaming(true); // Set the streaming flag to true
 
       console.log('messages:', messages);
-      
+
       // Establish an SSE connection for the bot's response
-      const apiUrl = getApiUri('chatcompletions', { prompt: encodeURIComponent(inputValue) });
+      const apiUrl = getApiUri('chatcompletions' );
 
       axios
-        .get(apiUrl, {
+        .post(apiUrl,  newMessages, {
           headers: {
             Accept: 'text/plain',
           },
