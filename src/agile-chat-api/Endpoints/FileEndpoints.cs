@@ -44,7 +44,7 @@ public static class FileEndpoints
                         if (isFileExistsInStorageService) //TRUE
                         {
                             Console.WriteLine($"File Exists in both CosmosDB & Storage Account.");
-                            resultMessages.Add(file.FileName + " exists already. ");
+                            resultMessages.Add(file.FileName + " already exists. ");
                         }
                         else //FALSE
                         {
@@ -85,7 +85,7 @@ public static class FileEndpoints
                     }
                 }
                 // After processing all files, return the accumulated messages as a popup
-                string finalMessage = string.Join("\n", resultMessages);
+                string finalMessage = string.Join(Environment.NewLine, resultMessages);
                 return Results.Ok($"{finalMessage}");
             }
             catch (Exception ex)

@@ -9,6 +9,7 @@ import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, M
 import { useToast } from "@/components/ui/use-toast";
 import axios from 'axios';
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -22,6 +23,7 @@ export default function Component() {
     const [progresses] = useState<Record<string, number>>({});
     const maxFileCount = 5; // Maximum number of files allowed
     const maxSize = 1024 * 1024 * 2; // 2MB
+    const navigate = useNavigate();
 
     const uploadFiles = async () => {
     if (files.length === 0) {
@@ -66,6 +68,7 @@ export default function Component() {
 
         // Clear files after upload
         setFiles([]);
+        navigate("/files"); 
       } else {
         toast({
           title: 'Error',
