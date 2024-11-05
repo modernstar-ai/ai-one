@@ -1,6 +1,11 @@
 ﻿namespace agile_chat_api.Services;
 
-public class ChatService
+public interface IChatService
+{
+    
+}
+
+public class ChatService: IChatService
 {
     
 }

@@ -1,12 +1,10 @@
 using agile_chat_api.Utils;
 using agile_chat_api.Extensions;
-using Azure.AI.OpenAI;
-using Azure.Identity;
 using DotNetEnv;
 using Microsoft.Azure.Cosmos;
 
 // Load environment variables for OpenAI Endpoint and Cosmos DB access
-DotNetEnv.Env.Load();
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +19,7 @@ if (string.IsNullOrEmpty(cosmosDbUri) || string.IsNullOrEmpty(cosmosDbKey))
 
 builder.Services.AddAzureAdAuth();
 // Register CosmosClient as a singleton
-builder.Services.AddSingleton(s => new CosmosClient(cosmosDbUri, cosmosDbKey));
+builder.Services.AddSingleton(_ => new CosmosClient(cosmosDbUri, cosmosDbKey));
 
 // Add services to the container
 builder.Services.AddSingleton<IToolService, ToolService>();
@@ -29,7 +27,7 @@ builder.Services.AddSingleton<IAssistantService, AssistantService>();
 builder.Services.AddSingleton<IPersonaService, PersonaService>();
 
 // Register ConsoleLogger
-builder.Services.AddSingleton<ILogger>(s => new ConsoleLogger("ConsoleLogger", LogLevel.Debug));
+builder.Services.AddSingleton<ILogger>(_ => new ConsoleLogger("ConsoleLogger", LogLevel.Debug));
 
 // Define the CORS policy with allowed origins
 // Load allowed origins from environment variables or use default values
