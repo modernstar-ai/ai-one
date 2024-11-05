@@ -19,6 +19,7 @@ public static class FileEndpoints
         {
             // Get the folder name from the form data
             var folder = request.Form["folder"].ToString();
+            var resultMessages = new List<string>();
 
             if (files == null || files.Count == 0)
             {
@@ -28,21 +29,64 @@ public static class FileEndpoints
             {
                 foreach (var file in files)
                 {
-                    if(file.Length > 0)
+                    if (file.Length <= 0)
                     {
-                        // Upload file to Azure Blob Storage using IBlobStorageService
-                        string blobURL = await blobStorageService.UploadFileToBlobAsync(file, folder);
+                        continue; // Skip empty files
+                    }
 
-                        // Check if the file already exists in Cosmos DB using ICosmosService & then Upload the same
-                        bool fileExists = await cosmosService.FileMetadataExistsAsync(file, blobURL,folder);
-                        if (!fileExists)
+                    bool isFileExistsInCosmosDB = await cosmosService.FileMetadataExistsAsync(file.FileName, folder);
+                    bool isFileExistsInStorageService = await blobStorageService.FileExistsInBlobAsync(file.FileName, folder);
+
+                    //Check if file Exists in Cosmos DB
+                    if (isFileExistsInCosmosDB) //TRUE
+                    {
+                        //Check if file Exists in Storage Service
+                        if (isFileExistsInStorageService) //TRUE
                         {
-                            //Save the file metadata with URL to Cosmos DB
+                            Console.WriteLine($"File Exists in both CosmosDB & Storage Account.");
+                            resultMessages.Add(file.FileName + " exists already. ");
+                        }
+                        else //FALSE
+                        {
+                            Console.WriteLine($"File Exists in CosmosDB but not in Storage Account, " +
+                                $"we will be creating it in Storage account then and delete existing cosmosDB record " +
+                                $"and add it with new record with new id & URL");
+                            await cosmosService.DeleteFileByNameFromCosmosAsync(file.FileName, folder);
+
+                            //Resaving it to the cosmos & storage data
+                            string blobURL = await blobStorageService.UploadFileToBlobAsync(file, folder);
                             await cosmosService.SaveFileMetadataToCosmosDbAsync(file, blobURL, folder);
+                            resultMessages.Add(file.FileName + " uploaded successfully.");
+                        }
+                    }
+                    else //FALSE
+                    {
+                        if(isFileExistsInStorageService) //TRUE
+                        {
+                            //File exists in Storage but not in cosmos DB
+                            Console.WriteLine($"File Exists in Storage Account but not in CosmosDB, " +
+                                $"we will be creating it in CosmosDB record " +
+                                $"with the URL from existing record from Storage Account");
+                            var blobURL = blobStorageService.GetBlobURLAsync(file.FileName, folder);
+                            if (blobURL != null)
+                            {
+                                await cosmosService.SaveFileMetadataToCosmosDbAsync(file, blobURL, folder);
+                            }
+                            resultMessages.Add(file.FileName + " uploaded successfully.");
+                        }
+                        else //FALSE
+                        {
+                            // If file is in neither storage nor Cosmos DB, upload to storage and save metadata to Cosmos DB
+                            Console.WriteLine($"File uploaded on both the CosmosDB and the Storage Account");
+                            string blobURL = await blobStorageService.UploadFileToBlobAsync(file, folder);
+                            await cosmosService.SaveFileMetadataToCosmosDbAsync(file, blobURL, folder);
+                            resultMessages.Add(file.FileName + " uploaded successfully.");
                         }
                     }
                 }
-                return Results.Ok("Files uploaded successfully.");
+                // After processing all files, return the accumulated messages as a popup
+                string finalMessage = string.Join("\n", resultMessages);
+                return Results.Ok($"{finalMessage}");
             }
             catch (Exception ex)
             {
@@ -65,8 +109,8 @@ public static class FileEndpoints
         });
 
         app.MapDelete("/files", async ([FromServices] ICosmosService cosmosService,
-                                             [FromServices] IStorageService blobStorageService,
-                                             [FromBody] DeleteFilesRequestDto request) =>
+                                       [FromServices] IStorageService blobStorageService,
+                                       [FromBody] DeleteFilesRequestDto request) =>
         {
             try
             {
@@ -79,11 +123,11 @@ public static class FileEndpoints
                 foreach (var fileId in request.FileIds)
                 {
                     var file = await cosmosService.GetFileByIdAsync(fileId);
-                    fileToDelete.Add(file);
+                    fileToDelete.Add(file!);
                 }
 
                 //Delete from Cosmos DB
-                await cosmosService.DeleteFileMetadataFromCosmosDbAsync(request.FileIds);
+                await cosmosService.DeleteBulkFileMetadataFromCosmosAsync(request.FileIds);
 
                 var deleteTasks = new List<Task>();
                 //Delete from BlobStorage

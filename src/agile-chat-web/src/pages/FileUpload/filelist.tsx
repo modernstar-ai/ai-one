@@ -9,16 +9,35 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { RefreshCw, Trash2 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from 'react-router-dom';
 import { useFetchFiles } from "@/hooks/use-files"
-import { deleteFiles } from '@/services/cosmosservice'; 
+import { deleteFiles } from '@/services/cosmosservice';
 
 export default function FileList() {
+  
   // Using the custom hook to fetch files
   const { files, refetch, loading} = useFetchFiles();
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState<boolean>(false); // Processing state for delete/refresh
+  const [sortedFiles, setSortedFiles] = useState<FileMetadata[]>([]);
+  
+// Sorting logic
+  useEffect(() => {
+    const sorted = [...files].sort((a, b) => {
+      const folderA = a.folder ?? "";  // Use empty string if folder is undefined
+      const folderB = b.folder ?? "";
+      const fileNameA = a.fileName ?? ""; // Use empty string if fileName is undefined
+      const fileNameB = b.fileName ?? "";
+
+      if (folderA === folderB) {
+        return fileNameA.localeCompare(fileNameB);
+      }
+      return folderA.localeCompare(folderB);
+    });
+    setSortedFiles(sorted);
+  }, [files]);
+
   // Function to toggle the selection of files
   const toggleFileSelection = (fileId: string) => {
     setSelectedFiles(prev =>
@@ -54,7 +73,7 @@ export default function FileList() {
     return mimeTypeMappings[contentType] || contentType
   }
 
-  // Handle Delete Files 
+  // Handle Delete Files
   const handleDeleteSelected = async () => {
     if (selectedFiles.length === 0) {
       alert('No files selected for deletion.');
@@ -79,7 +98,6 @@ export default function FileList() {
     }
   };
 
-
   // Handle Refresh Files
   const handleRefresh = async () => {
     setIsProcessing(true);
@@ -102,17 +120,17 @@ export default function FileList() {
           <div className="flex justify-between items-center mb-4">
           <Link to="/fileupload" aria-label="Add New File" accessKey="n"><Button  tabIndex={-1} aria-label="Add New File Button">Add New</Button></Link>
           <div className="space-x-2">
-              <Button 
-                  variant="outline" 
-                  size="icon" 
+              <Button
+                  variant="outline"
+                  size="icon"
                   aria-label="Refresh"
                   onClick={handleRefresh}
                   disabled={loading || isProcessing}>
                 <RefreshCw className="h-4 w-4" />
               </Button>
-              <Button 
-                  variant="outline" 
-                  size="icon" 
+              <Button
+                  variant="outline"
+                  size="icon"
                   aria-label="Trash"
                   onClick={handleDeleteSelected}
                   disabled={selectedFiles.length===0}>
@@ -135,7 +153,7 @@ export default function FileList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {files.map((file) => (
+              {sortedFiles.map((file) => (
                 <TableRow key={file.id}>
                   <TableCell>
                     <Checkbox

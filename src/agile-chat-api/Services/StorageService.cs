@@ -1,4 +1,5 @@
-﻿using Azure.Storage.Blobs;
+﻿using Azure;
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Models;
 using Config = agile_chat_api.Configurations.AppConfigs;
@@ -9,11 +10,28 @@ namespace Services
     public interface IStorageService
     {
         /// <summary>
+        /// Files the exists in BLOB asynchronous.
+        /// </summary>
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="folderName">Name of the folder.</param>
+        /// <returns></returns>
+        /// TODO Edit XML Comment Template for FileExistsInBlobAsync
+        Task<bool> FileExistsInBlobAsync(string fileName, string folderName);
+
+        /// <summary>
         /// Uploads the file to BLOB asynchronous.
         /// </summary>
         /// <param name="file">The file.</param>
         /// <returns></returns>
         Task<string> UploadFileToBlobAsync(IFormFile file, string folderName);
+
+        /// <summary>
+        /// Gets the BLOB URL asynchronous.
+        /// </summary>
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="folder">The folder.</param>
+        /// <returns></returns>
+        string GetBlobURLAsync(string fileName, string folder);
 
         /// <summary>
         /// Deletes the file from BLOB asynchronous.
@@ -35,6 +53,42 @@ namespace Services
             BlobServiceClient blobServiceClient = new(Config.BlobStorageConnectionString);
             _blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.BlobContainerName);
             _blobContainerClient.CreateIfNotExists();
+        }
+
+        /// <summary>
+        /// Files the exists in BLOB asynchronous.
+        /// </summary>
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="folderName">Name of the folder.</param>
+        /// <returns></returns>
+        /// TODO Edit XML Comment Template for FileExistsInBlobAsync
+        public async Task<bool> FileExistsInBlobAsync(string fileName, string folderName)
+        {
+            string blobPath = $"{folderName}/{fileName}";
+            BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
+            try
+            {
+                // Check if the blob exists
+                return await _blobClient.ExistsAsync();
+            }
+            catch (RequestFailedException ex)
+            {
+                Console.WriteLine($"Error checking if file exists: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets the BLOB URL asynchronous.
+        /// </summary>
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="folder">The folder.</param>
+        /// <returns></returns>
+        public string GetBlobURLAsync(string fileName, string folder)
+        {
+            string blobPath = $"{folder}/{fileName}";
+            BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
+            return _blobClient.Uri.ToString();
         }
 
         /// <summary>

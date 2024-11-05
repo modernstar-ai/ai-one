@@ -1,6 +1,10 @@
-﻿using Microsoft.Azure.Cosmos;
+﻿using Azure;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Linq;
+using Microsoft.Extensions.Logging;
 using Models;
 using System.Collections.Concurrent;
+using System.Reflection.Metadata.Ecma335;
 using Config = agile_chat_api.Configurations.AppConfigs;
 using Constants = agile_chat_api.Configurations.Constants;
 
@@ -11,39 +15,47 @@ namespace Services
         /// <summary>
         /// Files the metadata exists asynchronous.
         /// </summary>
-        /// <param name="file">The file.</param>
-        /// <param name="blobUrl">The BLOB URL.</param>
+        /// <param name="fileName">Name of the file.</param>
         /// <param name="folder">The folder.</param>
         /// <returns></returns>
-        Task<bool> FileMetadataExistsAsync(IFormFile file, string blobUrl, string folder);
+        Task<bool> FileMetadataExistsAsync(string fileName, string folder);
 
         /// <summary>
         /// Saves the file metadata to cosmos database asynchronous.
         /// </summary>
         /// <param name="file">The file.</param>
         /// <param name="blobUrl">The BLOB URL.</param>
+        /// <param name="folderName">Name of the folder.</param>
         /// <returns></returns>
         Task SaveFileMetadataToCosmosDbAsync(IFormFile file, object blobUrl, string folderName);
 
         /// <summary>
-        /// Gets the specific file asynchronous.
+        /// Gets the file by identifier asynchronous.
         /// </summary>
-        /// <param name="fileId">The file identifier.</param>
+        /// <param name="id">The identifier.</param>
         /// <returns></returns>
-        Task<FileMetadata> GetFileByIdAsync(string fileId);
+        Task<FileMetadata?> GetFileByIdAsync(string id);
 
         /// <summary>
-        /// Gets the file uploads asynchronous.
+        /// Gets the bulk files asynchronous.
         /// </summary>
         /// <returns></returns>
-        Task<IEnumerable<FileMetadata>> GetFileUploadsAsync();
+        Task<IEnumerable<FileMetadata?>> GetFileUploadsAsync();
 
         /// <summary>
-        /// Deletes the file metadata from cosmos database asynchronous.
+        /// Deletes the file metadata from cosmos using file name asynchronous.
         /// </summary>
-        /// <param name="fileIds">The file ids.</param>
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="folder">The folder.</param>
         /// <returns></returns>
-        Task DeleteFileMetadataFromCosmosDbAsync(IEnumerable<string> fileIds);
+        Task DeleteFileByNameFromCosmosAsync(string fileName, string folder);
+
+        /// <summary>
+        /// Deletes the bulk file metadata from cosmos asynchronous.
+        /// </summary>
+        /// <param name="files">The files.</param>
+        /// <returns></returns>
+        Task DeleteBulkFileMetadataFromCosmosAsync(IEnumerable<string> files);
     }
 }
 
@@ -53,6 +65,7 @@ namespace Services
     {
         private readonly CosmosClient _cosmosClient;
         private readonly Container _cosmosContainer;
+
         public CosmosService()
         {
             _cosmosClient = new CosmosClient(Config.CosmosEndpoint, Config.CosmosKey);
@@ -63,6 +76,7 @@ namespace Services
         /// Ensures the cosmos container exists.
         /// </summary>
         /// <returns></returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         private async Task<Container> EnsureCosmosContainerExists()
         {
             var database = await _cosmosClient.CreateDatabaseIfNotExistsAsync(Config.CosmosDBName);
@@ -78,33 +92,40 @@ namespace Services
         /// Files the metadata exists asynchronous.
         /// </summary>
         /// <param name="fileName">Name of the file.</param>
-        /// <param name="blobUrl">The BLOB URL.</param>
+        /// <param name="folder">The folder.</param>
         /// <returns></returns>
-        public async Task<bool> FileMetadataExistsAsync(IFormFile file, string blobUrl, string folder)
+        /// <exception cref="System.NotImplementedException"></exception>
+        public async Task<bool> FileMetadataExistsAsync(string fileName, string folder)
         {
+            var queryable = _cosmosContainer.GetItemLinqQueryable<FileMetadata>();
+
+            // Use LINQ to filter documents based on FileName and Folder
+            var filteredQuery = queryable
+                .Where(file => file.FileName == fileName && file.Folder == folder)
+                .ToFeedIterator();
+
             try
             {
-                var query = new QueryDefinition("SELECT * FROM c WHERE c.FolderName = @folderName AND c.FileName = @fileName")
-                    .WithParameter("@folderName", folder)
-                    .WithParameter("@fileName", file.FileName);
-
-                using FeedIterator<FileMetadata> feedIterator = _cosmosContainer.GetItemQueryIterator<FileMetadata>(query);
-
-                if (feedIterator.HasMoreResults)
+                List<FileMetadata> results = [];
+                while (filteredQuery.HasMoreResults)
                 {
-                    var existingItems = await feedIterator.ReadNextAsync();
-                    if (existingItems.Count > 0)
-                    {
-                        return true;
-                    }
+                    FeedResponse<FileMetadata> response = await filteredQuery.ReadNextAsync();
+                    results.AddRange(response);
                 }
+                if (results.Count > 0)
+                {
+                    return true;
+                }
+                FileMetadata? data = results.FirstOrDefault();
+                Console.WriteLine($"Document count: {data}");
+                return false;
+
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _ = ex.Message;
-                throw;
+                Console.WriteLine($"Error checking if file metadata exists for {fileName} in folder {folder}", fileName, folder);
+                return false;
             }
-            return false;
         }
 
         /// <summary>
@@ -112,6 +133,7 @@ namespace Services
         /// </summary>
         /// <param name="file">The file.</param>
         /// <param name="blobUrl">The BLOB URL.</param>
+        /// <param name="folderName">Name of the folder.</param>
         public async Task SaveFileMetadataToCosmosDbAsync(IFormFile file, object blobUrl, string folderName)
         {
             try
@@ -120,7 +142,6 @@ namespace Services
                 var fileMetadata = new FileMetadata
                 {
                     id = Guid.NewGuid().ToString(), // Unique identity ID
-                    FileId = Guid.NewGuid(),
                     FileName = Path.GetFileName(file.FileName),
                     BlobUrl = blobUrl,
                     ContentType = file.ContentType,
@@ -130,122 +151,135 @@ namespace Services
                 };
                 await _cosmosContainer.CreateItemAsync(fileMetadata, new PartitionKey(fileMetadata.id));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _ = ex.Message;
-                throw;
+                Console.WriteLine($"Error saving file metadata for {file.FileName} in folder {folderName}", file.FileName, folderName);
             }
         }
 
         /// <summary>
-        /// Gets the file by identifier upload asynchronous.
+        /// Gets the file by identifier asynchronous.
         /// </summary>
-        /// <param name="fileIds">The file ids.</param>
+        /// <param name="id">The identifier.</param>
         /// <returns></returns>
-        public async Task<FileMetadata> GetFileByIdAsync(string fileIds)
+        public async Task<FileMetadata?> GetFileByIdAsync(string id)
         {
             try
             {
-                var query = new QueryDefinition("SELECT * FROM c WHERE c.id = @Id")
-                    .WithParameter("@Id", fileIds);
-                using FeedIterator<FileMetadata> feedIterator = _cosmosContainer.GetItemQueryIterator<FileMetadata>(query);
-                while (feedIterator.HasMoreResults)
-                {
-                    FeedResponse<FileMetadata> response = await feedIterator.ReadNextAsync();
-                    foreach (var fileMetadata in response)
-                    {
-                        return fileMetadata; // Return the first match found
-                    }
-                }
-                return null!; // Return null if no results found
+                var response = await _cosmosContainer.ReadItemAsync<FileMetadata>(id, new PartitionKey(id));
+                return response.Resource;
             }
-            catch (Exception ex)
+            catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                _ = ex.Message;
-                throw;
+                Console.WriteLine($"File with ID {id} not found.", id);
+                return null;
             }
+            catch (Exception)
+            {
+                Console.WriteLine($"Error retrieving file with ID {id}", id);
+            }
+            return null;
         }
 
         /// <summary>
-        /// Gets the file uploads asynchronous.
+        /// Gets the file upload asynchronous.
         /// </summary>
         /// <returns></returns>
-        public async Task<IEnumerable<FileMetadata>> GetFileUploadsAsync()
+        public async Task<IEnumerable<FileMetadata?>> GetFileUploadsAsync()
         {
             var query = new QueryDefinition("SELECT * FROM c");
             var results = new List<FileMetadata>();
-
-            using (FeedIterator<FileMetadata> feedIterator = _cosmosContainer.GetItemQueryIterator<FileMetadata>(query))
+            try
             {
+                using var feedIterator = _cosmosContainer.GetItemQueryIterator<FileMetadata>(query);
                 while (feedIterator.HasMoreResults)
                 {
-                    FeedResponse<FileMetadata> response = await feedIterator.ReadNextAsync();
-                    results.AddRange(response);
+                    results.AddRange(await feedIterator.ReadNextAsync());
                 }
+            }
+            catch (Exception)
+            {
+                Console.WriteLine($"Error retrieving all file metadata.");
+                return []; // Ensure non-null return
             }
             return results;
         }
 
         /// <summary>
-        /// Deletes the file metadata from cosmos database asynchronous.
+        /// Deletes the file with retry asynchronous.
         /// </summary>
-        /// <param name="fileIds"></param>
-        /// <exception cref="System.ArgumentException">No file IDs provided for deletion.</exception>
-        public async Task DeleteFileMetadataFromCosmosDbAsync(IEnumerable<string> fileIds)
+        /// <param name="fileId">The file identifier.</param>
+        /// <param name="failedDeletions">The failed deletions.</param>
+        private async Task DeleteFileWithRetryAsync(string fileId, ConcurrentBag<string> failedDeletions)
         {
-            if (fileIds?.Any() != true)
+            try
             {
-                throw new ArgumentException("No file IDs provided for deletion.");
+                await _cosmosContainer.DeleteItemAsync<FileMetadata>(fileId, new PartitionKey(fileId));
+                Console.WriteLine($"File with ID {fileId} deleted successfully.", fileId);
             }
-            var tasks = new List<Task>();
-            var failedDeletions = new ConcurrentBag<string>();
-            foreach (var fileId in fileIds)
+            catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
             {
-                tasks.Add(Task.Run(async () =>
-                {
-                    try
-                    {
-                        await _cosmosContainer.DeleteItemAsync<FileMetadata>(fileId, new PartitionKey(fileId));
-                    }
-                    catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-                    {
-                        // Log that the item was not found but continue with the deletion of other items
-                        Console.WriteLine($"File with ID {fileId} not found. Skipping deletion.");
-                    }
-                    catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-                    {
-                        // Handle rate limiting by retrying after a delay
-                        Console.WriteLine($"Rate limited while deleting file ID {fileId}. Retrying after delay.");
-                        if (ex.RetryAfter.HasValue)
-                        {
-                            await Task.Delay(ex.RetryAfter.Value);
-                        }
-                        failedDeletions.Add(fileId);  // Track files that failed due to rate limiting
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error deleting file with ID {fileId}: {ex.Message}");
-                        failedDeletions.Add(fileId);  // Track files that failed due to other errors
-                    }
-                }));
+                Console.WriteLine($"Rate limit hit for ID {fileId}. Retrying after delay...", fileId);
+                await Task.Delay(ex.RetryAfter ?? TimeSpan.FromSeconds(1));
+                failedDeletions.Add(fileId);
             }
-            // Run all delete tasks in parallel
-            await Task.WhenAll(tasks);
+            catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                Console.WriteLine($"File with ID {fileId} not found. Skipping deletion.", fileId);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine($"Error deleting file with ID {fileId}", fileId);
+                failedDeletions.Add(fileId);
+            }
+        }
 
-            // Retry failed deletions (due to rate limiting or other transient errors)
+        /// <summary>
+        /// Deletes the file metadata from cosmos using file name asynchronous.
+        /// </summary>
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="folder">The folder.</param>
+        /// <returns></returns>
+        /// <exception cref="System.NotImplementedException"></exception>
+        public async Task DeleteFileByNameFromCosmosAsync(string fileName, string folder)
+        {
+            var query = new QueryDefinition("SELECT c.id FROM c WHERE c.FolderName = @folder AND c.FileName = @fileName")
+                .WithParameter("@folder", folder)
+                .WithParameter("@fileName", fileName);
+            try
+            {
+                using var feedIterator = _cosmosContainer.GetItemQueryIterator<dynamic>(query);
+                while (feedIterator.HasMoreResults)
+                {
+                    var items = await feedIterator.ReadNextAsync();
+                    var deleteTasks = items.Select(item => _cosmosContainer.DeleteItemAsync<FileMetadata>(item.id.ToString(), new PartitionKey(item.id.ToString())));
+                    await Task.WhenAll((IEnumerable<Task>)deleteTasks);
+                }
+
+                Console.WriteLine($"File(s) with name {fileName} in folder {folder} deleted successfully.", fileName, folder);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine($"Error deleting file by name {fileName} in folder {folder}", fileName, folder);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Deletes the bulk file metadata from cosmos asynchronous.
+        /// </summary>
+        /// <param name="files">The files.</param>
+        public async Task DeleteBulkFileMetadataFromCosmosAsync(IEnumerable<string> files)
+        {
+            var failedDeletions = new ConcurrentBag<string>();
+            var deleteTasks = files.Select(id => DeleteFileWithRetryAsync(id, failedDeletions));
+            await Task.WhenAll(deleteTasks);
             if (!failedDeletions.IsEmpty)
             {
-                Console.WriteLine("Retrying failed deletions...");
+                Console.WriteLine($"Retrying failed deletions for {failedDeletions.Count} files.", failedDeletions.Count);
                 foreach (var fileId in failedDeletions)
                 {
-                    try
-                    {
-                        await _cosmosContainer.DeleteItemAsync<FileMetadata>(fileId, new PartitionKey(fileId));
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Final attempt to delete file with ID {fileId} failed: {ex.Message}");
-                    }
+                    await DeleteFileWithRetryAsync(fileId, failedDeletions);
                 }
             }
         }

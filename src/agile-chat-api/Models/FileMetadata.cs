@@ -8,14 +8,8 @@
         /// <value>
         /// The identifier.
         /// </value>
-        public required string id { get; set; } // Unique identity identifier in Cosmos DB
-        /// <summary>
-        /// Gets or sets the file identifier.
-        /// </summary>
-        /// <value>
-        /// The file identifier.
-        /// </value>
-        public required Guid FileId { get; set; } // Unique identity identifier in Cosmos DB
+        public required string id { get; set; } // Unique identity identifier in Cosmos DB - Also referred in code as FileId
+
         /// <summary>
         /// Gets or sets the name of the file.
         /// </summary>

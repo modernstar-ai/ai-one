@@ -8,7 +8,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, MailIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import axios from 'axios';
-import  SidebarMenu from '@/components/Sidebar'
 import { useEffect, useState } from "react";
 
 function getApiUrl(endpoint: string): string {
@@ -58,20 +57,22 @@ export default function Component() {
         },
       });
       console.log(response);
-      if (response.status != 200) {
+      if (response.status === 200 && response.data) {
+        toast({
+          title: 'Success',
+          description: response.data, // Directly using response.data as the message
+          variant: 'default',
+        });
+
+        // Clear files after upload
+        setFiles([]);
+      } else {
         toast({
           title: 'Error',
           description: 'File upload failed.',
           variant: 'destructive',
         });
       }
-      toast({
-        title: 'Success',
-        description: 'Files uploaded successfully!',
-        variant: 'default',
-      });
-
-      setFiles([]); // Clear files after upload
     } catch (error) {
       // Check if the error is an instance of Error
       console.log(error);
