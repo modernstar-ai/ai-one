@@ -56,7 +56,7 @@ public static class ChatCompletionsEndpoint
             azureSearchApiKey?.Length == 0)
             return null;
 
-        #pragma warning disable AOAI001 //add data source is for evaluation purposes only 
+#pragma warning disable AOAI001 //add data source is for evaluation purposes only 
         var dataSource = new AzureSearchChatDataSource()
         {
             Endpoint = new Uri(aiSearchUri),
@@ -66,14 +66,14 @@ public static class ChatCompletionsEndpoint
         return dataSource;
     }
 
-    
+
     public static ChatClient? GetChatClient()
     {
         // Initialize the AzureOpenAIClient with DefaultAzureCredential
         //AzureOpenAIClient azureClient = new AzureOpenAIClient(
         //    new Uri("https://your-azure-openai-resource.com"),
         //    new DefaultAzureCredential());
-            
+
         var openAiEndpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
         var openAiApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
         var openAiDeploymentName = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_DEPLOYMENT_NAME");
@@ -95,14 +95,18 @@ public static class ChatCompletionsEndpoint
     }
     public static void MapChatCompletionsEndpoint(this IEndpointRouteBuilder app)
     {
-        
-        app.MapPost("/chatcompletions", async (HttpContext context) =>
+
+        app.MapPost("/chat", async (HttpContext context) =>
         {
             // Deserialize the incoming JSON payload into a list of ChatMessage objects
             var messages = await GetChatMessagesFromContext(context);
             if (messages == null || !messages.Any())
             {
-                return Results.BadRequest("No messages provided.");
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await context.Response.WriteAsync("No messages provided.");
+                await context.Response.Body.FlushAsync();
+                return;
+
             }
 
             // Set up the necessary headers for SSE
@@ -114,13 +118,14 @@ public static class ChatCompletionsEndpoint
             var chatClient = GetChatClient();
             if (chatClient == null)
             {
-                const string error = "OpenAI endpoint or API key is not set in environment variables."; 
+                const string error = "OpenAI endpoint or API key is not set in environment variables.";
                 //logger.LogError(error);
                 // context.Response.StatusCode = 500;
-                // await context.Response.WriteAsync(error);
-                return Results.BadRequest(error);
+                await context.Response.WriteAsync(error);                
+                await context.Response.Body.FlushAsync();
+                return;
             }
-            
+
             // Get the AOAI Messages from the JSON messages
             var oaiMessages = GetOaiChatMessages(messages);
 
@@ -144,10 +149,12 @@ public static class ChatCompletionsEndpoint
                 }
             }
 
+            // Close the response stream
+            context.Response.Body.Close();
+
             //not required when streaming. it will cause an error
             //return Results.Ok();
-
-            return null;
+            //return null;
         }).RequireAuthorization();
     }
 

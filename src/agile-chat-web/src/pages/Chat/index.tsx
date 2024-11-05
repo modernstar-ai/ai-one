@@ -49,7 +49,7 @@ const ChatPage = () => {
       console.log('messages:', messages);
 
       // Establish an SSE connection for the bot's response
-      const apiUrl = getApiUri('chatcompletions' );
+      const apiUrl = getApiUri('chat' );
 
       axios
         .post(apiUrl,  newMessages, {
