@@ -1,11 +1,33 @@
+using System.Text.Json.Nodes;
+using agile_chat_api.Services;
 using Azure.Storage.Blobs;
-using System.Runtime.InteropServices;
+using Microsoft.AspNetCore.Mvc;
+
+namespace agile_chat_api.Endpoints;
 
 public static class FileEndpoints
 {
     public static void MapFileEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapPost("webhook", async (HttpContext context, [FromServices] IAzureAiSearchService azureAiSearchService, [FromBody] JsonNode body) =>
+        {
+            //Validate the webhook handshake
+            var eventType = context.Request.Headers["aeg-event-type"].ToString();
+            var key = context.Request.Headers["key"].ToString();
+            if (string.IsNullOrWhiteSpace(eventType) || string.IsNullOrWhiteSpace(key) ||
+                key != Environment.GetEnvironmentVariable("AZURE_STORAGE_EVENT_GRID_WEBHOOK_KEY"))
+                return Results.Unauthorized();
 
+            if (eventType == "SubscriptionValidation")
+            {
+                var code = body?.AsArray().FirstOrDefault()?["data"]?["validationCode"]?.ToString();
+                return Results.Ok(new { validationResponse = code });
+            }
+            
+            var success = await azureAiSearchService.RunIndexer(AzureAiSearchService.FOLDERS_INDEX_NAME);
+            return  success ? Results.Ok() : Results.BadRequest();   
+        });
+        
         app.MapPost("/upload", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken] async (IFormFileCollection files) =>
         {
             var connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_ACCOUNT_CONNECTION");

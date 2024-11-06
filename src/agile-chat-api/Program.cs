@@ -1,5 +1,7 @@
+using agile_chat_api.Endpoints;
 using agile_chat_api.Utils;
 using agile_chat_api.Extensions;
+using agile_chat_api.Services;
 using Azure.AI.OpenAI;
 using Azure.Identity;
 using DotNetEnv;
@@ -27,6 +29,7 @@ builder.Services.AddSingleton(s => new CosmosClient(cosmosDbUri, cosmosDbKey));
 builder.Services.AddSingleton<IToolService, ToolService>();
 builder.Services.AddSingleton<IAssistantService, AssistantService>();
 builder.Services.AddSingleton<IPersonaService, PersonaService>();
+builder.Services.AddSingleton<IAzureAiSearchService, AzureAiSearchService>();
 
 // Register ConsoleLogger
 builder.Services.AddSingleton<ILogger>(s => new ConsoleLogger("ConsoleLogger", LogLevel.Debug));
