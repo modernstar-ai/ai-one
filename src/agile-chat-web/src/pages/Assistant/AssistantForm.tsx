@@ -18,7 +18,11 @@ import { useToast } from '@/components/ui/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice';
-import { Assistant, AssistantStatus, AssistantType } from '@/types/Assistant';
+import { Assistant, AssistantStatus, AssistantType, Tools } from '@/types/Assistant';
+
+import { MultiToolSettingsDropdownInput } from '@/components/MultiToolSelector';
+import { fetchTools } from '@/services/toolservice';
+import { Tool } from '@/types/Tool';
 
 //todo: replace with server side implementation
 const generateGuid = () => {
@@ -41,10 +45,15 @@ const formSchema = z.object({
   temperature: z.number(),
   documentLimit: z.number(),
   status: z.nativeEnum(AssistantStatus),
+  tools: z.array(
+    z.object({
+      toolId: z.string(),
+      toolName: z.string(),
+    })
+  ), // Updated to match the expected structure of tools
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
 export default function AssistantForm() {
   const [searchParams] = useSearchParams();
   const fileId = searchParams.get('id');
@@ -55,6 +64,37 @@ export default function AssistantForm() {
   });
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const [selectedToolIds, setSelectedToolIds] = useState<Set<string>>(new Set());
+  const [tools, setTools] = useState<Tool[]>([]);
+  // Fetch tool items for drop down
+  const getTools = async () => {
+    try {
+      const response = await fetchTools(); // Call the service to fetch tools
+      if (response) {
+        // Sort tools alphabetically by name
+        const sortedTools = response.sort((a, b) => a.name.localeCompare(b.name));
+        console.log('Fetched tools:', sortedTools);
+        setTools(sortedTools); // Set the sorted tools into state
+      }
+    } catch (error) {
+      console.error('Failed to fetch tools:', error);
+    }
+  };
+
+  // Fetch tools when the component mounts
+  useEffect(() => {
+    getTools(); // Call getTools when component mounts
+  }, []);
+
+  // Helper function to construct tools array from selected tool IDs
+  const constructToolsArray = (): Tools[] => {
+    return Array.from(selectedToolIds).map((toolId) => {
+      const tool = tools.find((t) => t.id === toolId);
+      return tool ? { toolId: tool.id, toolName: tool.name } : { toolId: '', toolName: '' };
+    });
+  };
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -69,6 +109,7 @@ export default function AssistantForm() {
       temperature: 0.7,
       documentLimit: 5,
       status: AssistantStatus.Draft,
+      tools: [], // Default value for tools
     },
   });
 
@@ -94,8 +135,16 @@ export default function AssistantForm() {
             temperature: file.temperature,
             documentLimit: file.documentLimit,
             status: file.status,
+            tools: file.tools, // Set tools to pre-populate
           });
           setTemperature(file.temperature);
+
+          // Set the selected tools in state to pre-populate the dropdown
+          if (file.tools && file.tools.length > 0) {
+            const toolIds = file.tools.map((tool) => tool.toolId);
+            setSelectedToolIds(new Set(toolIds));
+          }
+
           const statusValue1 = form.getValues('status');
           console.log('Current status value 1:', statusValue1);
           form.setValue('status', file.status);
@@ -125,13 +174,26 @@ export default function AssistantForm() {
     loadTool();
   }, [fileId, form, toast]);
 
+  useEffect(() => {
+    // Map selected tool IDs to their corresponding objects with toolId and toolName
+    const toolsArray = Array.from(selectedToolIds).map((toolId) => {
+      const tool = tools.find((t) => t.id === toolId);
+      return tool ? { toolId: tool.id, toolName: tool.name } : { toolId: '', toolName: '' };
+    });
+
+    // Set the tools value in the form
+    form.setValue('tools', toolsArray);
+  }, [selectedToolIds, tools, form]);
+
+
   // Form submit handler
   const onSubmit = async (values: FormValues) => {
     console.log('Assistant onSubmit', values);
     setIsSubmitting(true);
     try {
       const now = new Date().toISOString();
-
+      // Construct tools array from selected tool IDs
+      const toolsArray = constructToolsArray();
       const fileData: Assistant = {
         id: fileId || generateGuid(),
         name: values.name,
@@ -148,6 +210,7 @@ export default function AssistantForm() {
         createdBy: 'adam@stephensen.me',
         updatedAt: now,
         updatedBy: 'adam@stephensen.me',
+        tools: toolsArray, // Pass the constructed tools array
       };
       console.log('Assistant Submit filedata', fileData);
 
@@ -331,6 +394,29 @@ export default function AssistantForm() {
                               onChange={(e) => field.onChange(Number(e.target.value))} // Convert to number
                             />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Add the Dropdown above the temperature field */}
+                    <FormField
+                      control={form.control}
+                      name="folder"
+                      render={() => (
+                        <FormItem className="font-sans text-foreground">
+                          <div className="mb-2">
+                            <FormLabel className='text-base mx-2'>Add Functionalities to the Bots</FormLabel>
+                          </div>
+                          <div className="mb-4">
+                            <FormLabel className='text-sm mx-2'> Select Tools </FormLabel>
+                          </div>
+
+                          <MultiToolSettingsDropdownInput
+                            tools={tools} // Pass the tools with both id and name
+                            selectedToolIds={selectedToolIds}
+                            setSelectedToolIds={setSelectedToolIds}
+                          />
                           <FormMessage />
                         </FormItem>
                       )}

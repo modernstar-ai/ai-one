@@ -51,6 +51,7 @@ export async function createAssistant(
       temperature: newAssistant.temperature,
       documentLimit: newAssistant.documentLimit,
       status: newAssistant.status,
+      tools: newAssistant.tools, // Add the tools field here
       createdAt: new Date().toISOString(),
       createdBy: "adam@stephensen.me",
       updatedAt: new Date().toISOString(),
@@ -84,12 +85,13 @@ export async function updateAssistant(
       temperature: updatedAssistant.temperature,
       documentLimit: updatedAssistant.documentLimit,
       status: updatedAssistant.status,
+      tools: updatedAssistant.tools, // Add the tools field here
       createdAt: updatedAssistant.createdAt,
       createdBy: updatedAssistant.createdBy,
       updatedAt: new Date().toISOString(),
       updatedBy: "adam@stephensen.me",
-    };
 
+    };
     const response = await axios.put<Assistant>(apiUrl, assistantData, {
       headers: {
         "Content-Type": "application/json",

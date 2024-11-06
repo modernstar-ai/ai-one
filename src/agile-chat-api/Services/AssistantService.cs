@@ -116,7 +116,7 @@ public class AssistantService : IAssistantService
             existingAssistant.Temperature = assistant.Temperature;
             existingAssistant.DocumentLimit = assistant.DocumentLimit;
             existingAssistant.UpdatedAt = DateTime.UtcNow;
-
+            existingAssistant.Tools = assistant.Tools;
             try
             {
                 await _container.ReplaceItemAsync(existingAssistant, assistant.Id.ToString(),
