@@ -1,7 +1,9 @@
+import { MultiSelectInput } from '@/components/ui-extended/multi-select';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useFolders } from '@/hooks/use-folders';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -53,6 +55,8 @@ const files = [
 
 export default function FileList() {
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
+  const { folders } = useFolders();
+  const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
 
   const toggleFileSelection = (fileId: number) => {
     setSelectedFiles((prev) => (prev.includes(fileId) ? prev.filter((id) => id !== fileId) : [...prev, fileId]));
@@ -75,16 +79,13 @@ export default function FileList() {
             </SelectContent>
           </Select>
 
-          <Select>
-            <SelectTrigger className="w-[180px]" aria-label="Select Folder">
-              <SelectValue placeholder="Select Folder" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="folder1">Folder 1</SelectItem>
-              <SelectItem value="folder2">Folder 2</SelectItem>
-              <SelectItem value="folder3">Folder 3</SelectItem>
-            </SelectContent>
-          </Select>
+          <MultiSelectInput
+            className="w-[30%] max-w-[500px]"
+            label="Folders"
+            items={folders?.map((folder) => folder.name)}
+            selectedItems={selectedFolders}
+            setSelectedItems={setSelectedFolders}
+          />
         </div>
 
         <div className="flex justify-between items-center mb-4">

@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, MailIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import axios from '@/error-handling/axiosSetup';
+import { useFolders } from '@/hooks/use-folders';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -75,6 +76,8 @@ export default function Component() {
   };
 
   const [files, setFiles] = React.useState<File[]>([]);
+  const { folders } = useFolders();
+
   const [progresses] = React.useState<Record<string, number>>({});
 
   const maxFileCount = 5; // Maximum number of files allowed
@@ -122,7 +125,6 @@ export default function Component() {
 
   return (
     <div className="flex h-screen bg-white-100">
-
       {/* Main Content */}
       <main className="flex-1 p-8" role="main">
         <header className="mb-8 text-center" role="banner">
@@ -166,9 +168,12 @@ export default function Component() {
                 <SelectValue placeholder="Select Folder" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="folder1">Folder 1</SelectItem>
-                <SelectItem value="folder2">Folder 2</SelectItem>
-                <SelectItem value="folder3">Folder 3</SelectItem>
+                {folders &&
+                  folders.map((folder, index) => (
+                    <SelectItem key={folder.name + index} value={folder.name}>
+                      {folder.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>

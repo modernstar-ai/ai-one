@@ -19,6 +19,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice';
 import { Assistant, AssistantStatus, AssistantType } from '@/types/Assistant';
+import { MultiSelectInput } from '@/components/ui-extended/multi-select';
+import { useFolders } from '@/hooks/use-folders';
 
 //todo: replace with server side implementation
 const generateGuid = () => {
@@ -37,7 +39,7 @@ const formSchema = z.object({
   greeting: z.string(),
   systemMessage: z.string(),
   group: z.string().optional(),
-  folder: z.string().optional(),
+  folder: z.array(z.string()),
   temperature: z.number(),
   documentLimit: z.number(),
   status: z.nativeEnum(AssistantStatus),
@@ -55,6 +57,7 @@ export default function AssistantForm() {
   });
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { folders } = useFolders();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -65,7 +68,7 @@ export default function AssistantForm() {
       greeting: '',
       systemMessage: '',
       group: '',
-      folder: '',
+      folder: [],
       temperature: 0.7,
       documentLimit: 5,
       status: AssistantStatus.Draft,
@@ -90,7 +93,7 @@ export default function AssistantForm() {
             greeting: file.greeting || '',
             systemMessage: file.systemMessage || '',
             group: file.group || '',
-            folder: file.folder || '',
+            folder: file.folder || [],
             temperature: file.temperature,
             documentLimit: file.documentLimit,
             status: file.status,
@@ -305,9 +308,17 @@ export default function AssistantForm() {
                       name="folder"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Folder</FormLabel>
+                          <FormLabel>Folders</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="" />
+                            <div>
+                              <MultiSelectInput
+                                className="w-full"
+                                items={folders?.map((folder) => folder.name)}
+                                selectedItems={field.value}
+                                setSelectedItems={(values: string[]) => (field.value = values)}
+                                {...field}
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>

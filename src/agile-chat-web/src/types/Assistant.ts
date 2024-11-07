@@ -17,7 +17,7 @@ export type Assistant = {
   greeting: string;
   systemMessage: string;
   group?: string;
-  folder?: string;
+  folder?: string[];
   temperature: number;
   documentLimit: number;
   status: AssistantStatus;

@@ -1,23 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAssistants, deleteAssistant } from '../services/assistantservice';
 import { AssistantType, Assistant as BaseAssistant } from '../types/Assistant';
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,16 +15,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Pencil, Trash2, Loader2, Info, FileSearch, MessageSquare } from 'lucide-react';
-import { toast } from "@/components/ui/use-toast";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { toast } from '@/components/ui/use-toast';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type Assistant = Omit<BaseAssistant, 'status'> & {
   status: string | number;
@@ -61,9 +43,9 @@ const AssistantsComponent: React.FC = () => {
       } catch (error) {
         console.error('Failed to fetch assistants:', error);
         toast({
-          title: "Error",
-          description: "Failed to load assistants. Please try again later.",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to load assistants. Please try again later.',
+          variant: 'destructive',
         });
       } finally {
         setIsLoading(false);
@@ -73,7 +55,6 @@ const AssistantsComponent: React.FC = () => {
   }, []);
 
   const handleEditAssistant = (id: string) => {
-
     navigate(`/assistant?id=${id}`);
   };
 
@@ -89,7 +70,7 @@ const AssistantsComponent: React.FC = () => {
         if (success) {
           setAssistants((prevAssistants) => prevAssistants.filter((t) => t.id !== assistantToDelete.id));
           toast({
-            title: "Success",
+            title: 'Success',
             description: `Assistant "${assistantToDelete.name}" has been deleted.`,
           });
         } else {
@@ -98,9 +79,9 @@ const AssistantsComponent: React.FC = () => {
       } catch (error) {
         console.error('Failed to delete assistant:', error);
         toast({
-          title: "Error",
-          description: "Failed to delete the assistant. Please try again later.",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to delete the assistant. Please try again later.',
+          variant: 'destructive',
         });
       } finally {
         setIsDeleting(false);
@@ -162,12 +143,11 @@ const AssistantsComponent: React.FC = () => {
             <Table aria-label="Available Assistants">
               <TableHeader>
                 <TableRow>
-                <TableHead className="w-[100px]">Actions</TableHead>
-                <TableHead className="w-[250px]">Name</TableHead>
-                <TableHead className="w-[40px]">Status</TableHead>
+                  <TableHead className="w-[100px]">Actions</TableHead>
+                  <TableHead className="w-[250px]">Name</TableHead>
+                  <TableHead className="w-[40px]">Status</TableHead>
                   <TableHead className="w-[200px]">Type</TableHead>
                   <TableHead className="w-[500px]">Description</TableHead>
-                 
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -218,8 +198,8 @@ const AssistantsComponent: React.FC = () => {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the
-                                assistant "{assistantToDelete?.name}" and remove it from our servers.
+                                This action cannot be undone. This will permanently delete the assistant "
+                                {assistantToDelete?.name}" and remove it from our servers.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter className="flex-col items-stretch sm:flex-row sm:justify-start sm:space-x-2">
@@ -259,10 +239,8 @@ const AssistantsComponent: React.FC = () => {
                         </Tooltip>
                       </TooltipProvider>
                     </TableCell> */}
-                  
-                
+
                     <TableCell className="font-medium">{assistant.description}</TableCell>
-                    
                   </TableRow>
                 ))}
               </TableBody>

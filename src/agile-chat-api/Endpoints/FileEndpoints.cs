@@ -9,7 +9,9 @@ public static class FileEndpoints
 {
     public static void MapFileEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("webhook", async (HttpContext context, [FromServices] IAzureAiSearchService azureAiSearchService, [FromBody] JsonNode body) =>
+        var api = app.MapGroup("api/file");
+        
+        api.MapPost("webhook", async (HttpContext context, [FromServices] IAzureAiSearchService azureAiSearchService, [FromBody] JsonNode body) =>
         {
             //Validate the webhook handshake
             var eventType = context.Request.Headers["aeg-event-type"].ToString();
@@ -25,8 +27,14 @@ public static class FileEndpoints
             }
             
             var success = await azureAiSearchService.RunIndexer(AzureAiSearchService.FOLDERS_INDEX_NAME);
-            return  success ? Results.Ok() : Results.BadRequest();   
+            return  success ? Results.Ok() : Results.BadRequest();
         });
+        
+        api.MapGet("folders", async ([FromServices] IBlobStorageService blobStorageService) =>
+        {
+            var folders = await blobStorageService.GetHighLevelFolders(BlobStorageService.FOLDERS_CONTAINER_NAME);
+            return Results.Ok(folders);
+        }).RequireAuthorization();
         
         app.MapPost("/upload", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken] async (IFormFileCollection files) =>
         {
