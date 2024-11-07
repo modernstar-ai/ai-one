@@ -313,10 +313,10 @@ export default function AssistantForm() {
                             <div>
                               <MultiSelectInput
                                 className="w-full"
-                                items={folders?.map((folder) => folder.name)}
+                                items={folders}
                                 selectedItems={field.value}
-                                setSelectedItems={(values: string[]) => (field.value = values)}
                                 {...field}
+                                onChange={(values: string[]) => field.onChange(values)}
                               />
                             </div>
                           </FormControl>

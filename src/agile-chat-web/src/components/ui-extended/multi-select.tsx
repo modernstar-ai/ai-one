@@ -8,7 +8,7 @@ interface IChatThreadSettingsProps {
   label?: string;
   items?: readonly string[];
   selectedItems: string[];
-  setSelectedItems: (items: string[]) => void;
+  onChange: (items: string[]) => void;
   className?: string;
 }
 
@@ -18,11 +18,11 @@ export const MultiSelectInput = React.forwardRef<
   HTMLInputElement,
   MultiSelectInputInputProps
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
->(({ label, items, selectedItems, setSelectedItems, className, ...props }, _ref) => {
+>(({ label, items, selectedItems, onChange, className, ...props }, _ref) => {
   useEffect(() => {
     if (items) {
       const set = new Set(Array.from(selectedItems).filter((oldFolder) => items.includes(oldFolder)));
-      setSelectedItems(Array.from(set));
+      onChange(Array.from(set));
     }
   }, [items]);
 
@@ -34,14 +34,14 @@ export const MultiSelectInput = React.forwardRef<
     } else {
       newArr = newArr.filter((x) => x !== folder);
     }
-    setSelectedItems(newArr);
+    onChange(newArr);
   };
 
   return (
     <DropdownMenu {...props}>
       <DropdownMenuTrigger className={`border rounded-md ${className}`}>
         {selectedItems.length > 0 ? (
-          <div className="flex w-full flex-wrap">
+          <div className="flex w-full flex-wrap p-2">
             {Array.from(selectedItems).map((item) => {
               return (
                 <Badge variant="outline" key={item}>
@@ -52,7 +52,7 @@ export const MultiSelectInput = React.forwardRef<
           </div>
         ) : (
           <div className="flex w-full">
-            <p className="p-2">Select {label ? label : 'items'}</p>
+            <p className="text-sm p-2">Select {label ? label : 'items'}</p>
           </div>
         )}
       </DropdownMenuTrigger>

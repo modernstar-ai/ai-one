@@ -170,8 +170,8 @@ export default function Component() {
               <SelectContent>
                 {folders &&
                   folders.map((folder, index) => (
-                    <SelectItem key={folder.name + index} value={folder.name}>
-                      {folder.name}
+                    <SelectItem key={folder + index} value={folder}>
+                      {folder}
                     </SelectItem>
                   ))}
               </SelectContent>

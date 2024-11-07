@@ -82,9 +82,9 @@ export default function FileList() {
           <MultiSelectInput
             className="w-[30%] max-w-[500px]"
             label="Folders"
-            items={folders?.map((folder) => folder.name)}
+            items={folders}
             selectedItems={selectedFolders}
-            setSelectedItems={setSelectedFolders}
+            onChange={setSelectedFolders}
           />
         </div>
 

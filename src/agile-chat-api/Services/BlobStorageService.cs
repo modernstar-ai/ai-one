@@ -30,7 +30,7 @@ public class BlobStorageService : IBlobStorageService
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
         var delimiter = "/";
 
-        var results = containerClient.GetBlobsByHierarchyAsync(prefix: delimiter);
+        var results = containerClient.GetBlobsByHierarchyAsync(delimiter: delimiter);
         var folders = new List<string>();
 
         await foreach (var result in results)
