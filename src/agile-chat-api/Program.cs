@@ -1,9 +1,6 @@
 using agile_chat_api.Endpoints;
-using agile_chat_api.Utils;
 using agile_chat_api.Extensions;
 using agile_chat_api.Services;
-using Azure.AI.OpenAI;
-using Azure.Identity;
 using DotNetEnv;
 using Microsoft.Azure.Cosmos;
 
@@ -33,7 +30,7 @@ builder.Services.AddSingleton<IAzureAiSearchService, AzureAiSearchService>();
 builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 
 // Register ConsoleLogger
-builder.Services.AddSingleton<ILogger>(s => new ConsoleLogger("ConsoleLogger", LogLevel.Debug));
+builder.Services.AddLogging();
 
 // Define the CORS policy with allowed origins
 // Load allowed origins from environment variables or use default values

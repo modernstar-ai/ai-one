@@ -4,31 +4,31 @@ using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace agile_chat_api.Endpoints;
-
+public class FileEndpointsLogger{}
 public static class FileEndpoints
 {
     public static void MapFileEndpoints(this IEndpointRouteBuilder app)
     {
         var api = app.MapGroup("api/file");
         
-        api.MapPost("webhook", async (HttpContext context, [FromServices] IAzureAiSearchService azureAiSearchService, [FromBody] JsonNode body) =>
+        api.MapPost("webhook", async (HttpContext context, [FromServices] IAzureAiSearchService azureAiSearchService, [FromBody] JsonNode body, ILogger<FileEndpointsLogger> logger) =>
         {
+            logger.LogInformation("Validated Authorization for web hook");
             //Validate the webhook handshake
             var eventType = context.Request.Headers["aeg-event-type"].ToString();
-            var key = context.Request.Headers["key"].ToString();
-            if (string.IsNullOrWhiteSpace(eventType) || string.IsNullOrWhiteSpace(key) ||
-                key != Environment.GetEnvironmentVariable("AZURE_STORAGE_EVENT_GRID_WEBHOOK_KEY"))
-                return Results.Unauthorized();
+            logger.LogInformation("Fetched aeg-event-type {EventType}", eventType);
 
             if (eventType == "SubscriptionValidation")
             {
                 var code = body?.AsArray().FirstOrDefault()?["data"]?["validationCode"]?.ToString();
+                logger.LogInformation("Fetched validation code {Code}", code);
+                
                 return Results.Ok(new { validationResponse = code });
             }
             
             var success = await azureAiSearchService.RunIndexer(AzureAiSearchService.FOLDERS_INDEX_NAME);
             return  success ? Results.Ok() : Results.BadRequest();
-        });
+        }).RequireAuthorization();
         
         api.MapGet("folders", async ([FromServices] IBlobStorageService blobStorageService) =>
         {

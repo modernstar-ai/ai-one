@@ -1,6 +1,5 @@
 using Azure;
 using Azure.Search.Documents.Indexes;
-using Microsoft.Azure.Cosmos;
 
 namespace agile_chat_api.Services;
 

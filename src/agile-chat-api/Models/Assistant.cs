@@ -42,7 +42,7 @@ public class Assistant
 
     
     public string? Group { get; set; }
-    public string? Folder { get; set; }
+    public List<string> Folder { get; set; } = new();
     public decimal Temperature { get; set; }
     public int DocumentLimit { get; set; }  
     
