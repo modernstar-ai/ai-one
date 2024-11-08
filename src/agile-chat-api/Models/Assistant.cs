@@ -26,8 +26,6 @@ public class Assistant
     /// <summary>
     /// Type of the assistant
     /// </summary>
-    //Note: this will return the text value rather than the int value
-    //[System.Text.Json.Serialization.JsonConverter(typeof(JsonStringEnumConverter))]
     public AssistantType Type { get; set; } = AssistantType.Chat;
 
     /// <summary>
@@ -36,14 +34,15 @@ public class Assistant
     public string Greeting { get; set; } = string.Empty;
 
     /// <summary>
-    /// The System Message to control the assistants behaviour
+    /// The System Message to control the assistants behavior
     /// </summary>
     public string SystemMessage { get; set; } = String.Empty;
 
 
     public string? Group { get; set; }
-    public string? Folder { get; set; }
+    public List<string>? Folder { get; set; }
     public decimal Temperature { get; set; }
+    public decimal TopP { get; set; }
     public int DocumentLimit { get; set; }
 
     /// <summary>
