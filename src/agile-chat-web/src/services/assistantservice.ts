@@ -49,6 +49,7 @@ export async function createAssistant(
       group: newAssistant.group,
       folder: newAssistant.folder,
       temperature: newAssistant.temperature,
+      topP: newAssistant.topP,
       documentLimit: newAssistant.documentLimit,
       status: newAssistant.status,
       tools: newAssistant.tools, // Add the tools field here
@@ -83,6 +84,7 @@ export async function updateAssistant(
       group: updatedAssistant.group,
       folder: updatedAssistant.folder,
       temperature: updatedAssistant.temperature,
+      topP: updatedAssistant.topP,
       documentLimit: updatedAssistant.documentLimit,
       status: updatedAssistant.status,
       tools: updatedAssistant.tools, // Add the tools field here
