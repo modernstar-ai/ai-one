@@ -79,13 +79,29 @@ namespace Services
         /// <exception cref="System.NotImplementedException"></exception>
         private async Task<Container> EnsureCosmosContainerExists()
         {
-            var database = await _cosmosClient.CreateDatabaseIfNotExistsAsync(Config.CosmosDBName);
-            ContainerResponse containerResponse = await database.Database.CreateContainerIfNotExistsAsync(new ContainerProperties
+            try
             {
-                Id = Config.FileContainerName,
-                PartitionKeyPath = Constants.FileContainerPartitionKeyPath
-            });
-            return containerResponse.Container;
+                var dbName = Config.CosmosDBName;
+                var database = await _cosmosClient.CreateDatabaseIfNotExistsAsync(dbName);
+                ContainerResponse containerResponse = await database.Database.CreateContainerIfNotExistsAsync(new ContainerProperties
+                {
+                    Id = Config.FileContainerName,
+                    PartitionKeyPath = Constants.FileContainerPartitionKeyPath
+                });
+
+                if (containerResponse == null)
+                {
+                    Console.WriteLine("ContainerResponse is null.");
+                    throw new InvalidOperationException("Failed to create or retrieve the container.");
+                }
+
+                return containerResponse.Container;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error ensuring Cosmos container exists: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>

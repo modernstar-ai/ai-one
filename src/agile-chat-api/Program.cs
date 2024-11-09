@@ -1,10 +1,10 @@
+using System.Text.Json;
 using agile_chat_api.Utils;
 using agile_chat_api.Extensions;
-using Azure.AI.OpenAI;
-using Azure.Identity;
 using DotNetEnv;
 using Microsoft.Azure.Cosmos;
 using Services;
+using System.Text.Json.Serialization;
 
 // Load environment variables for OpenAI Endpoint and Cosmos DB access
 DotNetEnv.Env.Load();
@@ -23,6 +23,13 @@ if (string.IsNullOrEmpty(cosmosDbUri) || string.IsNullOrEmpty(cosmosDbKey))
 builder.Services.AddAzureAdAuth();
 // Register CosmosClient as a singleton
 builder.Services.AddSingleton(s => new CosmosClient(cosmosDbUri, cosmosDbKey));
+
+// Configure Json serialization options
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip; // Allows comments
+    options.JsonSerializerOptions.AllowTrailingCommas = true; // Allows trailing commas
+});
 
 // Add services to the container
 builder.Services.AddSingleton<ICosmosService, CosmosService>();
