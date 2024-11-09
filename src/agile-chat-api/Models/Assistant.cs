@@ -17,7 +17,7 @@ public class Assistant
     /// Name of the assistant
     /// </summary>
     public string Name { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Optional description of the assistant
     /// </summary>
@@ -28,8 +28,8 @@ public class Assistant
     /// </summary>
     //Note: this will return the text value rather than the int value
     //[System.Text.Json.Serialization.JsonConverter(typeof(JsonStringEnumConverter))]
-    public AssistantType Type { get; set; } = AssistantType.Chat; 
-    
+    public AssistantType Type { get; set; } = AssistantType.Chat;
+
     /// <summary>
     /// The welcome message displayed by the assistant
     /// </summary>
@@ -40,19 +40,29 @@ public class Assistant
     /// </summary>
     public string SystemMessage { get; set; } = String.Empty;
 
-    
+
     public string? Group { get; set; }
     public string? Folder { get; set; }
     public decimal Temperature { get; set; }
-    public int DocumentLimit { get; set; }  
-    
+    public int DocumentLimit { get; set; }
+
     /// <summary>
     /// Current status of the assistant
     /// </summary>
     public AssistantStatus Status { get; set; }
-    
-    public DateTime CreatedAt { get; set; }  
+
+    public DateTime CreatedAt { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public DateTime UpdatedAt { get; set; }
     public string UpdatedBy { get; set; } = string.Empty;
+
+    public List<Tools> Tools { get; set; } = [];
+}
+public class Tools
+{
+    [JsonPropertyName("toolId")]
+    public string ToolId { get; set; } = string.Empty;
+
+    [JsonPropertyName("toolName")]
+    public string ToolName { get; set; } = string.Empty;
 }
