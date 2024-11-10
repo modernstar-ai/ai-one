@@ -43,7 +43,9 @@ builder.Services.AddSingleton<IAzureAiSearchService, AzureAiSearchService>();
 builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 
 // Register ConsoleLogger
-builder.Services.AddLogging();
+//builder.Services.AddLogging(); //todo: re-enable
+builder.Services.AddSingleton<ILogger>(_ => new ConsoleLogger("ConsoleLogger", LogLevel.Debug));
+
 
 // Define the CORS policy with allowed origins
 // Load allowed origins from environment variables or use default values

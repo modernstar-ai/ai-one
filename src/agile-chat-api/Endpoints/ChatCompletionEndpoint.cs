@@ -41,10 +41,10 @@ public static class ChatCompletionsEndpoint
             ChatCompletionOptions options = new ChatCompletionOptions();
 
             //configure RAG
-            var indexName = "gptkbindex";
-            var dataSource = ChatService.GetChatCompletionOptionsDataSource(indexName);
-#pragma warning disable AOAI001
-            options.AddDataSource(dataSource);
+//             var indexName = "gptkbindex";
+//             var dataSource = ChatService.GetChatCompletionOptionsDataSource(indexName);
+// #pragma warning disable AOAI001
+//             options.AddDataSource(dataSource);
 
             // Get the AOAI Messages from the JSON messages
             var oaiMessages = ChatService.GetOaiChatMessages(messages);
@@ -63,7 +63,7 @@ public static class ChatCompletionsEndpoint
                         if (!string.IsNullOrEmpty(content))
                         {
                             // Send each chunk of the response to the client as an SSE event
-                            await context.Response.WriteAsync($"data: {content}\n\n");
+                            await context.Response.WriteAsync(content);
                             await context.Response.Body.FlushAsync();
                         }
                     }
