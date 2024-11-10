@@ -1,0 +1,83 @@
+name: Azure Infrastructure Deployment
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: The reason for running the workflow
+        required: false
+        default: Manual run
+      environment:
+        description: "Deployment environment"
+        required: true
+        type: choice
+        default: "development"
+        options:
+          - development
+          - staging
+          - production
+# on:
+#   push:
+#     branches:
+#       - main
+
+# Set up permissions for deploying with secretless Azure federated credentials
+# https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  infra-deploy:
+    runs-on: ubuntu-latest
+    environment: development
+
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AZURE_BICEP_PARAMS: ${{ vars.AZURE_BICEP_PARAMS }}
+      AZURE_BICEP_MAIN: "./infra/main.bicep"
+      AZURE_BICEP_OUTPUT: "./infra/main.json"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Lint and Prep Bicep
+        uses: azure/cli@v2
+        with:
+          azcliversion: 2.64.0
+          inlineScript: |
+            tdnf install -y icu
+            tdnf install -y jq
+            az bicep install
+            #az bicep build --file ${{ env.AZURE_BICEP_MAIN }}
+
+        ##https://techcommunity.microsoft.com/t5/azure-tools-blog/azure-cli-docker-container-base-linux-image-is-now-azure-linux/ba-p/4236248
+      - name: Deploy Bicep to Azure
+        uses: azure/cli@v2
+        with:
+          azcliversion: 2.64.0
+          inlineScript: |
+            az account set --subscription ${{ vars.AZURE_SUBSCRIPTION_ID }}
+            az deployment sub create --location ${{ vars.AZURE_LOCATION }} --template-file ${{ env.AZURE_BICEP_OUTPUT }} --parameters "./infra/${{ vars.AZURE_BICEP_PARAMS }}"
+
+            # # Set deployment name
+            # echo "today=$(date +"%d-%b-%Y")" >> $GITHUB_ENV
+            # deploymentName="sub-dep-"${{ vars.AZURE_ENV_NAME }}-${{ env.today }}
+
+            #--name $deploymentName \`
+            # Deploy template with parameters
+            # az deployment sub create \
+            # --location ${{ vars.AZURE_LOCATION }} \
+            # --template-file ${{ env.AZURE_BICEP_OUTPUT }} \
+            # --parameters "./infra/${{ vars.AZURE_BICEP_PARAMS }}"
