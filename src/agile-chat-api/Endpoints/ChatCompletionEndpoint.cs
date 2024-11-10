@@ -1,78 +1,67 @@
-using Azure.Identity;
-using Azure.AI.OpenAI;
-using Microsoft.AspNetCore.Http;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using OpenAI.Chat;
 using System.ClientModel;
-using Azure;
-using DotNetEnv;
-using static System.Net.WebRequestMethods;
+using agile_chat_api.Services;
+using Azure.AI.OpenAI.Chat;
+using Microsoft.AspNetCore.Mvc;
 
-    public static class ChatCompletionsEndpoint
+public static class ChatCompletionsEndpoint
+{
+    public static void MapChatCompletionsEndpoint(this IEndpointRouteBuilder app)
     {
-        public static void MapChatCompletionsEndpoint(this IEndpointRouteBuilder app)
+        app.MapPost("/chat", async (HttpContext context) =>
         {
-            // Map the GET endpoint for SSE-based streaming
-            app.MapGet("/chatcompletions", async (HttpContext context, string prompt) =>
+            // Deserialize the incoming JSON payload into a list of ChatMessage objects
+            var messages = await ChatService.GetChatMessagesFromContext(context);
+            if (messages == null || !messages.Any())
             {
-                if (string.IsNullOrEmpty(prompt))
-                {
-                    context.Response.StatusCode = 400;
-                    await context.Response.WriteAsync("Prompt is required.");
-                    return;
-                }
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await context.Response.WriteAsync("No messages provided.");
+                await context.Response.Body.FlushAsync();
+                return;
+            }
 
                 // Set up the necessary headers for SSE
                 context.Response.Headers.ContentType = "text/event-stream";
                 context.Response.Headers.CacheControl = "no-cache";
                 context.Response.Headers.Connection = "keep-alive";
 
-                // Initialize the AzureOpenAIClient with DefaultAzureCredential
-                //AzureOpenAIClient azureClient = new AzureOpenAIClient(
-                //    new Uri("https://your-azure-openai-resource.com"),
-                //    new DefaultAzureCredential());
+            // Get the ChatClient
+            var chatClient = ChatService.GetChatClient();
+            if (chatClient == null)
+            {
+                const string error = "OpenAI endpoint or API key is not set in environment variables.";
+                //logger.LogError(error);
+                // context.Response.StatusCode = 500;
+                await context.Response.WriteAsync(error);
+                await context.Response.Body.FlushAsync();
+                return;
+            }
 
-                //from doco here
-                //https://learn.microsoft.com/en-us/dotnet/api/overview/azure/ai.openai-readme?view=azure-dotnet-preview#create-client-with-a-microsoft-entra-credential
-                var openAiEndpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-                var openAiApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
-                var openAiDeploymentName = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_DEPLOYMENT_NAME");
+            //get the options container for RAG and Tools optoins
+            ChatCompletionOptions options = new ChatCompletionOptions();
 
-                if (string.IsNullOrEmpty(openAiEndpoint) || string.IsNullOrEmpty(openAiApiKey))
-                {
-                    Console.WriteLine("OpenAI endpoint or API key is not set in environment variables. EndPoint: {openAiEndpoint} ");
-                    context.Response.StatusCode = 500;
-                    await context.Response.WriteAsync("OpenAI endpoint or API key is not set.");
-                    return;
-                }
-                AzureOpenAIClient azureClient = new(
-                    new Uri(openAiEndpoint),
-                    new AzureKeyCredential(openAiApiKey));
+            //configure RAG
+//             var indexName = "gptkbindex";
+//             var dataSource = ChatService.GetChatCompletionOptionsDataSource(indexName);
+// #pragma warning disable AOAI001
+//             options.AddDataSource(dataSource);
 
+            // Get the AOAI Messages from the JSON messages
+            var oaiMessages = ChatService.GetOaiChatMessages(messages);
 
-                // Get ChatClient using the deployment name
-                ChatClient chatClient = azureClient.GetChatClient(openAiDeploymentName);
-
-                // Prepare chat messages based on your prompt and initial context
-                var messages = new List<ChatMessage>
-                {
-                    new SystemChatMessage("You are a helpful assistant."), // that talks like a pirate
-                    new UserChatMessage(prompt) // The user-provided prompt
-                };
-
+            try
+            {
                 // Get streaming completion updates
-                CollectionResult<StreamingChatCompletionUpdate> completionUpdates = chatClient.CompleteChatStreaming(messages);
+                var completionUpdates = chatClient.CompleteChatStreaming(oaiMessages, options);
 
                 // Stream responses as Server-Sent Events (SSE)
-                foreach (StreamingChatCompletionUpdate completionUpdate in completionUpdates)
+                foreach (var completionUpdate in completionUpdates)
                 {
-                    foreach (ChatMessageContentPart contentPart in completionUpdate.ContentUpdate)
+                    foreach (var contentPart in completionUpdate.ContentUpdate)
                     {
-                        string content = contentPart.Text;
+                        var content = contentPart.Text;
                         if (!string.IsNullOrEmpty(content))
                         {
-                            //Console.WriteLine(content);
                             // Send each chunk of the response to the client as an SSE event
                             await context.Response.WriteAsync(content);
                             await context.Response.Body.FlushAsync();
@@ -80,10 +69,86 @@ using static System.Net.WebRequestMethods;
                     }
                 }
 
-                //not required when streaming. it will cause an error
-                //return Results.Ok();
-                return;
-            }).RequireAuthorization();
-        }
-    }
+                // Complete the response
+                await context.Response.CompleteAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception and return an error response
+                var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError(ex, "Error processing chat completion request.");
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                await context.Response.WriteAsync("An error occurred while processing the request.");
+                await context.Response.Body.FlushAsync();
+            }
 
+            // Close the response stream
+            context.Response.Body.Close();
+
+            //not required when streaming. it will cause an error
+            //return Results.Ok();
+            //return null;
+        }).RequireAuthorization();
+
+
+        app.MapPost("/purechat", async (HttpContext context) =>
+        {
+            // Deserialize the incoming JSON payload into a list of ChatMessage objects
+            var messages = await ChatService.GetChatMessagesFromContext(context);
+            if (messages == null || !messages.Any())
+            {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await context.Response.WriteAsync("No messages provided.");
+                await context.Response.Body.FlushAsync();
+                return;
+            }
+
+            // Set up the necessary headers for SSE
+            context.Response.Headers.Append("Content-Type", "text/event-stream");
+            context.Response.Headers.Append("Cache-Control", "no-cache");
+            context.Response.Headers.Append("Connection", "keep-alive");
+
+            // Get the ChatClient
+            var chatClient = ChatService.GetChatClient();
+            if (chatClient == null)
+            {
+                const string error = "OpenAI endpoint or API key is not set in environment variables.";
+                //logger.LogError(error);
+                // context.Response.StatusCode = 500;
+                await context.Response.WriteAsync(error);
+                await context.Response.Body.FlushAsync();
+                return;
+            }
+
+            // Get the AOAI Messages from the JSON messages
+            var oaiMessages = ChatService.GetOaiChatMessages(messages);
+
+            // Get streaming completion updates
+            CollectionResult<StreamingChatCompletionUpdate> completionUpdates =
+                chatClient.CompleteChatStreaming(oaiMessages);
+
+            // Stream responses as Server-Sent Events (SSE)
+            foreach (StreamingChatCompletionUpdate completionUpdate in completionUpdates)
+            {
+                foreach (ChatMessageContentPart contentPart in completionUpdate.ContentUpdate)
+                {
+                    string content = contentPart.Text;
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        //Console.WriteLine(content);
+                        // Send each chunk of the response to the client as an SSE event
+                        await context.Response.WriteAsync(content);
+                        await context.Response.Body.FlushAsync();
+                    }
+                }
+            }
+
+            // Close the response stream
+            context.Response.Body.Close();
+
+            //not required when streaming. it will cause an error
+            //return Results.Ok();
+            //return null;
+        }).RequireAuthorization();
+    }
+}
