@@ -18,6 +18,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice';
 import { Assistant, AssistantStatus, AssistantType } from '@/types/Assistant';
+import { MultiSelectInput } from '@/components/ui-extended/multi-select';
+import { useFolders } from '@/hooks/use-folders';
 
 import { MultiToolSettingsDropdownInput } from '@/components/MultiToolSelector';
 import { fetchTools } from '@/services/toolservice';
@@ -30,7 +32,7 @@ const formSchema = z.object({
   greeting: z.string(),
   systemMessage: z.string(),
   group: z.string().optional(),
-  folder: z.string().optional(),
+  folder: z.array(z.string()),
   temperature: z.number(),
   topP: z.number().min(0).max(1), // <-- Added topP validation
   documentLimit: z.number(),
@@ -51,11 +53,12 @@ export default function AssistantForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { folders } = useFolders();
   const [selectedToolIds, setSelectedToolIds] = useState<Set<string>>(new Set());
   const [tools, setTools] = useState<Tool[]>([]);
   const [temperature, setTemperature] = useState(0.7);
   const [topP, setTopP] = useState(0.9); 
-
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -65,7 +68,7 @@ export default function AssistantForm() {
       greeting: '',
       systemMessage: '',
       group: '',
-      folder: '',
+      folder: [],
       temperature: 0.7,
       topP: 0.9, // <-- Added topP default value
       documentLimit: 5,
@@ -92,19 +95,42 @@ export default function AssistantForm() {
     const loadTool = async () => {
       if (fileId) {
         toast({ title: 'load', description: 'Loading...' });
-        try {
-          const file = (await fetchAssistantById(fileId)) as Assistant;
-          if (file) {
-            form.reset({
-              ...file,
-              greeting: file.greeting || '',
-              systemMessage: file.systemMessage || '',
-              folder: Array.isArray(file.folder) ? file.folder.join(", ") : file.folder || ''
-            });
-            setTemperature(file.temperature);
-            setSelectedToolIds(new Set(file.tools.map((tool) => tool.toolId)));
-          }
-        } catch {
+        const file = (await fetchAssistantById(fileId)) as Assistant;
+        console.log('Assistant loadTool', file);
+        console.log('Load file.type', file.type);
+        console.log('Load file.status', file.status);
+
+        if (file) {
+          form.reset({
+            name: file.name,
+            description: file.description,
+            type: file.type,
+            greeting: file.greeting || '',
+            systemMessage: file.systemMessage || '',
+            group: file.group || '',
+            //todo: tools
+            // folder: file.folder || [], //todo: Yassir's version 
+            folder: Array.isArray(file.folder) ? file.folder.join(", ") : file.folder || '', // Nidhi ? 
+            temperature: file.temperature,
+            documentLimit: file.documentLimit,
+            status: file.status,
+          });
+          setTemperature(file.temperature);
+          setSelectedToolIds(new Set(file.tools.map((tool) => tool.toolId)));
+       
+          const statusValue1 = form.getValues('status');
+          console.log('Current status value 1:', statusValue1);
+          form.setValue('status', file.status);
+          const statusValue2 = form.getValues('status');
+          console.log('Current status value 2:', statusValue2);
+
+          // Read specific form values
+          const statusValue = form.getValues('status');
+          const typeValue = form.getValues('type');
+
+          console.log('Current status value:', statusValue);
+          console.log('Current type value:', typeValue);
+        } else {
           toast({
             variant: 'destructive',
             title: 'Error',
@@ -131,12 +157,12 @@ export default function AssistantForm() {
     try {
       const now = new Date().toISOString();
       const fileData: Assistant = {
-        ...values,
+        ...values, //todo: Yassir doesn't have this - he lists each value
         id: fileId || generateGuid(),
         createdAt: fileId ? now : now,
-        createdBy: 'adam@stephensen.me',
+        createdBy: 'adam@stephensen.me', //todo: set from user
         updatedAt: now,
-        updatedBy: 'adam@stephensen.me',
+        updatedBy: 'adam@stephensen.me', //todo: set from user
         folder: values.folder ? [values.folder] : [] // Convert `folder` to an array
       };
       const result = fileId ? await updateAssistant(fileData) : await createAssistant(fileData);
@@ -260,7 +286,7 @@ export default function AssistantForm() {
                       name="group"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Group</FormLabel>
+                          <FormLabel>Security Group</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="" />
                           </FormControl>
@@ -274,9 +300,17 @@ export default function AssistantForm() {
                       name="folder"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Folder</FormLabel>
+                          <FormLabel>Folders</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="" />
+                            <div>
+                              <MultiSelectInput
+                                className="w-full"
+                                items={folders}
+                                selectedItems={field.value}
+                                {...field}
+                                onChange={(values: string[]) => field.onChange(values)}
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>

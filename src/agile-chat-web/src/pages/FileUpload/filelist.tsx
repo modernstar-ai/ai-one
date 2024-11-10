@@ -1,14 +1,9 @@
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { RefreshCw, Trash2 } from "lucide-react"
+import { MultiSelectInput } from '@/components/ui-extended/multi-select';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useFolders } from '@/hooks/use-folders';
+import { RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from "react"
 import { Link } from 'react-router-dom';
 import { useFetchFiles } from "@/hooks/use-files"
@@ -16,12 +11,14 @@ import { deleteFiles } from '@/services/cosmosservice';
 import { FileMetadata } from "@/models/filemetadata"
 
 export default function FileList() {
-  
+
   // Using the custom hook to fetch files
   const { files, refetch, loading} = useFetchFiles();
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([])
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false); // Processing state for delete/refresh
   const [sortedFiles, setSortedFiles] = useState<FileMetadata[]>([]);
+  const { folders } = useFolders();
+   const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
   
 // Sorting logic
   useEffect(() => {
@@ -30,6 +27,7 @@ export default function FileList() {
       const folderB = b.folder ?? "";
       const fileNameA = a.fileName ?? ""; // Use empty string if fileName is undefined
       const fileNameB = b.fileName ?? "";
+
 
       if (folderA === folderB) {
         return fileNameA.localeCompare(fileNameB);
@@ -117,9 +115,24 @@ export default function FileList() {
       <div className="flex h-screen bg-background">
         <div className="flex-1 p-8 overflow-y-auto">
           <h1 className="text-3xl font-bold mb-6">Your Files</h1>
+          
+          <div className="flex space-x-4 mb-4">
+            <MultiSelectInput
+              className="w-[30%] max-w-[500px]"
+              label="Folders"
+              items={folders}
+              selectedItems={selectedFolders}
+              onChange={setSelectedFolders}
+            />
+          </div>
 
-          <div className="flex justify-between items-center mb-4">
-          <Link to="/fileupload" aria-label="Add New File" accessKey="n"><Button  tabIndex={-1} aria-label="Add New File Button">Add New</Button></Link>
+        <div className="flex justify-between items-center mb-4">
+          <Link to="/fileupload" aria-label="Add New File" accessKey="n">
+            <Button tabIndex={-1} aria-label="Add New File Button">
+              Add New
+            </Button>
+          </Link>
+
           <div className="space-x-2">
               <Button
                   variant="outline"
@@ -136,9 +149,9 @@ export default function FileList() {
                   onClick={handleDeleteSelected}
                   disabled={selectedFiles.length===0}>
                 <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
+              </Button>            
           </div>
+        </div>
 
           <Table>
             <TableHeader>
@@ -174,5 +187,5 @@ export default function FileList() {
           </Table>
         </div>
       </div>
-  )
+  );
 }

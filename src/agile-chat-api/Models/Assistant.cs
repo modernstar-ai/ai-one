@@ -40,7 +40,9 @@ public class Assistant
 
 
     public string? Group { get; set; }
+
     public List<string>? Folder { get; set; }
+
     public decimal Temperature { get; set; }
     public decimal TopP { get; set; }
     public int DocumentLimit { get; set; }

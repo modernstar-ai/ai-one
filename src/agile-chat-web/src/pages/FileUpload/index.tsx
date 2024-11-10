@@ -1,13 +1,14 @@
-import * as React from "react";
-import Dropzone, { FileRejection } from "react-dropzone";
-import { Cross2Icon, UploadIcon } from "@radix-ui/react-icons";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, MailIcon } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import axios from 'axios';
+import * as React from 'react';
+import Dropzone, { FileRejection } from 'react-dropzone';
+import { Cross2Icon, UploadIcon } from '@radix-ui/react-icons';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, MailIcon } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import axios from '@/error-handling/axiosSetup';
+import { useFolders } from '@/hooks/use-folders';
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -24,7 +25,8 @@ export default function Component() {
     const maxFileCount = 5; // Maximum number of files allowed
     const maxSize = 1024 * 1024 * 2; // 2MB
     const navigate = useNavigate();
-
+    const { folders } = useFolders();
+  
     const uploadFiles = async () => {
     if (files.length === 0) {
       toast({
@@ -95,6 +97,8 @@ export default function Component() {
     }
   };
 
+
+
   const onDrop = (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
     if (files.length + acceptedFiles.length > maxFileCount) {
       toast({
@@ -137,7 +141,6 @@ export default function Component() {
 
   return (
     <div className="flex h-screen bg-white-100">
-
       {/* Main Content */}
       <main className="flex-1 p-8" role="main">
         <header className="mb-8 text-center" role="banner">
@@ -171,9 +174,12 @@ export default function Component() {
                 <SelectValue placeholder="Select Folder" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1234-2024-spr">1234_2024_SPR</SelectItem>
-                <SelectItem value="1234-2024-win">1234_2024_WIN</SelectItem>
-                <SelectItem value="4321-2024-spr">4321_2024_SPR</SelectItem>
+                {folders &&
+                  folders.map((folder, index) => (
+                    <SelectItem key={folder + index} value={folder}>
+                      {folder}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
