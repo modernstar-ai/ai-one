@@ -22,10 +22,16 @@ export async function fetchAssistants(): Promise<Assistant[] | null> {
 export async function fetchAssistantById(
   id: string
 ): Promise<Assistant | null> {
-  const apiUrl = getApiUrl(`assistants/${id}`);
   try {
-    const response = await axios.get<Assistant>(apiUrl);
-    return response.data;
+    if (id) {
+      const apiUrl = getApiUrl(`assistants/${id}`);
+      console.log("fetchAssistantById", apiUrl);
+      const response = await axios.get<Assistant>(apiUrl);
+      return response.data;
+    } else {
+      console.error("No ID provided to fetch assistant");
+      return null;
+    }
   } catch (error) {
     console.error(`Error fetching assistant with ID ${id}:`, error);
     return null;
@@ -92,7 +98,6 @@ export async function updateAssistant(
       createdBy: updatedAssistant.createdBy,
       updatedAt: new Date().toISOString(),
       updatedBy: "adam@stephensen.me",
-
     };
     const response = await axios.put<Assistant>(apiUrl, assistantData, {
       headers: {

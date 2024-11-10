@@ -13,10 +13,8 @@ const ChatRouter: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const assistant = await fetchAssistantById(id);
-                console.log('ChatRouter assistant:', assistant);
-                if (assistant) {
-                        console.log('ChatRouter assistant.Type:', assistant.type);
+                const assistant = await fetchAssistantById(id);                
+                if (assistant) {                        
                     if (assistant.type == 'Chat') {
                         setPage(<ChatPage id={id} />);
                     } else if (assistant.type == 'Search') {
@@ -37,7 +35,12 @@ const ChatRouter: React.FC = () => {
             }
         };
 
-        fetchData();
+        if(id) {            
+            fetchData();
+        } else {            
+            setPage(<ChatPage />);            
+        }
+
     }, [id, navigate]);
 
     if (loading) {
