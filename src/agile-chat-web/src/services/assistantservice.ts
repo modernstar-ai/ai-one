@@ -42,14 +42,16 @@ export async function createAssistant(
     const assistantData = {
       id: newAssistant.id,
       name: newAssistant.name,
-      type: newAssistant.type,
       description: newAssistant.description,
+      type: newAssistant.type,
       greeting: newAssistant.greeting,
       systemMessage: newAssistant.systemMessage,
       group: newAssistant.group,
-      folder: newAssistant.folder,
+      folder: newAssistant.folders,
       temperature: newAssistant.temperature,
+      topP: newAssistant.topP,
       documentLimit: newAssistant.documentLimit,
+      tools: newAssistant.tools, // Add the tools field here
       status: newAssistant.status,
       createdAt: new Date().toISOString(),
       createdBy: "adam@stephensen.me",
@@ -80,16 +82,18 @@ export async function updateAssistant(
       greeting: updatedAssistant.greeting,
       systemMessage: updatedAssistant.systemMessage,
       group: updatedAssistant.group,
-      folder: updatedAssistant.folder,
+      folder: updatedAssistant.folders,
       temperature: updatedAssistant.temperature,
+      topP: updatedAssistant.topP,
       documentLimit: updatedAssistant.documentLimit,
       status: updatedAssistant.status,
+      tools: updatedAssistant.tools, // Add the tools field here
       createdAt: updatedAssistant.createdAt,
       createdBy: updatedAssistant.createdBy,
       updatedAt: new Date().toISOString(),
       updatedBy: "adam@stephensen.me",
-    };
 
+    };
     const response = await axios.put<Assistant>(apiUrl, assistantData, {
       headers: {
         "Content-Type": "application/json",

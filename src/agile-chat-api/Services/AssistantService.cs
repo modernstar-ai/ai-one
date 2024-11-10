@@ -1,9 +1,7 @@
-using agile_chat_api.Enums;
-using DotNetEnv;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Azure.Cosmos;
-using System.Collections.Concurrent;
-using System.ComponentModel;
-using Microsoft.Extensions.Logging;
+using System.Reflection;
+using Config = agile_chat_api.Configurations.AppConfigs;
 
 public interface IAssistantService
 {
@@ -16,23 +14,16 @@ public interface IAssistantService
 
 public class AssistantService : IAssistantService
 {
-    private readonly Microsoft.Azure.Cosmos.Container _container;
+    private readonly Container _container;
     private readonly ILogger<AssistantService> _logger;
 
     public AssistantService(ILogger<AssistantService> logger)
     {
         _logger = logger;
+        const string containerName = "assistants";
 
-        string cosmosDbUri = Env.GetString("AZURE_COSMOSDB_URI") ??
-                             throw new InvalidOperationException("Cosmos DB URI is missing.");
-        string cosmosDbKey = Env.GetString("AZURE_COSMOSDB_KEY") ??
-                             throw new InvalidOperationException("Cosmos DB Key is missing.");
-        string databaseName = Env.GetString("AZURE_COSMOSDB_DB_NAME") ??
-                              throw new InvalidOperationException("Cosmos DB Database Name is missing.");
-        string containerName = "assistants";
-
-        var cosmosClient = new CosmosClient(cosmosDbUri, cosmosDbKey);
-        _container = cosmosClient.GetContainer(databaseName, containerName);
+        var cosmosClient = new CosmosClient(Config.CosmosEndpoint, Config.CosmosKey);
+        _container = cosmosClient.GetContainer(Config.CosmosDBName, containerName);
     }
 
     public async Task<IEnumerable<Assistant>> GetAllAsync()
@@ -46,7 +37,7 @@ public class AssistantService : IAssistantService
             while (query.HasMoreResults)
             {
                 var response =await query.ReadNextAsync();
-                results.AddRange(response.ToList());
+                results.AddRange([.. response]);
             }
         }
         catch (Exception ex)
@@ -114,9 +105,10 @@ public class AssistantService : IAssistantService
             existingAssistant.Group = assistant.Group;
             existingAssistant.Folder = assistant.Folder;
             existingAssistant.Temperature = assistant.Temperature;
+            existingAssistant.TopP = assistant.TopP;
             existingAssistant.DocumentLimit = assistant.DocumentLimit;
             existingAssistant.UpdatedAt = DateTime.UtcNow;
-
+            existingAssistant.Tools = assistant.Tools;
             try
             {
                 await _container.ReplaceItemAsync(existingAssistant, assistant.Id.ToString(),

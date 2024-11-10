@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-
 import { Card, CardContent } from '@/components/ui/card';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,16 +21,10 @@ import { Assistant, AssistantStatus, AssistantType } from '@/types/Assistant';
 import { MultiSelectInput } from '@/components/ui-extended/multi-select';
 import { useFolders } from '@/hooks/use-folders';
 
-//todo: replace with server side implementation
-const generateGuid = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
+import { MultiToolSettingsDropdownInput } from '@/components/MultiToolSelector';
+import { fetchTools } from '@/services/toolservice';
+import { Tool } from '@/types/Tool';
 
-// Define schema with Zod
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
   description: z.string(),
@@ -41,8 +34,15 @@ const formSchema = z.object({
   group: z.string().optional(),
   folder: z.array(z.string()),
   temperature: z.number(),
+  topP: z.number().min(0).max(1), // <-- Added topP validation
   documentLimit: z.number(),
   status: z.nativeEnum(AssistantStatus),
+  tools: z.array(
+    z.object({
+      toolId: z.string(),
+      toolName: z.string(),
+    })
+  ),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -51,14 +51,14 @@ export default function AssistantForm() {
   const [searchParams] = useSearchParams();
   const fileId = searchParams.get('id');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fileDates, setFileDates] = useState({
-    createdAt: '', // Changed to lowercase
-    updatedAt: '', // Changed to lowercase
-  });
   const { toast } = useToast();
   const navigate = useNavigate();
   const { folders } = useFolders();
-
+  const [selectedToolIds, setSelectedToolIds] = useState<Set<string>>(new Set());
+  const [tools, setTools] = useState<Tool[]>([]);
+  const [temperature, setTemperature] = useState(0.7);
+  const [topP, setTopP] = useState(0.9); 
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -70,12 +70,27 @@ export default function AssistantForm() {
       group: '',
       folder: [],
       temperature: 0.7,
+      topP: 0.9, // <-- Added topP default value
       documentLimit: 5,
       status: AssistantStatus.Draft,
+      tools: [],
     },
   });
 
-  // Fetch existing file if editing
+  useEffect(() => {
+    const getTools = async () => {
+      try {
+        const response = await fetchTools();
+        if (response) {
+          setTools(response.sort((a, b) => a.name.localeCompare(b.name)));
+        }
+      } catch (error) {
+        console.error('Failed to fetch tools:', error);
+      }
+    };
+    getTools();
+  }, []);
+
   useEffect(() => {
     const loadTool = async () => {
       if (fileId) {
@@ -93,22 +108,21 @@ export default function AssistantForm() {
             greeting: file.greeting || '',
             systemMessage: file.systemMessage || '',
             group: file.group || '',
-            folder: file.folder || [],
+            //todo: tools
+            // folder: file.folder || [], //todo: Yassir's version 
+            folder: Array.isArray(file.folder) ? file.folder.join(", ") : file.folder || '', // Nidhi ? 
             temperature: file.temperature,
             documentLimit: file.documentLimit,
             status: file.status,
           });
           setTemperature(file.temperature);
+          setSelectedToolIds(new Set(file.tools.map((tool) => tool.toolId)));
+       
           const statusValue1 = form.getValues('status');
           console.log('Current status value 1:', statusValue1);
           form.setValue('status', file.status);
           const statusValue2 = form.getValues('status');
           console.log('Current status value 2:', statusValue2);
-          // Store dates separately
-          setFileDates({
-            createdAt: file.createdAt,
-            updatedAt: file.updatedAt,
-          });
 
           // Read specific form values
           const statusValue = form.getValues('status');
@@ -128,58 +142,38 @@ export default function AssistantForm() {
     loadTool();
   }, [fileId, form, toast]);
 
-  // Form submit handler
+  useEffect(() => {
+    form.setValue(
+      'tools',
+      Array.from(selectedToolIds).map((toolId) => {
+        const tool = tools.find((t) => t.id === toolId);
+        return tool ? { toolId: tool.id, toolName: tool.name } : { toolId: '', toolName: '' };
+      })
+    );
+  }, [selectedToolIds, tools, form]);
+
   const onSubmit = async (values: FormValues) => {
-    console.log('Assistant onSubmit', values);
     setIsSubmitting(true);
     try {
       const now = new Date().toISOString();
-
       const fileData: Assistant = {
+        ...values, //todo: Yassir doesn't have this - he lists each value
         id: fileId || generateGuid(),
-        name: values.name,
-        description: values.description,
-        type: values.type,
-        greeting: values.greeting,
-        systemMessage: values.systemMessage,
-        group: values.group,
-        folder: values.folder,
-        temperature: values.temperature,
-        documentLimit: values.documentLimit,
-        status: values.status,
-        createdAt: fileId ? fileDates.createdAt : now,
-        createdBy: 'adam@stephensen.me',
+        createdAt: fileId ? now : now,
+        createdBy: 'adam@stephensen.me', //todo: set from user
         updatedAt: now,
-        updatedBy: 'adam@stephensen.me',
+        updatedBy: 'adam@stephensen.me', //todo: set from user
+        folder: values.folder ? [values.folder] : [] // Convert `folder` to an array
       };
-      console.log('Assistant Submit filedata', fileData);
-
-      if (fileId) {
-        const result = await updateAssistant(fileData);
-        console.log('Assistant Submit update result', result);
-        if (result) {
-          toast({
-            title: 'Success',
-            description: 'Assistant updated successfully',
-          });
-          navigate('/assistants');
-        } else {
-          throw new Error('Failed to update assistant');
-        }
+      const result = fileId ? await updateAssistant(fileData) : await createAssistant(fileData);
+      if (result) {
+        toast({
+          title: 'Success',
+          description: fileId ? 'Assistant updated successfully' : 'Assistant created successfully',
+        });
+        navigate('/assistants');
       } else {
-        console.log('Assistant Submit create');
-        const result = await createAssistant(fileData);
-        console.log('Assistant Submit create result', result);
-        if (result) {
-          toast({
-            title: 'Success',
-            description: 'Tool created successfully',
-          });
-          form.reset();
-          navigate('/assistants');
-        } else {
-          throw new Error('Failed to create tool');
-        }
+        throw new Error('Operation failed');
       }
     } catch (error) {
       toast({
@@ -191,8 +185,6 @@ export default function AssistantForm() {
       setIsSubmitting(false);
     }
   };
-
-  const [temperature, setTemperature] = useState(form.getValues('temperature'));
 
   return (
     <div className="flex h-screen bg-background text-foreground">
@@ -294,7 +286,7 @@ export default function AssistantForm() {
                       name="group"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Group</FormLabel>
+                          <FormLabel>Security Group</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="" />
                           </FormControl>
@@ -335,13 +327,27 @@ export default function AssistantForm() {
                             <Input
                               {...field}
                               type="number"
-                              id="documentLimit"
                               placeholder="Enter a number between 0 and 1000"
                               min={0}
                               max={1000}
-                              onChange={(e) => field.onChange(Number(e.target.value))} // Convert to number
                             />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="tools"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>Add Functionalities to the Bots</FormLabel>
+                          <MultiToolSettingsDropdownInput
+                            tools={tools}
+                            selectedToolIds={selectedToolIds}
+                            setSelectedToolIds={setSelectedToolIds}
+                          />
                           <FormMessage />
                         </FormItem>
                       )}
@@ -355,14 +361,12 @@ export default function AssistantForm() {
                           <FormLabel>Temperature</FormLabel>
                           <FormControl>
                             <Slider
-                              {...field}
                               value={[field.value]}
                               min={0}
                               max={2}
                               step={0.1}
-                              onChange={(e) => field.onChange(Number((e.target as HTMLInputElement).value))}
                               onValueChange={(value) => {
-                                field.onChange(Number(value));
+                                field.onChange(value[0]);
                                 setTemperature(value[0]);
                               }}
                             />
@@ -372,6 +376,31 @@ export default function AssistantForm() {
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={form.control}
+                      name="topP"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Top P</FormLabel>
+                          <FormControl>
+                            <Slider
+                              value={[field.value]}
+                              min={0}
+                              max={1}
+                              step={0.01}
+                              onValueChange={(value) => {
+                                field.onChange(value[0]);
+                                setTopP(value[0]); 
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                          <div>Selected Top P: {topP}</div> 
+                        </FormItem>
+                      )}
+                    />
+
                     <FormField
                       control={form.control}
                       name="status"
@@ -399,7 +428,7 @@ export default function AssistantForm() {
                     />
 
                     <div className="flex justify-between">
-                      <Button type="submit" disabled={false}>
+                      <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? 'Submitting...' : fileId ? 'Update' : 'Create'}
                       </Button>
                     </div>
@@ -413,3 +442,11 @@ export default function AssistantForm() {
     </div>
   );
 }
+
+const generateGuid = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};

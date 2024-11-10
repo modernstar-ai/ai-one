@@ -8,6 +8,10 @@ export enum AssistantType {
   Chat = 'Chat',
   Search = 'Search',
 }
+export class Tools {
+  toolId: string = '';
+  toolName: string = '';
+}
 
 export type Assistant = {
   id: string;
@@ -19,7 +23,9 @@ export type Assistant = {
   group?: string;
   folder?: string[];
   temperature: number;
+  topP:number;
   documentLimit: number;
+  tools: Tools[];
   status: AssistantStatus;
   createdAt: string;
   createdBy: string;

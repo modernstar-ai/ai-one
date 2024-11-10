@@ -24,16 +24,16 @@ using static System.Net.WebRequestMethods;
                 }
 
                 // Set up the necessary headers for SSE
-                context.Response.Headers.Add("Content-Type", "text/event-stream");
-                context.Response.Headers.Add("Cache-Control", "no-cache");
-                context.Response.Headers.Add("Connection", "keep-alive");
+                context.Response.Headers.ContentType = "text/event-stream";
+                context.Response.Headers.CacheControl = "no-cache";
+                context.Response.Headers.Connection = "keep-alive";
 
                 // Initialize the AzureOpenAIClient with DefaultAzureCredential
                 //AzureOpenAIClient azureClient = new AzureOpenAIClient(
                 //    new Uri("https://your-azure-openai-resource.com"),
                 //    new DefaultAzureCredential());
 
-                //from doco here 
+                //from doco here
                 //https://learn.microsoft.com/en-us/dotnet/api/overview/azure/ai.openai-readme?view=azure-dotnet-preview#create-client-with-a-microsoft-entra-credential
                 var openAiEndpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
                 var openAiApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
@@ -49,7 +49,7 @@ using static System.Net.WebRequestMethods;
                 AzureOpenAIClient azureClient = new(
                     new Uri(openAiEndpoint),
                     new AzureKeyCredential(openAiApiKey));
-                
+
 
                 // Get ChatClient using the deployment name
                 ChatClient chatClient = azureClient.GetChatClient(openAiDeploymentName);

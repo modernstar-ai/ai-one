@@ -70,13 +70,13 @@ public static class AssistantEndpoints
         {
             try
             {
-                var assistant = await assistantService.GetByIdAsync(id); 
+                var assistant = await assistantService.GetByIdAsync(id);
                 if (assistant is null)
                 {
                     return Results.NotFound();
                 }
 
-                await assistantService.DeleteAsync(assistant.Id); 
+                await assistantService.DeleteAsync(assistant.Id);
                 return Results.NoContent();
             }
             catch (Exception ex)
