@@ -35,7 +35,10 @@ const ChatPage = () => {
         }
     };
 
-    fetchData();
+    if(id) {    
+      fetchData();
+    }
+
 }, [id]);
 
 
