@@ -8,6 +8,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, MailIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import axios from '@/error-handling/axiosSetup';
+import { useFolders } from '@/hooks/use-folders';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -15,9 +18,16 @@ function getApiUrl(endpoint: string): string {
 }
 
 export default function Component() {
-  const { toast } = useToast(); // Initialize the Shadcn toast
-
-  const uploadFiles = async () => {
+    const { toast } = useToast(); // Initialize the Shadcn toast
+    const [files, setFiles] = useState<File[]>([]);
+    const [selectedFolder, setSelectedFolder] = useState<string | null>(null); // State for selected folder
+    const [progresses] = useState<Record<string, number>>({});
+    const maxFileCount = 5; // Maximum number of files allowed
+    const maxSize = 1024 * 1024 * 2; // 2MB
+    const navigate = useNavigate();
+    const { folders } = useFolders();
+  
+    const uploadFiles = async () => {
     if (files.length === 0) {
       toast({
         title: 'Error',
@@ -26,8 +36,18 @@ export default function Component() {
       });
       return;
     }
+  
+    if (!selectedFolder) {
+      toast({
+        title: "Error",
+        description: "No folder selected.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const formData = new FormData();
+    formData.append("folder", selectedFolder); // Append selected folder value
     files.forEach((file) => {
       formData.append('files', file);
     });
@@ -41,20 +61,23 @@ export default function Component() {
         },
       });
       console.log(response);
-      if (response.status != 200) {
+      if (response.status === 200 && response.data) {
+        toast({
+          title: 'Success',
+          description: response.data, // Directly using response.data as the message
+          variant: 'default',
+        });
+
+        // Clear files after upload
+        setFiles([]);
+        navigate("/files"); 
+      } else {
         toast({
           title: 'Error',
           description: 'File upload failed.',
           variant: 'destructive',
         });
       }
-      toast({
-        title: 'Success',
-        description: 'Files uploaded successfully!',
-        variant: 'default',
-      });
-
-      setFiles([]); // Clear files after upload
     } catch (error) {
       // Check if the error is an instance of Error
       console.log(error);
@@ -74,11 +97,7 @@ export default function Component() {
     }
   };
 
-  const [files, setFiles] = React.useState<File[]>([]);
-  const [progresses] = React.useState<Record<string, number>>({});
 
-  const maxFileCount = 5; // Maximum number of files allowed
-  const maxSize = 1024 * 1024 * 2; // 2MB
 
   const onDrop = (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
     if (files.length + acceptedFiles.length > maxFileCount) {
@@ -110,7 +129,7 @@ export default function Component() {
     setFiles(newFiles);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       files.forEach((file) => {
         if ('preview' in file && typeof file.preview === 'string') {
@@ -122,7 +141,6 @@ export default function Component() {
 
   return (
     <div className="flex h-screen bg-white-100">
-
       {/* Main Content */}
       <main className="flex-1 p-8" role="main">
         <header className="mb-8 text-center" role="banner">
@@ -150,25 +168,18 @@ export default function Component() {
 
         {/* Dropdowns */}
         <div className="flex justify-center w-full">
-          <div className="mb-8 grid grid-cols-2 gap-4 w-1/2">
-            <Select>
-              <SelectTrigger aria-label="Select Group">
-                <SelectValue placeholder="Select Group" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="group1">Group 1</SelectItem>
-                <SelectItem value="group2">Group 2</SelectItem>
-                <SelectItem value="group3">Group 3</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
+          <div className="mb-2 gap-4 w-1/2">
+          <Select onValueChange={(value) => setSelectedFolder(value)}> {/* Update selected folder */}
               <SelectTrigger aria-label="Select Folder">
                 <SelectValue placeholder="Select Folder" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="folder1">Folder 1</SelectItem>
-                <SelectItem value="folder2">Folder 2</SelectItem>
-                <SelectItem value="folder3">Folder 3</SelectItem>
+                {folders &&
+                  folders.map((folder, index) => (
+                    <SelectItem key={folder + index} value={folder}>
+                      {folder}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -176,58 +187,51 @@ export default function Component() {
 
         {/* File Upload Area */}
         <div className="flex justify-center w-full">
-          <Dropzone
-            onDrop={onDrop}
-            accept={{}} // Allow all file types
-            maxSize={maxSize}
-            maxFiles={maxFileCount}
-          >
-            {({
-              getRootProps,
-              getInputProps,
-              isDragActive,
-            }: {
-              getRootProps: () => React.HTMLProps<HTMLDivElement>;
-              getInputProps: () => React.InputHTMLAttributes<HTMLInputElement>;
-              isDragActive: boolean;
-            }) => (
-              <div
-                {...getRootProps()}
-                className={`group relative grid text-center h-52 w-1/2 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-2.5 text-center transition hover:bg-muted/25 ${
-                  isDragActive ? 'border-muted-foreground/50' : ''
-                }`}
-              >
-                <input {...getInputProps()} aria-labelledby="dropzone-label" />
-                <span id="dropzone-label" className="sr-only">
-                  Upload files
-                </span>
-                {isDragActive ? (
-                  <div className="flex flex-col items-center justify-center gap-4 sm:px-5">
-                    <div className="rounded-full border border-dashed p-3">
-                      <UploadIcon className="size-7 text-muted-foreground" aria-hidden="true" />
-                    </div>
-                    <p className="font-medium text-muted-foreground">Drop the files here</p>
+        <Dropzone
+          onDrop={onDrop}
+          accept={{}} // Allow all file types
+          maxSize={maxSize}
+          maxFiles={maxFileCount}
+        >
+         {({ getRootProps, getInputProps, isDragActive }: 
+                { getRootProps: () => React.HTMLProps<HTMLDivElement>; 
+                  getInputProps: () => React.InputHTMLAttributes<HTMLInputElement>; 
+                  isDragActive: boolean; }) => (
+            <div
+              {...getRootProps()}
+              className={`group relative grid text-center h-52 w-1/2 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-2.5 text-center transition hover:bg-muted/25 ${
+                isDragActive ? "border-muted-foreground/50" : ""
+              }`}
+            >
+              <input {...getInputProps()} aria-labelledby="dropzone-label" />
+              <span id="dropzone-label" className="sr-only">
+                Upload files
+              </span>
+              {isDragActive ? (
+                <div className="flex flex-col items-center justify-center gap-4 sm:px-5">
+                  <div className="rounded-full border border-dashed p-3">
+                    <UploadIcon className="size-7 text-muted-foreground" aria-hidden="true" />
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-4 sm:px-5">
-                    <div className="rounded-full border border-dashed p-3">
-                      <UploadIcon className="size-7 text-muted-foreground" aria-hidden="true" />
-                    </div>
-                    <p className="font-medium text-muted-foreground">
-                      Drag 'n' drop files here, or click to select files
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      You can upload up to {maxFileCount} files (up to {Math.round(maxSize / (1024 * 1024))}MB each)
-                    </p>
+                  <p className="font-medium text-muted-foreground">Drop the files here</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-4 sm:px-5">
+                  <div className="rounded-full border border-dashed p-3">
+                    <UploadIcon className="size-7 text-muted-foreground" aria-hidden="true" />
                   </div>
-                )}
-              </div>
-            )}
-          </Dropzone>
-        </div>
-        <div className="flex justify-center mt-4">
-          <Button size="lg" className="grid text-center" onClick={uploadFiles} aria-label="Add Files Button">
-            Upload Files
+                  <p className="font-medium text-muted-foreground">Drag 'n' drop files here, or click to select files</p>
+                  <p className="text-sm text-muted-foreground">
+                    You can upload up to {maxFileCount} files (up to {Math.round(maxSize / (1024 * 1024))}MB each)
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </Dropzone>
+      </div>
+      <div className="flex justify-center mt-4">
+        <Button  size="lg" className="grid text-center" onClick={uploadFiles} aria-label="Add Files Button">
+             Upload Files
           </Button>
         </div>
 
@@ -266,8 +270,7 @@ function FileCard({ file, progress, onRemove }: { file: File; progress?: number;
           variant="outline"
           size="icon"
           className="size-7"
-          onClick={onRemove}
-        >
+          onClick={onRemove}>
           <Cross2Icon className="size-4" aria-hidden="true" />
           <span className="sr-only">Remove file</span>
         </Button>

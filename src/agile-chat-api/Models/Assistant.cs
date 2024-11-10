@@ -18,14 +18,25 @@ public class Assistant
     public string SystemMessage { get; set; } = String.Empty;
 
     public string? Group { get; set; }
-    public string? Folder { get; set; }
-    public decimal Temperature { get; set; }
-    public int DocumentLimit { get; set; }
 
+    public List<string>? Folder { get; set; }
+
+    public decimal Temperature { get; set; }
+    public decimal TopP { get; set; }
+    public int DocumentLimit { get; set; }
+    public List<Tools> Tools { get; set; } = [];
     public AssistantStatus Status { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public DateTime UpdatedAt { get; set; }
     public string UpdatedBy { get; set; } = string.Empty;
+}
+public class Tools
+{
+    [JsonPropertyName("toolId")]
+    public string ToolId { get; set; } = string.Empty;
+
+    [JsonPropertyName("toolName")]
+    public string ToolName { get; set; } = string.Empty;
 }

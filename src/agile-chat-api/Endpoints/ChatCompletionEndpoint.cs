@@ -20,10 +20,10 @@ public static class ChatCompletionsEndpoint
                 return;
             }
 
-            // Set up the necessary headers for SSE
-            context.Response.Headers.Append("Content-Type", "text/event-stream");
-            context.Response.Headers.Append("Cache-Control", "no-cache");
-            context.Response.Headers.Append("Connection", "keep-alive");
+                // Set up the necessary headers for SSE
+                context.Response.Headers.ContentType = "text/event-stream";
+                context.Response.Headers.CacheControl = "no-cache";
+                context.Response.Headers.Connection = "keep-alive";
 
             // Get the ChatClient
             var chatClient = ChatService.GetChatClient();
