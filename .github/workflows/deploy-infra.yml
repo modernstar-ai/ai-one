@@ -13,7 +13,7 @@ on:
         default: "development"
         options:
           - development
-          - staging
+          - test
           - production
 # on:
 #   push:
@@ -37,11 +37,24 @@ jobs:
       AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
       AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
       AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
-      AZURE_BICEP_PARAMS: "./infra/${{ vars.AZURE_BICEP_PARAMS }}"
+      #AZURE_BICEP_PARAMS: "./infra/${{ vars.AZURE_BICEP_PARAMS }}"
       AZURE_BICEP_MAIN: "./infra/main.bicep"
       ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
 
     steps:
+      - name: Set Bicep Param file
+        run: |
+          if [ "${{ github.event.inputs.environment }}" == "development" ]; then
+            echo "BICEP_PARAMS=./infra/dev.parameters.json" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.environment }}" == "test" ]; then
+            echo "BICEP_PARAMS=./infra/tst.parameters.json" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.environment }}" == "production" ]; then
+            echo "BICEP_PARAMS=./infra/prd.parameters.json" >> $GITHUB_ENV
+          fi
+
+      - name: Verify environment variable
+        run: echo "The selected bicep params file is ${{ env.AZURE_BICEP_PARAMS }}"
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -88,4 +101,5 @@ jobs:
           resource-group-name: "${{ env.AZURE_RESOURCE_GROUP }}"
           subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
           template-file: "${{ env.AZURE_BICEP_MAIN }}"
-          parameters-file: "${{ env.AZURE_BICEP_PARAMS }}"
+          parameters-file: "${{ env.BICEP_PARAMS }}"
+          #parameters-file: "${{ env.AZURE_BICEP_PARAMS }}"
