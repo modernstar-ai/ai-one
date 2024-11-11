@@ -1,0 +1,105 @@
+name: Azure Bicep Deployment
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: The reason for running the workflow
+        required: false
+        default: Manual run
+      environment:
+        description: "Select the Azure environment"
+        required: true
+        type: choice
+        default: "development"
+        options:
+          - development
+          - test
+          - production
+# on:
+#   push:
+#     branches:
+#       - main
+
+# Set up permissions for deploying with secretless Azure federated credentials
+# https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  infra-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      #AZURE_BICEP_PARAMS: "./infra/${{ vars.AZURE_BICEP_PARAMS }}"
+      AZURE_BICEP_MAIN: "./infra/main.bicep"
+      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
+
+    steps:
+      - name: Set Bicep Param file
+        run: |
+          if [ "${{ github.event.inputs.environment }}" == "development" ]; then
+            echo "BICEP_PARAMS=./infra/dev.parameters.json" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.environment }}" == "test" ]; then
+            echo "BICEP_PARAMS=./infra/tst.parameters.json" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.environment }}" == "production" ]; then
+            echo "BICEP_PARAMS=./infra/prd.parameters.json" >> $GITHUB_ENV
+          fi
+
+      - name: Verify environment variable
+        run: echo "The selected bicep params file is ${{ env.AZURE_BICEP_PARAMS }}"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Lint and Prep Bicep
+        uses: azure/cli@v2
+        with:
+          azcliversion: 2.64.0
+          inlineScript: |
+            az bicep install
+            az bicep build --file ${{ env.AZURE_BICEP_MAIN }}
+
+      - name: Check if Resource Group Exists
+        id: check_rsg
+        uses: azure/cli@v2
+        with:
+          azcliversion: 2.64.0
+          inlineScript: |
+            az group show --name "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1 || echo "not found"
+
+      - name: Create Resource Group (if not exists)
+        if: steps.check_rsg.outputs.exit_code == 'failure'
+        uses: azure/cli@v2
+        with:
+          azcliversion: 2.64.0
+          inlineScript: |
+            az group create --name "${{ env.AZURE_RESOURCE_GROUP }}" --location "${{ env.AZURE_LOCATION }}"
+
+        ##https://github.com/Azure/bicep-deploy
+      - name: Deploy Bicep to Azure
+        uses: azure/bicep-deploy@v1
+        with:
+          type: deployment
+          operation: create
+          name: "deployment-${{ env.AZURE_ENV_NAME }}-${{ env.ENVIRONMENT }}"
+          location: "${{ env.AZURE_LOCATION }}"
+          scope: resourceGroup
+          resource-group-name: "${{ env.AZURE_RESOURCE_GROUP }}"
+          subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
+          template-file: "${{ env.AZURE_BICEP_MAIN }}"
+          parameters-file: "${{ env.BICEP_PARAMS }}"
+          #parameters-file: "${{ env.AZURE_BICEP_PARAMS }}"
