@@ -18,12 +18,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice';
 import { Assistant, AssistantStatus, AssistantType } from '@/types/Assistant';
-import { MultiSelectInput } from '@/components/ui-extended/multi-select';
-import { useFolders } from '@/hooks/use-folders';
+//import { MultiSelectInput } from '@/components/ui-extended/multi-select';
+//import { useFolders } from '@/hooks/use-folders';
 
 import { MultiToolSettingsDropdownInput } from '@/components/MultiToolSelector';
 import { fetchTools } from '@/services/toolservice';
 import { Tool } from '@/types/Tool';
+import { useIndexes } from '@/hooks/use-indexes';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
@@ -32,6 +33,7 @@ const formSchema = z.object({
   greeting: z.string(),
   systemMessage: z.string(),
   group: z.string().optional(),
+  index: z.string(),
   folder: z.array(z.string()),
   temperature: z.number(),
   topP: z.number().min(0).max(1), // <-- Added topP validation
@@ -53,12 +55,12 @@ export default function AssistantForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { folders } = useFolders();
+  //const { folders } = useFolders();
+  const { indexes } = useIndexes();
   const [selectedToolIds, setSelectedToolIds] = useState<Set<string>>(new Set());
   const [tools, setTools] = useState<Tool[]>([]);
-  const [temperature, setTemperature] = useState(0.7);
-  const [topP, setTopP] = useState(0.9); 
-  
+  const [topP, setTopP] = useState(0.9);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -68,6 +70,7 @@ export default function AssistantForm() {
       greeting: '',
       systemMessage: '',
       group: '',
+      index: '',
       folder: [],
       temperature: 0.7,
       topP: 0.9, // <-- Added topP default value
@@ -77,70 +80,56 @@ export default function AssistantForm() {
     },
   });
 
-  useEffect(() => {
-    const getTools = async () => {
-      try {
-        const response = await fetchTools();
-        if (response) {
-          setTools(response.sort((a, b) => a.name.localeCompare(b.name)));
-        }
-      } catch (error) {
-        console.error('Failed to fetch tools:', error);
+  const getTools = async () => {
+    try {
+      const response = await fetchTools();
+      if (response) {
+        setTools(response.sort((a, b) => a.name.localeCompare(b.name)));
       }
+    } catch (error) {
+      console.error('Failed to fetch tools:', error);
+    }
+  };
+
+  const loadAssistant = async () => {
+    if (fileId) {
+      toast({ title: 'load', description: 'Loading...' });
+      const file = (await fetchAssistantById(fileId)) as Assistant;
+      if (file) {
+        form.reset({
+          name: file.name,
+          description: file.description,
+          type: file.type,
+          greeting: file.greeting || '',
+          systemMessage: file.systemMessage || '',
+          group: file.group || '',
+          index: file.index,
+          //todo: tools
+          // folder: file.folder || [], //todo: Yassir's version
+          folder: file.folder,
+          temperature: file.temperature,
+          documentLimit: file.documentLimit,
+          status: file.status,
+        });
+        setSelectedToolIds(new Set(file.tools.map((tool) => tool.toolId)));
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to load assistant data',
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    const load = async () => {
+      await getTools();
+      await loadAssistant();
     };
-    getTools();
+
+    load();
   }, []);
-
-  useEffect(() => {
-    const loadTool = async () => {
-      if (fileId) {
-        toast({ title: 'load', description: 'Loading...' });
-        const file = (await fetchAssistantById(fileId)) as Assistant;
-        console.log('Assistant loadTool', file);
-        console.log('Load file.type', file.type);
-        console.log('Load file.status', file.status);
-
-        if (file) {
-          form.reset({
-            name: file.name,
-            description: file.description,
-            type: file.type,
-            greeting: file.greeting || '',
-            systemMessage: file.systemMessage || '',
-            group: file.group || '',
-            //todo: tools
-            // folder: file.folder || [], //todo: Yassir's version 
-            folder: Array.isArray(file.folder) ? file.folder.join(", ") : file.folder || '', // Nidhi ? 
-            temperature: file.temperature,
-            documentLimit: file.documentLimit,
-            status: file.status,
-          });
-          setTemperature(file.temperature);
-          setSelectedToolIds(new Set(file.tools.map((tool) => tool.toolId)));
-       
-          const statusValue1 = form.getValues('status');
-          console.log('Current status value 1:', statusValue1);
-          form.setValue('status', file.status);
-          const statusValue2 = form.getValues('status');
-          console.log('Current status value 2:', statusValue2);
-
-          // Read specific form values
-          const statusValue = form.getValues('status');
-          const typeValue = form.getValues('type');
-
-          console.log('Current status value:', statusValue);
-          console.log('Current type value:', typeValue);
-        } else {
-          toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Failed to load assistant data',
-          });
-        }
-      }
-    };
-    loadTool();
-  }, [fileId, form, toast]);
 
   useEffect(() => {
     form.setValue(
@@ -163,8 +152,9 @@ export default function AssistantForm() {
         createdBy: 'adam@stephensen.me', //todo: set from user
         updatedAt: now,
         updatedBy: 'adam@stephensen.me', //todo: set from user
-        folder: values.folder ? [values.folder] : [] // Convert `folder` to an array
+        folder: values.folder ? values.folder : [], // Convert `folder` to an array
       };
+
       const result = fileId ? await updateAssistant(fileData) : await createAssistant(fileData);
       if (result) {
         toast({
@@ -297,6 +287,35 @@ export default function AssistantForm() {
 
                     <FormField
                       control={form.control}
+                      name="index"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Container</FormLabel>
+                          <FormControl>
+                            <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Container" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {indexes?.map((indexName, i) => (
+                                  <SelectItem key={indexName + i} value={indexName}>
+                                    {indexName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* 
+                    
+                    <FormField
+                      control={form.control}
                       name="folder"
                       render={({ field }) => (
                         <FormItem>
@@ -316,6 +335,7 @@ export default function AssistantForm() {
                         </FormItem>
                       )}
                     />
+                    */}
 
                     <FormField
                       control={form.control}
@@ -367,12 +387,11 @@ export default function AssistantForm() {
                               step={0.1}
                               onValueChange={(value) => {
                                 field.onChange(value[0]);
-                                setTemperature(value[0]);
                               }}
                             />
                           </FormControl>
                           <FormMessage />
-                          <div>Selected Temperature: {temperature}</div>
+                          <div>Selected Temperature: {field.value}</div>
                         </FormItem>
                       )}
                     />
@@ -391,12 +410,12 @@ export default function AssistantForm() {
                               step={0.01}
                               onValueChange={(value) => {
                                 field.onChange(value[0]);
-                                setTopP(value[0]); 
+                                setTopP(value[0]);
                               }}
                             />
                           </FormControl>
                           <FormMessage />
-                          <div>Selected Top P: {topP}</div> 
+                          <div>Selected Top P: {topP}</div>
                         </FormItem>
                       )}
                     />

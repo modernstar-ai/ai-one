@@ -6,7 +6,6 @@ using Models;
 using Services;
 
 namespace agile_chat_api.Endpoints;
-public class FileEndpointsLogger { }
 public static class FileEndpoints
 {
     /// <summary>
@@ -16,9 +15,9 @@ public static class FileEndpoints
     /// <returns></returns>
     public static void MapFileEndpoints(this IEndpointRouteBuilder app)
     {
-        var api = app.MapGroup("api/file");
+        var api = app.MapGroup("api/file").RequireAuthorization();
 
-        api.MapPost("webhook", async (HttpContext context, [FromServices] IAzureAiSearchService azureAiSearchService, [FromBody] JsonNode body, ILogger<FileEndpointsLogger> logger) =>
+        api.MapPost("webhook", async (HttpContext context, [FromServices] IAzureAiSearchService azureAiSearchService, [FromBody] JsonNode body, ILogger logger) =>
         {
             logger.LogInformation("Validated Authorization for web hook");
             //Validate the webhook handshake
@@ -35,13 +34,13 @@ public static class FileEndpoints
 
             var success = await azureAiSearchService.RunIndexer(AzureAiSearchService.FOLDERS_INDEX_NAME);
             return success ? Results.Ok() : Results.BadRequest();
-        }).RequireAuthorization();
+        });
 
         api.MapGet("folders", async ([FromServices] IBlobStorageService blobStorageService) =>
         {
             var folders = await blobStorageService.GetHighLevelFolders(BlobStorageService.FOLDERS_CONTAINER_NAME);
             return Results.Ok(folders);
-        }).RequireAuthorization();
+        });
 
 
         app.MapPost("/upload", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
