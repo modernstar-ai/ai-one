@@ -1,4 +1,4 @@
-name: Azure Infrastructure Deployment
+name: Azure Bicep Deployment
 on:
   workflow_dispatch:
     inputs:
@@ -7,7 +7,7 @@ on:
         required: false
         default: Manual run
       environment:
-        description: "Deployment environment"
+        description: "Select the Azure environment"
         required: true
         type: choice
         default: "development"
@@ -29,17 +29,17 @@ permissions:
 jobs:
   infra-deploy:
     runs-on: ubuntu-latest
-    environment: development
 
     env:
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
       AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
       AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
-      AZURE_BICEP_PARAMS: ${{ vars.AZURE_BICEP_PARAMS }}
+      AZURE_BICEP_PARAMS: "./infra/${{ vars.AZURE_BICEP_PARAMS }}"
       AZURE_BICEP_MAIN: "./infra/main.bicep"
-      AZURE_BICEP_OUTPUT: "./infra/main.json"
+      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
 
     steps:
       - name: Checkout code
@@ -48,36 +48,44 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
       - name: Lint and Prep Bicep
         uses: azure/cli@v2
         with:
           azcliversion: 2.64.0
           inlineScript: |
-            tdnf install -y icu
-            tdnf install -y jq
             az bicep install
-            #az bicep build --file ${{ env.AZURE_BICEP_MAIN }}
+            az bicep build --file ${{ env.AZURE_BICEP_MAIN }}
 
-        ##https://techcommunity.microsoft.com/t5/azure-tools-blog/azure-cli-docker-container-base-linux-image-is-now-azure-linux/ba-p/4236248
-      - name: Deploy Bicep to Azure
+      - name: Check if Resource Group Exists
+        id: check_rsg
         uses: azure/cli@v2
         with:
           azcliversion: 2.64.0
           inlineScript: |
-            az account set --subscription ${{ vars.AZURE_SUBSCRIPTION_ID }}
-            az deployment sub create --location ${{ vars.AZURE_LOCATION }} --template-file ${{ env.AZURE_BICEP_OUTPUT }} --parameters "./infra/${{ vars.AZURE_BICEP_PARAMS }}"
+            az group show --name "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1 || echo "not found"
 
-            # # Set deployment name
-            # echo "today=$(date +"%d-%b-%Y")" >> $GITHUB_ENV
-            # deploymentName="sub-dep-"${{ vars.AZURE_ENV_NAME }}-${{ env.today }}
+      - name: Create Resource Group (if not exists)
+        if: steps.check_rsg.outputs.exit_code == 'failure'
+        uses: azure/cli@v2
+        with:
+          azcliversion: 2.64.0
+          inlineScript: |
+            az group create --name "${{ env.AZURE_RESOURCE_GROUP }}" --location "${{ env.AZURE_LOCATION }}"
 
-            #--name $deploymentName \`
-            # Deploy template with parameters
-            # az deployment sub create \
-            # --location ${{ vars.AZURE_LOCATION }} \
-            # --template-file ${{ env.AZURE_BICEP_OUTPUT }} \
-            # --parameters "./infra/${{ vars.AZURE_BICEP_PARAMS }}"
+        ##https://github.com/Azure/bicep-deploy
+      - name: Deploy Bicep to Azure
+        uses: azure/bicep-deploy@v1
+        with:
+          type: deployment
+          operation: create
+          name: "deployment-${{ env.AZURE_ENV_NAME }}-${{ env.ENVIRONMENT }}"
+          location: "${{ env.AZURE_LOCATION }}"
+          scope: resourceGroup
+          resource-group-name: "${{ env.AZURE_RESOURCE_GROUP }}"
+          subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
+          template-file: "${{ env.AZURE_BICEP_MAIN }}"
+          parameters-file: "${{ env.AZURE_BICEP_PARAMS }}"
