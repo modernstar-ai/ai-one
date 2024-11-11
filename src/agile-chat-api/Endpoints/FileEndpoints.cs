@@ -23,12 +23,12 @@ public static class FileEndpoints
             logger.LogInformation("Validated Authorization for web hook");
             //Validate the webhook handshake
             var eventType = context.Request.Headers["aeg-event-type"].ToString();
-            logger.LogInformation("Fetched aeg-event-type {EventType}", eventType);
+            logger.LogDebug("Fetched aeg-event-type {EventType}", eventType);
 
             if (eventType == "SubscriptionValidation")
             {
                 var code = body?.AsArray().FirstOrDefault()?["data"]?["validationCode"]?.ToString();
-                logger.LogInformation("Fetched validation code {Code}", code);
+                logger.LogDebug("Fetched validation code {Code}", code);
 
                 return Results.Ok(new { validationResponse = code });
             }
@@ -139,7 +139,7 @@ public static class FileEndpoints
             {
                 return Results.Problem($"An error occurred while retrieving files: {ex.Message}");
             }
-        });
+        }).RequireAuthorization();
 
         app.MapDelete("/files", async ([FromServices] ICosmosService cosmosService,
                                        [FromServices] IStorageService blobStorageService,
@@ -176,7 +176,7 @@ public static class FileEndpoints
                 return Results.Problem("An error occurred while deleting the files.");
             }
         }
-        ).DisableAntiforgery();
+        ).DisableAntiforgery().RequireAuthorization();
 
     }
 }

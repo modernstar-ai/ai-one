@@ -14,7 +14,8 @@ internal static class ServiceCollectionExtensions
             {
                 {"AzureAd:Instance", "https://login.microsoftonline.com/"},
                 {"AzureAd:ClientId", Environment.GetEnvironmentVariable("AZURE_CLIENT_ID")},
-                {"AzureAd:TenantId", Environment.GetEnvironmentVariable("AZURE_TENANT_ID")}
+                {"AzureAd:TenantId", Environment.GetEnvironmentVariable("AZURE_TENANT_ID")},
+                {"AzureAd:AllowWebApiToBeAuthorizedByACL", "True"}
             })
             .Build();
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
