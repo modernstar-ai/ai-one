@@ -6,7 +6,7 @@
         "value": "agilechat"
       },
       "environmentName": {
-        "value": "dev"
+        "value": "prd"
       },
       "location": {
         "value": "australiaeast"
