@@ -10,11 +10,11 @@ on:
         description: "Select the Azure environment"
         required: true
         type: choice
-        default: "development"
+        default: "Development"
         options:
-          - development
-          - test
-          - production
+          - Development
+          - Test
+          - Production
 # on:
 #   push:
 #     branches:
@@ -29,6 +29,7 @@ permissions:
 jobs:
   infra-deploy:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
 
     env:
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
@@ -44,11 +45,11 @@ jobs:
     steps:
       - name: Set Bicep Param file
         run: |
-          if [ "${{ github.event.inputs.environment }}" == "development" ]; then
+          if [ "${{ github.event.inputs.environment }}" == "Development" ]; then
             echo "BICEP_PARAMS=./infra/dev.parameters.json" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.environment }}" == "test" ]; then
+          elif [ "${{ github.event.inputs.environment }}" == "Test" ]; then
             echo "BICEP_PARAMS=./infra/tst.parameters.json" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.environment }}" == "production" ]; then
+          elif [ "${{ github.event.inputs.environment }}" == "Production" ]; then
             echo "BICEP_PARAMS=./infra/prd.parameters.json" >> $GITHUB_ENV
           fi
 
@@ -64,6 +65,7 @@ jobs:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          ##creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Lint and Prep Bicep
         uses: azure/cli@v2
@@ -102,4 +104,3 @@ jobs:
           subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
           template-file: "${{ env.AZURE_BICEP_MAIN }}"
           parameters-file: "${{ env.BICEP_PARAMS }}"
-          #parameters-file: "${{ env.AZURE_BICEP_PARAMS }}"
