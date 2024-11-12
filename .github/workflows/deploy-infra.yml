@@ -30,7 +30,7 @@ jobs:
   infra-deploy:
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
-    
+
     env:
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
@@ -38,7 +38,6 @@ jobs:
       AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
       AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
       AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
-      #AZURE_BICEP_PARAMS: "./infra/${{ vars.AZURE_BICEP_PARAMS }}"
       AZURE_BICEP_MAIN: "./infra/main.bicep"
       ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
 
@@ -61,11 +60,10 @@ jobs:
 
       - name: Login to Azure
         uses: azure/login@v2
-        with:          
+        with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
-          ##creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Lint and Prep Bicep
         uses: azure/cli@v2
@@ -74,8 +72,8 @@ jobs:
           inlineScript: |
             tdnf install -y icu
             tdnf install -y jq
-            #az bicep install
-            #az bicep build --file ${{ env.AZURE_BICEP_MAIN }}
+            az bicep install
+            az config set bicep.use_binary_from_path=false && az bicep build -f ${{ env.AZURE_BICEP_MAIN }} --stdout
 
       - name: Check if Resource Group Exists
         id: check_rsg
@@ -100,7 +98,7 @@ jobs:
           type: deployment
           operation: create
           name: "${{ env.AZURE_ENV_NAME }}"
-          #location: "australiaeast" # ${{ env.AZURE_LOCATION }}"
+          ##location: "australiaeast" # ${{ env.AZURE_LOCATION }}"
           scope: resourceGroup
           resource-group-name: "${{ env.AZURE_RESOURCE_GROUP }}"
           subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"

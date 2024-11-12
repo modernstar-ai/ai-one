@@ -484,18 +484,21 @@ resource chatGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@202
 // embeddingDeployment
 resource embeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
   name: embeddingModelName
-  parent: azureopenai
+  parent: azureopenai 
+  sku: {
+    name: 'Standard'
+    capacity: embeddingDeploymentCapacity
+  }
   properties: {
     model: {
       format: 'OpenAI'
       name: embeddingModelName
       version: '2'
     }
-    scaleSettings: {
-      capacity: embeddingDeploymentCapacity
-    }
+    
   }
 }
+
 
 resource azureopenaidalle 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   name: openai_dalle_name
