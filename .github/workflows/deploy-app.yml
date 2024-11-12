@@ -77,32 +77,32 @@ jobs:
 
         #############################################################
 
-      - name: Deploy - Agile-Chat-Api
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ env.AGILE_CHAT_API_NAME }}
-          package: ${{ env.AGILE_CHAT_API_PUB }}
-          resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+      # - name: Deploy - Agile-Chat-Api
+      #   uses: azure/webapps-deploy@v2
+      #   with:
+      #     app-name: ${{ env.AGILE_CHAT_API_NAME }}
+      #     package: ${{ env.AGILE_CHAT_API_PUB }}
+      #     resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
+      #     subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
         #############################################################
 
-      - name: Deploy - Agile-Chat-Web
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ env.AGILE_CHAT_WEB_NAME }}
-          package: ${{ env.AGILE_CHAT_WEB_PUB }}
-          resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+      # - name: Deploy - Agile-Chat-Web
+      #   uses: azure/webapps-deploy@v2
+      #   with:
+      #     app-name: ${{ env.AGILE_CHAT_WEB_NAME }}
+      #     package: ${{ env.AGILE_CHAT_WEB_PUB }}
+      #     resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
+      #     subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
         #############################################################
         
-      - name: Deploy - Agile-RagChat-Web
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ env.AGILE_RAGCHAT_API_NAME }}
-          package: ${{ env.AGILE_RAGCHAT_API_PUB }}
-          resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+      # - name: Deploy - Agile-RagChat-Web
+      #   uses: azure/webapps-deploy@v2
+      #   with:
+      #     app-name: ${{ env.AGILE_RAGCHAT_API_NAME }}
+      #     package: ${{ env.AGILE_RAGCHAT_API_PUB }}
+      #     resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
+      #     subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
         #############################################################
