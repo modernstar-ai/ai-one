@@ -12,7 +12,8 @@ param environmentName string
 
 @minLength(1)
 @description('Primary location for all resources')
-param location string
+//param location string
+param location string = resourceGroup().location
 
 // azure open ai -- regions currently support gpt-4o global-standard
 @description('Location for the OpenAI resource group')
