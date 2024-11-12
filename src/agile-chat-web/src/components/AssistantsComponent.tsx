@@ -174,7 +174,7 @@ const AssistantsComponent: React.FC = () => {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Edit {assistant.name}</p>
+                              <p>Chat {assistant.name}</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>

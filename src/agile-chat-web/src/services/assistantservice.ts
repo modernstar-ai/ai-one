@@ -23,7 +23,6 @@ export async function fetchAssistantById(id: string): Promise<Assistant | null> 
   try {
     if (id) {
       const apiUrl = getApiUrl(`assistants/${id}`);
-      console.log('fetchAssistantById', apiUrl);
       const response = await axios.get<Assistant>(apiUrl);
       return response.data;
     } else {
@@ -75,7 +74,6 @@ export async function createAssistant(newAssistant: Assistant): Promise<Assistan
 
 export async function updateAssistant(updatedAssistant: Assistant): Promise<Assistant | null> {
   const apiUrl = getApiUrl(`assistants/${updatedAssistant.id}`);
-  console.log('apiUrl', apiUrl);
   try {
     // Ensure all required fields are included in the request
     const assistantData = {

@@ -7,8 +7,8 @@ import { RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useFetchFiles } from '@/hooks/use-files';
-import { deleteFiles } from '@/services/cosmosservice';
 import { FileMetadata } from '@/models/filemetadata';
+import { deleteFiles } from '@/services/files-service';
 
 export default function FileList() {
   // Using the custom hook to fetch files

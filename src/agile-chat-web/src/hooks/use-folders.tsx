@@ -1,4 +1,4 @@
-import { getFolders } from '@/services/folders-service';
+import { getFolders } from '@/services/files-service';
 import { useEffect, useState } from 'react';
 
 export function useFolders() {

@@ -319,7 +319,12 @@ export default function AssistantForm() {
                               <SelectValue placeholder="Select Container" />
                             </SelectTrigger>
                           </FormControl>
+
                           <SelectContent>
+                            {/**                           <Button className="w-full" variant={'outline'}>
+                              Add new +
+                            </Button> */}
+
                             {indexes?.map((indexName, i) => (
                               <SelectItem key={indexName + i} value={indexName}>
                                 {indexName}
@@ -429,10 +434,7 @@ export default function AssistantForm() {
                           min={0}
                           max={1}
                           step={0.01}
-                          onValueChange={(value) => {
-                            field.onChange(value[0]);
-                            setTopP(value[0]);
-                          }}
+                          onValueChange={(value) => field.onChange(value[0])}
                         />
                       </FormControl>
                       <FormMessage />
