@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.31.34.60546",
-      "templateHash": "10204757345471831845"
+      "templateHash": "1208637879333348476"
     }
   },
   "parameters": {
@@ -248,7 +248,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.31.34.60546",
-              "templateHash": "11313133628120808984"
+              "templateHash": "16842877311859952232"
             }
           },
           "parameters": {
@@ -357,30 +357,7 @@
             "validStorageServiceImageContainerName": "[toLower(replace(parameters('storageServiceImageContainerName'), '-', ''))]",
             "databaseName": "chat",
             "historyContainerName": "history",
-            "configContainerName": "config",
-            "llmDeployments": [
-              {
-                "name": "[parameters('chatGptDeploymentName')]",
-                "model": {
-                  "format": "OpenAI",
-                  "name": "[parameters('chatGptModelName')]",
-                  "version": "[parameters('chatGptModelVersion')]"
-                },
-                "sku": {
-                  "name": "GlobalStandard",
-                  "capacity": "[parameters('chatGptDeploymentCapacity')]"
-                }
-              },
-              {
-                "name": "[parameters('embeddingDeploymentName')]",
-                "model": {
-                  "format": "OpenAI",
-                  "name": "[parameters('embeddingModelName')]",
-                  "version": "2"
-                },
-                "capacity": "[parameters('embeddingDeploymentCapacity')]"
-              }
-            ]
+            "configContainerName": "config"
           },
           "resources": [
             {
@@ -427,19 +404,6 @@
             {
               "type": "Microsoft.KeyVault/vaults/secrets",
               "apiVersion": "2021-06-01-preview",
-              "name": "[format('{0}/{1}', variables('keyVaultName'), 'AZURE-OPENAI-DALLE-API-KEY')]",
-              "properties": {
-                "contentType": "text/plain",
-                "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', variables('openai_dalle_name')), '2023-05-01').key1]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', variables('openai_dalle_name'))]",
-                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults/secrets",
-              "apiVersion": "2021-06-01-preview",
               "name": "[format('{0}/{1}', variables('keyVaultName'), 'AZURE-COSMOSDB-KEY')]",
               "properties": {
                 "contentType": "text/plain",
@@ -448,32 +412,6 @@
               "dependsOn": [
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmos_name'))]",
                 "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults/secrets",
-              "apiVersion": "2021-06-01-preview",
-              "name": "[format('{0}/{1}', variables('keyVaultName'), 'AZURE-DOCUMENT-INTELLIGENCE-KEY')]",
-              "properties": {
-                "contentType": "text/plain",
-                "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', variables('form_recognizer_name')), '2023-05-01').key1]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', variables('form_recognizer_name'))]",
-                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults/secrets",
-              "apiVersion": "2021-06-01-preview",
-              "name": "[format('{0}/{1}', variables('keyVaultName'), 'AZURE-SPEECH-KEY')]",
-              "properties": {
-                "contentType": "text/plain",
-                "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', variables('speech_service_name')), '2023-05-01').key1]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
-                "[resourceId('Microsoft.CognitiveServices/accounts', variables('speech_service_name'))]"
               ]
             },
             {
@@ -500,24 +438,6 @@
               "dependsOn": [
                 "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('storage_name'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.CognitiveServices/accounts/deployments",
-              "apiVersion": "2023-05-01",
-              "name": "[format('{0}/{1}', variables('openai_dalle_name'), parameters('dalleDeploymentName'))]",
-              "properties": {
-                "model": {
-                  "format": "OpenAI",
-                  "name": "[parameters('dalleModelName')]"
-                }
-              },
-              "sku": {
-                "name": "Standard",
-                "capacity": "[parameters('dalleDeploymentCapacity')]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', variables('openai_dalle_name'))]"
               ]
             },
             {
@@ -626,22 +546,6 @@
                       "value": "[parameters('openai_api_version')]"
                     },
                     {
-                      "name": "AZURE_OPENAI_DALLE_API_KEY",
-                      "value": "[format('@Microsoft.KeyVault(VaultName={0};SecretName={1})', variables('keyVaultName'), 'AZURE-OPENAI-DALLE-API-KEY')]"
-                    },
-                    {
-                      "name": "AZURE_OPENAI_DALLE_API_INSTANCE_NAME",
-                      "value": "[variables('openai_dalle_name')]"
-                    },
-                    {
-                      "name": "AZURE_OPENAI_DALLE_API_DEPLOYMENT_NAME",
-                      "value": "[parameters('dalleDeploymentName')]"
-                    },
-                    {
-                      "name": "AZURE_OPENAI_DALLE_API_VERSION",
-                      "value": "[parameters('dalleApiVersion')]"
-                    },
-                    {
                       "name": "AZURE_COSMOSDB_URI",
                       "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmos_name')), '2023-04-15').documentEndpoint]"
                     },
@@ -662,22 +566,6 @@
                       "value": "[parameters('searchServiceIndexName')]"
                     },
                     {
-                      "name": "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT",
-                      "value": "[format('https://{0}.cognitiveservices.azure.com/', variables('form_recognizer_name'))]"
-                    },
-                    {
-                      "name": "AZURE_DOCUMENT_INTELLIGENCE_KEY",
-                      "value": "[format('@Microsoft.KeyVault(VaultName={0};SecretName={1})', variables('keyVaultName'), 'AZURE-DOCUMENT-INTELLIGENCE-KEY')]"
-                    },
-                    {
-                      "name": "AZURE_SPEECH_REGION",
-                      "value": "[parameters('location')]"
-                    },
-                    {
-                      "name": "AZURE_SPEECH_KEY",
-                      "value": "[format('@Microsoft.KeyVault(VaultName={0};SecretName={1})', variables('keyVaultName'), 'AZURE-SPEECH-KEY')]"
-                    },
-                    {
                       "name": "AZURE_STORAGE_ACCOUNT_NAME",
                       "value": "[variables('storage_name')]"
                     },
@@ -694,11 +582,8 @@
               "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('appservice_name'))]",
                 "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'AZURE-COSMOSDB-KEY')]",
-                "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'AZURE-DOCUMENT-INTELLIGENCE-KEY')]",
                 "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'AZURE-OPENAI-API-KEY')]",
-                "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'AZURE-OPENAI-DALLE-API-KEY')]",
                 "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'AZURE-SEARCH-API-KEY')]",
-                "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'AZURE-SPEECH-KEY')]",
                 "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'AZURE-STORAGE-ACCOUNT-KEY')]",
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmos_name'))]",
                 "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
@@ -817,21 +702,6 @@
               ]
             },
             {
-              "type": "Microsoft.CognitiveServices/accounts",
-              "apiVersion": "2023-05-01",
-              "name": "[variables('form_recognizer_name')]",
-              "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]",
-              "kind": "FormRecognizer",
-              "properties": {
-                "customSubDomainName": "[variables('form_recognizer_name')]",
-                "publicNetworkAccess": "Enabled"
-              },
-              "sku": {
-                "name": "[parameters('formRecognizerSkuName')]"
-              }
-            },
-            {
               "type": "Microsoft.Search/searchServices",
               "apiVersion": "2022-09-01",
               "name": "[variables('search_name')]",
@@ -879,55 +749,6 @@
               "dependsOn": [
                 "[resourceId('Microsoft.CognitiveServices/accounts', variables('openai_name'))]"
               ]
-            },
-            {
-              "type": "Microsoft.CognitiveServices/accounts/deployments",
-              "apiVersion": "2023-05-01",
-              "name": "[format('{0}/{1}', variables('openai_name'), parameters('embeddingModelName'))]",
-              "sku": {
-                "name": "Standard",
-                "capacity": "[parameters('embeddingDeploymentCapacity')]"
-              },
-              "properties": {
-                "model": {
-                  "format": "OpenAI",
-                  "name": "[parameters('embeddingModelName')]",
-                  "version": "2"
-                }
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', variables('openai_name'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.CognitiveServices/accounts",
-              "apiVersion": "2023-05-01",
-              "name": "[variables('openai_dalle_name')]",
-              "location": "[parameters('dalleLocation')]",
-              "tags": "[parameters('tags')]",
-              "kind": "OpenAI",
-              "properties": {
-                "customSubDomainName": "[variables('openai_dalle_name')]",
-                "publicNetworkAccess": "Enabled"
-              },
-              "sku": {
-                "name": "[parameters('openAiSkuName')]"
-              }
-            },
-            {
-              "type": "Microsoft.CognitiveServices/accounts",
-              "apiVersion": "2023-05-01",
-              "name": "[variables('speech_service_name')]",
-              "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]",
-              "kind": "SpeechServices",
-              "properties": {
-                "customSubDomainName": "[variables('speech_service_name')]",
-                "publicNetworkAccess": "Enabled"
-              },
-              "sku": {
-                "name": "[parameters('speechServiceSkuName')]"
-              }
             },
             {
               "type": "Microsoft.Storage/storageAccounts",
