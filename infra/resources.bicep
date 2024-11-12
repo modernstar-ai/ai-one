@@ -494,7 +494,6 @@ resource embeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2
     scaleSettings: {
       capacity: embeddingDeploymentCapacity
     }
-    versionUpgradeOption: 'string'
   }
 }
 
