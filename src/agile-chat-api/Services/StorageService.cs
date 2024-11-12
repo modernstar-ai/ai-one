@@ -51,7 +51,7 @@ namespace Services
         public StorageService()
         {
             BlobServiceClient blobServiceClient = new(Config.BlobStorageConnectionString);
-            _blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.BlobContainerName);
+            _blobContainerClient = blobServiceClient.GetBlobContainerClient(Config.BlobStorageContainerName);
             _blobContainerClient.CreateIfNotExists();
         }
 

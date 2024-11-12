@@ -48,5 +48,8 @@
         /// <exception cref="System.InvalidOperationException">AZURE_STORAGE_ACCOUNT_CONNECTION not set.</exception>
         public static string BlobStorageConnectionString => Environment.GetEnvironmentVariable("AZURE_STORAGE_ACCOUNT_CONNECTION")
             ?? throw new InvalidOperationException("AZURE_STORAGE_ACCOUNT_CONNECTION not set.");
+        
+        public static string BlobStorageContainerName => Environment.GetEnvironmentVariable("AZURE_STORAGE_FOLDERS_CONTAINER_NAME")
+        ?? throw new InvalidOperationException("AZURE_STORAGE_FOLDERS_CONTAINER_NAME not set.");
     }
 }

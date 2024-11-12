@@ -11,10 +11,5 @@
         /// The assistant container partition key path
         /// </summary>
         public const string AssistantContainerPartitionKeyPath = "/CreatedBy";
-
-        /// <summary>
-        /// The BLOB container name
-        /// </summary>
-        public const string BlobContainerName = "fileuploadsv1";
     }
 }
