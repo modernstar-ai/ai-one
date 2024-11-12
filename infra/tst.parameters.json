@@ -7,6 +7,10 @@
       },
       "environmentName": {
         "value": "tst"
+      },
+      "openAILocation": {
+        "value": "australiaeast"
       }
+      
     }
   }
