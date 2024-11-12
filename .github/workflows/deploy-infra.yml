@@ -29,7 +29,7 @@ permissions:
 jobs:
   infra-deploy:
     runs-on: ubuntu-latest
-    environment: Test
+    environment: ${{ github.event.inputs.environment }}
     
     env:
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
