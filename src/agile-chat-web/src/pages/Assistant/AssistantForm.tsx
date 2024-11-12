@@ -37,7 +37,10 @@ const formSchema = z.object({
   index: z.string(),
   folder: z.array(z.string()),
   temperature: z.number(),
-  topP: z.number().min(0).max(1), // <-- Added topP validation
+  topP: z.number().min(0).max(1).optional(), // <-- Added topP validation
+  maxResponseToken: z.number().optional(),
+  pastMessages: z.number().optional(),
+  strictness: z.number().optional(),
   documentLimit: z.number(),
   status: z.nativeEnum(AssistantStatus),
   tools: z.array(
@@ -61,7 +64,7 @@ export default function AssistantForm() {
   const { indexes } = useIndexes();
   const [selectedToolIds, setSelectedToolIds] = useState<Set<string>>(new Set());
   const [tools, setTools] = useState<Tool[]>([]);
-  const [topP, setTopP] = useState(0.9);
+  const [, setTopP] = useState<number>(0);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -74,9 +77,9 @@ export default function AssistantForm() {
       group: '',
       index: '',
       folder: [],
-      temperature: 0.7,
-      topP: 0.9, // <-- Added topP default value
       documentLimit: 5,
+      temperature: 0.7,
+      topP: 0.95,
       status: AssistantStatus.Draft,
       tools: [],
     },
@@ -113,6 +116,9 @@ export default function AssistantForm() {
           documentLimit: file.documentLimit,
           status: file.status,
           topP: file.topP,
+          maxResponseToken: file.maxResponseToken,
+          pastMessages: file.pastMessages,
+          strictness: file.strictness
         });
         setSelectedToolIds(new Set(file.tools.map((tool) => tool.toolId)));
       } else {
@@ -431,6 +437,60 @@ export default function AssistantForm() {
                       </FormControl>
                       <FormMessage />
                       <div>Selected Top P: {field.value}</div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="maxResponseToken"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Max Response (tokens)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          placeholder="Enter a number, by default value will be set to 800 tokens"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="pastMessages"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Past Messages Included</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          placeholder="Enter a number, by default value will be set to 10"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="strictness"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Strictness</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          placeholder="Enter a number, by default value will be set to 3"
+                        />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />

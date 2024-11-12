@@ -53,6 +53,9 @@ export async function createAssistant(newAssistant: Assistant): Promise<Assistan
       folder: newAssistant.folder,
       temperature: newAssistant.temperature,
       topP: newAssistant.topP,
+      maxResponseToken: newAssistant.maxResponseToken,
+      pastMessages: newAssistant.pastMessages,
+      strictness: newAssistant.strictness,
       documentLimit: newAssistant.documentLimit,
       tools: newAssistant.tools, // Add the tools field here
       status: newAssistant.status,
@@ -87,6 +90,9 @@ export async function updateAssistant(updatedAssistant: Assistant): Promise<Assi
       folder: updatedAssistant.folder,
       temperature: updatedAssistant.temperature,
       topP: updatedAssistant.topP,
+      maxResponseToken: updatedAssistant.maxResponseToken,
+      pastMessages: updatedAssistant.pastMessages,
+      strictness: updatedAssistant.strictness,
       documentLimit: updatedAssistant.documentLimit,
       status: updatedAssistant.status,
       tools: updatedAssistant.tools, // Add the tools field here
