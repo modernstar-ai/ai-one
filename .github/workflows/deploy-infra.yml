@@ -72,6 +72,8 @@ jobs:
         with:
           azcliversion: 2.64.0
           inlineScript: |
+            tdnf install -y icu
+            tdnf install -y jq
             az bicep install
             az bicep build --file ${{ env.AZURE_BICEP_MAIN }}
 
