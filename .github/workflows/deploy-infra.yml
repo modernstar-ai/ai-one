@@ -99,10 +99,10 @@ jobs:
         with:
           type: deployment
           operation: create
-          name: "deploy-${{ env.AZURE_ENV_NAME }}"
+          name: "${{ env.AZURE_ENV_NAME }}"
           location: "${{ env.AZURE_LOCATION }}"
           scope: resourceGroup
           resource-group-name: "${{ env.AZURE_RESOURCE_GROUP }}"
-          #subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
+          subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
           template-file: "${{ env.AZURE_BICEP_MAIN }}"
           parameters-file: "${{ env.BICEP_PARAMS }}"
