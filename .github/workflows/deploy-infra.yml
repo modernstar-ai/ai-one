@@ -100,8 +100,8 @@ jobs:
           type: deployment
           operation: create
           name: "${{ env.AZURE_ENV_NAME }}"
-          location: "${{ env.AZURE_LOCATION }}"
-          scope: subscription
+          location: "australiaeast" # ${{ env.AZURE_LOCATION }}"
+          scope: resourceGroup
           resource-group-name: "${{ env.AZURE_RESOURCE_GROUP }}"
           subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
           template-file: "${{ env.AZURE_BICEP_MAIN }}"
