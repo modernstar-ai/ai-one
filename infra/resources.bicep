@@ -5,23 +5,22 @@ param location string = resourceGroup().location
 param tags object = {}
 
 //calculate names
-var resourcePrefix = toLower('${projectName}-${environmentName}') 
+var resourcePrefix = toLower('${projectName}-${environmentName}')
 var appservice_name = toLower('${resourcePrefix}-app')
 var webapp_name = toLower('${resourcePrefix}-webapp')
 var apiapp_name = toLower('${resourcePrefix}-apiapp')
 
-
 param openai_api_version string
 
 param openAiLocation string
-param openAiSkuName string 
-param chatGptDeploymentCapacity int 
+param openAiSkuName string
+param chatGptDeploymentCapacity int
 param chatGptDeploymentName string
-param chatGptModelName string 
+param chatGptModelName string
 param chatGptModelVersion string
-param embeddingDeploymentName string 
+param embeddingDeploymentName string
 param embeddingDeploymentCapacity int
-param embeddingModelName string 
+param embeddingModelName string
 
 param dalleLocation string
 param dalleDeploymentCapacity int
@@ -38,7 +37,6 @@ param searchServiceIndexName string = 'azure-chat'
 
 param storageServiceSku object
 param storageServiceImageContainerName string
-
 
 var openai_name = toLower('${resourcePrefix}-aillm')
 var openai_dalle_name = toLower('${resourcePrefix}-aidalle')
@@ -59,7 +57,10 @@ var keyVaultName = toLower('${resourcePrefix}-kv')
 var la_workspace_name = toLower('${resourcePrefix}-la')
 var diagnostic_setting_name = 'AppServiceConsoleLogs'
 
-var keyVaultSecretsOfficerRole = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7')
+var keyVaultSecretsOfficerRole = subscriptionResourceId(
+  'Microsoft.Authorization/roleDefinitions',
+  'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
+)
 
 var validStorageServiceImageContainerName = toLower(replace(storageServiceImageContainerName, '-', ''))
 
@@ -91,8 +92,6 @@ var llmDeployments = [
   }
 ]
 
-
-
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
   name: appservice_name
   location: location
@@ -122,10 +121,10 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
       alwaysOn: true
       appCommandLine: 'npx serve -s dist'
       ftpsState: 'Disabled'
-      minTlsVersion: '1.2'      
+      minTlsVersion: '1.2'
     }
   }
-  identity: { type: 'SystemAssigned'}
+  identity: { type: 'SystemAssigned' }
 
   resource configLogs 'config' = {
     name: 'logs'
@@ -151,13 +150,13 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
       appCommandLine: 'dotnet agile-chat-api.dll'
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
-      
-      appSettings: [ 
-        { 
+
+      appSettings: [
+        {
           name: 'AZURE_KEY_VAULT_NAME'
           value: keyVaultName
         }
-        { 
+        {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
           value: 'true'
         }
@@ -209,18 +208,18 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AZURE_SEARCH_API_KEY'
           value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_SEARCH_API_KEY.name})'
         }
-        { 
+        {
           name: 'AZURE_SEARCH_NAME'
           value: search_name
         }
-        { 
+        {
           name: 'AZURE_SEARCH_INDEX_NAME'
           value: searchServiceIndexName
         }
-        { 
+        {
           name: 'AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT'
           value: 'https://${form_recognizer_name}.cognitiveservices.azure.com/'
-        }        
+        }
         {
           name: 'AZURE_DOCUMENT_INTELLIGENCE_KEY'
           value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_DOCUMENT_INTELLIGENCE_KEY.name})'
@@ -241,12 +240,11 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AZURE_STORAGE_ACCOUNT_KEY'
           value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_KEY.name})'
         }
-      ]      
+      ]
     }
   }
-  identity: { type: 'SystemAssigned'}
+  identity: { type: 'SystemAssigned' }
 }
-
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
   name: la_workspace_name
@@ -451,19 +449,53 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   }
 }
 
-@batchSize(1)
-resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [for deployment in llmDeployments: {
+// throwing depployment errors
+// @batchSize(1)
+// resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [for deployment in llmDeployments: {
+//   parent: azureopenai
+//   name: deployment.name
+//   properties: {
+//     model: deployment.model
+//     raiPolicyName: contains(deployment, 'raiPolicyName') ? deployment.raiPolicyName : null
+//   }
+//   sku: contains(deployment, 'sku') ? deployment.sku : {
+//     name: 'Standard'
+//     capacity: deployment.capacity
+//   }
+// }]
+
+// ChatGptDeployment
+resource chatGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
+  name: chatGptDeploymentName
+  sku: {
+    name: 'GlobalStandard'
+    capacity: chatGptDeploymentCapacity
+  }
   parent: azureopenai
-  name: deployment.name
   properties: {
-    model: deployment.model
-    raiPolicyName: contains(deployment, 'raiPolicyName') ? deployment.raiPolicyName : null
+    model: {
+      format: 'OpenAI'
+      name: chatGptModelName
+      version: chatGptModelVersion
+    }
   }
-  sku: contains(deployment, 'sku') ? deployment.sku : {
-    name: 'Standard'
-    capacity: deployment.capacity
+}
+
+// embeddingDeployment
+resource embeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
+  name: embeddingModelName
+  parent: azureopenai
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: embeddingModelName
+      version: '2'
+    }
+    scaleSettings: {
+      capacity: embeddingDeploymentCapacity
+    }
   }
-}]
+}
 
 resource azureopenaidalle 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   name: openai_dalle_name
@@ -492,8 +524,6 @@ resource azureopenaidalle 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
     }
   }
 }
-
-
 
 resource speechService 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   name: speech_service_name
@@ -527,7 +557,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
     }
   }
 }
-
 
 output url string = 'https://${webApp.properties.defaultHostName}'
 output api_url string = 'https://${apiApp.properties.defaultHostName}'
