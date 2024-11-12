@@ -29,6 +29,7 @@ permissions:
 jobs:
   infra-deploy:
     runs-on: ubuntu-latest
+    environment: Test
     
     env:
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
