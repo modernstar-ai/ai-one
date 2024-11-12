@@ -1,10 +1,26 @@
 name: Deploy Web Apps
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: The reason for running the workflow
+        required: false
+        default: Manual run
+      environment:
+        description: "Select the App environment"
+        required: true
+        type: choice
+        default: "Development"
+        options:
+          - Development
+          - Test
+          - Production
 
 #on:
   # push:
   #   branches:
   #     - main # Deploy on push to main branch
-  workflow_dispatch: # Allow manual trigger of the workflow
+
 
   # Set up permissions for deploying with secretless Azure federated credentials
 # https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
