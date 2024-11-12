@@ -68,29 +68,29 @@ var databaseName = 'chat'
 var historyContainerName = 'history'
 var configContainerName = 'config'
 
-var llmDeployments = [
-  {
-    name: chatGptDeploymentName
-    model: {
-      format: 'OpenAI'
-      name: chatGptModelName
-      version: chatGptModelVersion
-    }
-    sku: {
-      name: 'GlobalStandard'
-      capacity: chatGptDeploymentCapacity
-    }
-  }
-  {
-    name: embeddingDeploymentName
-    model: {
-      format: 'OpenAI'
-      name: embeddingModelName
-      version: '2'
-    }
-    capacity: embeddingDeploymentCapacity
-  }
-]
+// var llmDeployments = [
+//   {
+//     name: chatGptDeploymentName
+//     model: {
+//       format: 'OpenAI'
+//       name: chatGptModelName
+//       version: chatGptModelVersion
+//     }
+//     sku: {
+//       name: 'GlobalStandard'
+//       capacity: chatGptDeploymentCapacity
+//     }
+//   }
+//   {
+//     name: embeddingDeploymentName
+//     model: {
+//       format: 'OpenAI'
+//       name: embeddingModelName
+//       version: '2'
+//     }
+//     capacity: embeddingDeploymentCapacity
+//   }
+// ]
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
   name: appservice_name
@@ -180,22 +180,22 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AZURE_OPENAI_API_VERSION'
           value: openai_api_version
         }
-        {
-          name: 'AZURE_OPENAI_DALLE_API_KEY'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_DALLE_API_KEY.name})'
-        }
-        {
-          name: 'AZURE_OPENAI_DALLE_API_INSTANCE_NAME'
-          value: openai_dalle_name
-        }
-        {
-          name: 'AZURE_OPENAI_DALLE_API_DEPLOYMENT_NAME'
-          value: dalleDeploymentName
-        }
-        {
-          name: 'AZURE_OPENAI_DALLE_API_VERSION'
-          value: dalleApiVersion
-        }
+        // {
+        //   name: 'AZURE_OPENAI_DALLE_API_KEY'
+        //   value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_DALLE_API_KEY.name})'
+        // }
+        // {
+        //   name: 'AZURE_OPENAI_DALLE_API_INSTANCE_NAME'
+        //   value: openai_dalle_name
+        // }
+        // {
+        //   name: 'AZURE_OPENAI_DALLE_API_DEPLOYMENT_NAME'
+        //   value: dalleDeploymentName
+        // }
+        // {
+        //   name: 'AZURE_OPENAI_DALLE_API_VERSION'
+        //   value: dalleApiVersion
+        // }
         {
           name: 'AZURE_COSMOSDB_URI'
           value: cosmosDbAccount.properties.documentEndpoint
@@ -216,22 +216,22 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AZURE_SEARCH_INDEX_NAME'
           value: searchServiceIndexName
         }
-        {
-          name: 'AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT'
-          value: 'https://${form_recognizer_name}.cognitiveservices.azure.com/'
-        }
-        {
-          name: 'AZURE_DOCUMENT_INTELLIGENCE_KEY'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_DOCUMENT_INTELLIGENCE_KEY.name})'
-        }
-        {
-          name: 'AZURE_SPEECH_REGION'
-          value: location
-        }
-        {
-          name: 'AZURE_SPEECH_KEY'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_SPEECH_KEY.name})'
-        }
+        // {
+        //   name: 'AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT'
+        //   value: 'https://${form_recognizer_name}.cognitiveservices.azure.com/'
+        // }
+        // {
+        //   name: 'AZURE_DOCUMENT_INTELLIGENCE_KEY'
+        //   value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_DOCUMENT_INTELLIGENCE_KEY.name})'
+        // }
+        // {
+        //   name: 'AZURE_SPEECH_REGION'
+        //   value: location
+        // }
+        // {
+        //   name: 'AZURE_SPEECH_KEY'
+        //   value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_SPEECH_KEY.name})'
+        // }
         {
           name: 'AZURE_STORAGE_ACCOUNT_NAME'
           value: storage_name
@@ -299,13 +299,13 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     }
   }
 
-  resource AZURE_OPENAI_DALLE_API_KEY 'secrets' = {
-    name: 'AZURE-OPENAI-DALLE-API-KEY'
-    properties: {
-      contentType: 'text/plain'
-      value: azureopenaidalle.listKeys().key1
-    }
-  }
+  // resource AZURE_OPENAI_DALLE_API_KEY 'secrets' = {
+  //   name: 'AZURE-OPENAI-DALLE-API-KEY'
+  //   properties: {
+  //     contentType: 'text/plain'
+  //     value: azureopenaidalle.listKeys().key1
+  //   }
+  // }
 
   resource AZURE_COSMOSDB_KEY 'secrets' = {
     name: 'AZURE-COSMOSDB-KEY'
@@ -315,21 +315,21 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     }
   }
 
-  resource AZURE_DOCUMENT_INTELLIGENCE_KEY 'secrets' = {
-    name: 'AZURE-DOCUMENT-INTELLIGENCE-KEY'
-    properties: {
-      contentType: 'text/plain'
-      value: formRecognizer.listKeys().key1
-    }
-  }
+  // resource AZURE_DOCUMENT_INTELLIGENCE_KEY 'secrets' = {
+  //   name: 'AZURE-DOCUMENT-INTELLIGENCE-KEY'
+  //   properties: {
+  //     contentType: 'text/plain'
+  //     value: formRecognizer.listKeys().key1
+  //   }
+  // }
 
-  resource AZURE_SPEECH_KEY 'secrets' = {
-    name: 'AZURE-SPEECH-KEY'
-    properties: {
-      contentType: 'text/plain'
-      value: speechService.listKeys().key1
-    }
-  }
+  // resource AZURE_SPEECH_KEY 'secrets' = {
+  //   name: 'AZURE-SPEECH-KEY'
+  //   properties: {
+  //     contentType: 'text/plain'
+  //     value: speechService.listKeys().key1
+  //   }
+  // }
 
   resource AZURE_SEARCH_API_KEY 'secrets' = {
     name: 'AZURE-SEARCH-API-KEY'
@@ -407,19 +407,20 @@ resource configContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/con
   }
 }
 
-resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-  name: form_recognizer_name
-  location: location
-  tags: tags
-  kind: 'FormRecognizer'
-  properties: {
-    customSubDomainName: form_recognizer_name
-    publicNetworkAccess: 'Enabled'
-  }
-  sku: {
-    name: formRecognizerSkuName
-  }
-}
+//removed for now
+// resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+//   name: form_recognizer_name
+//   location: location
+//   tags: tags
+//   kind: 'FormRecognizer'
+//   properties: {
+//     customSubDomainName: form_recognizer_name
+//     publicNetworkAccess: 'Enabled'
+//   }
+//   sku: {
+//     name: formRecognizerSkuName
+//   }
+// }
 
 resource searchService 'Microsoft.Search/searchServices@2022-09-01' = {
   name: search_name
@@ -482,62 +483,65 @@ resource chatGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@202
 }
 
 // embeddingDeployment
-resource embeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-  name: embeddingModelName
-  parent: azureopenai
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: embeddingModelName
-      version: '2'
-    }
-    scaleSettings: {
-      capacity: embeddingDeploymentCapacity
-    }
-  }
-}
+// resource embeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
+//   name: embeddingModelName
+//   parent: azureopenai
+//   sku: {
+//     name: 'Standard'
+//     capacity: embeddingDeploymentCapacity
+//   }
+//   properties: {
+//     model: {
+//       format: 'OpenAI'
+//       name: embeddingModelName
+//       version: '2'
+//     }
+//   }
+// }
 
-resource azureopenaidalle 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-  name: openai_dalle_name
-  location: dalleLocation
-  tags: tags
-  kind: 'OpenAI'
-  properties: {
-    customSubDomainName: openai_dalle_name
-    publicNetworkAccess: 'Enabled'
-  }
-  sku: {
-    name: openAiSkuName
-  }
+//removed for now
+// resource azureopenaidalle 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+//   name: openai_dalle_name
+//   location: dalleLocation
+//   tags: tags
+//   kind: 'OpenAI'
+//   properties: {
+//     customSubDomainName: openai_dalle_name
+//     publicNetworkAccess: 'Enabled'
+//   }
+//   sku: {
+//     name: openAiSkuName
+//   }
 
-  resource dalleDeployment 'deployments' = {
-    name: dalleDeploymentName
-    properties: {
-      model: {
-        format: 'OpenAI'
-        name: dalleModelName
-      }
-    }
-    sku: {
-      name: 'Standard'
-      capacity: dalleDeploymentCapacity
-    }
-  }
-}
+//   resource dalleDeployment 'deployments' = {
+//     name: dalleDeploymentName
+//     properties: {
+//       model: {
+//         format: 'OpenAI'
+//         name: dalleModelName
+//       }
+//     }
+//     sku: {
+//       name: 'Standard'
+//       capacity: dalleDeploymentCapacity
+//     }
+//   }
+// }
 
-resource speechService 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-  name: speech_service_name
-  location: location
-  tags: tags
-  kind: 'SpeechServices'
-  properties: {
-    customSubDomainName: speech_service_name
-    publicNetworkAccess: 'Enabled'
-  }
-  sku: {
-    name: speechServiceSkuName
-  }
-}
+//removed for now
+// resource speechService 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+//   name: speech_service_name
+//   location: location
+//   tags: tags
+//   kind: 'SpeechServices'
+//   properties: {
+//     customSubDomainName: speech_service_name
+//     publicNetworkAccess: 'Enabled'
+//   }
+//   sku: {
+//     name: speechServiceSkuName
+//   }
+// }
 
 // TODO: define good default Sku and settings for storage account
 resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {

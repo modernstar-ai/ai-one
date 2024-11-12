@@ -1,0 +1,178 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "metadata": {
+      "_generator": {
+        "name": "bicep",
+        "version": "0.30.23.60470",
+        "templateHash": "10696557376070207654"
+      }
+    },
+    "parameters": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "metadata": {
+          "description": "Name of the the environment which is used to generate a short unique hash used in all resources."
+        }
+      },
+      "location": {
+        "type": "string",
+        "minLength": 1,
+        "metadata": {
+          "description": "Primary location for all resources"
+        }
+      }
+    },
+    "variables": {
+      "tags": {
+        "azd-env-name": "[parameters('name')]"
+      }
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2022-09-01",
+        "name": "all-resources",
+        "properties": {
+          "expressionEvaluationOptions": {
+            "scope": "inner"
+          },
+          "mode": "Incremental",
+          "parameters": {
+            "name": {
+              "value": "[parameters('name')]"
+            },
+            "tags": {
+              "value": "[variables('tags')]"
+            },
+            "location": {
+              "value": "[parameters('location')]"
+            }
+          },
+          "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "metadata": {
+              "_generator": {
+                "name": "bicep",
+                "version": "0.30.23.60470",
+                "templateHash": "9521333856642701165"
+              }
+            },
+            "parameters": {
+              "name": {
+                "type": "string",
+                "defaultValue": "azurechat-demo"
+              },
+              "location": {
+                "type": "string",
+                "defaultValue": "[resourceGroup().location]"
+              },
+              "tags": {
+                "type": "object",
+                "defaultValue": {}
+              }
+            },
+            "variables": {
+              "appservice_name": "[toLower(format('{0}-app', parameters('name')))]",
+              "webapp_name": "[toLower(format('{0}-webapp', parameters('name')))]"
+            },
+            "resources": [
+              {
+                "type": "Microsoft.Web/sites/config",
+                "apiVersion": "2020-06-01",
+                "name": "[format('{0}/{1}', variables('webapp_name'), 'logs')]",
+                "properties": {
+                  "applicationLogs": {
+                    "fileSystem": {
+                      "level": "Verbose"
+                    }
+                  },
+                  "detailedErrorMessages": {
+                    "enabled": true
+                  },
+                  "failedRequestsTracing": {
+                    "enabled": true
+                  },
+                  "httpLogs": {
+                    "fileSystem": {
+                      "enabled": true,
+                      "retentionInDays": 1,
+                      "retentionInMb": 35
+                    }
+                  }
+                },
+                "dependsOn": [
+                  "[resourceId('Microsoft.Web/sites', variables('webapp_name'))]"
+                ]
+              },
+              {
+                "type": "Microsoft.Web/serverfarms",
+                "apiVersion": "2021-02-01",
+                "name": "[variables('appservice_name')]",
+                "location": "[parameters('location')]",
+                "tags": "[parameters('tags')]",
+                "properties": {
+                  "reserved": true
+                },
+                "sku": {
+                  "name": "P0v3",
+                  "tier": "Premium0V3",
+                  "size": "P0v3",
+                  "family": "Pv3",
+                  "capacity": 1
+                },
+                "kind": "linux"
+              },
+              {
+                "type": "Microsoft.Web/sites",
+                "apiVersion": "2020-06-01",
+                "name": "[variables('webapp_name')]",
+                "location": "[parameters('location')]",
+                "tags": "[union(parameters('tags'), createObject('azd-service-name', 'agilechat-web'))]",
+                "properties": {
+                  "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appservice_name'))]",
+                  "httpsOnly": true,
+                  "siteConfig": {
+                    "linuxFxVersion": "node|18-lts",
+                    "alwaysOn": true,
+                    "appCommandLine": "vite preview --outDir dist",
+                    "ftpsState": "Disabled",
+                    "minTlsVersion": "1.2"
+                  }
+                },
+                "identity": {
+                  "type": "SystemAssigned"
+                },
+                "dependsOn": [
+                  "[resourceId('Microsoft.Web/serverfarms', variables('appservice_name'))]"
+                ]
+              }
+            ],
+            "outputs": {
+              "url": {
+                "type": "string",
+                "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/sites', variables('webapp_name')), '2020-06-01').defaultHostName)]"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "outputs": {
+      "APP_URL": {
+        "type": "string",
+        "value": "[reference(resourceId('Microsoft.Resources/deployments', 'all-resources'), '2022-09-01').outputs.url.value]"
+      },
+      "AZURE_LOCATION": {
+        "type": "string",
+        "value": "[parameters('location')]"
+      },
+      "AZURE_TENANT_ID": {
+        "type": "string",
+        "value": "[tenant().tenantId]"
+      }
+    }
+  }

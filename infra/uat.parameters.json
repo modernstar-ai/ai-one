@@ -10,6 +10,12 @@
       },
       "location": {
         "value": "australiaeast"
-      }
+      },
+      "openAILocation": {
+        "value": "australiaeast"
+      },
+      "dalleLocation": {
+        "value": "australiaeast"
+      } 
     }
   }
