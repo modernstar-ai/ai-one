@@ -14,7 +14,7 @@ public interface IAzureAiSearchService
 public class AzureAiSearchService : IAzureAiSearchService
 {
     public static readonly string FOLDERS_INDEX_NAME =
-        Environment.GetEnvironmentVariable("AZURE_SEARCH_FOLDERS_INDEX_NAME")! + "-indexer";
+        Environment.GetEnvironmentVariable("AZURE_STORAGE_FOLDERS_CONTAINER_NAME")! + "-indexer";
 
     private readonly Uri _uri;
     private readonly AzureKeyCredential _credentials;

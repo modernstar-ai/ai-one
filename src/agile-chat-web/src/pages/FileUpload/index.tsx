@@ -7,137 +7,71 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, MailIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import axios from '@/error-handling/axiosSetup';
 import { useFolders } from '@/hooks/use-folders';
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import * as z from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { uploadFiles } from '@/services/files-service';
+import { useIndexes } from '@/hooks/use-indexes';
 
-function getApiUrl(endpoint: string): string {
-  const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
-  return `${rootApiUrl}/${endpoint}`;
-}
+const maxFileCount = 5; // Maximum number of files allowed
+const maxSize = 26214400; // 25MB
 
-export default function Component() {
-    const { toast } = useToast(); // Initialize the Shadcn toast
-    const [files, setFiles] = useState<File[]>([]);
-    const [selectedFolder, setSelectedFolder] = useState<string | null>(null); // State for selected folder
-    const [progresses] = useState<Record<string, number>>({});
-    const maxFileCount = 5; // Maximum number of files allowed
-    const maxSize = 1024 * 1024 * 2; // 2MB
-    const navigate = useNavigate();
-    const { folders } = useFolders();
-  
-    const uploadFiles = async () => {
-    if (files.length === 0) {
-      toast({
-        title: 'Error',
-        description: 'No files selected for upload.',
-        variant: 'destructive',
-      });
-      return;
-    }
-  
-    if (!selectedFolder) {
-      toast({
-        title: "Error",
-        description: "No folder selected.",
-        variant: "destructive",
-      });
-      return;
-    }
+const formSchema = z.object({
+  index: z.string().min(1, { message: 'Container is required' }),
+  folder: z.string().min(1, { message: 'Folder is required' }),
+  files: z
+    .array(z.instanceof(File))
+    .refine((files) => files.length > 0, { message: 'No files selected' })
+    .refine((files) => files.length <= maxFileCount, { message: 'Maximum of 5 files can be uploaded at a time' }),
+});
+type FormValues = z.infer<typeof formSchema>;
 
+export default function FileUploadComponent() {
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      index: '',
+      folder: '',
+      files: [],
+    },
+  });
+
+  const { toast } = useToast(); // Initialize the Shadcn toast
+  const [progresses] = useState<Record<string, number>>({});
+  const navigate = useNavigate();
+  const { folders } = useFolders();
+  const { indexes } = useIndexes();
+
+  const onSubmit = async (values: FormValues) => {
     const formData = new FormData();
-    formData.append("folder", selectedFolder); // Append selected folder value
-    files.forEach((file) => {
-      formData.append('files', file);
-    });
+    formData.append('index', values.index);
+    formData.append('folder', values.folder);
+    values.files.forEach((file) => formData.append('files', file));
 
-    try {
-      const apiUrl = getApiUrl('upload');
-      console.log(apiUrl);
-      const response = await axios.post(apiUrl, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      console.log(response);
-      if (response.status === 200 && response.data) {
-        toast({
-          title: 'Success',
-          description: response.data, // Directly using response.data as the message
-          variant: 'default',
-        });
-
-        // Clear files after upload
-        setFiles([]);
-        navigate("/files"); 
-      } else {
-        toast({
-          title: 'Error',
-          description: 'File upload failed.',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      // Check if the error is an instance of Error
-      console.log(error);
-      if (error instanceof Error) {
-        toast({
-          title: 'Error',
-          description: error.message,
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: 'An unknown error occurred during upload.',
-          variant: 'destructive',
-        });
-      }
-    }
+    await uploadFiles(formData);
+    navigate('/files');
   };
 
-
-
   const onDrop = (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
-    if (files.length + acceptedFiles.length > maxFileCount) {
+    form.setValue('files', [...form.getValues().files, ...acceptedFiles]);
+    rejectedFiles.forEach((rejected) => {
       toast({
-        title: 'Error',
-        description: `Cannot upload more than ${maxFileCount} files`,
         variant: 'destructive',
+        title: 'Error',
+        description: rejected.errors[0].message,
       });
-      return;
-    }
-
-    const newFiles = acceptedFiles.map((file) => file); // Just keep the accepted files
-
-    setFiles([...files, ...newFiles]);
-
-    if (rejectedFiles.length > 0) {
-      rejectedFiles.forEach(({ file }) => {
-        toast({
-          title: 'Error',
-          description: `File ${file.name} was rejected`, // Use backticks for template literal
-          variant: 'destructive',
-        });
-      });
-    }
+    });
   };
 
   const onRemove = (index: number) => {
-    const newFiles = files.filter((_, i) => i !== index);
-    setFiles(newFiles);
+    const newArr = [...form.getValues().files];
+    newArr.splice(index, 1);
+    form.setValue('files', newArr);
   };
-
-  useEffect(() => {
-    return () => {
-      files.forEach((file) => {
-        if ('preview' in file && typeof file.preview === 'string') {
-          URL.revokeObjectURL(file.preview);
-        }
-      });
-    };
-  }, [files]);
 
   return (
     <div className="flex h-screen bg-white-100">
@@ -167,83 +101,143 @@ export default function Component() {
         </div>
 
         {/* Dropdowns */}
-        <div className="flex justify-center w-full">
-          <div className="mb-2 gap-4 w-1/2">
-          <Select onValueChange={(value) => setSelectedFolder(value)}> {/* Update selected folder */}
-              <SelectTrigger aria-label="Select Folder">
-                <SelectValue placeholder="Select Folder" />
-              </SelectTrigger>
-              <SelectContent>
-                {folders &&
-                  folders.map((folder, index) => (
-                    <SelectItem key={folder + index} value={folder}>
-                      {folder}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+        <Form {...form}>
+          <FormField
+            control={form.control}
+            name="index"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Container</FormLabel>
+                <FormControl>
+                  <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
+                    <SelectTrigger aria-label="Select Folder">
+                      <SelectValue placeholder="Select Folder" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {indexes &&
+                        indexes.map((indexName, i) => (
+                          <SelectItem key={indexName + i} value={indexName}>
+                            {indexName}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="folder"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Folder</FormLabel>
+                <FormControl>
+                  <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
+                    <SelectTrigger aria-label="Select Folder">
+                      <SelectValue placeholder="Select Folder" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {folders &&
+                        folders.map((folder, index) => (
+                          <SelectItem key={folder + index} value={folder}>
+                            {folder}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="files"
+            render={({ field }) => {
+              return (
+                <FormItem>
+                  <FormLabel>Files</FormLabel>
+                  <FormControl>
+                    <div className="w-full flex flex-col justify-center items-center">
+                      <Dropzone
+                        onDrop={onDrop}
+                        accept={{}} // Allow all file types
+                        maxSize={maxSize}
+                        maxFiles={maxFileCount}
+                      >
+                        {({
+                          getRootProps,
+                          getInputProps,
+                          isDragActive,
+                        }: {
+                          getRootProps: () => React.HTMLProps<HTMLDivElement>;
+                          getInputProps: () => React.InputHTMLAttributes<HTMLInputElement>;
+                          isDragActive: boolean;
+                        }) => (
+                          <div
+                            {...getRootProps()}
+                            className={`group relative grid text-center h-52 w-1/2 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-2.5 text-center transition hover:bg-muted/25 ${
+                              isDragActive ? 'border-muted-foreground/50' : ''
+                            }`}
+                          >
+                            <input {...getInputProps()} aria-labelledby="dropzone-label" />
+                            <span id="dropzone-label" className="sr-only">
+                              Upload files
+                            </span>
+                            {isDragActive ? (
+                              <div className="flex flex-col items-center justify-center gap-4 sm:px-5">
+                                <div className="rounded-full border border-dashed p-3">
+                                  <UploadIcon className="size-7 text-muted-foreground" aria-hidden="true" />
+                                </div>
+                                <p className="font-medium text-muted-foreground">Drop the files here</p>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center gap-4 sm:px-5">
+                                <div className="rounded-full border border-dashed p-3">
+                                  <UploadIcon className="size-7 text-muted-foreground" aria-hidden="true" />
+                                </div>
+                                <p className="font-medium text-muted-foreground">
+                                  Drag 'n' drop files here, or click to select files
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  You can upload up to {maxFileCount} files (up to {Math.round(maxSize / (1024 * 1024))}
+                                  MB each)
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </Dropzone>
+                      {field.value.length > 0 && (
+                        <ScrollArea className="mt-4 h-fit w-[50%] px-3">
+                          <div className="flex max-h-48 flex-col gap-4">
+                            {field.value.map((file, index) => (
+                              <FileCard
+                                key={index}
+                                file={file}
+                                onRemove={() => onRemove(index)}
+                                progress={progresses[file.name]}
+                              />
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
+          {/* File Upload Area */}
+          <div className="flex mt-2 justify-center">
+            <Button type="submit" disabled={form.formState.isSubmitting} onClick={form.handleSubmit(onSubmit)}>
+              {form.formState.isSubmitting ? 'Uploading...' : 'Upload'}
+            </Button>
           </div>
-        </div>
-
-        {/* File Upload Area */}
-        <div className="flex justify-center w-full">
-        <Dropzone
-          onDrop={onDrop}
-          accept={{}} // Allow all file types
-          maxSize={maxSize}
-          maxFiles={maxFileCount}
-        >
-         {({ getRootProps, getInputProps, isDragActive }: 
-                { getRootProps: () => React.HTMLProps<HTMLDivElement>; 
-                  getInputProps: () => React.InputHTMLAttributes<HTMLInputElement>; 
-                  isDragActive: boolean; }) => (
-            <div
-              {...getRootProps()}
-              className={`group relative grid text-center h-52 w-1/2 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-2.5 text-center transition hover:bg-muted/25 ${
-                isDragActive ? "border-muted-foreground/50" : ""
-              }`}
-            >
-              <input {...getInputProps()} aria-labelledby="dropzone-label" />
-              <span id="dropzone-label" className="sr-only">
-                Upload files
-              </span>
-              {isDragActive ? (
-                <div className="flex flex-col items-center justify-center gap-4 sm:px-5">
-                  <div className="rounded-full border border-dashed p-3">
-                    <UploadIcon className="size-7 text-muted-foreground" aria-hidden="true" />
-                  </div>
-                  <p className="font-medium text-muted-foreground">Drop the files here</p>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-4 sm:px-5">
-                  <div className="rounded-full border border-dashed p-3">
-                    <UploadIcon className="size-7 text-muted-foreground" aria-hidden="true" />
-                  </div>
-                  <p className="font-medium text-muted-foreground">Drag 'n' drop files here, or click to select files</p>
-                  <p className="text-sm text-muted-foreground">
-                    You can upload up to {maxFileCount} files (up to {Math.round(maxSize / (1024 * 1024))}MB each)
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </Dropzone>
-      </div>
-      <div className="flex justify-center mt-4">
-        <Button  size="lg" className="grid text-center" onClick={uploadFiles} aria-label="Add Files Button">
-             Upload Files
-          </Button>
-        </div>
-
-        {files.length > 0 && (
-          <ScrollArea className="mt-4 h-fit w-full px-3">
-            <div className="flex max-h-48 flex-col gap-4">
-              {files.map((file, index) => (
-                <FileCard key={index} file={file} onRemove={() => onRemove(index)} progress={progresses[file.name]} />
-              ))}
-            </div>
-          </ScrollArea>
-        )}
+        </Form>
       </main>
     </div>
   );
@@ -270,7 +264,8 @@ function FileCard({ file, progress, onRemove }: { file: File; progress?: number;
           variant="outline"
           size="icon"
           className="size-7"
-          onClick={onRemove}>
+          onClick={onRemove}
+        >
           <Cross2Icon className="size-4" aria-hidden="true" />
           <span className="sr-only">Remove file</span>
         </Button>

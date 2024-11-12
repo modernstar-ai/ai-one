@@ -13,7 +13,7 @@ public interface IBlobStorageService
 public class BlobStorageService : IBlobStorageService
 {
     public static readonly string FOLDERS_CONTAINER_NAME =
-        Environment.GetEnvironmentVariable("AZURE_SEARCH_FOLDERS_INDEX_NAME")!;
+        Environment.GetEnvironmentVariable("AZURE_STORAGE_FOLDERS_CONTAINER_NAME")!;
 
     private readonly BlobServiceClient _blobServiceClient;
     private readonly ILogger<BlobStorageService> _logger;
@@ -28,6 +28,8 @@ public class BlobStorageService : IBlobStorageService
     public async Task<List<string>> GetHighLevelFolders(string containerName)
     {
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        await containerClient.CreateIfNotExistsAsync();
+        
         var delimiter = "/";
 
         var results = containerClient.GetBlobsByHierarchyAsync(delimiter: delimiter);
