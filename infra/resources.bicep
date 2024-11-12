@@ -449,6 +449,7 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   }
 }
 
+// throwing depployment errors
 // @batchSize(1)
 // resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [for deployment in llmDeployments: {
 //   parent: azureopenai
@@ -463,21 +464,39 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
 //   }
 // }]
 
-@batchSize(1)
-resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [
-  for deployment in llmDeployments: {
-    parent: azureopenai
-    name: deployment.name
-    properties: {
-      model: deployment.model
-      raiPolicyName: deployment.?raiPolicyName ?? null
-    }
-    sku: deployment.?sku ?? {
-      name: 'Standard'
-      capacity: deployment.capacity
+// ChatGptDeployment
+resource chatGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
+  name: chatGptDeploymentName
+  sku: {
+    name: 'GlobalStandard'
+    capacity: chatGptDeploymentCapacity
+  }
+  parent: azureopenai
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: chatGptModelName
+      version: chatGptModelVersion
     }
   }
-]
+}
+
+// embeddingDeployment
+resource embeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
+  name: embeddingModelName
+  parent: azureopenai
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: embeddingModelName
+      version: '2'
+    }
+    scaleSettings: {
+      capacity: embeddingDeploymentCapacity
+    }
+    versionUpgradeOption: 'string'
+  }
+}
 
 resource azureopenaidalle 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   name: openai_dalle_name
