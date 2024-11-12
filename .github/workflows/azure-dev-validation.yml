@@ -1,14 +1,14 @@
 name: Validate Bicep templates
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
-    paths:
-      - "infra/**"
-  pull_request:
-    branches: [ main ]
-    paths:
-      - "infra/**"
+#   push:
+#     branches: [ main ]
+#     paths:
+#       - "infra/**"
+#   pull_request:
+#     branches: [ main ]
+#     paths:
+#       - "infra/**"
 
 permissions:
   contents: read
