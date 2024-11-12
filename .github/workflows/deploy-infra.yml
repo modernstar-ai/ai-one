@@ -75,7 +75,7 @@ jobs:
             az bicep install
             az config set bicep.use_binary_from_path=false && az bicep build -f ${{ env.AZURE_BICEP_MAIN }} --stdout
 
-      - name: Check if Resource Group Exists
+      - name: Check if Resource Group Exist
         id: check_rsg
         uses: azure/cli@v2
         with:
