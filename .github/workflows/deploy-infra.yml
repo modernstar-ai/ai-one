@@ -74,8 +74,8 @@ jobs:
           inlineScript: |
             tdnf install -y icu
             tdnf install -y jq
-            az bicep install
-            az bicep build --file ${{ env.AZURE_BICEP_MAIN }}
+            #az bicep install
+            #az bicep build --file ${{ env.AZURE_BICEP_MAIN }}
 
       - name: Check if Resource Group Exists
         id: check_rsg
