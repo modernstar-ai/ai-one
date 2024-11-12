@@ -57,9 +57,8 @@ const AssistantsComponent: React.FC = () => {
   const handleEditAssistant = (id: string) => {
     navigate(`/assistant?id=${id}`);
   };
-  
-  const handleLaunchAssistant = (id: string) => {
 
+  const handleLaunchAssistant = (id: string) => {
     navigate(`/chatrouter/${id}`);
   };
 
@@ -116,7 +115,7 @@ const AssistantsComponent: React.FC = () => {
     switch (type) {
       case AssistantType.Chat:
         return <MessageSquare className="h-4 w-4" aria-hidden="true" />;
-        case AssistantType.Search:
+      case AssistantType.Search:
         return <FileSearch className="h-4 w-4" aria-hidden="true" />;
       // case 'ExternalAPI':
       //   return <Globe className="h-4 w-4" aria-hidden="true" />;
@@ -151,6 +150,7 @@ const AssistantsComponent: React.FC = () => {
                   <TableHead className="w-[100px]">Actions</TableHead>
                   <TableHead className="w-[250px]">Name</TableHead>
                   <TableHead className="w-[40px]">Status</TableHead>
+                  <TableHead className="w-[200px]">Container</TableHead>
                   <TableHead className="w-[200px]">Type</TableHead>
                   <TableHead className="w-[500px]">Description</TableHead>
                 </TableRow>
@@ -160,18 +160,16 @@ const AssistantsComponent: React.FC = () => {
                   <TableRow key={assistant.id}>
                     <TableCell>
                       <div className="flex items-start space-x-2">
-                        
-                      <TooltipProvider>
+                        <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                            
                               <Button
                                 variant="outline"
                                 size="sm"
                                 className="h-8 w-8 p-0"
                                 onClick={() => handleLaunchAssistant(assistant.id)}
                               >
-                                {getTypeIcon(assistant.type)}                                    
+                                {getTypeIcon(assistant.type)}
                                 <span className="sr-only">Chat with {assistant.name}</span>
                               </Button>
                             </TooltipTrigger>
@@ -242,11 +240,11 @@ const AssistantsComponent: React.FC = () => {
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
-                        
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{assistant.name}</TableCell>
                     <TableCell>{getStatusBadge(assistant.status)}</TableCell>
+                    <TableCell>{assistant.index}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getTypeIcon(assistant.type)}

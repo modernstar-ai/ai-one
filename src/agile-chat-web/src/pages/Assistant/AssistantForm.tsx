@@ -25,6 +25,7 @@ import { MultiToolSettingsDropdownInput } from '@/components/MultiToolSelector';
 import { fetchTools } from '@/services/toolservice';
 import { Tool } from '@/types/Tool';
 import { useIndexes } from '@/hooks/use-indexes';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
@@ -50,6 +51,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function AssistantForm() {
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchParams] = useSearchParams();
   const fileId = searchParams.get('id');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,6 +112,7 @@ export default function AssistantForm() {
           temperature: file.temperature,
           documentLimit: file.documentLimit,
           status: file.status,
+          topP: file.topP,
         });
         setSelectedToolIds(new Set(file.tools.map((tool) => tool.toolId)));
       } else {
@@ -124,8 +127,10 @@ export default function AssistantForm() {
 
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
       await getTools();
       await loadAssistant();
+      setLoading(false);
     };
 
     load();
@@ -176,143 +181,153 @@ export default function AssistantForm() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex flex-col h-full w-full justify-center items-center bg-background text-foreground">
+        <Loader2 className="h-32 w-32 animate-spin" />
+        <div className="font-medium">Loading Assistant...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-background text-foreground">
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
+        {/* Header */}
         <SimpleHeading
           Title="AI Assistants"
           Subtitle={fileId ? 'Edit AI Assistant' : 'Create New AI Assistant'}
           DocumentCount={0}
         />
-        <div className="flex-1 p-4 overflow-auto">
-          <main className="flex-1 space-y-6">
-            <Card>
-              <CardContent className="space-y-6">
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Your AI Assistant" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
 
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="A brief overview of your AI Assistant" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+        <div className="flex flex-col h-full grow min-h-0 overflow-auto">
+          <Card>
+            <CardContent className="space-y-8">
+              <Form {...form}>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Your AI Assistant" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Type</FormLabel>
-                          <Select onValueChange={(value) => field.onChange(value as AssistantType)} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select Type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value={AssistantType.Chat}>Chat</SelectItem>
-                              <SelectItem value={AssistantType.Search}>Search</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="A brief overview of your AI Assistant" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="greeting"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Greeting</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} placeholder={`Welcome`} className="font-mono h-[80px]" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="systemMessage"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>System Message</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              {...field}
-                              placeholder={`You are a helpful AI Assistant.`}
-                              className="font-mono h-[200px]"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value as AssistantType)} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={AssistantType.Chat}>Chat</SelectItem>
+                          <SelectItem value={AssistantType.Search}>Search</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="group"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Security Group</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="greeting"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Greeting</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} placeholder={`Welcome`} className="font-mono h-[80px]" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="systemMessage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>System Message</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          placeholder={`You are a helpful AI Assistant.`}
+                          className="font-mono h-[200px]"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="index"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Container</FormLabel>
-                          <FormControl>
-                            <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select Container" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {indexes?.map((indexName, i) => (
-                                  <SelectItem key={indexName + i} value={indexName}>
-                                    {indexName}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="group"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Security Group</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    {/* 
+                <FormField
+                  control={form.control}
+                  name="index"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Container</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select Container" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {indexes?.map((indexName, i) => (
+                              <SelectItem key={indexName + i} value={indexName}>
+                                {indexName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* 
                     
                     <FormField
                       control={form.control}
@@ -337,125 +352,120 @@ export default function AssistantForm() {
                     />
                     */}
 
-                    <FormField
-                      control={form.control}
-                      name="documentLimit"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Document Limit</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              type="number"
-                              placeholder="Enter a number between 0 and 1000"
-                              min={0}
-                              max={1000}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="documentLimit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Document Limit</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          placeholder="Enter a number between 0 and 1000"
+                          min={0}
+                          max={1000}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="tools"
-                      render={() => (
-                        <FormItem>
-                          <FormLabel>Add Functionalities to the Bots</FormLabel>
-                          <MultiToolSettingsDropdownInput
-                            tools={tools}
-                            selectedToolIds={selectedToolIds}
-                            setSelectedToolIds={setSelectedToolIds}
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="tools"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>Add Functionalities to the Bots</FormLabel>
+                      <MultiToolSettingsDropdownInput
+                        tools={tools}
+                        selectedToolIds={selectedToolIds}
+                        setSelectedToolIds={setSelectedToolIds}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="temperature"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Temperature</FormLabel>
-                          <FormControl>
-                            <Slider
-                              value={[field.value]}
-                              min={0}
-                              max={2}
-                              step={0.1}
-                              onValueChange={(value) => {
-                                field.onChange(value[0]);
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                          <div>Selected Temperature: {field.value}</div>
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="temperature"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Temperature</FormLabel>
+                      <FormControl>
+                        <Slider
+                          value={[field.value]}
+                          min={0}
+                          max={2}
+                          step={0.1}
+                          onValueChange={(value) => {
+                            field.onChange(value[0]);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <div>Selected Temperature: {field.value}</div>
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="topP"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Top P</FormLabel>
-                          <FormControl>
-                            <Slider
-                              value={[field.value]}
-                              min={0}
-                              max={1}
-                              step={0.01}
-                              onValueChange={(value) => {
-                                field.onChange(value[0]);
-                                setTopP(value[0]);
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                          <div>Selected Top P: {topP}</div>
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="topP"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Top P</FormLabel>
+                      <FormControl>
+                        <Slider
+                          value={[field.value]}
+                          min={0}
+                          max={1}
+                          step={0.01}
+                          onValueChange={(value) => {
+                            field.onChange(value[0]);
+                            setTopP(value[0]);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <div>Selected Top P: {field.value}</div>
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Status</FormLabel>
-                          <Select
-                            onValueChange={(value) => field.onChange(value as AssistantStatus)}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value={AssistantStatus.Draft}>Draft</SelectItem>
-                              <SelectItem value={AssistantStatus.Published}>Published</SelectItem>
-                              <SelectItem value={AssistantStatus.Archived}>Archived</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value as AssistantStatus)} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={AssistantStatus.Draft}>Draft</SelectItem>
+                          <SelectItem value={AssistantStatus.Published}>Published</SelectItem>
+                          <SelectItem value={AssistantStatus.Archived}>Archived</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <div className="flex justify-between">
-                      <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? 'Submitting...' : fileId ? 'Update' : 'Create'}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-          </main>
+                <div className="flex justify-between mt-2">
+                  <Button type="submit" disabled={isSubmitting} onClick={form.handleSubmit(onSubmit)}>
+                    {isSubmitting ? 'Submitting...' : fileId ? 'Update' : 'Create'}
+                  </Button>
+                </div>
+              </Form>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
