@@ -68,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: node-app
-          path: ${{ env.AGILE_CHAT_WEB_PUB }}/release.zip
+          path: release.zip
 
         #############################################################
 
@@ -85,6 +85,6 @@ jobs:
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AGILE_CHAT_WEB_NAME }}
-          package: ${{ env.AGILE_CHAT_WEB_PUB }}/release.zip
+          package: ./release.zip
 
       #############################################################
