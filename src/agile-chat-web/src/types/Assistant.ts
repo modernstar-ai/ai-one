@@ -24,10 +24,10 @@ export type Assistant = {
   index: string;
   folder?: string[];
   temperature: number;
-  topP: number;
-  maxResponseToken: number;
-  pastMessages: number;
-  strictness: number;
+  topP?: number;
+  maxResponseToken?: number;
+  pastMessages?: number;
+  strictness?: number;
   documentLimit: number;
   tools: Tools[];
   status: AssistantStatus;

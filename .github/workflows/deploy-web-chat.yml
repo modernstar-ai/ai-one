@@ -62,7 +62,9 @@ jobs:
           npm run build --if-present
 
       - name: Agile-Chat-Web - Zip artifact for deployment
-        run: zip -r release.zip . -i ./src/agile-chat-web/*
+        run: |
+          cd ${{ env.AGILE_CHAT_WEB_SRC }}
+          zip -r ../../release.zip ./*
 
       - name: Agile-Chat-Web - Upload artifact for deployment job
         uses: actions/upload-artifact@v3

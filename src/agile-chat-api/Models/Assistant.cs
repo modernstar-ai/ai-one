@@ -18,19 +18,19 @@ public class Assistant
     public string SystemMessage { get; set; } = String.Empty;
 
     public string? Group { get; set; }
-    
+
     public string Index { get; set; }
     public List<string> Folder { get; set; } = new();
 
     //Todo : For future customer defaults
     /// <summary>
-    /// The defaults are set as per the UTS usecase and documentation
+    /// The defaults are set as per the UTS use-case and documentation
     /// </summary>
     public decimal Temperature { get; set; } = 0.7m;
-    public decimal TopP { get; set; } = 0.95m;
-    public int MaxResponseToken { get; set; } = 800;
-    public int PastMessages { get; set; } = 10;
-    public int Strictness { get; set; } = 3;
+    public decimal? TopP { get; set; } = 0.95m;
+    public int? MaxResponseToken { get; set; } = 800;
+    public int? PastMessages { get; set; } = 10;
+    public int? Strictness { get; set; } = 3;
 
     public int DocumentLimit { get; set; }
     public List<Tools> Tools { get; set; } = [];
