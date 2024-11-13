@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.31.34.60546",
-      "templateHash": "1208637879333348476"
+      "templateHash": "3521727069892729613"
     }
   },
   "parameters": {
@@ -248,7 +248,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.31.34.60546",
-              "templateHash": "16842877311859952232"
+              "templateHash": "10905843424164458051"
             }
           },
           "parameters": {
@@ -491,7 +491,13 @@
                   "alwaysOn": true,
                   "appCommandLine": "npx serve -s dist",
                   "ftpsState": "Disabled",
-                  "minTlsVersion": "1.2"
+                  "minTlsVersion": "1.2",
+                  "appSettings": [
+                    {
+                      "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+                      "value": "false"
+                    }
+                  ]
                 }
               },
               "identity": {
@@ -511,7 +517,7 @@
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appservice_name'))]",
                 "httpsOnly": true,
                 "siteConfig": {
-                  "linuxFxVersion": "DOTNET|8.0",
+                  "linuxFxVersion": "DOTNETCORE|8.0",
                   "alwaysOn": true,
                   "appCommandLine": "dotnet agile-chat-api.dll",
                   "ftpsState": "Disabled",
@@ -523,7 +529,7 @@
                     },
                     {
                       "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
-                      "value": "true"
+                      "value": "false"
                     },
                     {
                       "name": "AZURE_OPENAI_API_KEY",

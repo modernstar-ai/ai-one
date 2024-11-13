@@ -1,4 +1,4 @@
-name: Deploy Web Apps
+name: Deploy Web Apis
 on:
   workflow_dispatch:
     inputs:
@@ -40,13 +40,10 @@ jobs:
       AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
       AGILE_CHAT_API_SRC: "./src/agile-chat-api"
       AGILE_CHAT_API_PUB: "./publish/agile-chat-api"
-      AGILE_CHAT_API_NAME: "agilechat-tst-apiapp"
-      AGILE_CHAT_WEB_SRC: "./src/agile-chat-web"
-      AGILE_CHAT_WEB_PUB: "./publish/agile-chat-web"
-      AGILE_CHAT_WEB_NAME: "agilechat-tst-webapp"
+      AGILE_CHAT_API_NAME: ${{ vars.AGILE_CHAT_API_NAME }}
       AGILE_RAGCHAT_API_SRC: "./src/agile-ragchat-api"
       AGILE_RAGCHAT_API_PUB: "./publish/agile-ragchat-api"
-      AGILE_RAGCHAT_API_NAME: "agile-ragchat-api"
+      AGILE_RAGCHAT_API_NAME: ${{ vars.AGILE_RAGCHAT_API_NAME }}
       ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
 
     steps:
@@ -77,22 +74,6 @@ jobs:
 
         #############################################################
 
-        ## Agile-Chat-Web- Node build and publish
-      # - name: Agile-Chat-Web- Node build and publish
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: "18.x"
-
-      # - name: Agile-Chat-Web - Node build and publish
-      #   run: |
-      #     cd ${{ env.AGILE_CHAT_WEB_SRC }}
-      #     npm install
-      #     #npm audit fix
-      #     npm run build --if-present
-      #     #npm test
-
-        #############################################################
-
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -106,17 +87,7 @@ jobs:
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AGILE_CHAT_API_NAME }}
-          package: ${{ env.AGILE_CHAT_API_PUB }}          
-
-      #############################################################
-
-      # - name: Deploy - Agile-Chat-Web
-      #   uses: azure/webapps-deploy@v2
-      #   with:
-      #     app-name: ${{ env.AGILE_CHAT_WEB_NAME }}
-      #     package: ${{ env.AGILE_CHAT_WEB_PUB }}
-      #     resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
-      #     subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          package: ${{ env.AGILE_CHAT_API_PUB }}
 
       #############################################################
 
@@ -125,7 +96,5 @@ jobs:
       #   with:
       #     app-name: ${{ env.AGILE_RAGCHAT_API_NAME }}
       #     package: ${{ env.AGILE_RAGCHAT_API_PUB }}
-      #     resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
-      #     subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
       #############################################################
