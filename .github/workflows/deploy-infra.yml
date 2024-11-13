@@ -98,7 +98,6 @@ jobs:
           type: deployment
           operation: create
           name: "${{ env.AZURE_ENV_NAME }}"
-          ##location: "australiaeast" # ${{ env.AZURE_LOCATION }}"
           scope: resourceGroup
           resource-group-name: "${{ env.AZURE_RESOURCE_GROUP }}"
           subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
