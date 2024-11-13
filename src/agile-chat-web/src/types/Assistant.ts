@@ -25,6 +25,9 @@ export type Assistant = {
   folder?: string[];
   temperature: number;
   topP: number;
+  maxResponseToken: number;
+  pastMessages: number;
+  strictness: number;
   documentLimit: number;
   tools: Tools[];
   status: AssistantStatus;

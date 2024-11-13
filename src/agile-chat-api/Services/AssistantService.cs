@@ -107,6 +107,9 @@ public class AssistantService : IAssistantService
             existingAssistant.Folder = assistant.Folder;
             existingAssistant.Temperature = assistant.Temperature;
             existingAssistant.TopP = assistant.TopP;
+            existingAssistant.MaxResponseToken = assistant.MaxResponseToken;
+            existingAssistant.Strictness = assistant.Strictness;
+            existingAssistant.PastMessages = assistant.PastMessages;
             existingAssistant.DocumentLimit = assistant.DocumentLimit;
             existingAssistant.UpdatedAt = DateTime.UtcNow;
             existingAssistant.Tools = assistant.Tools;
