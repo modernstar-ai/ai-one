@@ -8,11 +8,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <SidebarProvider
         className="h-screen"
         defaultOpen={false}
-        style={{
-          '--sidebar-width-icon': '3.5rem',
-          '--sidebar-width': '20rem',
-          '--sidebar-width-mobile': '20rem',
-        }}
+        style={
+          {
+            '--sidebar-width-icon': '3.5rem',
+            '--sidebar-width': '20rem',
+            '--sidebar-width-mobile': '20rem',
+          } as React.CSSProperties
+        }
       >
         <LeftSidebar />
         {/* Main Content Area */}
