@@ -40,10 +40,10 @@ jobs:
       AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
       AGILE_CHAT_API_SRC: "./src/agile-chat-api"
       AGILE_CHAT_API_PUB: "./publish/agile-chat-api"
-      AGILE_CHAT_API_NAME: "agilechat-dev-apiapp"
+      AGILE_CHAT_API_NAME: "agilechat-tst-apiapp"
       AGILE_CHAT_WEB_SRC: "./src/agile-chat-web"
       AGILE_CHAT_WEB_PUB: "./publish/agile-chat-web"
-      AGILE_CHAT_WEB_NAME: "agilechat-dev-webapp"
+      AGILE_CHAT_WEB_NAME: "agilechat-tst-webapp"
       AGILE_RAGCHAT_API_SRC: "./src/agile-ragchat-api"
       AGILE_RAGCHAT_API_PUB: "./publish/agile-ragchat-api"
       AGILE_RAGCHAT_API_NAME: "agile-ragchat-api"
@@ -78,18 +78,18 @@ jobs:
         #############################################################
 
         ## Agile-Chat-Web- Node build and publish
-      - name: Agile-Chat-Web- Node build and publish
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18.x"
+      # - name: Agile-Chat-Web- Node build and publish
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: "18.x"
 
-      - name: Agile-Chat-Web - Node build and publish
-        run: |
-          cd ${{ env.AGILE_CHAT_WEB_SRC }}
-          npm install
-          #npm audit fix
-          npm run build --if-present
-          #npm test
+      # - name: Agile-Chat-Web - Node build and publish
+      #   run: |
+      #     cd ${{ env.AGILE_CHAT_WEB_SRC }}
+      #     npm install
+      #     #npm audit fix
+      #     npm run build --if-present
+      #     #npm test
 
         #############################################################
 
@@ -102,13 +102,13 @@ jobs:
 
         #############################################################
 
-      # - name: Deploy - Agile-Chat-Api
-      #   uses: azure/webapps-deploy@v2
-      #   with:
-      #     app-name: ${{ env.AGILE_CHAT_API_NAME }}
-      #     package: ${{ env.AGILE_CHAT_API_PUB }}
-      #     resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
-      #     subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy - Agile-Chat-Api
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AGILE_CHAT_API_NAME }}
+          package: ${{ env.AGILE_CHAT_API_PUB }}
+          resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
       #############################################################
 
