@@ -1,35 +1,53 @@
 name: Deploy Web Apps
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: The reason for running the workflow
+        required: false
+        default: Manual run
+      environment:
+        description: "Select the App environment"
+        required: true
+        type: choice
+        default: "Development"
+        options:
+          - Development
+          - Test
+          - Production
 
 #on:
-  # push:
-  #   branches:
-  #     - main # Deploy on push to main branch
-  workflow_dispatch: # Allow manual trigger of the workflow
+# push:
+#   branches:
+#     - main # Deploy on push to main branch
 
-  # Set up permissions for deploying with secretless Azure federated credentials
+# Set up permissions for deploying with secretless Azure federated credentials
 # https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  build-and-deploy:
+  app-build-and-deploy:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
 
     env:
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
       AGILE_CHAT_API_SRC: "./src/agile-chat-api"
       AGILE_CHAT_API_PUB: "./publish/agile-chat-api"
-      AGILE_CHAT_API_NAME: "agilechat-dev-apiapp"
+      AGILE_CHAT_API_NAME: "agilechat-tst-apiapp"
       AGILE_CHAT_WEB_SRC: "./src/agile-chat-web"
       AGILE_CHAT_WEB_PUB: "./publish/agile-chat-web"
-      AGILE_CHAT_WEB_NAME: "agilechat-dev-webapp"
+      AGILE_CHAT_WEB_NAME: "agilechat-tst-webapp"
       AGILE_RAGCHAT_API_SRC: "./src/agile-ragchat-api"
       AGILE_RAGCHAT_API_PUB: "./publish/agile-ragchat-api"
       AGILE_RAGCHAT_API_NAME: "agile-ragchat-api"
+      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
 
     steps:
       - name: Checkout code
@@ -43,28 +61,35 @@ jobs:
         #############################################################
         ## Agile-Chat-Api- dotnet build and publish
       - name: Agile-Chat-Api- dotnet build and publish
-        run: |
+        run: |          
           dotnet restore ${{ env.AGILE_CHAT_API_SRC }}
           dotnet build ${{ env.AGILE_CHAT_API_SRC }} --no-restore --configuration Release
-          dotnet publish ${{ env.AGILE_CHAT_API_SRC }} -c Release -o .${{ env.AGILE_CHAT_API_PUB }} 
+          dotnet publish ${{ env.AGILE_CHAT_API_SRC }} -c Release -o ${{ env.AGILE_CHAT_API_PUB }} 
+
+          #############################################################
+
+      #   ## Agile-RagChat-Web- dotnet build and publish
+      # - name: Agile-RagChat-Web- dotnet build and publish
+      #   run: |
+      #     dotnet restore ${{ env.AGILE_RAGCHAT_API_SRC }}
+      #     dotnet build ${{ env.AGILE_RAGCHAT_API_SRC }} --no-restore --configuration Release
+      #     dotnet publish ${{ env.AGILE_RAGCHAT_API_SRC }} -c Release -o ${{ env.AGILE_RAGCHAT_API_PUB }}
 
         #############################################################
 
-          ## Agile-Chat-Web- dotnet build and publish
-      - name: Agile-Chat-Web- dotnet build and publish
-        run: |
-          dotnet restore ${{ env.AGILE_CHAT_WEB_SRC }}
-          dotnet build ${{ env.AGILE_CHAT_WEB_SRC }} --no-restore --configuration Release
-          dotnet publish ${{ env.AGILE_CHAT_WEB_SRC }} -c Release -o .${{ env.AGILE_CHAT_WEB_PUB }} 
+        ## Agile-Chat-Web- Node build and publish
+      # - name: Agile-Chat-Web- Node build and publish
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: "18.x"
 
-        #############################################################
-
-       ## Agile-RagChat-Web- dotnet build and publish
-      - name: Agile-RagChat-Web- dotnet build and publish
-        run: |
-          dotnet restore ${{ env.AGILE_RAGCHAT_API_SRC }}
-          dotnet build ${{ env.AGILE_RAGCHAT_API_SRC }} --no-restore --configuration Release
-          dotnet publish ${{ env.AGILE_RAGCHAT_API_SRC }} -c Release -o .${{ env.AGILE_RAGCHAT_API_PUB }} 
+      # - name: Agile-Chat-Web - Node build and publish
+      #   run: |
+      #     cd ${{ env.AGILE_CHAT_WEB_SRC }}
+      #     npm install
+      #     #npm audit fix
+      #     npm run build --if-present
+      #     #npm test
 
         #############################################################
 
@@ -81,28 +106,26 @@ jobs:
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AGILE_CHAT_API_NAME }}
-          package: ${{ env.AGILE_CHAT_API_PUB }}
-          resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          package: ${{ env.AGILE_CHAT_API_PUB }}          
 
-        #############################################################
+      #############################################################
 
-      - name: Deploy - Agile-Chat-Web
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ env.AGILE_CHAT_WEB_NAME }}
-          package: ${{ env.AGILE_CHAT_WEB_PUB }}
-          resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+      # - name: Deploy - Agile-Chat-Web
+      #   uses: azure/webapps-deploy@v2
+      #   with:
+      #     app-name: ${{ env.AGILE_CHAT_WEB_NAME }}
+      #     package: ${{ env.AGILE_CHAT_WEB_PUB }}
+      #     resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
+      #     subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-        #############################################################
-        
-      - name: Deploy - Agile-RagChat-Web
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ env.AGILE_RAGCHAT_API_NAME }}
-          package: ${{ env.AGILE_RAGCHAT_API_PUB }}
-          resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+      #############################################################
 
-        #############################################################
+      # - name: Deploy - Agile-RagChat-Web
+      #   uses: azure/webapps-deploy@v2
+      #   with:
+      #     app-name: ${{ env.AGILE_RAGCHAT_API_NAME }}
+      #     package: ${{ env.AGILE_RAGCHAT_API_PUB }}
+      #     resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
+      #     subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      #############################################################
