@@ -64,7 +64,7 @@ jobs:
       - name: Agile-Chat-Web - Zip artifact for deployment
         run: |
           cd ${{ env.AGILE_CHAT_WEB_SRC }}
-          zip -r ../release.zip agile-chat-web
+          zip -r ../../release.zip ./*
 
       - name: Agile-Chat-Web - Upload artifact for deployment job
         uses: actions/upload-artifact@v3
