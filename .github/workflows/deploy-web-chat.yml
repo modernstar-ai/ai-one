@@ -1,0 +1,90 @@
+name: Deploy Web Chat App
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: The reason for running the workflow
+        required: false
+        default: Manual run
+      environment:
+        description: "Select the App environment"
+        required: true
+        type: choice
+        default: "Development"
+        options:
+          - Development
+          - Test
+          - Production
+
+#on:
+# push:
+#   branches:
+#     - main # Deploy on push to main branch
+
+# Set up permissions for deploying with secretless Azure federated credentials
+# https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  app-build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AGILE_CHAT_WEB_SRC: "./src/agile-chat-web"
+      AGILE_CHAT_WEB_PUB: "./publish/agile-chat-web"
+      AGILE_CHAT_WEB_NAME: ${{ vars.AGILE_CHAT_WEB_NAME }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+        #############################################################
+
+        # Agile-Chat-Web- Node build and publish
+      - name: Set up Node.js version
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+
+      - name: Agile-Chat-Web - Node build and publish
+        run: |
+          cd ${{ env.AGILE_CHAT_WEB_SRC }}
+          npm install 
+          npm run build --if-present
+
+      - name: Agile-Chat-Web - Zip artifact for deployment
+        run: zip release.zip ./* -r
+
+      - name: Agile-Chat-Web - Upload artifact for deployment job
+        uses: actions/upload-artifact@v3
+        with:
+          name: node-app
+          path: ${{ env.AGILE_CHAT_WEB_PUB }}/release.zip
+
+        #############################################################
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      #############################################################
+
+      - name: Deploy - Agile-Chat-Web
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AGILE_CHAT_WEB_NAME }}
+          package: ${{ env.AGILE_CHAT_WEB_PUB }}/release.zip
+
+      #############################################################

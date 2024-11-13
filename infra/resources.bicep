@@ -122,6 +122,12 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
       appCommandLine: 'npx serve -s dist'
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
+      appSettings: [
+        {
+          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+          value: 'false'
+        }
+      ]
     }
   }
   identity: { type: 'SystemAssigned' }
@@ -145,7 +151,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
     serverFarmId: appServicePlan.id
     httpsOnly: true
     siteConfig: {
-      linuxFxVersion: 'DOTNET|8.0'
+      linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true
       appCommandLine: 'dotnet agile-chat-api.dll'
       ftpsState: 'Disabled'
@@ -158,7 +164,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
-          value: 'true'
+          value: 'false'
         }
         {
           name: 'AZURE_OPENAI_API_KEY'
