@@ -64,7 +64,7 @@ jobs:
         run: |
           dotnet restore ${{ env.AGILE_CHAT_API_SRC }}
           dotnet build ${{ env.AGILE_CHAT_API_SRC }} --no-restore --configuration Release
-          dotnet publish ${{ env.AGILE_CHAT_API_SRC }} -c Release -o .${{ env.AGILE_CHAT_API_PUB }} 
+          dotnet publish ${{ env.AGILE_CHAT_API_SRC }} -c Release -o ${{ env.AGILE_CHAT_API_PUB }} 
 
           #############################################################
 
@@ -73,7 +73,7 @@ jobs:
         run: |
           dotnet restore ${{ env.AGILE_RAGCHAT_API_SRC }}
           dotnet build ${{ env.AGILE_RAGCHAT_API_SRC }} --no-restore --configuration Release
-          dotnet publish ${{ env.AGILE_RAGCHAT_API_SRC }} -c Release -o .${{ env.AGILE_RAGCHAT_API_PUB }}
+          dotnet publish ${{ env.AGILE_RAGCHAT_API_SRC }} -c Release -o ${{ env.AGILE_RAGCHAT_API_PUB }}
 
         #############################################################
 
@@ -106,9 +106,7 @@ jobs:
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AGILE_CHAT_API_NAME }}
-          package: ${{ env.AGILE_CHAT_API_PUB }}
-          resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          package: ${{ env.AGILE_CHAT_API_PUB }}          
 
       #############################################################
 
