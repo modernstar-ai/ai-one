@@ -153,7 +153,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true
-      appCommandLine: 'dotnet agile-chat-api.dll'
+      //appCommandLine: 'dotnet agile-chat-api.dll'
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
 
