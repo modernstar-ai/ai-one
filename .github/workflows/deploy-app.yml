@@ -63,7 +63,7 @@ jobs:
       - name: Agile-Chat-Api- dotnet build and publish
         run: |
           cd ${{ env.AGILE_CHAT_API_SRC }}
-          dotnet restore cd ${{ env.AGILE_CHAT_API_SRC }}
+          dotnet restore 
           dotnet build --configuration Release
           dotnet publish -c Release -o ${{ env.AGILE_CHAT_API_PUB }} 
           cd '.'
