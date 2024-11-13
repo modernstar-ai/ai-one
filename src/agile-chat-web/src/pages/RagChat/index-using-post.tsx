@@ -28,7 +28,11 @@ const createMessage = (overrides: Partial<SearchMessage> = {}): SearchMessage =>
   };
 };
 
-const RagChatPage = () => {
+interface IRagChatProps {
+  id?: string;
+}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const RagChatPage = (_props: IRagChatProps) => {
   const [messages, setMessages] = useState<SearchMessage[]>(() => [createMessage()]);
   const [inputValue, setInputValue] = useState('');
 
@@ -141,7 +145,6 @@ const RagChatPage = () => {
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}

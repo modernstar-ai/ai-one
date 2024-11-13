@@ -1,4 +1,4 @@
-import { useState,useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -6,41 +6,44 @@ import SimpleHeading from '@/components/Heading-Simple';
 import { getApiUri } from '@/services/uri-helpers';
 import axios from '@/error-handling/axiosSetup';
 import { fetchAssistantById } from '@/services/assistantservice';
-import { useParams } from 'react-router-dom';
+import { Assistant } from '@/types/Assistant';
 
-const ChatPage = () => {
+interface IChatPageProps {
+  id?: string;
+}
+const ChatPage = (props: IChatPageProps) => {
   const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [assistant, setAssistant] = useState<any>(null);
-  const { id } = useParams<{ id: string }>();
-  
+  const [assistant, setAssistant] = useState<Assistant | null>(null);
+  const { id } = props;
+
   useEffect(() => {
     const fetchData = async () => {
-        try {
-            const fetchedAssistant = await fetchAssistantById(id);
-            setAssistant(fetchedAssistant);
-            console.log('chat assistant:', assistant);
-            if (fetchedAssistant) {
-                console.log('ChatRouter assistant.Type:', fetchedAssistant.type);
-                const newMessages = [...messages, 
-                  { text: fetchedAssistant.systemMessage, sender: 'system' },
-                  { text: fetchedAssistant.greeting, sender: 'assistant' }];
-                setMessages(newMessages);
-            } else {
-                console.log('chat assistant not found:', id);                
-            }
-        } catch (error) {
-            console.error('Error fetching chat assistant:', error);                
+      try {
+        const fetchedAssistant = await fetchAssistantById(id!);
+        setAssistant(fetchedAssistant);
+        console.log('chat assistant:', assistant);
+        if (fetchedAssistant) {
+          console.log('ChatRouter assistant.Type:', fetchedAssistant.type);
+          const newMessages = [
+            ...messages,
+            { text: fetchedAssistant.systemMessage, sender: 'system' },
+            { text: fetchedAssistant.greeting, sender: 'assistant' },
+          ];
+          setMessages(newMessages);
+        } else {
+          console.log('chat assistant not found:', id);
         }
+      } catch (error) {
+        console.error('Error fetching chat assistant:', error);
+      }
     };
 
-    if(id) {    
+    if (id) {
       fetchData();
     }
-
-}, [id]);
-
+  }, [id]);
 
   const handleSendMessage = async () => {
     if (inputValue.trim()) {
@@ -52,10 +55,10 @@ const ChatPage = () => {
       console.log('messages:', messages);
 
       // Establish an SSE connection for the bot's response
-      const apiUrl = getApiUri('chat' );
+      const apiUrl = getApiUri('chat');
 
       axios
-        .post(apiUrl,  newMessages, {
+        .post(apiUrl, newMessages, {
           headers: {
             Accept: 'text/plain',
           },
@@ -98,35 +101,37 @@ const ChatPage = () => {
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <SimpleHeading 
-          Title={assistant ? assistant.name : "Chat"}
-          Subtitle={assistant ? assistant.description : ""}
-          DocumentCount={0} />
+        <SimpleHeading
+          Title={assistant ? assistant.name : 'Chat'}
+          Subtitle={assistant ? assistant.description : ''}
+          DocumentCount={0}
+        />
 
         <ScrollArea className="flex-1 p-4 space-y-4">
-          {messages.map((message, index) => (
-            message.sender !== 'system' && (
-            <div
-              key={index}
-              className={`w-full my-4 p-4 flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`p-6 rounded-lg`}
-                style={{
-                  backgroundColor: message.sender === 'user' ? 'var(--chat-user-bg-color)' : 'var(--chat-bot-bg-color)',
-                  color: message.sender === 'user' ? 'var(--chat-user-text-color)' : 'var(--chat-bot-text-color)',
-                  width: '60%',
-                }}
-              >
-                {message.text}
-              </div>
-            </div>
-            )
-          ))}
+          {messages.map(
+            (message, index) =>
+              message.sender !== 'system' && (
+                <div
+                  key={index}
+                  className={`w-full my-4 p-4 flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`p-6 rounded-lg`}
+                    style={{
+                      backgroundColor:
+                        message.sender === 'user' ? 'var(--chat-user-bg-color)' : 'var(--chat-bot-bg-color)',
+                      color: message.sender === 'user' ? 'var(--chat-user-text-color)' : 'var(--chat-bot-text-color)',
+                      width: '60%',
+                    }}
+                  >
+                    {message.text}
+                  </div>
+                </div>
+              )
+          )}
         </ScrollArea>
         {/* Input Area */}
         <div className="p-4 border-t">

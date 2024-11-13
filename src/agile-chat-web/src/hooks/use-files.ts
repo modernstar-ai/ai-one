@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getFiles } from '@/services/cosmosservice';
 import { FileMetadata } from '@/models/filemetadata';
+import { getFiles } from '@/services/files-service';
 
 export const useFetchFiles = () => {
   const [files, setFiles] = useState<FileMetadata[]>([]);

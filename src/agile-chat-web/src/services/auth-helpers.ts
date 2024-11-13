@@ -7,7 +7,7 @@ export const isLoggedIn = (accounts: AccountInfo[]): boolean => {
 };
 
 export const getName = (account: AccountInfo | null): string => {
-  return account ? account.name : '';
+  return account ? account.name! : '';
 };
 
 export const getUserName = (account: AccountInfo | null): string => {

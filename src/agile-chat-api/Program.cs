@@ -95,5 +95,6 @@ app.MapAssistantEndpoints();
 app.MapChatCompletionsEndpoint();
 app.MapPersonaEndpoints();
 app.MapFileEndpoints();
+app.MapIndexesEndpoints();
 
 app.Run();

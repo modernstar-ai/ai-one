@@ -18,8 +18,9 @@ public class Assistant
     public string SystemMessage { get; set; } = String.Empty;
 
     public string? Group { get; set; }
-
-    public List<string>? Folder { get; set; }
+    
+    public string Index { get; set; }
+    public List<string> Folder { get; set; } = new();
 
     public decimal Temperature { get; set; }
     public decimal TopP { get; set; }

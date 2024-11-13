@@ -103,6 +103,7 @@ public class AssistantService : IAssistantService
             existingAssistant.Greeting = assistant.Greeting;
             existingAssistant.SystemMessage = assistant.SystemMessage;
             existingAssistant.Group = assistant.Group;
+            existingAssistant.Index = assistant.Index;
             existingAssistant.Folder = assistant.Folder;
             existingAssistant.Temperature = assistant.Temperature;
             existingAssistant.TopP = assistant.TopP;

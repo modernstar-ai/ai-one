@@ -1,5 +1,5 @@
-import axios from "axios";
-import { Assistant } from "../types/Assistant";
+import axios from 'axios';
+import { Assistant } from '../types/Assistant';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -8,28 +8,25 @@ function getApiUrl(endpoint: string): string {
 
 // Fetch all assistants
 export async function fetchAssistants(): Promise<Assistant[] | null> {
-  const apiUrl = getApiUrl("assistants");
+  const apiUrl = getApiUrl('assistants');
   try {
     const response = await axios.get<Assistant[]>(apiUrl);
     return response.data;
   } catch (error) {
-    console.error("Error fetching assistants:", error);
+    console.error('Error fetching assistants:', error);
     return null;
   }
 }
 
 // Fetch a assistant by ID
-export async function fetchAssistantById(
-  id: string
-): Promise<Assistant | null> {
+export async function fetchAssistantById(id: string): Promise<Assistant | null> {
   try {
     if (id) {
       const apiUrl = getApiUrl(`assistants/${id}`);
-      console.log("fetchAssistantById", apiUrl);
       const response = await axios.get<Assistant>(apiUrl);
       return response.data;
     } else {
-      console.error("No ID provided to fetch assistant");
+      console.error('No ID provided to fetch assistant');
       return null;
     }
   } catch (error) {
@@ -39,10 +36,8 @@ export async function fetchAssistantById(
 }
 
 // Create a new assistant
-export async function createAssistant(
-  newAssistant: Assistant
-): Promise<Assistant | null> {
-  const apiUrl = getApiUrl("assistants");
+export async function createAssistant(newAssistant: Assistant): Promise<Assistant | null> {
+  const apiUrl = getApiUrl('assistants');
   try {
     // Ensure all required fields are included in the request
     const assistantData = {
@@ -53,31 +48,29 @@ export async function createAssistant(
       greeting: newAssistant.greeting,
       systemMessage: newAssistant.systemMessage,
       group: newAssistant.group,
-      folder: newAssistant.folders,
+      index: newAssistant.index,
+      folder: newAssistant.folder,
       temperature: newAssistant.temperature,
       topP: newAssistant.topP,
       documentLimit: newAssistant.documentLimit,
       tools: newAssistant.tools, // Add the tools field here
       status: newAssistant.status,
       createdAt: new Date().toISOString(),
-      createdBy: "adam@stephensen.me",
+      createdBy: 'adam@stephensen.me',
       updatedAt: new Date().toISOString(),
-      updatedBy: "adam@stephensen.me",
+      updatedBy: 'adam@stephensen.me',
     };
 
     const response = await axios.post<Assistant>(apiUrl, assistantData);
     return response.data;
   } catch (error) {
-    console.error("Error creating assistant:", error);
+    console.error('Error creating assistant:', error);
     return null;
   }
 }
 
-export async function updateAssistant(
-  updatedAssistant: Assistant
-): Promise<Assistant | null> {
+export async function updateAssistant(updatedAssistant: Assistant): Promise<Assistant | null> {
   const apiUrl = getApiUrl(`assistants/${updatedAssistant.id}`);
-  console.log("apiUrl", apiUrl);
   try {
     // Ensure all required fields are included in the request
     const assistantData = {
@@ -88,7 +81,8 @@ export async function updateAssistant(
       greeting: updatedAssistant.greeting,
       systemMessage: updatedAssistant.systemMessage,
       group: updatedAssistant.group,
-      folder: updatedAssistant.folders,
+      index: updatedAssistant.index,
+      folder: updatedAssistant.folder,
       temperature: updatedAssistant.temperature,
       topP: updatedAssistant.topP,
       documentLimit: updatedAssistant.documentLimit,
@@ -97,11 +91,11 @@ export async function updateAssistant(
       createdAt: updatedAssistant.createdAt,
       createdBy: updatedAssistant.createdBy,
       updatedAt: new Date().toISOString(),
-      updatedBy: "adam@stephensen.me",
+      updatedBy: 'adam@stephensen.me',
     };
     const response = await axios.put<Assistant>(apiUrl, assistantData, {
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
 
@@ -111,10 +105,7 @@ export async function updateAssistant(
       return response.data;
     }
   } catch (error) {
-    console.error(
-      `Error updating assistant with ID ${updatedAssistant.id}:`,
-      error
-    );
+    console.error(`Error updating assistant with ID ${updatedAssistant.id}:`, error);
     return null;
   }
 }
