@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.31.34.60546",
-      "templateHash": "3521727069892729613"
+      "templateHash": "7728322452943159830"
     }
   },
   "parameters": {
@@ -248,7 +248,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.31.34.60546",
-              "templateHash": "10905843424164458051"
+              "templateHash": "9715152490755823651"
             }
           },
           "parameters": {
@@ -334,6 +334,13 @@
             },
             "storageServiceImageContainerName": {
               "type": "string"
+            },
+            "roleAssignmentName": {
+              "type": "string",
+              "defaultValue": "[newGuid()]",
+              "metadata": {
+                "description": "The name of the Role Assignment - from Guid."
+              }
             }
           },
           "variables": {
@@ -619,6 +626,21 @@
               "dependsOn": [
                 "[resourceId('Microsoft.OperationalInsights/workspaces', variables('la_workspace_name'))]",
                 "[resourceId('Microsoft.Web/sites', variables('webapp_name'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.KeyVault/vaults/{0}', variables('keyVaultName'))]",
+              "name": "[parameters('roleAssignmentName')]",
+              "properties": {
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('apiapp_name')), '2020-06-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[variables('keyVaultSecretsOfficerRole')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('apiapp_name'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
               ]
             },
             {
