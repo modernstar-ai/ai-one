@@ -64,7 +64,6 @@ export default function AssistantForm() {
   const { indexes } = useIndexes();
   const [selectedToolIds, setSelectedToolIds] = useState<Set<string>>(new Set());
   const [tools, setTools] = useState<Tool[]>([]);
-  const [, setTopP] = useState<number>(0);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -430,7 +429,7 @@ export default function AssistantForm() {
                       <FormLabel>Top P</FormLabel>
                       <FormControl>
                         <Slider
-                          value={[field.value]}
+                          value={[field.value ?? 1]}
                           min={0}
                           max={1}
                           step={0.01}

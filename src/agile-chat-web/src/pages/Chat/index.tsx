@@ -7,6 +7,9 @@ import { getApiUri } from '@/services/uri-helpers';
 import axios from '@/error-handling/axiosSetup';
 import { fetchAssistantById } from '@/services/assistantservice';
 import { Assistant } from '@/types/Assistant';
+import MessageContent from '@/components/chat-page/message-content';
+import { ChatMessageArea } from '@/components/chat-page/chat-message-area';
+import { useAuth } from '@/services/auth-helpers';
 
 interface IChatPageProps {
   id?: string;
@@ -16,7 +19,8 @@ const ChatPage = (props: IChatPageProps) => {
   const [inputValue, setInputValue] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [assistant, setAssistant] = useState<Assistant | null>(null);
-  const { id } = props;
+  const {id } = props;
+  const {name } = useAuth();  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,22 +118,32 @@ const ChatPage = (props: IChatPageProps) => {
           {messages.map(
             (message, index) =>
               message.sender !== 'system' && (
-                <div
-                  key={index}
-                  className={`w-full my-4 p-4 flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`p-6 rounded-lg`}
-                    style={{
-                      backgroundColor:
-                        message.sender === 'user' ? 'var(--chat-user-bg-color)' : 'var(--chat-bot-bg-color)',
-                      color: message.sender === 'user' ? 'var(--chat-user-text-color)' : 'var(--chat-bot-text-color)',
-                      width: '60%',
-                    }}
-                  >
-                    {message.text}
-                  </div>
-                </div>
+                
+                <> 
+              <ChatMessageArea
+                key={index} //message.id                
+                profileName={message.sender === "user" ? name : (assistant && assistant.name ? assistant.name : "AI Assistant")}
+                role={message.sender == "user"? "user":"assistant"} //message.role
+                onCopy={() => {
+                  navigator.clipboard.writeText(message.text);
+                }}
+                profilePicture={
+                  message.sender === "user" //message.role==
+                    ? ""
+                    : "/agile.png"//session?.user?.image  //todo: session.user.image
+                }
+              >  
+                <MessageContent message={{role: message.sender == "user"? "user":"assistant",
+                  content:message.text,
+                  name: message.sender }}
+                  />
+              </ChatMessageArea>
+
+
+
+                  
+                  
+                </>
               )
           )}
         </ScrollArea>
