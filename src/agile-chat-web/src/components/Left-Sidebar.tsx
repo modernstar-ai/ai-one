@@ -1,7 +1,7 @@
 import { Sidebar, SidebarContent, SidebarTrigger } from '@/components/ui/sidebar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { Home, MessageCircleMore, FileBox, User, VenetianMask, LogOut, MessageSquareCode, Wrench } from 'lucide-react';
+import { Home, MessageCircleMore, FileBox, User, VenetianMask, LogOut, MessageSquareCode, Wrench, Database } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/services/auth-helpers';
 
@@ -52,6 +52,11 @@ export function LeftSidebar() {
                   <Link to="/assistants" aria-label="Home" accessKey="p">
                     <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chatbot Button">
                       <VenetianMask className="h-6 w-6" />
+                    </Button>
+                  </Link>
+                  <Link to="/indexes" aria-label="Indexes" accessKey="i">
+                    <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chatbot Button">
+                      <Database className="h-6 w-6" />
                     </Button>
                   </Link>
                   <Link to="/tools" aria-label="Tools" accessKey="l">
