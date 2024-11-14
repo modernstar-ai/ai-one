@@ -93,18 +93,6 @@ var configContainerName = 'config'
 // ]
 
 
-// resource stg 'Microsoft.Resources/resourceGroups@2024-07-01' existing = {
-//   name: 'examplestorage'
-// }
-
-// //Resource Group 
-// // REF: https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/resources/resource-group
-// @description('Resource Group')
-// resource rsg 'Microsoft.Resources/resourceGroups@2024-07-01' = {
-//   name: resourceGroupName
-//   location: location
-//   tags: tags
-// }
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
   name: appservice_name
@@ -300,18 +288,18 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 //**************************************************************************
 //Add Role Assignment for web app to Key vault
 
-// @description('The name of the Role Assignment - from Guid.')
-// param roleAssignmentName string = newGuid()
+@description('The name of the Role Assignment - from Guid.')
+param roleAssignmentName string = newGuid()
 
-// resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-//   name: roleAssignmentName
-//   scope: kv
-//   properties: {
-//     principalId: apiApp.identity.principalId
-//     principalType: 'ServicePrincipal'
-//     roleDefinitionId: keyVaultSecretsOfficerRole
-//   }
-// }
+resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: roleAssignmentName
+  scope: kv
+  properties: {
+    principalId: apiApp.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: keyVaultSecretsOfficerRole
+  }
+}
 
 //**************************************************************************
 
