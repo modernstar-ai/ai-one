@@ -92,8 +92,6 @@ var configContainerName = 'config'
 //   }
 // ]
 
-
-
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
   name: appservice_name
   location: location
