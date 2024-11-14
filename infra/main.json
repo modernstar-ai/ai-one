@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.31.34.60546",
-      "templateHash": "3521727069892729613"
+      "templateHash": "772654643881042359"
     }
   },
   "parameters": {
@@ -175,7 +175,7 @@
             "value": "[parameters('environmentName')]"
           },
           "tags": {
-            "value": "[variables('tags')]"
+            "value": "[union(variables('tags'), createObject('azd-env-name', parameters('environmentName')))]"
           },
           "openai_api_version": {
             "value": "[parameters('openAIApiVersion')]"
@@ -248,7 +248,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.31.34.60546",
-              "templateHash": "10905843424164458051"
+              "templateHash": "10992996952631183081"
             }
           },
           "parameters": {
@@ -334,6 +334,13 @@
             },
             "storageServiceImageContainerName": {
               "type": "string"
+            },
+            "roleAssignmentName": {
+              "type": "string",
+              "defaultValue": "[newGuid()]",
+              "metadata": {
+                "description": "The name of the Role Assignment - from Guid."
+              }
             }
           },
           "variables": {
@@ -519,9 +526,17 @@
                 "siteConfig": {
                   "linuxFxVersion": "DOTNETCORE|8.0",
                   "alwaysOn": true,
-                  "appCommandLine": "dotnet agile-chat-api.dll",
                   "ftpsState": "Disabled",
                   "minTlsVersion": "1.2",
+                  "cors": {
+                    "allowedOrigins": [
+                      "[format('https://{0}', reference(resourceId('Microsoft.Web/sites', variables('webapp_name')), '2020-06-01').defaultHostName)]"
+                    ],
+                    "supportCredentials": true
+                  },
+                  "defaultDocuments": [
+                    "string"
+                  ],
                   "appSettings": [
                     {
                       "name": "AZURE_KEY_VAULT_NAME",
@@ -592,13 +607,15 @@
                 "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'AZURE-SEARCH-API-KEY')]",
                 "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'AZURE-STORAGE-ACCOUNT-KEY')]",
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmos_name'))]",
-                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+                "[resourceId('Microsoft.Web/sites', variables('webapp_name'))]"
               ]
             },
             {
               "type": "Microsoft.OperationalInsights/workspaces",
               "apiVersion": "2021-12-01-preview",
               "name": "[variables('la_workspace_name')]",
+              "tags": "[parameters('tags')]",
               "location": "[parameters('location')]"
             },
             {
@@ -622,10 +639,26 @@
               ]
             },
             {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.KeyVault/vaults/{0}', variables('keyVaultName'))]",
+              "name": "[parameters('roleAssignmentName')]",
+              "properties": {
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('apiapp_name')), '2020-06-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[variables('keyVaultSecretsOfficerRole')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('apiapp_name'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+              ]
+            },
+            {
               "type": "Microsoft.KeyVault/vaults",
               "apiVersion": "2021-06-01-preview",
               "name": "[variables('keyVaultName')]",
               "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
               "properties": {
                 "sku": {
                   "family": "A",
