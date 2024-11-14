@@ -1,132 +1,501 @@
-import { Sidebar, SidebarContent, SidebarTrigger } from '@/components/ui/sidebar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { Home, MessageCircleMore, FileBox, User, VenetianMask, LogOut, MessageSquareCode, Wrench } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/services/auth-helpers';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from "@/services/auth-helpers";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Home,
+  MessageCircleMore,
+  FileBox,
+  User,
+  VenetianMask,
+  LogOut,
+  MessageSquareCode,
+  Wrench,
+  Plus,
+  Trash2,
+  Sun,
+  Moon,
+  Monitor,
+  ClipboardList,
+  Shield,
+  PanelLeftOpen,
+  PanelLeftClose,
+  Loader2,
+} from 'lucide-react';
+import {
+  fetchChatThreads,
+  createChatThread,
+  deleteChatThread,
+  type ChatThread
+} from '@/services/chatthreadservice';
+
+type Theme = 'light' | 'dark' | 'system';
+
+type NavItem = {
+  path: string;
+  icon: React.ElementType;
+  label: string;
+  accessKey: string;
+};
 
 export function LeftSidebar() {
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [threads, setThreads] = useState<ChatThread[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [threadToDelete, setThreadToDelete] = useState<string | null>(null);
+  const navigate = useNavigate();
   const { instance, accounts, isLoggedIn, name, username } = useAuth();
+  const [currentTheme, setCurrentTheme] = useState<Theme>('system');
+
+  const navigationItems: NavItem[] = [
+    { path: "/chat", icon: MessageCircleMore, label: "Chat", accessKey: "c" },
+    { path: "/ragchat", icon: MessageSquareCode, label: "Chat over data", accessKey: "r" },
+    { path: "/files", icon: FileBox, label: "Files", accessKey: "f" },
+    { path: "/assistants", icon: VenetianMask, label: "Assistants", accessKey: "p" },
+    { path: "/tools", icon: Wrench, label: "Tools", accessKey: "l" }
+  ];
+
+  // Theme handling
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as Theme || 'system';
+    setCurrentTheme(savedTheme);
+    applyTheme(savedTheme);
+  }, []);
+
+  const applyTheme = (theme: Theme) => {
+    localStorage.setItem('theme', theme);
+    setCurrentTheme(theme);
+
+    if (theme === 'system') {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } else if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
+  // Watch for system theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      if (localStorage.getItem('theme') === 'system') {
+        applyTheme('system');
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    if (isLoggedIn && username) {
+      loadChatThreads(true);
+    }
+  }, [isLoggedIn, username]);
+
+  // Load when panel is opened
+  useEffect(() => {
+    if (isPanelOpen && isLoggedIn && username && !initialLoad) {
+      loadChatThreads(false);
+    }
+  }, [isPanelOpen]);
+
+  // Periodic refresh when panel is open
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (isPanelOpen && isLoggedIn && username) {
+      intervalId = setInterval(() => loadChatThreads(false), 30000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isPanelOpen, isLoggedIn, username]);
+
+  const loadChatThreads = async (isInitial: boolean = false) => {
+    if (isInitial) {
+      setInitialLoad(true);
+    }
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetchChatThreads(username);
+      if (response) {
+        setThreads(response);
+      } else {
+        setError('Failed to load chat threads');
+      }
+    } catch (err) {
+      setError('Failed to load chat threads');
+    } finally {
+      setLoading(false);
+      if (isInitial) {
+        setInitialLoad(false);
+      }
+    }
+  };
+
+  
+  const handleCreateChat = async () => {
+    setLoading(true);
+    try {
+      // Get assistantId from query string if it exists
+      const urlParams = new URLSearchParams(window.location.search);
+      const assistantId = urlParams.get('assistantId');
+      
+      // Prepare chat thread data
+      const chatData = {
+        name: "New Chat",
+        personaMessage: "",
+        personaMessageTitle: "",
+        userId: username,
+        ...(assistantId && { assistantId }) // Only add assistantId if it exists
+      };
+      
+      const newThread = await createChatThread(chatData);
+      
+      if (newThread) {
+        await loadChatThreads(false);
+         
+        // Navigate to new chat
+        navigate(`/chat/${newThread.id}`);
+      } else {
+        setError('Failed to create new chat');
+      }
+    } catch (err) {
+      setError('Failed to create new chat');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  
+
+  const handleDeleteThread = async (threadId: string) => {
+    setLoading(true);
+    try {
+      const success = await deleteChatThread(threadId, name);
+      if (success) {
+        await loadChatThreads(false);
+      } else {
+        setError('Failed to delete chat thread');
+      }
+    } catch (err) {
+      setError('Failed to delete chat thread');
+    } finally {
+      setLoading(false);
+      setThreadToDelete(null);
+    }
+  };
+
+  const handleClearHistory = async () => {
+    const confirmClear = window.confirm('Are you sure you want to clear all chat history?');
+    if (confirmClear) {
+      setLoading(true);
+      try {
+        const deletePromises = threads.map(thread => deleteChatThread(thread.id, name));
+        await Promise.all(deletePromises);
+        await loadChatThreads(false);
+      } catch (err) {
+        setError('Failed to clear chat history');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleLogout = () => {
+    instance.logoutRedirect({ account: accounts[0] }).then(() => {
+      instance.logoutPopup({ account: accounts[0] });
+    });
+  };
 
   return (
-    <Sidebar variant="inset" collapsible="icon" className="p-0">
-      <SidebarContent>
-        <div className="flex h-screen w-full  bg-background text-foreground border-red-500">
-          <div
-            id="left-icon-menu"
-            className="bg-primary text-primary-foreground flex flex-col items-center py-4 space-y-4 h-full  border-orange-500 border-0"
-          >
-            <div className="flex h-full border-green-500 border-1">
-              {/* Sidebar container */}
-              {/* <div className="bg-black w-16 flex flex-col items-center py-4"> */}
-              <div className="w-16 bg-primary text-primary-foreground flex flex-col items-center py-4 space-y-4">
-                {/* Top icons */}
-                <div className="space-y-4">
-                  <Link to="/" aria-label="Home" accessKey="h">
-                    <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Home Button">
-                      <Home className="h-6 w-6" />
-                    </Button>
-                  </Link>
-                  {/* <Home className="text-gray-400 w-6 h-6" /> */}
-                </div>
-                <SidebarTrigger />
+    <div className="flex h-screen">
+      {/* Fixed Sidebar */}
+      <div className="w-16 flex flex-col items-center py-4 border-r bg-background">
+        <TooltipProvider>
+          {/* Home and Panel Toggle Buttons */}
+          <div className="flex flex-col space-y-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link to="/">
+                  <Button variant="ghost" size="icon">
+                    <Home className="h-5 w-5" />
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">Home</TooltipContent>
+            </Tooltip>
 
-                {/* Middle icons, flex-grow ensures they are in the center */}
-                <div className="flex-grow flex flex-col justify-center space-y-4">
-                  <Link to="/chat" aria-label="Home" accessKey="c">
-                    <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chat Button">
-                      <MessageCircleMore className="h-6 w-6" />
-                    </Button>
-                  </Link>
-                  <Link aria-label="Chat over data" to="/ragchat" accessKey="r">
-                    <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chat over Data Button">
-                      <MessageSquareCode className="h-6 w-6" />
-                    </Button>
-                  </Link>
-                  <Link to="/files" aria-label="Home" accessKey="f">
-                    <Button variant="ghost" size="icon" tabIndex={-1} aria-label="File Button">
-                      {' '}
-                      <FileBox className=" w-6 h-6" />
-                    </Button>
-                  </Link>
-                  <Link to="/assistants" aria-label="Home" accessKey="p">
-                    <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chatbot Button">
-                      <VenetianMask className="h-6 w-6" />
-                    </Button>
-                  </Link>
-                  <Link to="/tools" aria-label="Tools" accessKey="l">
-                    <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Tools Page Button">
-                      <Wrench className="h-6 w-6" />
-                    </Button>
-                  </Link>
-                </div>
-
-                {isLoggedIn && (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="ghost" size="icon" aria-label="User Details">
-                        <User className="h-6 w-6" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-60">
-                      <div className="space-y-2">
-                        <h4 className="font-medium leading-none">{name}</h4>
-                        <p className="text-xs text-muted-foreground">{username}</p>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start"
-                          aria-label="Logout Button"
-                          onClick={() => {
-                            instance.logoutRedirect({ account: accounts[0] }).then(() => {
-                              instance.logoutPopup({ account: accounts[0] });
-                            });
-                          }}
-                        >
-                          <LogOut className="mr-2 h-4 w-4" />
-                          Logout
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                )}
-              </div>
-            </div>
-          </div>
-          {isLoggedIn && (
-            <div
-              id="left-sidebar-content"
-              className="flex flex-col bg-gray-100 p-4 overflow-y-auto border-yellow-500 border-0"
-            >
-              <div className="bg-gray-100 p-4 overflow-y-auto">
-                <div className="flex items-center mb-6">
-                  <div className="text-3xl font-bold mr-2">[logo]</div>
-                </div>
-                <div className="text-sm font-semibold mb-2">Your AI Assistants</div>
-
-                <div className="space-y-2">
-                  <div>Foundations of...</div>
-                  <div>Health and Society</div>
-                  <div>Clinical Practice 2A</div>
-                  <div>Clinical Practice 3A</div>
-                </div>
-
-                <div className="mt-6 text-sm font-semibold">History</div>
-                <div className="space-y-2 mt-2">
-                  <div>What is the role....</div>
-                  <div>History 2</div>
-                  <div>History 3</div>
-                  <div>History 4</div>
-                  <div>History 5</div>
-                </div>
-                {/* Left-aligned Clear History button */}
-                <Button variant="secondary" className="mt-4 px-0">
-                  Clear History
+            {/* Panel Toggle Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setIsPanelOpen(!isPanelOpen)}
+                >
+                  {isPanelOpen ? (
+                    <PanelLeftClose className="h-5 w-5" />
+                  ) : (
+                    <PanelLeftOpen className="h-5 w-5" />
+                  )}
                 </Button>
-              </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                {isPanelOpen ? 'Hide Recent Chats' : 'Show Recent Chats'}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
+          {/* Navigation Items */}
+          <div className="flex flex-col space-y-2 mt-4">
+            {navigationItems.map(({ path, icon: Icon, label }) => (
+              <Tooltip key={path}>
+                <TooltipTrigger asChild>
+                  <Link to={path}>
+                    <Button variant="ghost" size="icon">
+                      <Icon className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">{label}</TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+
+          {/* User Menu */}
+          {isLoggedIn && (
+            <div className="mt-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">{name}</p>
+                      <p className="text-xs text-muted-foreground">{username}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  
+                  {/* Theme Options */}
+                  <DropdownMenuItem onClick={() => applyTheme('light')}>
+                    <Sun className="mr-2 h-4 w-4" />
+                    <span>Light</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => applyTheme('dark')}>
+                    <Moon className="mr-2 h-4 w-4" />
+                    <span>Dark</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => applyTheme('system')}>
+                    <Monitor className="mr-2 h-4 w-4" />
+                    <span>System</span>
+                  </DropdownMenuItem>
+                  
+                   
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
-        </div>
-      </SidebarContent>
-    </Sidebar>
+        </TooltipProvider>
+      </div>
+
+      {/* Collapsible Panel */}
+      <div
+        className={cn(
+          "border-r bg-background transition-all duration-300 ease-in-out",
+          isPanelOpen ? "w-80" : "w-0 opacity-0"
+        )}
+      >
+        {isPanelOpen && (
+          <div className="h-full flex flex-col">
+            {/* Panel Header */}
+            <div className="p-4 border-b flex items-center justify-between">
+              <h2 className="font-semibold">Recent Chats</h2>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleCreateChat}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Plus className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="px-4 py-2 text-destructive text-sm">{error}</div>
+            )}
+
+            {/* Chat Threads */}
+            {loading && threads.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <ScrollArea className="flex-1">
+                <div className="p-4 space-y-2">
+                  {threads.map((thread) => (
+                    <div
+                      key={thread.id}
+                      className={cn(
+                        "group flex items-center justify-between p-2 rounded-md",
+                        "hover:bg-muted cursor-pointer",
+                        loading && "opacity-50 pointer-events-none"
+                      )}
+                    >
+                      <div 
+                        className="flex flex-col flex-grow min-w-0"
+                        onClick={() => navigate(`/chat/${thread.id}`)}
+                      >
+                        <span className="text-sm font-medium truncate">
+                          {thread.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(thread.lastMessageAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100"
+                            disabled={loading}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {loading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Chat</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this chat? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteThread(thread.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+
+            {/* Clear History Button */}
+            {threads.length > 0 && (
+              <div className="p-4 border-t">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
+                      Clear History
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Clear All Chat History</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to clear all chat history? This action cannot be undone and will delete all your conversations.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleClearHistory}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Clear All
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Optional: Add an overlay for mobile when panel is open */}
+      {isPanelOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-background/80 backdrop-blur-sm"
+          onClick={() => setIsPanelOpen(false)}
+        />
+      )}
+    </div>
   );
 }

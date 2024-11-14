@@ -41,6 +41,7 @@ builder.Services.AddSingleton<IAssistantService, AssistantService>();
 builder.Services.AddSingleton<IPersonaService, PersonaService>();
 builder.Services.AddSingleton<IAzureAiSearchService, AzureAiSearchService>();
 builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
+builder.Services.AddSingleton<IChatThreadService, ChatThreadService>();
 
 // Register ConsoleLogger
 //builder.Services.AddLogging(); //todo: re-enable
@@ -96,5 +97,6 @@ app.MapChatCompletionsEndpoint();
 app.MapPersonaEndpoints();
 app.MapFileEndpoints();
 app.MapIndexesEndpoints();
+app.MapChatThreadEndpoints();
 
 app.Run();
