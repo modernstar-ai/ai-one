@@ -1,6 +1,6 @@
 // src/services/personaservice.ts
 import axios from '@/error-handling/axiosSetup';
-import { Indexes } from '@/types/Indexes';
+import { Indexes } from "@/models/indexmetadata";
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -19,23 +19,25 @@ export async function getIndexes(): Promise<string[]> {
   }
 }
 
-//Create new index
-export async function createIndex(newIndex: Indexes): Promise<Indexes | null> {
-  const apiUrl = getApiUrl('assistants');
+//Create new index in cosmos
+export async function createIndex(newIndex: Partial<Indexes>): Promise<Indexes | null> {
+  const apiUrl = getApiUrl('create');
   try {
-    // Ensure all required fields are included in the request
     const indexData = {
       name: newIndex.name,
       description: newIndex.description,
-      group:newIndex.group,
-      createdAt: newIndex.createdAt,
+      group: newIndex.group,
       createdBy: newIndex.createdBy,
     };
+    const response = await axios.post<Indexes>(apiUrl, indexData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    const response = await axios.post<Indexes>(apiUrl, indexData);
     return response.data;
   } catch (error) {
-    console.error('Error creating assistant:', error);
+    console.error('Error creating index:', error);
     return null;
   }
 }
