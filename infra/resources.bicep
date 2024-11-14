@@ -153,9 +153,19 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true
-      appCommandLine: 'dotnet agile-chat-api.dll'
+      //appCommandLine: 'dotnet agile-chat-api.dll'
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
+
+      cors: {
+        allowedOrigins: [
+          'https://${webApp.properties.defaultHostName}'
+        ]
+        supportCredentials: true
+      }
+      defaultDocuments: [
+        'string'
+      ]
 
       appSettings: [
         {
@@ -254,6 +264,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
   name: la_workspace_name
+  tags: tags
   location: location
 }
 
@@ -272,19 +283,28 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
   }
 }
 
-// resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-//   name: guid(kv.id, webApp.name, keyVaultSecretsOfficerRole)
-//   scope: kv
-//   properties: {
-//     principalId: webApp.identity.principalId
-//     principalType: 'ServicePrincipal'
-//     roleDefinitionId: keyVaultSecretsOfficerRole
-//   }
-// }
+//**************************************************************************
+//Add Role Assignment for web app to Key vault
+
+//@description('The name of the Role Assignment - from Guid.')
+//param roleAssignmentName string = newGuid()
+
+//resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+//  name: roleAssignmentName
+//  scope: kv
+//  properties: {
+//    principalId: apiApp.identity.principalId
+ //   principalType: 'ServicePrincipal'
+ //   roleDefinitionId: keyVaultSecretsOfficerRole
+ // }
+//}
+
+//**************************************************************************
 
 resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
   name: keyVaultName
   location: location
+  tags: tags
   properties: {
     sku: {
       family: 'A'
