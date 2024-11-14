@@ -1,10 +1,9 @@
-import { FC, memo } from "react";
-import { Prism } from "react-syntax-highlighter";
-import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-
+import { FC, memo } from 'react';
+import { Prism } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 export const fence = {
-  render: "CodeBlock",
+  render: 'CodeBlock',
   attributes: {
     language: {
       type: String,
@@ -30,4 +29,4 @@ export const CodeBlock: FC<Props> = memo(({ language, children }) => {
   );
 });
 
-CodeBlock.displayName = "CodeBlock";
+CodeBlock.displayName = 'CodeBlock';
