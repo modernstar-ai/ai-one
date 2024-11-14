@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.31.34.60546",
-      "templateHash": "772654643881042359"
+      "templateHash": "5279882405297628584"
     }
   },
   "parameters": {
@@ -248,7 +248,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.31.34.60546",
-              "templateHash": "10992996952631183081"
+              "templateHash": "7311810575128951367"
             }
           },
           "parameters": {
@@ -335,11 +335,36 @@
             "storageServiceImageContainerName": {
               "type": "string"
             },
-            "roleAssignmentName": {
+            "aspCoreEnvironment": {
               "type": "string",
-              "defaultValue": "[newGuid()]",
+              "defaultValue": "Development",
+              "allowedValues": [
+                "Development",
+                "Production"
+              ],
               "metadata": {
-                "description": "The name of the Role Assignment - from Guid."
+                "description": "Deployment Environment"
+              }
+            },
+            "azureClientID": {
+              "type": "securestring",
+              "defaultValue": "",
+              "metadata": {
+                "description": "AZURE_CLIENT_ID"
+              }
+            },
+            "azureClientSecret": {
+              "type": "securestring",
+              "defaultValue": "",
+              "metadata": {
+                "description": "AZURE_CLIENT_SECRET"
+              }
+            },
+            "azureTenantId": {
+              "type": "securestring",
+              "defaultValue": "",
+              "metadata": {
+                "description": "AZURE_TENANT_ID"
               }
             }
           },
@@ -539,8 +564,24 @@
                   ],
                   "appSettings": [
                     {
+                      "name": "AZURE_CLIENT_ID",
+                      "value": "[parameters('azureClientID')]"
+                    },
+                    {
+                      "name": "AZURE_CLIENT_SECRET",
+                      "value": "[parameters('azureClientSecret')]"
+                    },
+                    {
+                      "name": "AZURE_TENANT_ID",
+                      "value": "[parameters('azureTenantId')]"
+                    },
+                    {
                       "name": "AZURE_KEY_VAULT_NAME",
                       "value": "[variables('keyVaultName')]"
+                    },
+                    {
+                      "name": "ASPNETCORE_ENVIRONMENT",
+                      "value": "[parameters('aspCoreEnvironment')]"
                     },
                     {
                       "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
@@ -565,6 +606,10 @@
                     {
                       "name": "AZURE_OPENAI_API_VERSION",
                       "value": "[parameters('openai_api_version')]"
+                    },
+                    {
+                      "name": "AZURE_OPENAI_ENDPOINT",
+                      "value": "[format('https://{0}/', reference(resourceId('Microsoft.CognitiveServices/accounts', variables('openai_name')), '2023-05-01').endpoint)]"
                     },
                     {
                       "name": "AZURE_COSMOSDB_URI",
@@ -606,6 +651,7 @@
                 "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'AZURE-OPENAI-API-KEY')]",
                 "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'AZURE-SEARCH-API-KEY')]",
                 "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'AZURE-STORAGE-ACCOUNT-KEY')]",
+                "[resourceId('Microsoft.CognitiveServices/accounts', variables('openai_name'))]",
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmos_name'))]",
                 "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
                 "[resourceId('Microsoft.Web/sites', variables('webapp_name'))]"
@@ -636,21 +682,6 @@
               "dependsOn": [
                 "[resourceId('Microsoft.OperationalInsights/workspaces', variables('la_workspace_name'))]",
                 "[resourceId('Microsoft.Web/sites', variables('webapp_name'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.KeyVault/vaults/{0}', variables('keyVaultName'))]",
-              "name": "[parameters('roleAssignmentName')]",
-              "properties": {
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('apiapp_name')), '2020-06-01', 'full').identity.principalId]",
-                "principalType": "ServicePrincipal",
-                "roleDefinitionId": "[variables('keyVaultSecretsOfficerRole')]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('apiapp_name'))]",
-                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
               ]
             },
             {

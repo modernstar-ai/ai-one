@@ -92,6 +92,24 @@ var configContainerName = 'config'
 //   }
 // ]
 
+@description('Deployment Environment')
+@allowed(['Development', 'Production'])
+param aspCoreEnvironment string = 'Development'
+
+@description('AZURE_CLIENT_ID')
+@secure()
+param azureClientID string = ''
+
+@description('AZURE_CLIENT_SECRET')
+@secure()
+param azureClientSecret string = ''
+
+@description('AZURE_TENANT_ID')
+@secure()
+param azureTenantId string = ''
+
+/* **************************************************** */
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
   name: appservice_name
   location: location
@@ -169,8 +187,24 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
 
       appSettings: [
         {
+          name: 'AZURE_CLIENT_ID'
+          value: azureClientID
+        }
+        {
+          name: 'AZURE_CLIENT_SECRET'
+          value: azureClientSecret
+        }
+        {
+          name: 'AZURE_TENANT_ID'
+          value: azureTenantId
+        }
+        {
           name: 'AZURE_KEY_VAULT_NAME'
           value: keyVaultName
+        }
+        {
+          name: 'ASPNETCORE_ENVIRONMENT'
+          value: aspCoreEnvironment
         }
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
@@ -195,6 +229,10 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'AZURE_OPENAI_API_VERSION'
           value: openai_api_version
+        }
+        {
+          name: 'AZURE_OPENAI_ENDPOINT'
+          value: 'https://${azureopenai.properties.endpoint}/'
         }
         // {
         //   name: 'AZURE_OPENAI_DALLE_API_KEY'
@@ -294,9 +332,9 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 //  scope: kv
 //  properties: {
 //    principalId: apiApp.identity.principalId
- //   principalType: 'ServicePrincipal'
- //   roleDefinitionId: keyVaultSecretsOfficerRole
- // }
+//   principalType: 'ServicePrincipal'
+//   roleDefinitionId: keyVaultSecretsOfficerRole
+// }
 //}
 
 //**************************************************************************
