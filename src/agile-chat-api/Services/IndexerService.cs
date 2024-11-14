@@ -13,7 +13,7 @@ namespace Services
 {
     public interface IContainerIndexerService
     {
-        Task<bool> SaveIndexToCosmosDbAsync(IndexesDto indexRequest);
+        Task<Indexes?> SaveIndexToCosmosDbAsync(IndexesDto indexRequest);
     }
 }
 
@@ -53,35 +53,39 @@ namespace Services
             }
         }
 
-        public async Task<bool> SaveIndexToCosmosDbAsync(IndexesDto indexRequest)
+        public async Task<Indexes?> SaveIndexToCosmosDbAsync(IndexesDto indexRequest)
         {
             try
             {
-                if (indexRequest == null) return false;
+                if (indexRequest == null)
+                {
+                    Console.WriteLine("Index request cannot be null.");
+                    return null;
+                }
+
                 var dateTimeString = DateTimeOffset.Now.ToString("dd-MM-yyyy HH:mm:ss");
-                var index = new Indexes
+                var indexMetadata = new Indexes()
                 {
                     id = Guid.NewGuid().ToString(), // Unique identity ID
                     Name = indexRequest.Name,
                     Description = indexRequest.Description,
-                    SecurityGroup = indexRequest.Group,
+                    Group = indexRequest.Group,
                     CreatedAt = dateTimeString,
                     CreatedBy = indexRequest.CreatedBy
                 };
-                var response = await _cosmosContainer.CreateItemAsync(index, new PartitionKey(index.id));
-
-                if (response == null)
-                    return false;
-                else
+                var response = await _cosmosContainer.CreateItemAsync(indexMetadata, new PartitionKey(indexMetadata.id));
+                if (response.StatusCode == System.Net.HttpStatusCode.Created)
                 {
-                    Console.WriteLine("Index created.");
-                    return true;
+                    Console.WriteLine("Index created successfully.");
+                    return indexMetadata;
                 }
+                Console.WriteLine($"Failed to create item with status code: {response.StatusCode}");
+                return null;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error ensuring Cosmos DB: {ex.Message}");
-                return false;
+                Console.WriteLine($"Error while saving index to Cosmos DB: {ex.Message}");
+                return null;
             }
         }
     }

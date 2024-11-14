@@ -12,7 +12,7 @@ public class Indexes
 
     public string? Description { get; set; }
 
-    public string? SecurityGroup { get; set; }
+    public string? Group { get; set; }
 
     public string CreatedAt { get; set; }
 

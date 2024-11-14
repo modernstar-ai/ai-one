@@ -38,37 +38,37 @@ export default function IndexForm() {
     setIsSubmitting(true);
     try {
       // Construct the fileData object without id and createdAt
-      const fileData: Partial<Indexes> = {
+      const indexData: Partial<Indexes> = {
         ...values,
         description: values.description ?? '',
-        group: values.group ?? '', // Ensure this uses the correct value from `values`
+        group: values.group ?? '', 
         createdBy: 'adam@stephensen.me',
       };
-      console.log("Sending fileData:", fileData);
-
-      // Call the createIndex function, passing only the required fields
-      const result = await createIndex(fileData);
-  
-      if (result) {
+      console.log("Sending index ...:", indexData);
+      const createdIndex = await createIndex(indexData);
+      if (createdIndex) {
         toast({
           title: 'Success',
           description: 'Index created successfully',
         });
         navigate('/indexes');
       } else {
-        throw new Error('Operation failed');
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Operation failed. Please try again or check logs for details.',
+        });
       }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
 
   return (
     <div className="flex h-screen bg-background text-foreground">
@@ -115,7 +115,7 @@ export default function IndexForm() {
                     name="group"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Security Group</FormLabel>
+                        <FormLabel>Group</FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="" />
                         </FormControl>
