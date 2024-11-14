@@ -70,14 +70,14 @@ jobs:
           npm install 
           npm run build --if-present
 
-      - name: Agile-Chat-Web - Clean previous zip
-        run: |
-          rm -f ../../release.zip
+      # - name: Agile-Chat-Web - Clean previous zip
+      #   run: |
+      #     rm -f ../../release.zip
 
       - name: Agile-Chat-Web - Zip artifact for deployment
         run: |
           cd ${{ env.AGILE_CHAT_WEB_SRC }}
-          zip -r ../../release.zip ./dist
+          zip -r ../../release.zip dist
 
       - name: Agile-Chat-Web - Upload artifact for deployment job
         uses: actions/upload-artifact@v3
