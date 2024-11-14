@@ -157,6 +157,16 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
 
+      cors: {
+        allowedOrigins: [
+          'https://${webApp.properties.defaultHostName}'
+        ]
+        supportCredentials: true
+      }
+      defaultDocuments: [
+        'string'
+      ]
+
       appSettings: [
         {
           name: 'AZURE_KEY_VAULT_NAME'
@@ -275,18 +285,18 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 //**************************************************************************
 //Add Role Assignment for web app to Key vault
 
-@description('The name of the Role Assignment - from Guid.')
-param roleAssignmentName string = newGuid()
+// @description('The name of the Role Assignment - from Guid.')
+// param roleAssignmentName string = newGuid()
 
-resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: roleAssignmentName
-  scope: kv
-  properties: {
-    principalId: apiApp.identity.principalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: keyVaultSecretsOfficerRole
-  }
-}
+// resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+//   name: roleAssignmentName
+//   scope: kv
+//   properties: {
+//     principalId: apiApp.identity.principalId
+//     principalType: 'ServicePrincipal'
+//     roleDefinitionId: keyVaultSecretsOfficerRole
+//   }
+// }
 
 //**************************************************************************
 
