@@ -60,18 +60,8 @@ jobs:
         with:
           node-version: "18.x"
 
-      # - name: Set Vite environment variables
-      #   run: |
-      #     echo "VITE_AGILECHAT_API_URL="https://${{ env.AGILE_CHAT_API_NAME }}.azurewebsites.net" >> $GITHUB_ENV
-      #     echo "VITE_AZURE_AD_CLIENT_ID=${{ env.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
-      #     echo "VITE_AZURE_AD_TENANT_ID=${{ env.AZURE_TENANT_ID }}" >> $GITHUB_ENV
-      #     ##echo "VITE_AGILECHAT_RAGAPI_URL="https://${{ env.AGILE_RAGCHAT_API_NAME }}.azurewebsites.net" >> $GITHUB_ENV
-
-      - name: Agile-Chat-Web - Node build and publish - Set Vite environment
-        run: |
-          #echo "VITE_AGILECHAT_API_URL=https://${{ env.AGILE_CHAT_API_NAME }}.azurewebsites.net" >> $GITHUB_ENV
-          #echo "VITE_AZURE_AD_CLIENT_ID=${{ env.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
-          #echo "VITE_AZURE_AD_TENANT_ID=${{ env.AZURE_TENANT_ID }}" >> $GITHUB_ENV         
+      - name: Agile-Chat-Web - Node build and publish 
+        run: |      
           cd ${{ env.AGILE_CHAT_WEB_SRC }}
           npm install 
           npm run build --if-present
