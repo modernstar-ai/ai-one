@@ -14,11 +14,20 @@ public static class IndexesEndpoints
     {
         var api = app.MapGroup("api/indexes").RequireAuthorization();
 
-        api.MapGet(string.Empty, async ([FromServices] IAzureAiSearchService azureAiSearchService) =>
-        {
-            var indexes = await azureAiSearchService.GetAllIndexes();
-            return Results.Ok(indexes);
-        });
+        api.MapGet(pattern:"", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
+            async ([FromServices] IContainerIndexerService cosmosService) =>
+            {
+                try
+                {
+                    var indexes = await cosmosService.GetContainerIndexesAsync();
+                    return Results.Ok(indexes);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error occurred: {ex.Message}");
+                    return Results.Problem("An error occurred while retrieving indexes.");
+                }
+            }).DisableAntiforgery();
 
 
         api.MapPost("create", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]

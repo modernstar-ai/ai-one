@@ -13,6 +13,7 @@ namespace Services
 {
     public interface IContainerIndexerService
     {
+        Task<IEnumerable<Indexes>> GetContainerIndexesAsync();
         Task<Indexes?> SaveIndexToCosmosDbAsync(IndexesDto indexRequest);
     }
 }
@@ -50,6 +51,32 @@ namespace Services
             {
                 Console.WriteLine($"Error ensuring Cosmos container exists: {ex.Message}");
                 throw;
+            }
+        }
+
+        public async Task<IEnumerable<Indexes>> GetContainerIndexesAsync()
+        {
+            var query = new QueryDefinition("SELECT * FROM c");
+            var results = new List<Indexes>();
+            try
+            {
+                using var feedIterator = _cosmosContainer.GetItemQueryIterator<Indexes>(query);
+                while (feedIterator.HasMoreResults)
+                {
+                    var response = await feedIterator.ReadNextAsync();
+                    results.AddRange(response);
+                }
+                return results;
+            }
+            catch (CosmosException cosmosEx)
+            {
+                Console.WriteLine($"Cosmos DB error: {cosmosEx.Message}");
+                return Enumerable.Empty<Indexes>(); // Return an empty list to ensure non-null
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error: {ex.Message}");
+                return Enumerable.Empty<Indexes>(); // Return an empty list to ensure non-null
             }
         }
 
