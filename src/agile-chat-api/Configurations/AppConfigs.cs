@@ -49,7 +49,23 @@
         public static string BlobStorageConnectionString => Environment.GetEnvironmentVariable("AZURE_STORAGE_ACCOUNT_CONNECTION")
             ?? throw new InvalidOperationException("AZURE_STORAGE_ACCOUNT_CONNECTION not set.");
         
-        public static string BlobStorageContainerName => Environment.GetEnvironmentVariable("AZURE_STORAGE_FOLDERS_CONTAINER_NAME")
-        ?? throw new InvalidOperationException("AZURE_STORAGE_FOLDERS_CONTAINER_NAME not set.");
+        public static string AzureOpenAiEndpoint => Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT")
+                                                            ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT not set.");
+
+        public static string AzureOpenAiEmbeddingsDeploymentName =
+            Environment.GetEnvironmentVariable("AZURE_OPENAI_API_EMBEDDINGS_DEPLOYMENT_NAME")
+            ?? throw new InvalidOperationException("AZURE_OPENAI_API_EMBEDDINGS_DEPLOYMENT_NAME not set");
+        
+        public static string AzureOpenAiApiKey =
+            Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY")
+            ?? throw new InvalidOperationException("AZURE_OPENAI_API_KEY not set");
+        
+        public static string AzureAiServicesKey =
+            Environment.GetEnvironmentVariable("AZURE_AI_SERVICES_KEY")
+            ?? throw new InvalidOperationException("AZURE_AI_SERVICES_KEY not set");
+
+        public static string AzureOpenAiEmbeddingsModelName =
+            Environment.GetEnvironmentVariable("AZURE_OPENAI_API_EMBEDDINGS_MODEL_NAME") ??
+            throw new InvalidOperationException("AZURE_OPENAI_API_EMBEDDINGS_MODEL_NAME not set");
     }
 }

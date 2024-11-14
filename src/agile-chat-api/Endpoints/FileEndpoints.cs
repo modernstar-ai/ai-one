@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using agile_chat_api.Dtos;
 using agile_chat_api.Services;
+using agile_chat_api.Utils;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc;
 using Models;
@@ -22,10 +23,10 @@ public static class FileEndpoints
         {
             logger.LogInformation("Validated Authorization for web hook");
             //Validate the webhook handshake
-            var eventType = context.Request.Headers["aeg-event-type"].ToString();
-            logger.LogDebug("Fetched aeg-event-type {EventType}", eventType);
+            var eventTypeHeader = context.Request.Headers["aeg-event-type"].ToString();
+            logger.LogDebug("Fetched aeg-event-type {EventType}", eventTypeHeader);
 
-            if (eventType == "SubscriptionValidation")
+            if (eventTypeHeader == "SubscriptionValidation")
             {
                 var code = body?.AsArray().FirstOrDefault()?["data"]?["validationCode"]?.ToString();
                 logger.LogDebug("Fetched validation code {Code}", code);
@@ -33,13 +34,20 @@ public static class FileEndpoints
                 return Results.Ok(new { validationResponse = code });
             }
 
-            var success = await azureAiSearchService.RunIndexer(AzureAiSearchService.FOLDERS_INDEX_NAME);
+            var (indexName, folderName) = EventGridHelpers.GetIndexAndFolderName(body);
+            logger.LogInformation("Fetched index name {IndexName} folder name {FolderName}", indexName, folderName);
+
+            if (string.IsNullOrWhiteSpace(indexName))
+                return Results.BadRequest();
+            
+            var success = await azureAiSearchService.RunIndexerAsync(indexName);
             return success ? Results.Ok() : Results.BadRequest();
+
         });
 
-        api.MapGet("folders", async ([FromServices] IBlobStorageService blobStorageService) =>
+        api.MapGet("folders", async ([FromServices] IStorageService blobStorageService) =>
         {
-            var folders = await blobStorageService.GetHighLevelFolders(BlobStorageService.FOLDERS_CONTAINER_NAME);
+            var folders = await blobStorageService.GetHighLevelFolders();
             return Results.Ok(folders);
         });
 

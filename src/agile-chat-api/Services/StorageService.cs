@@ -39,6 +39,8 @@ namespace Services
         /// <param name="blobUrl">The BLOB URL.</param>
         /// <returns></returns>
         Task DeleteFileFromBlobAsync(FileMetadata file);
+        
+        Task<List<string>> GetHighLevelFolders();
     }
 }
 
@@ -51,7 +53,7 @@ namespace Services
         public StorageService()
         {
             BlobServiceClient blobServiceClient = new(Config.BlobStorageConnectionString);
-            _blobContainerClient = blobServiceClient.GetBlobContainerClient(Config.BlobStorageContainerName);
+            _blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.BlobStorageContainerName);
             _blobContainerClient.CreateIfNotExists();
         }
 
@@ -147,6 +149,22 @@ namespace Services
             {
                 throw new InvalidOperationException($"Error deleting file from blob storage: {file.FileName}", ex);
             }
+        }
+        
+        public async Task<List<string>> GetHighLevelFolders()
+        {
+            var delimiter = "/";
+
+            var results = _blobContainerClient.GetBlobsByHierarchyAsync(delimiter: delimiter);
+            var folders = new List<string>();
+
+            await foreach (var result in results)
+            {
+                if(result.IsPrefix)
+                    folders.Add(result.Prefix.Replace("/", ""));
+            }
+
+            return folders;
         }
     }
 }

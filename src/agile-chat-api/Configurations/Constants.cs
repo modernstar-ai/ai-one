@@ -11,5 +11,7 @@
         /// The assistant container partition key path
         /// </summary>
         public const string AssistantContainerPartitionKeyPath = "/CreatedBy";
+
+        public const string BlobStorageContainerName = "index-content";
     }
 }
