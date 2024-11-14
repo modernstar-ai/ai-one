@@ -41,6 +41,8 @@ jobs:
       AGILE_CHAT_WEB_SRC: "./src/agile-chat-web"
       AGILE_CHAT_WEB_PUB: "./publish/agile-chat-web"
       AGILE_CHAT_WEB_NAME: ${{ vars.AGILE_CHAT_WEB_NAME }}
+      AGILE_CHAT_API_NAME: ${{ vars.AGILE_CHAT_API_NAME }}
+      AGILE_RAGCHAT_API_NAME: ${{ vars.AGILE_RAGCHAT_API_NAME }}
       ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
 
     steps:
@@ -55,16 +57,27 @@ jobs:
         with:
           node-version: "18.x"
 
+      - name: Set Vite environment variables
+        run: |
+          echo "VITE_AGILECHAT_API_URL="https://${{ env.AGILE_CHAT_API_NAME }}.azurewebsites.net" >> $GITHUB_ENV
+          echo "VITE_AZURE_AD_CLIENT_ID=${{ env.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "VITE_AZURE_AD_TENANT_ID=${{ env.AZURE_TENANT_ID }}" >> $GITHUB_ENV
+          ##echo "VITE_AGILECHAT_RAGAPI_URL="https://${{ env.AGILE_RAGCHAT_API_NAME }}.azurewebsites.net" >> $GITHUB_ENV
+
       - name: Agile-Chat-Web - Node build and publish
         run: |
           cd ${{ env.AGILE_CHAT_WEB_SRC }}
           npm install 
           npm run build --if-present
 
+      - name: Agile-Chat-Web - Clean previous zip
+        run: |
+          rm -f ../../release.zip
+
       - name: Agile-Chat-Web - Zip artifact for deployment
         run: |
           cd ${{ env.AGILE_CHAT_WEB_SRC }}
-          zip -r ../../release.zip ./*
+          zip -r ../../release.zip ./dist
 
       - name: Agile-Chat-Web - Upload artifact for deployment job
         uses: actions/upload-artifact@v3
