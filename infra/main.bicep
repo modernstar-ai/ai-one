@@ -3,7 +3,7 @@ targetScope = 'resourceGroup'
 @minLength(1)
 @maxLength(9)
 @description('The name of the solution.')
-param projectName string 
+param projectName string
 
 @minLength(1)
 @maxLength(4)
@@ -17,7 +17,30 @@ param location string = resourceGroup().location
 
 // azure open ai -- regions currently support gpt-4o global-standard
 @description('Location for the OpenAI resource group')
-@allowed(['australiaeast', 'brazilsouth', 'canadaeast', 'eastus', 'eastus2', 'francecentral', 'germanywestcentral', 'japaneast', 'koreacentral', 'northcentralus', 'norwayeast', 'polandcentral', 'spaincentral', 'southafricanorth', 'southcentralus', 'southindia', 'swedencentral', 'switzerlandnorth', 'uksouth', 'westeurope', 'westus', 'westus3'])
+@allowed([
+  'australiaeast'
+  'brazilsouth'
+  'canadaeast'
+  'eastus'
+  'eastus2'
+  'francecentral'
+  'germanywestcentral'
+  'japaneast'
+  'koreacentral'
+  'northcentralus'
+  'norwayeast'
+  'polandcentral'
+  'spaincentral'
+  'southafricanorth'
+  'southcentralus'
+  'southindia'
+  'swedencentral'
+  'switzerlandnorth'
+  'uksouth'
+  'westeurope'
+  'westus'
+  'westus3'
+])
 @metadata({
   azd: {
     type: 'location'
@@ -25,9 +48,8 @@ param location string = resourceGroup().location
 })
 param openAILocation string
 
-
 param openAISku string = 'S0'
-param openAIApiVersion string ='2024-08-01-preview'
+param openAIApiVersion string = '2024-08-01-preview'
 
 param chatGptDeploymentCapacity int = 8 //30
 param chatGptDeploymentName string = 'gpt-4o'
@@ -52,21 +74,22 @@ param searchServiceIndexName string = 'azure-chat'
 param searchServiceSkuName string = 'standard'
 
 // TODO: define good default Sku and settings for storage account
-param storageServiceSku object = { name: 'Standard_LRS' } 
+param storageServiceSku object = { name: 'Standard_LRS' }
 param storageServiceImageContainerName string = 'images'
 
-
 //other
-var tags = { 'azd-env-name': environmentName }
+//var tags = { 'azd-env-name': environmentName }
 
+//Load tags from the file
+var tagsFilePath = './uts.tags.json'
+var tags = loadJsonContent(tagsFilePath)
 
 module resources 'resources.bicep' = {
   name: 'all-resources'
   params: {
     projectName: projectName
-    environmentName:environmentName
-    tags: tags  
-
+    environmentName: environmentName
+    tags: union(tags, { 'azd-env-name': environmentName })
     openai_api_version: openAIApiVersion
     openAiLocation: openAILocation
     openAiSkuName: openAISku

@@ -92,6 +92,20 @@ var configContainerName = 'config'
 //   }
 // ]
 
+
+// resource stg 'Microsoft.Resources/resourceGroups@2024-07-01' existing = {
+//   name: 'examplestorage'
+// }
+
+// //Resource Group 
+// // REF: https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/resources/resource-group
+// @description('Resource Group')
+// resource rsg 'Microsoft.Resources/resourceGroups@2024-07-01' = {
+//   name: resourceGroupName
+//   location: location
+//   tags: tags
+// }
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
   name: appservice_name
   location: location
@@ -264,6 +278,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
   name: la_workspace_name
+  tags: tags
   location: location
 }
 
@@ -303,6 +318,7 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
   name: keyVaultName
   location: location
+  tags: tags
   properties: {
     sku: {
       family: 'A'
