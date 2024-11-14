@@ -250,12 +250,12 @@ export function LeftSidebar() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen dark">
       {/* Fixed Sidebar */}
-      <div className="w-16 flex flex-col items-center py-4 border-r bg-background">
+      <div className="w-16 flex flex-col items-center py-4 border-r bg-background ">
         <TooltipProvider>
           {/* Home and Panel Toggle Buttons */}
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-col space-y-2 dark:text-white">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link to="/">
@@ -289,7 +289,7 @@ export function LeftSidebar() {
           </div>
 
           {/* Navigation Items */}
-          <div className="flex flex-col space-y-2 mt-4">
+          <div className="flex flex-col space-y-2 mt-4 h-screen justify-center items-center  dark:text-white">
             {navigationItems.map(({ path, icon: Icon, label }) => (
               <Tooltip key={path}>
                 <TooltipTrigger asChild>
@@ -306,15 +306,15 @@ export function LeftSidebar() {
 
           {/* User Menu */}
           {isLoggedIn && (
-            <div className="mt-auto">
-              <DropdownMenu>
+            <div className="mt-auto dark:text-white dark">
+              <DropdownMenu data-theme="dark">
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon">
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-56  dark text-white">
+                  <DropdownMenuLabel ata-theme="dark">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium">{name}</p>
                       <p className="text-xs text-muted-foreground">{username}</p>
@@ -358,13 +358,14 @@ export function LeftSidebar() {
         )}
       >
         {isPanelOpen && (
-          <div className="h-full flex flex-col">
+          <div className="h-full flex flex-col dark:text-white " >
             {/* Panel Header */}
-            <div className="p-4 border-b flex items-center justify-between">
+            <div className="p-4 border-b flex justify-between">
               <h2 className="font-semibold">Recent Chats</h2>
               <Button 
                 variant="ghost" 
                 size="icon" 
+                 
                 onClick={handleCreateChat}
                 disabled={loading}
               >
@@ -400,7 +401,8 @@ export function LeftSidebar() {
                     >
                       <div 
                         className="flex flex-col flex-grow min-w-0"
-                        onClick={() => navigate(`/chat/${thread.id}`)}
+                        // onClick={() => navigate(`/chat/${thread.id}`)}
+                        onClick={() => navigate(`/chat/${thread.id}${thread.assistantId ? `?assistantId=${thread.assistantId}` : ''}`)}
                       >
                         <span className="text-sm font-medium truncate">
                           {thread.name}

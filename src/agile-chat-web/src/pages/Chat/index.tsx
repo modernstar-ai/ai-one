@@ -162,6 +162,9 @@ const ChatPage = () => {
     };
 
     initializeChatThread();
+
+    setAssistant(null); // Clear assistant on unmount
+
   }, [chatThreadId, assistantId, username, navigate]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -212,6 +215,9 @@ const ChatPage = () => {
         text: inputValue,
         role: 'user'
       });
+
+      // Clear input after storing message
+      setInputValue('');
 
       const response = await axios.post(apiUrl, messageHistory, {
         headers: {
@@ -344,6 +350,7 @@ const ChatPage = () => {
         </div>
       </div>
     </div>
+    
   );
 };
 
