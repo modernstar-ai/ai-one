@@ -21,12 +21,11 @@ namespace Services
 {
     public class IndexerService : IContainerIndexerService
     {
-        private readonly CosmosClient _cosmosClient;
+        private readonly CosmosClient _cosmosClient = new(Config.CosmosEndpoint, Config.CosmosKey);
         private readonly Container _cosmosContainer;
 
         public IndexerService()
         {
-            _cosmosClient = new CosmosClient(Config.CosmosEndpoint, Config.CosmosKey);
             _cosmosContainer = EnsureCosmosContainerExists().GetAwaiter().GetResult();
         }
 

@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Indexes } from "@/types/Indexes";
+import { Indexes } from "@/models/indexmetadata";
 import { toast } from "@/components/ui/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createIndex } from "@/services/indexes-service";
@@ -37,21 +37,22 @@ export default function IndexForm() {
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      const now = new Date().toISOString();
-      const fileData: Indexes = {
+      // Construct the fileData object without id and createdAt
+      const fileData: Partial<Indexes> = {
         ...values,
-        id: fileId || '',
         description: values.description ?? '',
-        group: values.description ?? '',
-        createdAt: now,
-        createdBy:'adam@stephensen.me'
+        group: values.group ?? '', // Ensure this uses the correct value from `values`
+        createdBy: 'adam@stephensen.me',
       };
-      const result = await createIndex(fileData); 
+      console.log("Sending fileData:", fileData);
+
+      // Call the createIndex function, passing only the required fields
+      const result = await createIndex(fileData);
   
       if (result) {
         toast({
           title: 'Success',
-          description: 'Assistant created successfully',
+          description: 'Index created successfully',
         });
         navigate('/indexes');
       } else {
