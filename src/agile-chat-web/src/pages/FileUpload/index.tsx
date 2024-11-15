@@ -22,7 +22,7 @@ const maxSize = 26214400; // 25MB
 
 const formSchema = z.object({
   index: z.string().min(1, { message: 'Container is required' }),
-  folder: z.string().min(1, { message: 'Folder is required' }),
+  folder: z.string().optional(),
   files: z
     .array(z.instanceof(File))
     .refine((files) => files.length > 0, { message: 'No files selected' })
@@ -49,7 +49,7 @@ export default function FileUploadComponent() {
   const onSubmit = async (values: FormValues) => {
     const formData = new FormData();
     formData.append('index', values.index);
-    formData.append('folder', values.folder);
+    formData.append('folder', values.folder ?? '');
     values.files.forEach((file) => formData.append('files', file));
 
     await uploadFiles(formData);
@@ -115,9 +115,9 @@ export default function FileUploadComponent() {
                     </SelectTrigger>
                     <SelectContent>
                       {indexes &&
-                        indexes.map((indexName, i) => (
-                          <SelectItem key={indexName + i} value={indexName}>
-                            {indexName}
+                        indexes.map((index) => (
+                          <SelectItem key={index.id} value={index.name}>
+                            {index.name}
                           </SelectItem>
                         ))}
                     </SelectContent>

@@ -324,7 +324,7 @@ export default function AssistantForm() {
                               Add new +
                             </Button> */}
 
-                            {indexes?.map((index, i) => (
+                            {indexes?.map((index) => (
                               <SelectItem key={index.id} value={index.name}>
                                 {index.name}
                               </SelectItem>

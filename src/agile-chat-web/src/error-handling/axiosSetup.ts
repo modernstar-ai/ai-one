@@ -25,4 +25,15 @@ axios.interceptors.request.use(
   }
 );
 
+// Request interceptor
+axios.interceptors.request.use(
+  (config) => {
+    return config;
+  },
+  (error) => {
+    errorHandler.handleError(error);
+    return Promise.reject(error);
+  }
+);
+
 export default axios;
