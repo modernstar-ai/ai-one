@@ -18,7 +18,7 @@ namespace Services
         /// <param name="fileName">Name of the file.</param>
         /// <param name="folder">The folder.</param>
         /// <returns></returns>
-        Task<bool> FileMetadataExistsAsync(string fileName, string folder);
+        Task<bool> FileMetadataExistsAsync(string fileName, string indexName, string folder);
 
         /// <summary>
         /// Saves the file metadata to cosmos database asynchronous.
@@ -27,7 +27,8 @@ namespace Services
         /// <param name="blobUrl">The BLOB URL.</param>
         /// <param name="folderName">Name of the folder.</param>
         /// <returns></returns>
-        Task SaveFileMetadataToCosmosDbAsync(IFormFile file, object blobUrl, string folderName);
+        Task SaveFileMetadataToCosmosDbAsync(string fileName, string contentType, long contentLength, object blobUrl,
+            string indexName, string folderName);
 
         /// <summary>
         /// Gets the file by identifier asynchronous.
@@ -48,7 +49,7 @@ namespace Services
         /// <param name="fileName">Name of the file.</param>
         /// <param name="folder">The folder.</param>
         /// <returns></returns>
-        Task DeleteFileByNameFromCosmosAsync(string fileName, string folder);
+        Task DeleteFileByNameFromCosmosAsync(string fileName, string indexName, string folder);
 
         /// <summary>
         /// Deletes the bulk file metadata from cosmos asynchronous.
@@ -111,13 +112,13 @@ namespace Services
         /// <param name="folder">The folder.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public async Task<bool> FileMetadataExistsAsync(string fileName, string folder)
+        public async Task<bool> FileMetadataExistsAsync(string fileName, string indexName, string folder)
         {
             var queryable = _cosmosContainer.GetItemLinqQueryable<FileMetadata>();
 
             // Use LINQ to filter documents based on FileName and Folder
             var filteredQuery = queryable
-                .Where(file => file.FileName == fileName && file.Folder == folder)
+                .Where(file => file.FileName == fileName && file.IndexName == indexName && file.Folder == folder)
                 .ToFeedIterator();
 
             try
@@ -150,7 +151,7 @@ namespace Services
         /// <param name="file">The file.</param>
         /// <param name="blobUrl">The BLOB URL.</param>
         /// <param name="folderName">Name of the folder.</param>
-        public async Task SaveFileMetadataToCosmosDbAsync(IFormFile file, object blobUrl, string folderName)
+        public async Task SaveFileMetadataToCosmosDbAsync(string fileName, string contentType, long contentLength, object blobUrl, string indexName, string folderName)
         {
             try
             {
@@ -158,18 +159,19 @@ namespace Services
                 var fileMetadata = new FileMetadata
                 {
                     id = Guid.NewGuid().ToString(), // Unique identity ID
-                    FileName = Path.GetFileName(file.FileName),
+                    FileName = Path.GetFileName(fileName),
                     BlobUrl = blobUrl,
-                    ContentType = file.ContentType,
-                    Size = file.Length,
+                    ContentType = contentType,
+                    Size = contentLength,
                     Folder = folderName,
+                    IndexName = indexName,
                     SubmittedOn = dateTimeString
                 };
                 await _cosmosContainer.CreateItemAsync(fileMetadata, new PartitionKey(fileMetadata.id));
             }
             catch (Exception)
             {
-                Console.WriteLine($"Error saving file metadata for {file.FileName} in folder {folderName}", file.FileName, folderName);
+                Console.WriteLine($"Error saving file metadata for {fileName} in index {indexName} and folder {folderName}");
             }
         }
 
@@ -257,9 +259,9 @@ namespace Services
         /// <param name="folder">The folder.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public async Task DeleteFileByNameFromCosmosAsync(string fileName, string folder)
+        public async Task DeleteFileByNameFromCosmosAsync(string fileName, string indexName, string folder)
         {
-            var query = new QueryDefinition("SELECT c.id FROM c WHERE c.FolderName = @folder AND c.FileName = @fileName")
+            var query = new QueryDefinition("SELECT c.id FROM c WHERE c.FolderName = @folder AND c.FileName = @fileName AND c.IndexName = @indexName")
                 .WithParameter("@folder", folder)
                 .WithParameter("@fileName", fileName);
             try

@@ -16,14 +16,14 @@ namespace Services
         /// <param name="folderName">Name of the folder.</param>
         /// <returns></returns>
         /// TODO Edit XML Comment Template for FileExistsInBlobAsync
-        Task<bool> FileExistsInBlobAsync(string fileName, string folderName);
+        Task<bool> FileExistsInBlobAsync(string fileName, string indexName, string folderName);
 
         /// <summary>
         /// Uploads the file to BLOB asynchronous.
         /// </summary>
         /// <param name="file">The file.</param>
         /// <returns></returns>
-        Task<string> UploadFileToBlobAsync(IFormFile file, string folderName);
+        Task<string> UploadFileToBlobAsync(IFormFile file, string indexName, string folderName);
 
         /// <summary>
         /// Gets the BLOB URL asynchronous.
@@ -64,9 +64,9 @@ namespace Services
         /// <param name="folderName">Name of the folder.</param>
         /// <returns></returns>
         /// TODO Edit XML Comment Template for FileExistsInBlobAsync
-        public async Task<bool> FileExistsInBlobAsync(string fileName, string folderName)
+        public async Task<bool> FileExistsInBlobAsync(string fileName, string indexName, string folderName)
         {
-            string blobPath = $"{folderName}/{fileName}";
+            string blobPath = $"{indexName}/{folderName}/{fileName}";
             BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
             try
             {
@@ -100,12 +100,12 @@ namespace Services
         /// <param name="folderName"></param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Error uploading file: {file.FileName}</exception>
-        public async Task<string> UploadFileToBlobAsync(IFormFile file, string folderName)
+        public async Task<string> UploadFileToBlobAsync(IFormFile file, string indexName, string folderName)
         {
             try
             {
                 string fileName = Path.GetFileName(file.FileName);
-                string blobPath = $"{folderName}/{fileName}";
+                string blobPath = $"{indexName}/{folderName}/{fileName}";
                 BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
 
                 // Check if both folder and file exist
@@ -140,7 +140,7 @@ namespace Services
             try
             {
                 string fileName = Path.GetFileName(file.FileName);
-                string blobPath = $"{file.Folder}/{fileName}";
+                string blobPath = $"{file.IndexName}/{file.Folder}/{fileName}";
                 BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
                 await _blobClient.DeleteIfExistsAsync();
                 Console.WriteLine($"Blob '{file.FileName}' deleted successfully from container '{blobPath}'.");

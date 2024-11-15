@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, MailIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { useFolders } from '@/hooks/use-folders';
+//import { useFolders } from '@/hooks/use-folders';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as z from 'zod';
@@ -43,7 +43,7 @@ export default function FileUploadComponent() {
   const { toast } = useToast(); // Initialize the Shadcn toast
   const [progresses] = useState<Record<string, number>>({});
   const navigate = useNavigate();
-  const { folders } = useFolders();
+  //const { folders } = useFolders();
   const { indexes } = useIndexes();
 
   const onSubmit = async (values: FormValues) => {
