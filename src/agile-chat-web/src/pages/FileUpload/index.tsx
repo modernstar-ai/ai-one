@@ -110,8 +110,8 @@ export default function FileUploadComponent() {
                 <FormLabel>Container</FormLabel>
                 <FormControl>
                   <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
-                    <SelectTrigger aria-label="Select Folder">
-                      <SelectValue placeholder="Select Folder" />
+                    <SelectTrigger aria-label="Select Container">
+                      <SelectValue placeholder="Select Container" />
                     </SelectTrigger>
                     <SelectContent>
                       {indexes &&
@@ -127,7 +127,8 @@ export default function FileUploadComponent() {
               </FormItem>
             )}
           />
-          <FormField
+          {/* 
+                    <FormField
             control={form.control}
             name="folder"
             render={({ field }) => (
@@ -152,6 +153,8 @@ export default function FileUploadComponent() {
               </FormItem>
             )}
           />
+          */}
+
           <FormField
             control={form.control}
             name="files"

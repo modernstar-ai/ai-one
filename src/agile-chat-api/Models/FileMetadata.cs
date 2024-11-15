@@ -38,6 +38,8 @@
         /// The size.
         /// </value>
         public long Size { get; set; }
+        
+        public string? IndexName { get; set; }
         /// <summary>
         /// Gets or sets the folder.
         /// </summary>

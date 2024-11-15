@@ -56,7 +56,7 @@ export default function IndexForm() {
           title: 'Success',
           description: 'Index created successfully',
         });
-        navigate('/indexes');
+        navigate('/containers');
       } else {
         toast({
           variant: 'destructive',
@@ -78,7 +78,7 @@ export default function IndexForm() {
   return (
     <div className="flex h-screen bg-background text-foreground">
       <div className="flex-1 flex flex-col">
-        <SimpleHeading Title="Containers" Subtitle={'Create New Container Index'} DocumentCount={0} />
+        <SimpleHeading Title="Containers" Subtitle={'Create New Container'} DocumentCount={0} />
         <div className="flex flex-col h-full grow min-h-0 overflow-auto">
           <Card>
             <CardContent className="space-y-8 mt-8">
@@ -90,7 +90,7 @@ export default function IndexForm() {
                     <FormItem>
                       <FormLabel>Name</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Your Indexer Name" />
+                        <Input {...field} placeholder="Your container name" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -104,7 +104,7 @@ export default function IndexForm() {
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="A brief overview of your Indexer" />
+                        <Input {...field} placeholder="A brief overview of your container" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

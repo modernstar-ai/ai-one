@@ -60,7 +60,7 @@ const AppRoutes = () => (
       }
     />
     <Route
-      path="/indexes"
+      path="/containers"
       element={
         <ProtectedRoute>
           <IndexesPage />
@@ -109,7 +109,7 @@ const AppRoutes = () => (
       }
     />
     <Route
-      path="/indexForm"
+      path="/container-form"
       element={
         <ProtectedRoute>
           <IndexForm />
