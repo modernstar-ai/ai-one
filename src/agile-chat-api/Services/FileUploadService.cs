@@ -10,7 +10,7 @@ using Constants = agile_chat_api.Configurations.Constants;
 
 namespace Services
 {
-    public interface ICosmosService
+    public interface IFileUploadService
     {
         /// <summary>
         /// Files the metadata exists asynchronous.
@@ -61,12 +61,12 @@ namespace Services
 
 namespace Services
 {
-    public class CosmosService : ICosmosService
+    public class FileUploadService : IFileUploadService
     {
         private readonly CosmosClient _cosmosClient;
         private readonly Container _cosmosContainer;
 
-        public CosmosService()
+        public FileUploadService()
         {
             _cosmosClient = new CosmosClient(Config.CosmosEndpoint, Config.CosmosKey);
             _cosmosContainer = EnsureCosmosContainerExists().GetAwaiter().GetResult();

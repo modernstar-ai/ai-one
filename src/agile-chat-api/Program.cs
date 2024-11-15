@@ -34,12 +34,13 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 });
 
 // Add services to the container
-builder.Services.AddSingleton<ICosmosService, CosmosService>();
+builder.Services.AddSingleton<IFileUploadService, FileUploadService>();
 builder.Services.AddSingleton<IStorageService, StorageService>();
 builder.Services.AddSingleton<IToolService, ToolService>();
 builder.Services.AddSingleton<IAssistantService, AssistantService>();
 builder.Services.AddSingleton<IPersonaService, PersonaService>();
 builder.Services.AddSingleton<IAzureAiSearchService, AzureAiSearchService>();
+builder.Services.AddSingleton<IContainerIndexerService, IndexerService>();
 
 // Register ConsoleLogger
 //builder.Services.AddLogging(); //todo: re-enable

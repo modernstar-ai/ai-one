@@ -1,4 +1,4 @@
-﻿namespace agile_chat_api.Dtos;
+﻿namespace Dtos;
 
 public class FileUploadsDto
 {

@@ -69,6 +69,11 @@ export function LeftSidebar() {
                       <VenetianMask className="h-6 w-6" />
                     </Button>
                   </Link>
+                  <Link to="/indexes" aria-label="Indexes" accessKey="i">
+                    <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chatbot Button">
+                      <Database className="h-6 w-6" />
+                    </Button>
+                  </Link>
                   <Link to="/tools" aria-label="Tools" accessKey="l">
                     <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Tools Page Button">
                       <Wrench className="h-6 w-6" />

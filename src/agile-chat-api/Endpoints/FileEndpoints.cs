@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-using agile_chat_api.Dtos;
+using Dtos;
 using agile_chat_api.Services;
 using agile_chat_api.Utils;
 using Azure.Storage.Blobs;
@@ -54,7 +54,7 @@ public static class FileEndpoints
 
         api.MapPost("upload", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
         async ([FromForm] FileUploadsDto request,
-                [FromServices] ICosmosService cosmosService,
+                [FromServices] IFileUploadService cosmosService,
                 [FromServices] IStorageService blobStorageService) =>
         {
             // Get the folder name from the form data
@@ -131,7 +131,7 @@ public static class FileEndpoints
             }
         }).DisableAntiforgery();
 
-        api.MapGet(string.Empty, async ([FromServices] ICosmosService cosmosService) =>
+        api.MapGet(string.Empty, async ([FromServices] IFileUploadService cosmosService) =>
         {
             try
             {
@@ -144,7 +144,7 @@ public static class FileEndpoints
             }
         });
 
-        api.MapDelete(string.Empty, async ([FromServices] ICosmosService cosmosService,
+        api.MapDelete(string.Empty, async ([FromServices] IFileUploadService cosmosService,
                                        [FromServices] IStorageService blobStorageService,
                                        [FromBody] DeleteFilesRequestDto request) =>
         {
