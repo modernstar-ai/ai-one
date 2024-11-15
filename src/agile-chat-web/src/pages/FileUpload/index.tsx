@@ -16,6 +16,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { uploadFiles } from '@/services/files-service';
 import { useIndexes } from '@/hooks/use-indexes';
+import { useRoleContext } from "@/common/RoleContext";
+import { fetchManageableGroups } from "@/services/custom-group-service";
 
 const maxFileCount = 5; // Maximum number of files allowed
 const maxSize = 26214400; // 25MB
@@ -45,6 +47,49 @@ export default function FileUploadComponent() {
   const navigate = useNavigate();
   //const { folders } = useFolders();
   const { indexes } = useIndexes();
+  const { isContentManager } = useRoleContext();
+  const userEmail = import.meta.env.VITE_USER_EMAIL as string;
+  const [filteredIndexes, setFilteredIndexes] = useState(indexes || []);
+
+  const fetchGroups = async (): Promise<string[]> => {
+    if (isContentManager) {
+      const groups = await fetchManageableGroups(userEmail);
+      return groups?.map(group => group.group) ?? [];
+    }
+    return [];
+  };
+
+  // Filter indexes based on the groups accessible to ContentManager
+  const filterIndexesForContentManager = async () => {
+    if (!indexes) {
+      setFilteredIndexes([]);
+      return;
+    }
+    
+    if (isContentManager) {
+      try {
+        const groups = await fetchGroups();
+        if (groups.length > 0) {
+          const filtered = indexes.filter((index) => groups.includes(index.group || ''));
+          setFilteredIndexes(filtered);
+        } else {
+          setFilteredIndexes([]); // No groups available
+        }
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+        setFilteredIndexes([]);
+      }
+    } else {
+      setFilteredIndexes(indexes); // Keep original indexes for non-content managers
+    }
+  };
+
+  React.useEffect(() => {
+    const intializeContainers = async () => {
+      await filterIndexesForContentManager();
+    };
+    intializeContainers();
+  }, [indexes]);
 
   const onSubmit = async (values: FormValues) => {
     const formData = new FormData();
@@ -114,12 +159,11 @@ export default function FileUploadComponent() {
                       <SelectValue placeholder="Select Container" />
                     </SelectTrigger>
                     <SelectContent>
-                      {indexes &&
-                        indexes.map((index) => (
-                          <SelectItem key={index.id} value={index.name}>
-                            {index.name}
-                          </SelectItem>
-                        ))}
+                      {filteredIndexes?.map((index) => (
+                              <SelectItem key={index.id} value={index.name}>
+                                {index.name}
+                              </SelectItem>
+                            ))}
                     </SelectContent>
                   </Select>
                 </FormControl>
