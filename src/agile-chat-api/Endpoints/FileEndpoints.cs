@@ -17,9 +17,9 @@ public static class FileEndpoints
     /// <returns></returns>
     public static void MapFileEndpoints(this IEndpointRouteBuilder app)
     {
-        var api = app.MapGroup("api/file").RequireAuthorization();
+        var api = app.MapGroup("api/file");
 
-        api.MapPost("webhook", async (HttpContext context, [FromServices] IAzureAiSearchService azureAiSearchService, [FromServices] FileUploadService fileUploadService, [FromBody] JsonNode body, ILogger logger) =>
+        api.MapPost("webhook", async (HttpContext context, [FromServices] IAzureAiSearchService azureAiSearchService, [FromServices] IFileUploadService fileUploadService, [FromBody] JsonNode body, ILogger logger) =>
         {
             logger.LogInformation("Validated Authorization for web hook");
             //Validate the webhook handshake
@@ -48,7 +48,7 @@ public static class FileEndpoints
             {
                 var fileMetaData = EventGridHelpers.GetFileCreatedMetaData(body);
                 await fileUploadService.SaveFileMetadataToCosmosDbAsync(fileName, fileMetaData.ContentType,
-                    fileMetaData.ContentLength, fileMetaData.FileUrl, indexName, folderName);
+                    fileMetaData.ContentLength, fileMetaData.BlobUrl, indexName, folderName);
             }
             
             var success = await azureAiSearchService.RunIndexerAsync(indexName);

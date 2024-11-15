@@ -13,9 +13,9 @@ public static class EventGridHelpers
         Unknown = 2
     }
 
-    private class FileMetaData
+    public class FileMetaData
     {
-        public string FileUrl { get; set; }
+        public string BlobUrl { get; set; }
         public string ContentType { get; set; }
         public long ContentLength { get; set; }
     }
@@ -60,19 +60,13 @@ public static class EventGridHelpers
     
     public static FileMetaData GetFileCreatedMetaData(JsonNode eventGrid)
     {
-        var subject = eventGrid.AsArray().FirstOrDefault()?["subject"]?.ToString();
-        var fileName = Path.GetFileName(subject);
-        var typeStr = eventGrid.AsArray().FirstOrDefault()?["type"]?.ToString();
-        Type eventType = Type.Unknown;
-
-        if (typeStr == "Microsoft.Storage.BlobDeleted")
-            eventType = Type.BlobDeleted;
-        else if (typeStr == "Microsoft.Storage.BlobCreated")
-            eventType = Type.BlobCreated;
+        var eventObj = eventGrid.AsArray().FirstOrDefault();
 
         return new FileMetaData
         {
-            ContentType = 
+            BlobUrl = eventObj?["data"]?["url"]?.ToString(),
+            ContentType = eventObj?["data"]?["contentType"]?.ToString(),
+            ContentLength = eventObj?["data"]?["contentLength"]?.ToString() != null ? long.Parse(eventObj?["data"]?["contentLength"]?.ToString()!) : 0
         };
     }
 }
