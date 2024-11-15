@@ -59,18 +59,14 @@ export function LeftSidebar() {
                       <FileBox className=" w-6 h-6" />
                     </Button>
                   </Link>
-                  <Link to="/indexes" aria-label="Indexes" accessKey="i">
-                    <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chatbot Button">
-                      <Database className="h-6 w-6" />
-                    </Button>
-                  </Link>
+
                   <Link to="/assistants" aria-label="Home" accessKey="p">
                     <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chatbot Button">
                       <VenetianMask className="h-6 w-6" />
                     </Button>
                   </Link>
                   <Link to="/indexes" aria-label="Indexes" accessKey="i">
-                    <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chatbot Button">
+                    <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Containers Button">
                       <Database className="h-6 w-6" />
                     </Button>
                   </Link>

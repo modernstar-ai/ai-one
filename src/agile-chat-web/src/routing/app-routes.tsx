@@ -12,8 +12,6 @@ import ConnectToDB from '../pages/Tools/connecttodb';
 import ConnectToLogicApp from '../pages/Tools/connecttologicapp';
 import ConnectToApi from '../pages/Tools/connecttoapi';
 import LoginPage from '../pages/Login/login';
-import IndexesPage from '@/pages/Indexes';
-
 import { ProtectedRoute } from './protected-route';
 import IndexesPage from '@/pages/Indexes';
 
