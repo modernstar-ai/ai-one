@@ -65,7 +65,7 @@ public static class IndexesEndpoints
             }).DisableAntiforgery();
 
         api.MapDelete("delete/{id}", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
-            async (string id, [FromServices] IContainerIndexerService cosmosService, [FromServices] IAzureAiSearchService azureSearchService, [FromServices] IStorageService storageService) =>
+            async (string id, [FromServices] IContainerIndexerService cosmosService, [FromServices] IAzureAiSearchService azureSearchService, [FromServices] IFileUploadService fileUploadService, [FromServices] IStorageService storageService) =>
             {
                 if (string.IsNullOrWhiteSpace(id))
                 {
@@ -77,8 +77,9 @@ public static class IndexesEndpoints
                     var itemDeleted = await cosmosService.DeleteIndexWithRetryAsync(id);
                     if (itemDeleted != null)
                     {
-                        await azureSearchService.DeleteIndexAsync(itemDeleted.Name);
                         await storageService.DeleteAllFilesFromIndexAsync(itemDeleted.Name);
+                        await fileUploadService.DeleteAllFilesInIndexAsync(itemDeleted.Name);
+                        await azureSearchService.DeleteIndexAsync(itemDeleted.Name);
                     }
                     
                     return Results.Ok($"Index with ID {id} deleted successfully.");

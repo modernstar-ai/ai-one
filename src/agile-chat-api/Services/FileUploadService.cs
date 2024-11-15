@@ -4,6 +4,7 @@ using Microsoft.Azure.Cosmos.Linq;
 using Models;
 using System.Collections.Concurrent;
 using agile_chat_api.Configurations;
+using agile_chat_api.Utils;
 using Constants = agile_chat_api.Configurations.Constants;
 
 namespace Services
@@ -17,6 +18,8 @@ namespace Services
         /// <param name="folder">The folder.</param>
         /// <returns></returns>
         Task<bool> FileMetadataExistsAsync(string fileName, string indexName, string folder);
+
+        Task DeleteAllFilesInIndexAsync(string indexName);
 
         /// <summary>
         /// Saves the file metadata to cosmos database asynchronous.
@@ -297,6 +300,35 @@ namespace Services
                 foreach (var fileId in failedDeletions)
                 {
                     await DeleteFileWithRetryAsync(fileId, failedDeletions);
+                }
+            }
+        }
+        
+        public async Task DeleteAllFilesInIndexAsync(string indexName)
+        {
+            string sqlQuery = $"SELECT * FROM c WHERE c.IndexName = @value";
+            var queryDefinition = new QueryDefinition(sqlQuery).WithParameter("@value", indexName);
+            var feedIterator = _cosmosContainer.GetItemQueryIterator<dynamic>(queryDefinition);
+
+            // Iterate through the results and delete the items
+            while (feedIterator.HasMoreResults)
+            {
+                var response = await feedIterator.ReadNextAsync();
+                foreach (var item in response)
+                {
+                    // Extract the id or other unique key of the item to delete it
+                    string id = item.id.ToString();
+
+                    try
+                    {
+                        // Delete the item by id and partition key
+                        await _cosmosContainer.DeleteItemAsync<dynamic>(id, new PartitionKey(id));
+                        Console.WriteLine($"Deleted item with id {id}");
+                    }
+                    catch (CosmosException ex)
+                    {
+                        Console.WriteLine($"Error deleting item with id {id}: {ex.Message}");
+                    }
                 }
             }
         }
