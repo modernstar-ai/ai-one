@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { toast } from "./ui/use-toast";
 import { deleteIndex, getIndexes } from "@/services/indexes-service";
-import { Indexes } from "@/models/indexmetadata";
-import { Loader2, Info, Pencil, Trash2 } from "lucide-react";
+import { Index } from "@/models/indexmetadata";
+import { Loader2, Info, Trash2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from "./ui/button";
@@ -20,16 +20,16 @@ import {
  
 const IndexerComponent: React.FC = () => {
 
-  const [indexes, setIndexes] = useState<Indexes[]>([]);
+  const [indexes, setIndexes] = useState<Index[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [indexToDelete, setIndexToDelete] = useState<Indexes | null>(null);
+  const [indexToDelete, setIndexToDelete] = useState<Index | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchIndexes = async () => {
       setIsLoading(true);
       try {
-        const indexData: Indexes[] = await getIndexes();
+        const indexData: Index[] = await getIndexes();
         if (indexData) {
           console.log("Fetched index data:", indexData); // Debugging line
           setIndexes(indexData);
@@ -60,7 +60,7 @@ const IndexerComponent: React.FC = () => {
     );
   }
 
-  const handleDeleteIndex = async (index: Indexes) => {
+  const handleDeleteIndex = async (index: Index) => {
     setIndexToDelete(index);
   };
 
