@@ -15,6 +15,7 @@ namespace Services
     {
         Task<IEnumerable<Indexes>> GetContainerIndexesAsync();
         Task<Indexes?> SaveIndexToCosmosDbAsync(IndexesDto indexRequest);
+        Task DeleteIndexWithRetryAsync(string indexId);
     }
 }
 
@@ -113,6 +114,48 @@ namespace Services
             {
                 Console.WriteLine($"Error while saving index to Cosmos DB: {ex.Message}");
                 return null;
+            }
+        }
+
+        public async Task DeleteIndexWithRetryAsync(string indexId)
+        {
+            const int maxRetries = 3;
+            var attempt = 0;
+
+            while (attempt < maxRetries)
+            {
+                try
+                {
+                    await _cosmosContainer.DeleteItemAsync<Indexes>(indexId, new PartitionKey(indexId));
+                    Console.WriteLine($"Index with ID {indexId} deleted successfully.");
+                    return;
+                }
+                catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                {
+                    attempt++;
+                    if (attempt >= maxRetries)
+                    {
+                        Console.WriteLine($"Rate limit hit for ID {indexId}. Max retry attempts reached. Deletion failed.");
+                        throw;
+                    }
+                    Console.WriteLine($"Rate limit hit for ID {indexId}. Retrying after delay (attempt {attempt}/{maxRetries})...");
+                    await Task.Delay(ex.RetryAfter ?? TimeSpan.FromSeconds(1));
+                }
+                catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    Console.WriteLine($"Index with ID {indexId} not found. Skipping deletion.");
+                    return;
+                }
+                catch (Exception)
+                {
+                    attempt++;
+                    if (attempt >= maxRetries)
+                    {
+                        Console.WriteLine($"Error deleting Index with ID {indexId}. Max retry attempts reached. Deletion failed.");
+                        throw;
+                    }
+                    Console.WriteLine($"Error deleting Index with ID {indexId}. Retrying (attempt {attempt}/{maxRetries})...");
+                }
             }
         }
     }
