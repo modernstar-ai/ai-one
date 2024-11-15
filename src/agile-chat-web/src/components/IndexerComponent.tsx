@@ -17,6 +17,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { useRoleContext } from "@/common/RoleContext";
+import { fetchManageableGroups } from "@/services/custom-group-service";
  
 const IndexerComponent: React.FC = () => {
 
@@ -24,29 +26,50 @@ const IndexerComponent: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [indexToDelete, setIndexToDelete] = useState<Index | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { isSystemAdmin, isContentManager } = useRoleContext();
+  const userEmail = import.meta.env.VITE_USER_EMAIL as string;
+
+  const fetchGroups = async (): Promise<string[]> => {
+    if (isContentManager) {
+      const groups = await fetchManageableGroups(userEmail);
+      return groups?.map(group => group.group) ?? [];
+    }
+    return [];
+  };
+
+  const fetchIndexes = async (manageableGroups: string[]): Promise<Index[]> => {
+    const indexData = await getIndexes();
+    if (!indexData) return [];
+    
+    if (isContentManager && manageableGroups.length > 0) {
+      return indexData.filter((index: Index) =>
+        manageableGroups.includes(index.group ?? "")
+      );
+    }
+    return indexData;
+  };
 
   useEffect(() => {
-    const fetchIndexes = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        const indexData: Index[] = await getIndexes();
-        if (indexData) {
-          console.log("Fetched index data:", indexData); // Debugging line
-          setIndexes(indexData);
-        }
+        const groups = await fetchGroups();
+        //setManageableGroups(groups);
+        const indexes = await fetchIndexes(groups);
+        setIndexes(indexes);
       } catch (error) {
-        console.error('Failed to fetch indexes:', error);
+        console.error('Failed to fetch data:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load indexes. Please try again later.',
+          description: 'Failed to load data. Please try again later.',
           variant: 'destructive',
         });
       } finally {
         setIsLoading(false);
       }
     };
-
-    fetchIndexes();
+  
+    fetchData();
   }, []); // Run only once when the component mounts
 
   if (isLoading) {
@@ -104,7 +127,9 @@ const IndexerComponent: React.FC = () => {
           <table className="min-w-full bg-white border">
             <thead>
               <tr>
-                <th className="w-[100px] py-2 px-4 border">Actions</th>
+                {isSystemAdmin && (
+                  <th className="w-[100px] py-2 px-4 border">Actions</th>
+                )}
                 <th className="w-[150px] py-2 px-4 border">Name</th>
                 <th className="w-[900px] py-2 px-4 border">Description</th>
                 <th className="w-[100px] py-2 px-4 border">Group</th>
@@ -113,73 +138,77 @@ const IndexerComponent: React.FC = () => {
             <tbody>
               {indexes.map((index) => (
                 <tr key={index.id} className="text-center border">
-                  <td className="py-2 px-4 border">
-                    <div className="flex items-center justify-center space-x-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            {/* <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              //onClick={() => handleEditIndex(index.id)}
-                              disabled={true} // Disable the edit button (TBD)
-                              >
-                              <Pencil className="h-4 w-4" />
-                              <span className="sr-only">Edit {index.name}</span>
-                            </Button> */}
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Edit {index.name}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <AlertDialog>
-                      <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => handleDeleteIndex(index)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">Delete {index.name}</span>
-                                  </Button>
-                                </AlertDialogTrigger>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Delete {index.name}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the container "
-                                {indexToDelete?.name}" and remove it from our servers.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter className="flex-col items-stretch sm:flex-row sm:justify-start sm:space-x-2">
-                              <AlertDialogCancel className="mb-2 sm:mb-0">Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
-                                {isDeleting ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Deleting...
-                                  </>
-                                ) : (
-                                  'Yes, delete container'
-                                )}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </td>
+                  {isSystemAdmin && (
+                    <td className="py-2 px-4 border">
+                      <div className="flex items-center justify-center space-x-2">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              {/* <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                //onClick={() => handleEditIndex(index.id)}
+                                disabled={true} // Disable the edit button (TBD)
+                                >
+                                <Pencil className="h-4 w-4" />
+                                <span className="sr-only">Edit {index.name}</span>
+                              </Button> */}
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Edit {index.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      
+                          <AlertDialog>
+                          <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 w-8 p-0"
+                                        onClick={() => handleDeleteIndex(index)}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="sr-only">Delete {index.name}</span>
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Delete {index.name}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the container "
+                                    {indexToDelete?.name}" and remove it from our servers.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="flex-col items-stretch sm:flex-row sm:justify-start sm:space-x-2">
+                                  <AlertDialogCancel className="mb-2 sm:mb-0">Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
+                                    {isDeleting ? (
+                                      <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Deleting...
+                                      </>
+                                    ) : (
+                                      'Yes, delete container'
+                                    )}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                          </AlertDialog>
+                      
+                      </div>
+                    </td>
+                  )}
                   <td className="py-2 px-4 border font-medium">{index.name}</td>
                   <td className="py-2 px-4 border text-left font-medium">{index.description ? index.description : "N/A"}</td>
                   <td className="py-2 px-4 border font-medium">{index.group ? index.group : "N/A"}</td>
