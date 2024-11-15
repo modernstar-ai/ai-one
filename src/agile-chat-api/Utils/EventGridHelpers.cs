@@ -47,7 +47,7 @@ public static class EventGridHelpers
     {
         var subject = eventGrid.AsArray().FirstOrDefault()?["subject"]?.ToString();
         var fileName = Path.GetFileName(subject);
-        var typeStr = eventGrid.AsArray().FirstOrDefault()?["type"]?.ToString();
+        var typeStr = eventGrid.AsArray().FirstOrDefault()?["eventType"]?.ToString();
         Type eventType = Type.Unknown;
 
         if (typeStr == "Microsoft.Storage.BlobDeleted")

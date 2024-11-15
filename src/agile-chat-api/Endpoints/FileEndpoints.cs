@@ -21,6 +21,7 @@ public static class FileEndpoints
 
         api.MapPost("webhook", async (HttpContext context, [FromServices] IAzureAiSearchService azureAiSearchService, [FromServices] IFileUploadService fileUploadService, [FromBody] JsonNode body, ILogger logger) =>
         {
+            logger.LogInformation("Received body {Body}", body.ToJsonString());
             logger.LogInformation("Validated Authorization for web hook");
             //Validate the webhook handshake
             var eventTypeHeader = context.Request.Headers["aeg-event-type"].ToString();

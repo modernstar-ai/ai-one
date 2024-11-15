@@ -261,15 +261,16 @@ namespace Services
         {
             var query = new QueryDefinition("SELECT c.id FROM c WHERE c.FolderName = @folder AND c.FileName = @fileName AND c.IndexName = @indexName")
                 .WithParameter("@folder", folder)
-                .WithParameter("@fileName", fileName);
+                .WithParameter("@fileName", fileName)
+                .WithParameter("@indexName", indexName);
             try
             {
-                using var feedIterator = _cosmosContainer.GetItemQueryIterator<dynamic>(query);
+                using var feedIterator = _cosmosContainer.GetItemQueryIterator<FileMetadata>(query);
                 while (feedIterator.HasMoreResults)
                 {
                     var items = await feedIterator.ReadNextAsync();
                     var deleteTasks = items.Select(item => _cosmosContainer.DeleteItemAsync<FileMetadata>(item.id.ToString(), new PartitionKey(item.id.ToString())));
-                    await Task.WhenAll((IEnumerable<Task>)deleteTasks);
+                    await Task.WhenAll(deleteTasks);
                 }
 
                 Console.WriteLine($"File(s) with name {fileName} in folder {folder} deleted successfully.", fileName, folder);
