@@ -1,5 +1,5 @@
 
-export type Indexes = {
+export type Index = {
     id: string;
     name: string;
     description?: string;

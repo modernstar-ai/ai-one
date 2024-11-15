@@ -7,10 +7,10 @@ import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Indexes } from "@/models/indexmetadata";
 import { toast } from "@/components/ui/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createIndex } from "@/services/indexes-service";
+import { Index } from "@/models/indexmetadata";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
@@ -38,7 +38,7 @@ export default function IndexForm() {
     setIsSubmitting(true);
     try {
       // Construct the fileData object without id and createdAt
-      const indexData: Partial<Indexes> = {
+      const indexData: Partial<Index> = {
         ...values,
         description: values.description ?? '',
         group: values.group ?? '', 

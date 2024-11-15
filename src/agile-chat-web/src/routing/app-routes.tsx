@@ -12,8 +12,9 @@ import ConnectToDB from '../pages/Tools/connecttodb';
 import ConnectToLogicApp from '../pages/Tools/connecttologicapp';
 import ConnectToApi from '../pages/Tools/connecttoapi';
 import LoginPage from '../pages/Login/login';
+import IndexesPage from '@/pages/Indexes/indexesPage';
+import IndexForm from '@/pages/Indexes/indexForm';
 import { ProtectedRoute } from './protected-route';
-import IndexesPage from '@/pages/Indexes';
 
 const AppRoutes = () => (
   <Routes>
@@ -107,6 +108,15 @@ const AppRoutes = () => (
         </ProtectedRoute>
       }
     />
+    <Route
+      path="/indexForm"
+      element={
+        <ProtectedRoute>
+          <IndexForm />
+        </ProtectedRoute>
+      }
+    />
+
     <Route
       path="/connecttodb"
       element={
