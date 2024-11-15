@@ -80,11 +80,11 @@ namespace Services
         {
             try
             {
-                var dbName = Constants.FileUploadContainerName;
+                var dbName = AppConfigs.CosmosDBName;
                 var database = await _cosmosClient.CreateDatabaseIfNotExistsAsync(dbName);
                 ContainerResponse containerResponse = await database.Database.CreateContainerIfNotExistsAsync(new ContainerProperties
                 {
-                    Id = Constants.FileContainerPartitionKeyPath,
+                    Id = Constants.FileUploadContainerName,
                     PartitionKeyPath = Constants.FileContainerPartitionKeyPath
                 });
 
