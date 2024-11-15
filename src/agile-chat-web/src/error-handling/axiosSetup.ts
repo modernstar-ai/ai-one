@@ -36,25 +36,4 @@ axios.interceptors.request.use(
   }
 );
 
-// Response interceptor
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const status = error.response?.status || 500;
-    const context = {
-      componentName: 'API_Call',
-      action: error.config?.url,
-      additionalData: {
-        method: error.config?.method,
-        url: error.config?.url,
-        params: error.config?.params,
-      },
-    };
-
-    const appError = errorHandler.createHttpError(status, context);
-    errorHandler.handleError(appError);
-    return Promise.reject(appError);
-  }
-);
-
 export default axios;

@@ -12,7 +12,8 @@ import ConnectToDB from '../pages/Tools/connecttodb';
 import ConnectToLogicApp from '../pages/Tools/connecttologicapp';
 import ConnectToApi from '../pages/Tools/connecttoapi';
 import LoginPage from '../pages/Login/login';
-
+import IndexesPage from '@/pages/Indexes/indexesPage';
+import IndexForm from '@/pages/Indexes/indexForm';
 import { ProtectedRoute } from './protected-route';
 
 const AppRoutes = () => (
@@ -59,6 +60,14 @@ const AppRoutes = () => (
       }
     />
     <Route
+      path="/containers"
+      element={
+        <ProtectedRoute>
+          <IndexesPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
       path="/assistants"
       element={
         <ProtectedRoute>
@@ -91,6 +100,23 @@ const AppRoutes = () => (
         </ProtectedRoute>
       }
     />
+    <Route
+      path="/indexes"
+      element={
+        <ProtectedRoute>
+          <IndexesPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/container-form"
+      element={
+        <ProtectedRoute>
+          <IndexForm />
+        </ProtectedRoute>
+      }
+    />
+
     <Route
       path="/connecttodb"
       element={

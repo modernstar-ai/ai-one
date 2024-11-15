@@ -6,10 +6,19 @@
         /// The file container partition key path
         /// </summary>
         public const string FileContainerPartitionKeyPath = "/id";
+        public const string FileUploadContainerName = "fileUploads";
 
         /// <summary>
         /// The assistant container partition key path
         /// </summary>
         public const string AssistantContainerPartitionKeyPath = "/CreatedBy";
+
+        /// <summary>
+        /// The index container partition key path
+        /// </summary>
+        public const string IndexContainerPartitionKeyPath = "/id";
+        public const string IndexContainerName = "indexes";
+
+        public const string BlobStorageContainerName = "index-content";
     }
 }

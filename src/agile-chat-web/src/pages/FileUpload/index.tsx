@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, MailIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { useFolders } from '@/hooks/use-folders';
+//import { useFolders } from '@/hooks/use-folders';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as z from 'zod';
@@ -22,7 +22,7 @@ const maxSize = 26214400; // 25MB
 
 const formSchema = z.object({
   index: z.string().min(1, { message: 'Container is required' }),
-  folder: z.string().min(1, { message: 'Folder is required' }),
+  folder: z.string().optional(),
   files: z
     .array(z.instanceof(File))
     .refine((files) => files.length > 0, { message: 'No files selected' })
@@ -43,13 +43,13 @@ export default function FileUploadComponent() {
   const { toast } = useToast(); // Initialize the Shadcn toast
   const [progresses] = useState<Record<string, number>>({});
   const navigate = useNavigate();
-  const { folders } = useFolders();
+  //const { folders } = useFolders();
   const { indexes } = useIndexes();
 
   const onSubmit = async (values: FormValues) => {
     const formData = new FormData();
     formData.append('index', values.index);
-    formData.append('folder', values.folder);
+    formData.append('folder', values.folder ?? '');
     values.files.forEach((file) => formData.append('files', file));
 
     await uploadFiles(formData);
@@ -110,14 +110,14 @@ export default function FileUploadComponent() {
                 <FormLabel>Container</FormLabel>
                 <FormControl>
                   <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
-                    <SelectTrigger aria-label="Select Folder">
-                      <SelectValue placeholder="Select Folder" />
+                    <SelectTrigger aria-label="Select Container">
+                      <SelectValue placeholder="Select Container" />
                     </SelectTrigger>
                     <SelectContent>
                       {indexes &&
-                        indexes.map((indexName, i) => (
-                          <SelectItem key={indexName + i} value={indexName}>
-                            {indexName}
+                        indexes.map((index) => (
+                          <SelectItem key={index.id} value={index.name}>
+                            {index.name}
                           </SelectItem>
                         ))}
                     </SelectContent>
@@ -127,7 +127,8 @@ export default function FileUploadComponent() {
               </FormItem>
             )}
           />
-          <FormField
+          {/* 
+                    <FormField
             control={form.control}
             name="folder"
             render={({ field }) => (
@@ -152,6 +153,8 @@ export default function FileUploadComponent() {
               </FormItem>
             )}
           />
+          */}
+
           <FormField
             control={form.control}
             name="files"
