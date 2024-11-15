@@ -6,6 +6,7 @@
         /// The file container partition key path
         /// </summary>
         public const string FileContainerPartitionKeyPath = "/id";
+        public const string FileUploadContainerName = "fileUploads";
 
         /// <summary>
         /// The assistant container partition key path

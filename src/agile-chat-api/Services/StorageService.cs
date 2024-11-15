@@ -31,7 +31,7 @@ namespace Services
         /// <param name="fileName">Name of the file.</param>
         /// <param name="folder">The folder.</param>
         /// <returns></returns>
-        string GetBlobURLAsync(string fileName, string folder);
+        string GetBlobURLAsync(string indexName, string fileName, string folder);
 
         /// <summary>
         /// Deletes the file from BLOB asynchronous.
@@ -39,6 +39,8 @@ namespace Services
         /// <param name="blobUrl">The BLOB URL.</param>
         /// <returns></returns>
         Task DeleteFileFromBlobAsync(FileMetadata file);
+        
+        Task DeleteAllFilesFromIndexAsync(string indexName);
         
         Task<List<string>> GetHighLevelFolders();
     }
@@ -66,7 +68,7 @@ namespace Services
         /// TODO Edit XML Comment Template for FileExistsInBlobAsync
         public async Task<bool> FileExistsInBlobAsync(string fileName, string indexName, string folderName)
         {
-            string blobPath = $"{indexName}/{folderName}/{fileName}";
+            string blobPath = $"{indexName}" + (!string.IsNullOrWhiteSpace(folderName) ? $"/{folderName}/{fileName}" : $"/{fileName}");
             BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
             try
             {
@@ -86,9 +88,9 @@ namespace Services
         /// <param name="fileName">Name of the file.</param>
         /// <param name="folder">The folder.</param>
         /// <returns></returns>
-        public string GetBlobURLAsync(string fileName, string folder)
+        public string GetBlobURLAsync(string indexName, string fileName, string folderName)
         {
-            string blobPath = $"{folder}/{fileName}";
+            string blobPath = $"{indexName}" + (!string.IsNullOrWhiteSpace(folderName) ? $"/{folderName}/{fileName}" : $"/{fileName}");
             BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
             return _blobClient.Uri.ToString();
         }
@@ -105,7 +107,7 @@ namespace Services
             try
             {
                 string fileName = Path.GetFileName(file.FileName);
-                string blobPath = $"{indexName}/{folderName}/{fileName}";
+                string blobPath = $"{indexName}" + (!string.IsNullOrWhiteSpace(folderName) ? $"/{folderName}/{fileName}" : $"/{fileName}");
                 BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
 
                 // Check if both folder and file exist
@@ -140,7 +142,7 @@ namespace Services
             try
             {
                 string fileName = Path.GetFileName(file.FileName);
-                string blobPath = $"{file.IndexName}/{file.Folder}/{fileName}";
+                string blobPath = $"{file.IndexName}" + (!string.IsNullOrWhiteSpace(file.Folder) ? $"/{file.Folder}/{fileName}" : $"/{fileName}");
                 BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
                 await _blobClient.DeleteIfExistsAsync();
                 Console.WriteLine($"Blob '{file.FileName}' deleted successfully from container '{blobPath}'.");
@@ -148,6 +150,15 @@ namespace Services
             catch (Exception ex)
             {
                 throw new InvalidOperationException($"Error deleting file from blob storage: {file.FileName}", ex);
+            }
+        }
+
+        public async Task DeleteAllFilesFromIndexAsync(string indexName)
+        {
+            await foreach (var blobItem in _blobContainerClient.GetBlobsAsync(prefix: indexName))
+            {
+                var blobClient = _blobContainerClient.GetBlobClient(blobItem.Name);
+                await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
             }
         }
         

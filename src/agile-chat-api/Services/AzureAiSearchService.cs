@@ -10,6 +10,8 @@ namespace agile_chat_api.Services;
 public interface IAzureAiSearchService
 {
     Task<bool> RunIndexerAsync(string indexName);
+    Task DeleteIndexAsync(string indexName);
+    Task<SearchIndexer> CreateDefaultIndexerAsync(string indexName);
     Task<List<string>> GetAllIndexes();
 }
 
@@ -157,7 +159,7 @@ public class AzureAiSearchService : IAzureAiSearchService
         }
         catch (RequestFailedException e) when (e.Status == 404)
         {
-            searchIndexer = await CreateDefaultIndexerAsync(indexName, indexerName);
+            searchIndexer = await CreateDefaultIndexerAsync(indexName);
         }
 
         var resp = await searchIndexerClient.RunIndexerAsync(searchIndexer.Name);
@@ -165,8 +167,9 @@ public class AzureAiSearchService : IAzureAiSearchService
         return resp is { IsError: false };
     }
 
-    private async Task<SearchIndexer> CreateDefaultIndexerAsync(string indexName, string indexerName)
+    public async Task<SearchIndexer> CreateDefaultIndexerAsync(string indexName)
     {
+        var indexerName = GetIndexerByIndexName(indexName);
         var searchIndexerClient = new SearchIndexerClient(_uri, _credentials);
 
         var dataSource = await GetOrCreateDefaultDataSourceAsync(indexName);
@@ -397,5 +400,23 @@ public class AzureAiSearchService : IAzureAiSearchService
         }
 
         return skillset;
+    }
+
+    public async Task DeleteIndexAsync(string indexName)
+    {
+        var indexerName = GetIndexerByIndexName(indexName);
+        var datasourceName = GetDatasourceNameByIndexName(indexName);
+        var skillsetName = GetSkillsetNameByIndexName(indexName);
+
+        var client = new SearchIndexerClient(_uri, _credentials);
+        var indexClient = new SearchIndexClient(_uri, _credentials);
+
+        var respSkillset = await client.DeleteSkillsetAsync(skillsetName);
+        var respDatasource = await client.DeleteDataSourceConnectionAsync(datasourceName);
+        var respIndexer = await client.DeleteIndexerAsync(indexerName);
+        var respIndex = await indexClient.DeleteIndexAsync(indexName);
+
+        if (respSkillset.IsError || respDatasource.IsError || respIndexer.IsError || respIndex.IsError)
+            throw new Exception($"Ran into error deleting. skillset resp: {respSkillset.ReasonPhrase} datasource resp: {respDatasource.ReasonPhrase} Indexer resp: {respIndexer.ReasonPhrase} index resp: {respIndex.ReasonPhrase}");
     }
 }

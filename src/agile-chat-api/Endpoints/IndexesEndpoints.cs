@@ -33,8 +33,12 @@ public static class IndexesEndpoints
 
         api.MapPost("create", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
             async ([FromBody] IndexesDto request,
-                   [FromServices] IContainerIndexerService cosmosService) =>
+                   [FromServices] IContainerIndexerService cosmosService,
+                [FromServices] IAzureAiSearchService searchService) =>
             {
+                if(cosmosService.IndexExistsAsync(request.Name))
+                    return Results.BadRequest("Container name already exists.");
+                
                 if (request == null || string.IsNullOrWhiteSpace(request.Name))
                 {
                     return Results.BadRequest("Invalid data. Please provide required fields.");
@@ -43,6 +47,7 @@ public static class IndexesEndpoints
                 try
                 {
                     var indexes = await cosmosService.SaveIndexToCosmosDbAsync(request);
+                    await searchService.CreateDefaultIndexerAsync(request.Name);
                     return Results.Ok(indexes);
                 }
                 catch (ArgumentNullException ex)
@@ -60,7 +65,7 @@ public static class IndexesEndpoints
             }).DisableAntiforgery();
 
         api.MapDelete("delete/{id}", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
-            async (string id, [FromServices] IContainerIndexerService cosmosService) =>
+            async (string id, [FromServices] IContainerIndexerService cosmosService, [FromServices] IAzureAiSearchService azureSearchService, [FromServices] IStorageService storageService) =>
             {
                 if (string.IsNullOrWhiteSpace(id))
                 {
@@ -69,7 +74,13 @@ public static class IndexesEndpoints
 
                 try
                 {
-                    await cosmosService.DeleteIndexWithRetryAsync(id);
+                    var itemDeleted = await cosmosService.DeleteIndexWithRetryAsync(id);
+                    if (itemDeleted != null)
+                    {
+                        await azureSearchService.DeleteIndexAsync(itemDeleted.Name);
+                        await storageService.DeleteAllFilesFromIndexAsync(itemDeleted.Name);
+                    }
+                    
                     return Results.Ok($"Index with ID {id} deleted successfully.");
                 }
                 catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)

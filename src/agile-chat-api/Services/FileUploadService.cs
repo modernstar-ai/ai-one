@@ -1,11 +1,9 @@
 ﻿using Azure;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
-using Microsoft.Extensions.Logging;
 using Models;
 using System.Collections.Concurrent;
-using System.Reflection.Metadata.Ecma335;
-using Config = agile_chat_api.Configurations.AppConfigs;
+using agile_chat_api.Configurations;
 using Constants = agile_chat_api.Configurations.Constants;
 
 namespace Services
@@ -69,7 +67,7 @@ namespace Services
 
         public FileUploadService()
         {
-            _cosmosClient = new CosmosClient(Config.CosmosEndpoint, Config.CosmosKey);
+            _cosmosClient = new CosmosClient(AppConfigs.CosmosEndpoint, AppConfigs.CosmosKey);
             _cosmosContainer = EnsureCosmosContainerExists().GetAwaiter().GetResult();
         }
 
@@ -82,11 +80,11 @@ namespace Services
         {
             try
             {
-                var dbName = Config.CosmosDBName;
+                var dbName = Constants.FileUploadContainerName;
                 var database = await _cosmosClient.CreateDatabaseIfNotExistsAsync(dbName);
                 ContainerResponse containerResponse = await database.Database.CreateContainerIfNotExistsAsync(new ContainerProperties
                 {
-                    Id = Config.FileContainerName,
+                    Id = Constants.FileContainerPartitionKeyPath,
                     PartitionKeyPath = Constants.FileContainerPartitionKeyPath
                 });
 

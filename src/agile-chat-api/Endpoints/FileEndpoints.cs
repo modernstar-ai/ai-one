@@ -17,7 +17,7 @@ public static class FileEndpoints
     /// <returns></returns>
     public static void MapFileEndpoints(this IEndpointRouteBuilder app)
     {
-        var api = app.MapGroup("api/file");
+        var api = app.MapGroup("api/file").RequireAuthorization();
 
         api.MapPost("webhook", async (HttpContext context, [FromServices] IAzureAiSearchService azureAiSearchService, [FromServices] IFileUploadService fileUploadService, [FromBody] JsonNode body, ILogger logger) =>
         {
@@ -42,9 +42,9 @@ public static class FileEndpoints
             if (string.IsNullOrWhiteSpace(indexName))
                 return Results.BadRequest();
 
-            if (eventType == EventGridHelpers.Type.BlobDeleted)
+            if (eventType == EventGridHelpers.Type.BlobDeleted && await fileUploadService.FileMetadataExistsAsync(fileName, indexName, folderName))
                 await fileUploadService.DeleteFileByNameFromCosmosAsync(fileName, indexName, folderName);
-            else if (eventType == EventGridHelpers.Type.BlobCreated)
+            else if (eventType == EventGridHelpers.Type.BlobCreated && !await fileUploadService.FileMetadataExistsAsync(fileName, indexName, folderName))
             {
                 var fileMetaData = EventGridHelpers.GetFileCreatedMetaData(body);
                 await fileUploadService.SaveFileMetadataToCosmosDbAsync(fileName, fileMetaData.ContentType,
@@ -114,7 +114,7 @@ public static class FileEndpoints
                             Console.WriteLine($"File Exists in Storage Account but not in CosmosDB, " +
                                 $"we will be creating it in CosmosDB record " +
                                 $"with the URL from existing record from Storage Account");
-                            var blobURL = blobStorageService.GetBlobURLAsync(file.FileName, request.Folder);
+                            var blobURL = blobStorageService.GetBlobURLAsync(request.Index, file.FileName, request.Folder);
                             if (blobURL != null)
                             {
                                 await cosmosService.SaveFileMetadataToCosmosDbAsync(file.FileName, file.ContentType, file.Length, blobURL, request.Index, request.Folder);

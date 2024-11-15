@@ -11,9 +11,6 @@
         public static string CosmosDBName => Environment.GetEnvironmentVariable("AZURE_COSMOSDB_DB_NAME")
             ?? throw new InvalidOperationException("AZURE_COSMOSDB_DB_NAME not set.");
 
-        public static string FileContainerName => Environment.GetEnvironmentVariable("AZURE_COSMOSDB_FILES_CONTAINER_NAME")
-            ?? throw new InvalidOperationException("AZURE_COSMOSDB_FILES_CONTAINER_NAME not set.");
-
         public static string BlobStorageConnectionString => Environment.GetEnvironmentVariable("AZURE_STORAGE_ACCOUNT_CONNECTION")
             ?? throw new InvalidOperationException("AZURE_STORAGE_ACCOUNT_CONNECTION not set.");
         

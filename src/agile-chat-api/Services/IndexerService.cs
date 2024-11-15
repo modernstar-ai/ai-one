@@ -7,10 +7,11 @@ using Constants = agile_chat_api.Configurations.Constants;
 namespace Services
 {
     public interface IContainerIndexerService
-    {
+    { 
+        bool IndexExistsAsync(string indexName);
         Task<IEnumerable<Indexes>> GetContainerIndexesAsync();
         Task<Indexes?> SaveIndexToCosmosDbAsync(IndexesDto indexRequest);
-        Task DeleteIndexWithRetryAsync(string indexId);
+        Task<Indexes?> DeleteIndexWithRetryAsync(string indexId);
     }
 }
 
@@ -48,6 +49,11 @@ namespace Services
                 Console.WriteLine($"Error ensuring Cosmos container exists: {ex.Message}");
                 throw;
             }
+        }
+
+        public bool IndexExistsAsync(string indexName)
+        {
+            return _cosmosContainer.GetItemLinqQueryable<Indexes>().Where(x => x.Name == indexName).FirstOrDefault() != null;
         }
 
         public async Task<IEnumerable<Indexes>> GetContainerIndexesAsync()
@@ -112,7 +118,7 @@ namespace Services
             }
         }
 
-        public async Task DeleteIndexWithRetryAsync(string indexId)
+        public async Task<Indexes?> DeleteIndexWithRetryAsync(string indexId)
         {
             const int maxRetries = 3;
             var attempt = 0;
@@ -121,9 +127,10 @@ namespace Services
             {
                 try
                 {
-                    await _cosmosContainer.DeleteItemAsync<Indexes>(indexId, new PartitionKey(indexId));
+                    var index = _cosmosContainer.GetItemLinqQueryable<Indexes>().Where(x => x.id == indexId).FirstOrDefault();
+                    var resp = await _cosmosContainer.DeleteItemAsync<Indexes>(indexId, new PartitionKey(indexId));
                     Console.WriteLine($"Index with ID {indexId} deleted successfully.");
-                    return;
+                    return index;
                 }
                 catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
                 {
@@ -139,7 +146,7 @@ namespace Services
                 catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
                     Console.WriteLine($"Index with ID {indexId} not found. Skipping deletion.");
-                    return;
+                    return null;
                 }
                 catch (Exception)
                 {
@@ -152,6 +159,8 @@ namespace Services
                     Console.WriteLine($"Error deleting Index with ID {indexId}. Retrying (attempt {attempt}/{maxRetries})...");
                 }
             }
+
+            return null;
         }
     }
 }
