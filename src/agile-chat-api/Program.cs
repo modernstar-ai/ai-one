@@ -40,7 +40,6 @@ builder.Services.AddSingleton<IToolService, ToolService>();
 builder.Services.AddSingleton<IAssistantService, AssistantService>();
 builder.Services.AddSingleton<IPersonaService, PersonaService>();
 builder.Services.AddSingleton<IAzureAiSearchService, AzureAiSearchService>();
-builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 builder.Services.AddSingleton<IContainerIndexerService, IndexerService>();
 
 // Register ConsoleLogger

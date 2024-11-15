@@ -14,7 +14,6 @@ import ConnectToApi from '../pages/Tools/connecttoapi';
 import LoginPage from '../pages/Login/login';
 import IndexesPage from '@/pages/Indexes/indexesPage';
 import IndexForm from '@/pages/Indexes/indexForm';
-
 import { ProtectedRoute } from './protected-route';
 
 const AppRoutes = () => (
@@ -57,6 +56,14 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <FileUploadPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/indexes"
+      element={
+        <ProtectedRoute>
+          <IndexesPage />
         </ProtectedRoute>
       }
     />
