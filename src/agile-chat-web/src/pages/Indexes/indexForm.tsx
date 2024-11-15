@@ -1,19 +1,24 @@
-import { useState } from "react";
-import SimpleHeading from "@/components/Heading-Simple";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from 'react';
+import SimpleHeading from '@/components/Heading-Simple';
+import { Card, CardContent } from '@/components/ui/card';
 import * as z from 'zod';
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { createIndex } from "@/services/indexes-service";
-import { Index } from "@/models/indexmetadata";
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { createIndex } from '@/services/indexes-service';
+import { Index } from '@/models/indexmetadata';
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: 'Name is required' }),
+  name: z
+    .string()
+    .min(1, { message: 'Name is required' })
+    .regex(/^[a-z][a-z0-9-]*$/, {
+      message: 'Name must be lowercase, start with a letter and contain only letters, numbers and hyphens',
+    }),
   description: z.string(),
   group: z.string(),
 });
@@ -41,10 +46,10 @@ export default function IndexForm() {
       const indexData: Partial<Index> = {
         ...values,
         description: values.description ?? '',
-        group: values.group ?? '', 
+        group: values.group ?? '',
         createdBy: 'adam@stephensen.me',
       };
-      console.log("Sending index ...:", indexData);
+      console.log('Sending index ...:', indexData);
       const createdIndex = await createIndex(indexData);
       if (createdIndex) {
         toast({
@@ -73,67 +78,63 @@ export default function IndexForm() {
   return (
     <div className="flex h-screen bg-background text-foreground">
       <div className="flex-1 flex flex-col">
-        <SimpleHeading
-            Title="Containers"
-            Subtitle={'Create New Container Index'}
-            DocumentCount={0}
-          />
-          <div className="flex flex-col h-full grow min-h-0 overflow-auto">
+        <SimpleHeading Title="Containers" Subtitle={'Create New Container Index'} DocumentCount={0} />
+        <div className="flex flex-col h-full grow min-h-0 overflow-auto">
           <Card>
-                <CardContent className="space-y-8 mt-8">
-                  <Form {...form}>
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Your Indexer Name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+            <CardContent className="space-y-8 mt-8">
+              <Form {...form}>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Your Indexer Name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="A brief overview of your Indexer" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="A brief overview of your Indexer" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <FormField
-                    control={form.control}
-                    name="group"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Group</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <FormField
+                  control={form.control}
+                  name="group"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Group</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <div className="flex justify-between mt-2">
-                      <Button type="submit" disabled={isSubmitting} onClick={form.handleSubmit(onSubmit)}>
-                        {isSubmitting ? 'Submitting...' : fileId ? 'Update' : 'Create'}
-                      </Button>
-                    </div>
-                  </Form>
-                </CardContent>
-              </Card>
-          </div>
+                <div className="flex justify-between mt-2">
+                  <Button type="submit" disabled={isSubmitting} onClick={form.handleSubmit(onSubmit)}>
+                    {isSubmitting ? 'Submitting...' : fileId ? 'Update' : 'Create'}
+                  </Button>
+                </div>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
-  )
+  );
 }
