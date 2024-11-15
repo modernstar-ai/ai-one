@@ -117,7 +117,7 @@ export default function AssistantForm() {
           topP: file.topP,
           maxResponseToken: file.maxResponseToken,
           pastMessages: file.pastMessages,
-          strictness: file.strictness
+          strictness: file.strictness,
         });
         setSelectedToolIds(new Set(file.tools.map((tool) => tool.toolId)));
       } else {
@@ -324,9 +324,9 @@ export default function AssistantForm() {
                               Add new +
                             </Button> */}
 
-                            {indexes?.map((indexName, i) => (
-                              <SelectItem key={indexName + i} value={indexName}>
-                                {indexName}
+                            {indexes?.map((index, i) => (
+                              <SelectItem key={index.id} value={index.name}>
+                                {index.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
