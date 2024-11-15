@@ -1,12 +1,7 @@
-using Azure;
+using agile_chat_api.Configurations;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.Cosmos.Linq;
-using Microsoft.Extensions.Logging;
 using Models;
-using System.Collections.Concurrent;
-using System.Reflection.Metadata.Ecma335;
 using Dtos;
-using Config = agile_chat_api.Configurations.AppConfigs;
 using Constants = agile_chat_api.Configurations.Constants;
 
 namespace Services
@@ -23,7 +18,7 @@ namespace Services
 {
     public class IndexerService : IContainerIndexerService
     {
-        private readonly CosmosClient _cosmosClient = new(Config.CosmosEndpoint, Config.CosmosKey);
+        private readonly CosmosClient _cosmosClient = new(AppConfigs.CosmosEndpoint, AppConfigs.CosmosKey);
         private readonly Container _cosmosContainer;
 
         public IndexerService()
@@ -35,11 +30,11 @@ namespace Services
         {
             try
             {
-                var dbName = Config.CosmosDBName;
+                var dbName = AppConfigs.CosmosDBName;
                 var database = await _cosmosClient.CreateDatabaseIfNotExistsAsync(dbName);
                 var containerResponse = await database.Database.CreateContainerIfNotExistsAsync(new ContainerProperties
                 {
-                    Id = Config.IndexContainerName,
+                    Id = Constants.IndexContainerName,
                     PartitionKeyPath = Constants.IndexContainerPartitionKeyPath
                 });
 

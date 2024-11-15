@@ -1,4 +1,4 @@
-namespace agile_chat_api.Configurations
+﻿namespace agile_chat_api.Configurations
 {
     public static class Constants
     {
@@ -16,6 +16,7 @@ namespace agile_chat_api.Configurations
         /// The index container partition key path
         /// </summary>
         public const string IndexContainerPartitionKeyPath = "/id";
+        public const string IndexContainerName = "indexes";
 
         public const string BlobStorageContainerName = "index-content";
     }

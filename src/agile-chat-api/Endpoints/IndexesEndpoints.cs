@@ -15,7 +15,7 @@ public static class IndexesEndpoints
     {
         var api = app.MapGroup("api/indexes").RequireAuthorization();
 
-        api.MapGet(pattern:"", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
+        api.MapGet(pattern: string.Empty, [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
             async ([FromServices] IContainerIndexerService cosmosService) =>
             {
                 try
