@@ -1,8 +1,8 @@
-import { MultiSelectInput } from '@/components/ui-extended/multi-select';
+// import { MultiSelectInput } from '@/components/ui-extended/multi-select';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useFolders } from '@/hooks/use-folders';
+// import { useFolders } from '@/hooks/use-folders';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -16,8 +16,8 @@ export default function FileList() {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false); // Processing state for delete/refresh
   const [sortedFiles, setSortedFiles] = useState<FileMetadata[]>([]);
-  const { folders } = useFolders();
-  const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
+  // const { folders } = useFolders();
+  // const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
 
   // Sorting logic
   useEffect(() => {
@@ -108,7 +108,7 @@ export default function FileList() {
       <div className="flex-1 p-8 overflow-y-auto">
         <h1 className="text-3xl font-bold mb-6">Your Files</h1>
 
-        <div className="flex space-x-4 mb-4">
+        {/* <div className="flex space-x-4 mb-4">
           <MultiSelectInput
             className="w-[30%] max-w-[500px]"
             label="Folders"
@@ -116,7 +116,7 @@ export default function FileList() {
             selectedItems={selectedFolders}
             onChange={setSelectedFolders}
           />
-        </div>
+        </div> */}
 
         <div className="flex justify-between items-center mb-4">
           <Link to="/fileupload" aria-label="Add New File" accessKey="n">

@@ -14,9 +14,11 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/services/auth-helpers';
+import { useRoleContext } from "@/common/RoleContext";
 
 export function LeftSidebar() {
   const { instance, accounts, isLoggedIn, name, username } = useAuth();
+  const { isSystemAdmin, isContentManager } = useRoleContext();
 
   return (
     <Sidebar variant="inset" collapsible="icon" className="p-0">
@@ -48,33 +50,38 @@ export function LeftSidebar() {
                       <MessageCircleMore className="h-6 w-6" />
                     </Button>
                   </Link>
-                  <Link aria-label="Chat over data" to="/ragchat" accessKey="r">
+                  {/* <Link aria-label="Chat over data" to="/ragchat" accessKey="r">
                     <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chat over Data Button">
                       <MessageSquareCode className="h-6 w-6" />
                     </Button>
-                  </Link>
+                  </Link> */}
+                  { (isSystemAdmin || isContentManager)  && (
                   <Link to="/files" aria-label="Home" accessKey="f">
                     <Button variant="ghost" size="icon" tabIndex={-1} aria-label="File Button">
                       {' '}
                       <FileBox className=" w-6 h-6" />
                     </Button>
                   </Link>
-
-                  <Link to="/assistants" aria-label="Home" accessKey="p">
-                    <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chatbot Button">
-                      <VenetianMask className="h-6 w-6" />
-                    </Button>
-                  </Link>
+                  )}
+                  { (isSystemAdmin || isContentManager)  && (  
+                    <Link to="/assistants" aria-label="Home" accessKey="p">
+                      <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Chatbot Button">
+                        <VenetianMask className="h-6 w-6" />
+                      </Button>
+                    </Link>
+                  )}
+                  { isSystemAdmin  && (
                   <Link to="/containers" aria-label="containers" accessKey="i">
                     <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Containers Button">
                       <Database className="h-6 w-6" />
                     </Button>
                   </Link>
-                  <Link to="/tools" aria-label="Tools" accessKey="l">
+                  )}
+                  {/* <Link to="/tools" aria-label="Tools" accessKey="l">
                     <Button variant="ghost" size="icon" tabIndex={-1} aria-label="Tools Page Button">
                       <Wrench className="h-6 w-6" />
                     </Button>
-                  </Link>
+                  </Link> */}
                 </div>
 
                 {isLoggedIn && (

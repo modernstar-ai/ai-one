@@ -20,6 +20,8 @@ import { Badge } from '@/components/ui/badge';
 import { Pencil, Trash2, Loader2, Info, FileSearch, MessageSquare } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useRoleContext } from "@/common/RoleContext";
+import { fetchManageableGroups } from "@/services/custom-group-service";
 
 type Assistant = Omit<BaseAssistant, 'status'> & {
   status: string | number;
@@ -31,27 +33,50 @@ const AssistantsComponent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
+  const { isSystemAdmin, isContentManager } = useRoleContext();
+  const userEmail = import.meta.env.VITE_USER_EMAIL as string;
+
+  const fetchGroups = async (): Promise<string[]> => {
+    if (isContentManager) {
+      const groups = await fetchManageableGroups(userEmail);
+      return groups?.map(group => group.group) ?? [];
+    }
+    return [];
+  };
+
+  const getAssistants = async (manageableGroups: string[]): Promise<Assistant[]> => {
+    const assistantsData = await fetchAssistants();
+    if (!assistantsData) return [];
+    
+    if (isContentManager && manageableGroups.length > 0) {
+      return assistantsData.filter((assistant: Assistant) =>
+        manageableGroups.includes(assistant.group ?? "")
+      );
+    }
+    return assistantsData;
+  };
 
   useEffect(() => {
-    async function getAssistants() {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        const assistantsData = await fetchAssistants();
-        if (assistantsData) {
-          setAssistants(assistantsData);
-        }
+        const groups = await fetchGroups();
+        //setManageableGroups(groups);
+        const assistants = await getAssistants(groups);
+        setAssistants(assistants);
       } catch (error) {
-        console.error('Failed to fetch assistants:', error);
+        console.error('Failed to fetch data:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load assistants. Please try again later.',
+          description: 'Failed to load data. Please try again later.',
           variant: 'destructive',
         });
       } finally {
         setIsLoading(false);
       }
-    }
-    getAssistants();
+    };
+  
+    fetchData();
   }, []);
 
   const handleEditAssistant = (id: string) => {
@@ -151,6 +176,7 @@ const AssistantsComponent: React.FC = () => {
                   <TableHead className="w-[250px]">Name</TableHead>
                   <TableHead className="w-[40px]">Status</TableHead>
                   <TableHead className="w-[200px]">Container</TableHead>
+                  <TableHead className="w-[200px]">Group</TableHead>
                   <TableHead className="w-[200px]">Type</TableHead>
                   <TableHead className="w-[500px]">Description</TableHead>
                 </TableRow>
@@ -196,55 +222,58 @@ const AssistantsComponent: React.FC = () => {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                        <AlertDialog>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => handleDeleteAssistant(assistant)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">Delete {assistant.name}</span>
-                                  </Button>
-                                </AlertDialogTrigger>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Delete {assistant.name}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the assistant "
-                                {assistantToDelete?.name}" and remove it from our servers.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter className="flex-col items-stretch sm:flex-row sm:justify-start sm:space-x-2">
-                              <AlertDialogCancel className="mb-2 sm:mb-0">Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
-                                {isDeleting ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Deleting...
-                                  </>
-                                ) : (
-                                  'Yes, delete assistant'
-                                )}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        {isSystemAdmin && (
+                          <AlertDialog>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8 w-8 p-0"
+                                      onClick={() => handleDeleteAssistant(assistant)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                      <span className="sr-only">Delete {assistant.name}</span>
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Delete {assistant.name}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the assistant "
+                                  {assistantToDelete?.name}" and remove it from our servers.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className="flex-col items-stretch sm:flex-row sm:justify-start sm:space-x-2">
+                                <AlertDialogCancel className="mb-2 sm:mb-0">Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
+                                  {isDeleting ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Deleting...
+                                    </>
+                                  ) : (
+                                    'Yes, delete assistant'
+                                  )}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{assistant.name}</TableCell>
                     <TableCell>{getStatusBadge(assistant.status)}</TableCell>
                     <TableCell>{assistant.index}</TableCell>
+                    <TableCell>{assistant.group}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getTypeIcon(assistant.type)}
