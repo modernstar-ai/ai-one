@@ -225,7 +225,7 @@ export default function FileUploadComponent() {
                         }) => (
                           <div
                             {...getRootProps()}
-                            className={`group relative grid text-center h-52 w-1/2 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-2.5 text-center transition hover:bg-muted/25 ${
+                            className={`group relative grid h-52 w-1/2 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-2.5 text-center transition hover:bg-muted/25 ${
                               isDragActive ? 'border-muted-foreground/50' : ''
                             }`}
                           >

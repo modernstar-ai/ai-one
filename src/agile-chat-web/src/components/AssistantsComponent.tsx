@@ -33,7 +33,7 @@ const AssistantsComponent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
-  const { isSystemAdmin, isContentManager } = useRoleContext();
+  const { isSystemAdmin, isContentManager, enablePreviewFeatures } = useRoleContext();
   const userEmail = import.meta.env.VITE_USER_EMAIL as string;
 
   const fetchGroups = async (): Promise<string[]> => {
@@ -47,7 +47,7 @@ const AssistantsComponent: React.FC = () => {
   const getAssistants = async (manageableGroups: string[]): Promise<Assistant[]> => {
     const assistantsData = await fetchAssistants();
     if (!assistantsData) return [];
-    
+
     if (isContentManager && manageableGroups.length > 0) {
       return assistantsData.filter((assistant: Assistant) =>
         manageableGroups.includes(assistant.group ?? "")
@@ -75,7 +75,7 @@ const AssistantsComponent: React.FC = () => {
         setIsLoading(false);
       }
     };
-  
+
     fetchData();
   }, []);
 
@@ -177,7 +177,9 @@ const AssistantsComponent: React.FC = () => {
                   <TableHead className="w-[40px]">Status</TableHead>
                   <TableHead className="w-[200px]">Container</TableHead>
                   <TableHead className="w-[200px]">Group</TableHead>
-                  <TableHead className="w-[200px]">Type</TableHead>
+                  {enablePreviewFeatures == true && (
+                    <TableHead className="w-[200px]">Type</TableHead>
+                  )}
                   <TableHead className="w-[500px]">Description</TableHead>
                 </TableRow>
               </TableHeader>
@@ -274,12 +276,14 @@ const AssistantsComponent: React.FC = () => {
                     <TableCell>{getStatusBadge(assistant.status)}</TableCell>
                     <TableCell>{assistant.index}</TableCell>
                     <TableCell>{assistant.group}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getTypeIcon(assistant.type)}
-                        <span>{AssistantType[assistant.type]}</span>
-                      </div>
-                    </TableCell>
+                    {enablePreviewFeatures == true && (
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getTypeIcon(assistant.type)}
+                          <span>{AssistantType[assistant.type]}</span>
+                        </div>
+                      </TableCell>
+                    )}
                     {/* <TableCell className="font-mono text-xs">
                       <TooltipProvider>
                         <Tooltip>

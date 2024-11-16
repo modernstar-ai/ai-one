@@ -6,6 +6,7 @@ interface RoleContextProps {
   isSystemAdmin: boolean;
   isContentManager: boolean;
   isEndUser: boolean;
+  enablePreviewFeatures: boolean;
   loading: boolean;
 }
 
@@ -17,13 +18,16 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isSystemAdmin, setIsSystemAdmin] = useState(false);
   const [isContentManager, setIsContentManager] = useState(false);
   const [isEndUser, setIsEndUser] = useState(false);
+  const [enablePreviewFeatures, setEnablePreviewFeatures] = useState(false);
   const [loading, setLoading] = useState(true);
+
 
   useEffect(() => {
     // Fetch the role data when the component mounts
     const fetchRoles = async () => {
       setLoading(true);
       const email =  import.meta.env.VITE_USER_EMAIL as string || ''; // Use your env variable for email
+      const enablePreview =  import.meta.env.VITE_ENABLE_PREVIEW_FEATURES as boolean || false; 
       try {
         const systemAdmin = await IsUserSystemAdmin(email);
         const contentManager = await IsUserContentManager(email);
@@ -31,6 +35,7 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsSystemAdmin(systemAdmin);
         setIsContentManager(contentManager);
         setIsEndUser(endUser);
+        setEnablePreviewFeatures(enablePreview);
       } catch (error) {
         console.error("Error fetching roles:", error);
       } finally {
@@ -42,7 +47,7 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <RoleContext.Provider value={{ isSystemAdmin, isContentManager, isEndUser, loading }}>
+    <RoleContext.Provider value={{ isSystemAdmin, isContentManager, isEndUser, enablePreviewFeatures, loading }}>
       {children}
     </RoleContext.Provider>
   );

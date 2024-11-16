@@ -66,9 +66,10 @@ export default function AssistantForm() {
   const { indexes } = useIndexes();
   const [selectedToolIds, setSelectedToolIds] = useState<Set<string>>(new Set());
   const [tools, setTools] = useState<Tool[]>([]);
-  const { isContentManager } = useRoleContext();
+  const { isContentManager, enablePreviewFeatures } = useRoleContext();
   const userEmail = import.meta.env.VITE_USER_EMAIL as string;
   const [filteredIndexes, setFilteredIndexes] = useState(indexes || []);
+
 
   const fetchGroups = async (): Promise<string[]> => {
     if (isContentManager) {
@@ -84,7 +85,7 @@ export default function AssistantForm() {
       setFilteredIndexes([]);
       return;
     }
-    
+
     if (isContentManager) {
       try {
         const groups = await fetchGroups();
@@ -175,7 +176,7 @@ export default function AssistantForm() {
       await loadAssistant();
       setLoading(false);
     };
-    
+
     load();
   }, []);
 
@@ -283,28 +284,29 @@ export default function AssistantForm() {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Type</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(value as AssistantType)} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={AssistantType.Chat}>Chat</SelectItem>
-                          <SelectItem value={AssistantType.Search}>Search</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+                {enablePreviewFeatures == true && (
+                  <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Type</FormLabel>
+                        <Select onValueChange={(value) => field.onChange(value as AssistantType)} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select Type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value={AssistantType.Chat}>Chat</SelectItem>
+                            <SelectItem value={AssistantType.Search}>Search</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 <FormField
                   control={form.control}
                   name="greeting"
@@ -365,11 +367,11 @@ export default function AssistantForm() {
                           </FormControl>
 
                           <SelectContent>
-                          {filteredIndexes?.map((index) => (
-                            <SelectItem key={index.id} value={index.name}>
-                              {index.name}
-                            </SelectItem>
-                          ))}
+                            {filteredIndexes?.map((index) => (
+                              <SelectItem key={index.id} value={index.name}>
+                                {index.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -423,22 +425,24 @@ export default function AssistantForm() {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="tools"
-                  render={() => (
-                    <FormItem>
-                      <FormLabel>Add Functionalities to the Bots</FormLabel>
-                      <MultiToolSettingsDropdownInput
-                        tools={tools}
-                        selectedToolIds={selectedToolIds}
-                        setSelectedToolIds={setSelectedToolIds}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+                {enablePreviewFeatures == true && (
+                  <FormField
+                    control={form.control}
+                    name="tools"
+                    render={() => (
+                      <FormItem>
+                        <FormLabel>Add Functionalities to the Bots</FormLabel>
+                        <MultiToolSettingsDropdownInput
+                          tools={tools}
+                          selectedToolIds={selectedToolIds}
+                          setSelectedToolIds={setSelectedToolIds}
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                
                 <FormField
                   control={form.control}
                   name="temperature"
