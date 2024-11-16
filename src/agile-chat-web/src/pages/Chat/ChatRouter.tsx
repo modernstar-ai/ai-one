@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ChatPage from '../Chat/index';
 import RagChatPage from '../RagChat/index-using-post';
 import { fetchAssistantById } from '@/services/assistantservice';
@@ -7,6 +7,7 @@ import { fetchAssistantById } from '@/services/assistantservice';
 const ChatRouter: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState<React.ReactNode | null>(null);
 
@@ -15,9 +16,15 @@ const ChatRouter: React.FC = () => {
       try {
         const assistant = await fetchAssistantById(id!);
         if (assistant) {
-          if (assistant.type == 'Chat') {
-            setPage(<ChatPage id={id} />);
-          } else if (assistant.type == 'Search') {
+          if (assistant.type === 'Chat') {
+            // Add assistantId to query parameters
+            setSearchParams(prev => {
+              const newParams = new URLSearchParams(prev);
+              newParams.set('assistantId', id!);
+              return newParams;
+            });
+            setPage(<ChatPage />);
+          } else if (assistant.type === 'Search') {
             setPage(<RagChatPage id={id} />);
           } else {
             console.log('ChatRouter unknown assistant type:', assistant.type);
@@ -40,7 +47,7 @@ const ChatRouter: React.FC = () => {
     } else {
       setPage(<ChatPage />);
     }
-  }, [id, navigate]);
+  }, [id, navigate, setSearchParams]);
 
   if (loading) {
     return <div>Loading...</div>;

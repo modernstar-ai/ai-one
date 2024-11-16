@@ -40,6 +40,7 @@ builder.Services.AddSingleton<IToolService, ToolService>();
 builder.Services.AddSingleton<IAssistantService, AssistantService>();
 builder.Services.AddSingleton<IPersonaService, PersonaService>();
 builder.Services.AddSingleton<IAzureAiSearchService, AzureAiSearchService>();
+builder.Services.AddSingleton<IChatThreadService, ChatThreadService>();
 builder.Services.AddSingleton<IContainerIndexerService, IndexerService>();
 
 // Register ConsoleLogger
@@ -96,5 +97,6 @@ app.MapChatCompletionsEndpoint();
 app.MapPersonaEndpoints();
 app.MapFileEndpoints();
 app.MapIndexesEndpoints();
+app.MapChatThreadEndpoints();
 
 app.Run();
