@@ -256,7 +256,7 @@ export function LeftSidebar() {
       instance.logoutPopup({ account: accounts[0] });
     });
   };
-  const { isSystemAdmin, isContentManager } = useRoleContext();
+  const { isSystemAdmin, isContentManager, enablePreviewFeatures } = useRoleContext();
 
   return (
     <div className="flex h-screen dark">
@@ -300,13 +300,14 @@ export function LeftSidebar() {
               </>
             )}
             {(isSystemAdmin) && (
-              <>
-                <SideNavButton path="/containers" label="Database" Icon={Database} accessKey='i' />
-                <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey='t' />
-              </>
+                <SideNavButton path="/containers" label="Database" Icon={Database} accessKey='i' />                
+            )}
+            {/* //todo:todu enablePreviewFeatures===true is required. */}
+            {isSystemAdmin && enablePreviewFeatures==true && (                            
+                <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey='t' />         
             )}
           </div>
-
+          
           {/* User Menu */}
           {isLoggedIn && (
             <div className="mt-auto dark:text-white dark">

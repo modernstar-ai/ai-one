@@ -115,11 +115,11 @@ public class ChatService
 
         foreach (var chatMessage in messages)
         {
-            if (chatMessage.sender == "system")
+            if (chatMessage.role == "system")
             {
                 oaiMessages.Add(new SystemChatMessage(chatMessage.text));
             }
-            else if (chatMessage.sender == "user")
+            else if (chatMessage.role == "user")
             {
                 oaiMessages.Add(new UserChatMessage(chatMessage.text));
             }
