@@ -105,8 +105,8 @@ const ChatPage = () => {
                   multiModalImage: '',
                   sender: 'assistant'
                 }
-              ];
-              setMessages(initialMessages);
+              ];          
+              setMessages(initialMessages);              
             }
           } else {
             throw new Error('Failed to create new chat thread');
@@ -202,7 +202,7 @@ const ChatPage = () => {
         ...(assistantId && { assistantId })
       });
 
-      console.error('Chat apiUrl: ', apiUrl);
+      console.log('Chat apiUrl: ', apiUrl);
 
       // Create message history format
       const messageHistory = messages.map(msg => ({
@@ -218,7 +218,7 @@ const ChatPage = () => {
 
       // Clear input after storing message
       setInputValue('');
-
+      
       const response = await axios.post(apiUrl, messageHistory, {
         headers: {
           Accept: 'text/plain',
@@ -296,7 +296,7 @@ const ChatPage = () => {
 <ScrollArea className="flex-1 p-4 space-y-4">
   {messages.map((message, index) =>
     message.sender !== 'system' && (
-      <> 
+      
         <ChatMessageArea
           key={index}
           profileName={message.sender === "user" ? (username || "User") : (assistant?.name || "AI Assistant")}
@@ -318,7 +318,7 @@ const ChatPage = () => {
             }}
           />
         </ChatMessageArea>
-      </>
+      
     )
   )}
 </ScrollArea>
