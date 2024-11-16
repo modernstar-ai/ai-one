@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SparklesIcon, FileSpreadsheetIcon, FileTextIcon, FileIcon, GlobeIcon, MailIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { useFolders } from '@/hooks/use-folders';
+//import { useFolders } from '@/hooks/use-folders';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as z from 'zod';
@@ -16,13 +16,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { uploadFiles } from '@/services/files-service';
 import { useIndexes } from '@/hooks/use-indexes';
+import { useRoleContext } from "@/common/RoleContext";
+import { fetchManageableGroups } from "@/services/custom-group-service";
 
 const maxFileCount = 5; // Maximum number of files allowed
 const maxSize = 26214400; // 25MB
 
 const formSchema = z.object({
   index: z.string().min(1, { message: 'Container is required' }),
-  folder: z.string().min(1, { message: 'Folder is required' }),
+  folder: z.string().optional(),
   files: z
     .array(z.instanceof(File))
     .refine((files) => files.length > 0, { message: 'No files selected' })
@@ -43,13 +45,56 @@ export default function FileUploadComponent() {
   const { toast } = useToast(); // Initialize the Shadcn toast
   const [progresses] = useState<Record<string, number>>({});
   const navigate = useNavigate();
-  const { folders } = useFolders();
+  //const { folders } = useFolders();
   const { indexes } = useIndexes();
+  const { isContentManager } = useRoleContext();
+  const userEmail = import.meta.env.VITE_USER_EMAIL as string;
+  const [filteredIndexes, setFilteredIndexes] = useState(indexes || []);
+
+  const fetchGroups = async (): Promise<string[]> => {
+    if (isContentManager) {
+      const groups = await fetchManageableGroups(userEmail);
+      return groups?.map(group => group.group) ?? [];
+    }
+    return [];
+  };
+
+  // Filter indexes based on the groups accessible to ContentManager
+  const filterIndexesForContentManager = async () => {
+    if (!indexes) {
+      setFilteredIndexes([]);
+      return;
+    }
+    
+    if (isContentManager) {
+      try {
+        const groups = await fetchGroups();
+        if (groups.length > 0) {
+          const filtered = indexes.filter((index) => groups.includes(index.group || ''));
+          setFilteredIndexes(filtered);
+        } else {
+          setFilteredIndexes([]); // No groups available
+        }
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+        setFilteredIndexes([]);
+      }
+    } else {
+      setFilteredIndexes(indexes); // Keep original indexes for non-content managers
+    }
+  };
+
+  React.useEffect(() => {
+    const intializeContainers = async () => {
+      await filterIndexesForContentManager();
+    };
+    intializeContainers();
+  }, [indexes]);
 
   const onSubmit = async (values: FormValues) => {
     const formData = new FormData();
     formData.append('index', values.index);
-    formData.append('folder', values.folder);
+    formData.append('folder', values.folder ?? '');
     values.files.forEach((file) => formData.append('files', file));
 
     await uploadFiles(formData);
@@ -110,16 +155,15 @@ export default function FileUploadComponent() {
                 <FormLabel>Container</FormLabel>
                 <FormControl>
                   <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
-                    <SelectTrigger aria-label="Select Folder">
-                      <SelectValue placeholder="Select Folder" />
+                    <SelectTrigger aria-label="Select Container">
+                      <SelectValue placeholder="Select Container" />
                     </SelectTrigger>
                     <SelectContent>
-                      {indexes &&
-                        indexes.map((indexName, i) => (
-                          <SelectItem key={indexName + i} value={indexName}>
-                            {indexName}
-                          </SelectItem>
-                        ))}
+                      {filteredIndexes?.map((index) => (
+                              <SelectItem key={index.id} value={index.name}>
+                                {index.name}
+                              </SelectItem>
+                            ))}
                     </SelectContent>
                   </Select>
                 </FormControl>
@@ -127,7 +171,8 @@ export default function FileUploadComponent() {
               </FormItem>
             )}
           />
-          <FormField
+          {/* 
+                    <FormField
             control={form.control}
             name="folder"
             render={({ field }) => (
@@ -152,6 +197,8 @@ export default function FileUploadComponent() {
               </FormItem>
             )}
           />
+          */}
+
           <FormField
             control={form.control}
             name="files"

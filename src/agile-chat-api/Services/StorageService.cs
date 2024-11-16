@@ -16,14 +16,14 @@ namespace Services
         /// <param name="folderName">Name of the folder.</param>
         /// <returns></returns>
         /// TODO Edit XML Comment Template for FileExistsInBlobAsync
-        Task<bool> FileExistsInBlobAsync(string fileName, string folderName);
+        Task<bool> FileExistsInBlobAsync(string fileName, string indexName, string folderName);
 
         /// <summary>
         /// Uploads the file to BLOB asynchronous.
         /// </summary>
         /// <param name="file">The file.</param>
         /// <returns></returns>
-        Task<string> UploadFileToBlobAsync(IFormFile file, string folderName);
+        Task<string> UploadFileToBlobAsync(IFormFile file, string indexName, string folderName);
 
         /// <summary>
         /// Gets the BLOB URL asynchronous.
@@ -31,7 +31,7 @@ namespace Services
         /// <param name="fileName">Name of the file.</param>
         /// <param name="folder">The folder.</param>
         /// <returns></returns>
-        string GetBlobURLAsync(string fileName, string folder);
+        string GetBlobURLAsync(string indexName, string fileName, string folder);
 
         /// <summary>
         /// Deletes the file from BLOB asynchronous.
@@ -39,6 +39,10 @@ namespace Services
         /// <param name="blobUrl">The BLOB URL.</param>
         /// <returns></returns>
         Task DeleteFileFromBlobAsync(FileMetadata file);
+        
+        Task DeleteAllFilesFromIndexAsync(string indexName);
+        
+        Task<List<string>> GetHighLevelFolders();
     }
 }
 
@@ -51,7 +55,7 @@ namespace Services
         public StorageService()
         {
             BlobServiceClient blobServiceClient = new(Config.BlobStorageConnectionString);
-            _blobContainerClient = blobServiceClient.GetBlobContainerClient(Config.BlobStorageContainerName);
+            _blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.BlobStorageContainerName);
             _blobContainerClient.CreateIfNotExists();
         }
 
@@ -62,9 +66,9 @@ namespace Services
         /// <param name="folderName">Name of the folder.</param>
         /// <returns></returns>
         /// TODO Edit XML Comment Template for FileExistsInBlobAsync
-        public async Task<bool> FileExistsInBlobAsync(string fileName, string folderName)
+        public async Task<bool> FileExistsInBlobAsync(string fileName, string indexName, string folderName)
         {
-            string blobPath = $"{folderName}/{fileName}";
+            string blobPath = $"{indexName}" + (!string.IsNullOrWhiteSpace(folderName) ? $"/{folderName}/{fileName}" : $"/{fileName}");
             BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
             try
             {
@@ -84,9 +88,9 @@ namespace Services
         /// <param name="fileName">Name of the file.</param>
         /// <param name="folder">The folder.</param>
         /// <returns></returns>
-        public string GetBlobURLAsync(string fileName, string folder)
+        public string GetBlobURLAsync(string indexName, string fileName, string folderName)
         {
-            string blobPath = $"{folder}/{fileName}";
+            string blobPath = $"{indexName}" + (!string.IsNullOrWhiteSpace(folderName) ? $"/{folderName}/{fileName}" : $"/{fileName}");
             BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
             return _blobClient.Uri.ToString();
         }
@@ -98,12 +102,12 @@ namespace Services
         /// <param name="folderName"></param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Error uploading file: {file.FileName}</exception>
-        public async Task<string> UploadFileToBlobAsync(IFormFile file, string folderName)
+        public async Task<string> UploadFileToBlobAsync(IFormFile file, string indexName, string folderName)
         {
             try
             {
                 string fileName = Path.GetFileName(file.FileName);
-                string blobPath = $"{folderName}/{fileName}";
+                string blobPath = $"{indexName}" + (!string.IsNullOrWhiteSpace(folderName) ? $"/{folderName}/{fileName}" : $"/{fileName}");
                 BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
 
                 // Check if both folder and file exist
@@ -138,7 +142,7 @@ namespace Services
             try
             {
                 string fileName = Path.GetFileName(file.FileName);
-                string blobPath = $"{file.Folder}/{fileName}";
+                string blobPath = $"{file.IndexName}" + (!string.IsNullOrWhiteSpace(file.Folder) ? $"/{file.Folder}/{fileName}" : $"/{fileName}");
                 BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
                 await _blobClient.DeleteIfExistsAsync();
                 Console.WriteLine($"Blob '{file.FileName}' deleted successfully from container '{blobPath}'.");
@@ -147,6 +151,31 @@ namespace Services
             {
                 throw new InvalidOperationException($"Error deleting file from blob storage: {file.FileName}", ex);
             }
+        }
+
+        public async Task DeleteAllFilesFromIndexAsync(string indexName)
+        {
+            await foreach (var blobItem in _blobContainerClient.GetBlobsAsync(prefix: indexName))
+            {
+                var blobClient = _blobContainerClient.GetBlobClient(blobItem.Name);
+                await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
+            }
+        }
+        
+        public async Task<List<string>> GetHighLevelFolders()
+        {
+            var delimiter = "/";
+
+            var results = _blobContainerClient.GetBlobsByHierarchyAsync(delimiter: delimiter);
+            var folders = new List<string>();
+
+            await foreach (var result in results)
+            {
+                if(result.IsPrefix)
+                    folders.Add(result.Prefix.Replace("/", ""));
+            }
+
+            return folders;
         }
     }
 }

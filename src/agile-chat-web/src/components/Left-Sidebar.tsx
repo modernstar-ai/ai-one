@@ -1,7 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from "@/services/auth-helpers";
+
+import { useRoleContext } from "@/common/RoleContext";
+
+import { useAuth } from '@/services/auth-helpers';
 import { cn } from "@/lib/utils";
+import {
+  fetchChatThreads,
+  createChatThread,
+  deleteChatThread,
+  type ChatThread
+} from '@/services/chatthreadservice';
+
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -29,6 +39,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Sidebar, SidebarContent, SidebarTrigger } from '@/components/ui/sidebar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
 import {
   Home,
   MessageCircleMore,
@@ -48,13 +61,9 @@ import {
   PanelLeftOpen,
   PanelLeftClose,
   Loader2,
+  Database
 } from 'lucide-react';
-import {
-  fetchChatThreads,
-  createChatThread,
-  deleteChatThread,
-  type ChatThread
-} from '@/services/chatthreadservice';
+
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -64,6 +73,9 @@ type NavItem = {
   label: string;
   accessKey: string;
 };
+
+
+
 
 export function LeftSidebar() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -79,8 +91,9 @@ export function LeftSidebar() {
   const navigationItems: NavItem[] = [
     { path: "/chat", icon: MessageCircleMore, label: "Chat", accessKey: "c" },
     { path: "/ragchat", icon: MessageSquareCode, label: "Chat over data", accessKey: "r" },
-    { path: "/files", icon: FileBox, label: "Files", accessKey: "f" },
     { path: "/assistants", icon: VenetianMask, label: "Assistants", accessKey: "p" },
+    { path: "/files", icon: FileBox, label: "Files", accessKey: "f" },
+    { path: "/containers", icon: Database, label: "Database", accessKey: "i" },
     { path: "/tools", icon: Wrench, label: "Tools", accessKey: "l" }
   ];
 
@@ -248,6 +261,7 @@ export function LeftSidebar() {
       instance.logoutPopup({ account: accounts[0] });
     });
   };
+  const { isSystemAdmin, isContentManager } = useRoleContext();
 
   return (
     <div className="flex h-screen dark">

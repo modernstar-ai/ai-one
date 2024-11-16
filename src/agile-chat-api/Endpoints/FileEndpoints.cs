@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
-using agile_chat_api.Dtos;
+using Dtos;
 using agile_chat_api.Services;
+using agile_chat_api.Utils;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc;
 using Models;
@@ -18,14 +19,15 @@ public static class FileEndpoints
     {
         var api = app.MapGroup("api/file").RequireAuthorization();
 
-        api.MapPost("webhook", async (HttpContext context, [FromServices] IAzureAiSearchService azureAiSearchService, [FromBody] JsonNode body, ILogger logger) =>
+        api.MapPost("webhook", async (HttpContext context, [FromServices] IAzureAiSearchService azureAiSearchService, [FromServices] IFileUploadService fileUploadService, [FromBody] JsonNode body, ILogger logger) =>
         {
+            logger.LogInformation("Received body {Body}", body.ToJsonString());
             logger.LogInformation("Validated Authorization for web hook");
             //Validate the webhook handshake
-            var eventType = context.Request.Headers["aeg-event-type"].ToString();
-            logger.LogDebug("Fetched aeg-event-type {EventType}", eventType);
+            var eventTypeHeader = context.Request.Headers["aeg-event-type"].ToString();
+            logger.LogDebug("Fetched aeg-event-type {EventType}", eventTypeHeader);
 
-            if (eventType == "SubscriptionValidation")
+            if (eventTypeHeader == "SubscriptionValidation")
             {
                 var code = body?.AsArray().FirstOrDefault()?["data"]?["validationCode"]?.ToString();
                 logger.LogDebug("Fetched validation code {Code}", code);
@@ -33,20 +35,38 @@ public static class FileEndpoints
                 return Results.Ok(new { validationResponse = code });
             }
 
-            var success = await azureAiSearchService.RunIndexer(AzureAiSearchService.FOLDERS_INDEX_NAME);
+            var (indexName, folderName) = EventGridHelpers.GetIndexAndFolderName(body);
+            var (fileName, eventType) = EventGridHelpers.GetFileNameAndEventType(body);
+            logger.LogInformation("Fetched index name {IndexName} folder name {FolderName}", indexName, folderName);
+            logger.LogInformation("Fetched file name {FileName} event type {EventType}", fileName, eventType);
+
+            if (string.IsNullOrWhiteSpace(indexName))
+                return Results.BadRequest();
+
+            if (eventType == EventGridHelpers.Type.BlobDeleted && await fileUploadService.FileMetadataExistsAsync(fileName, indexName, folderName))
+                await fileUploadService.DeleteFileByNameFromCosmosAsync(fileName, indexName, folderName);
+            else if (eventType == EventGridHelpers.Type.BlobCreated && !await fileUploadService.FileMetadataExistsAsync(fileName, indexName, folderName))
+            {
+                var fileMetaData = EventGridHelpers.GetFileCreatedMetaData(body);
+                await fileUploadService.SaveFileMetadataToCosmosDbAsync(fileName, fileMetaData.ContentType,
+                    fileMetaData.ContentLength, fileMetaData.BlobUrl, indexName, folderName);
+            }
+            
+            var success = await azureAiSearchService.RunIndexerAsync(indexName);
             return success ? Results.Ok() : Results.BadRequest();
+
         });
 
-        api.MapGet("folders", async ([FromServices] IBlobStorageService blobStorageService) =>
+        api.MapGet("folders", async ([FromServices] IStorageService blobStorageService) =>
         {
-            var folders = await blobStorageService.GetHighLevelFolders(BlobStorageService.FOLDERS_CONTAINER_NAME);
+            var folders = await blobStorageService.GetHighLevelFolders();
             return Results.Ok(folders);
         });
 
 
         api.MapPost("upload", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
         async ([FromForm] FileUploadsDto request,
-                [FromServices] ICosmosService cosmosService,
+                [FromServices] IFileUploadService cosmosService,
                 [FromServices] IStorageService blobStorageService) =>
         {
             // Get the folder name from the form data
@@ -62,8 +82,8 @@ public static class FileEndpoints
                     if (file.Length <= 0)
                         continue; // Skip empty files
 
-                    bool isFileExistsInCosmosDB = await cosmosService.FileMetadataExistsAsync(file.FileName, request.Folder);
-                    bool isFileExistsInStorageService = await blobStorageService.FileExistsInBlobAsync(file.FileName, request.Folder);
+                    bool isFileExistsInCosmosDB = await cosmosService.FileMetadataExistsAsync(file.FileName, request.Index, request.Folder);
+                    bool isFileExistsInStorageService = await blobStorageService.FileExistsInBlobAsync(file.FileName, request.Index, request.Folder);
 
                     //Check if file Exists in Cosmos DB
                     if (isFileExistsInCosmosDB) //TRUE
@@ -79,11 +99,11 @@ public static class FileEndpoints
                             Console.WriteLine($"File Exists in CosmosDB but not in Storage Account, " +
                                 $"we will be creating it in Storage account then and delete existing cosmosDB record " +
                                 $"and add it with new record with new id & URL");
-                            await cosmosService.DeleteFileByNameFromCosmosAsync(file.FileName, request.Folder);
+                            await cosmosService.DeleteFileByNameFromCosmosAsync(file.FileName, request.Index, request.Folder);
 
                             //Resaving it to the cosmos & storage data
-                            string blobURL = await blobStorageService.UploadFileToBlobAsync(file, request.Folder);
-                            await cosmosService.SaveFileMetadataToCosmosDbAsync(file, blobURL, request.Folder);
+                            string blobURL = await blobStorageService.UploadFileToBlobAsync(file, request.Index, request.Folder);
+                            await cosmosService.SaveFileMetadataToCosmosDbAsync(file.FileName, file.ContentType, file.Length, blobURL, request.Index, request.Folder);
                             resultMessages.Add(file.FileName + " uploaded successfully.");
                         }
                     }
@@ -95,10 +115,10 @@ public static class FileEndpoints
                             Console.WriteLine($"File Exists in Storage Account but not in CosmosDB, " +
                                 $"we will be creating it in CosmosDB record " +
                                 $"with the URL from existing record from Storage Account");
-                            var blobURL = blobStorageService.GetBlobURLAsync(file.FileName, request.Folder);
+                            var blobURL = blobStorageService.GetBlobURLAsync(request.Index, file.FileName, request.Folder);
                             if (blobURL != null)
                             {
-                                await cosmosService.SaveFileMetadataToCosmosDbAsync(file, blobURL, request.Folder);
+                                await cosmosService.SaveFileMetadataToCosmosDbAsync(file.FileName, file.ContentType, file.Length, blobURL, request.Index, request.Folder);
                             }
                             resultMessages.Add(file.FileName + " uploaded successfully.");
                         }
@@ -106,8 +126,8 @@ public static class FileEndpoints
                         {
                             // If file is in neither storage nor Cosmos DB, upload to storage and save metadata to Cosmos DB
                             Console.WriteLine($"File uploaded on both the CosmosDB and the Storage Account");
-                            string blobURL = await blobStorageService.UploadFileToBlobAsync(file, request.Folder);
-                            await cosmosService.SaveFileMetadataToCosmosDbAsync(file, blobURL, request.Folder);
+                            string blobURL = await blobStorageService.UploadFileToBlobAsync(file, request.Index, request.Folder);
+                            await cosmosService.SaveFileMetadataToCosmosDbAsync(file.FileName, file.ContentType, file.Length, blobURL, request.Index, request.Folder);
                             resultMessages.Add(file.FileName + " uploaded successfully.");
                         }
                     }
@@ -123,7 +143,7 @@ public static class FileEndpoints
             }
         }).DisableAntiforgery();
 
-        api.MapGet(string.Empty, async ([FromServices] ICosmosService cosmosService) =>
+        api.MapGet(string.Empty, async ([FromServices] IFileUploadService cosmosService) =>
         {
             try
             {
@@ -136,7 +156,7 @@ public static class FileEndpoints
             }
         });
 
-        api.MapDelete(string.Empty, async ([FromServices] ICosmosService cosmosService,
+        api.MapDelete(string.Empty, async ([FromServices] IFileUploadService cosmosService,
                                        [FromServices] IStorageService blobStorageService,
                                        [FromBody] DeleteFilesRequestDto request) =>
         {
