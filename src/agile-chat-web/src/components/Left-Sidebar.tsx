@@ -13,6 +13,8 @@ import {
 } from '@/services/chatthreadservice';
 
 import { Button } from "@/components/ui/button";
+import SideNavButton from "@/components/navigation/left-sidebar-button";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   AlertDialog,
@@ -88,14 +90,7 @@ export function LeftSidebar() {
   const { instance, accounts, isLoggedIn, name, username } = useAuth();
   const [currentTheme, setCurrentTheme] = useState<Theme>('system');
 
-  const navigationItems: NavItem[] = [
-    { path: "/chat", icon: MessageCircleMore, label: "Chat", accessKey: "c" },
-    { path: "/ragchat", icon: MessageSquareCode, label: "Chat over data", accessKey: "r" },
-    { path: "/assistants", icon: VenetianMask, label: "Assistants", accessKey: "p" },
-    { path: "/files", icon: FileBox, label: "Files", accessKey: "f" },
-    { path: "/containers", icon: Database, label: "Database", accessKey: "i" },
-    { path: "/tools", icon: Wrench, label: "Tools", accessKey: "l" }
-  ];
+
 
   // Theme handling
   useEffect(() => {
@@ -169,7 +164,7 @@ export function LeftSidebar() {
     }
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetchChatThreads(username);
       if (response) {
@@ -187,14 +182,14 @@ export function LeftSidebar() {
     }
   };
 
-  
+
   const handleCreateChat = async () => {
     setLoading(true);
     try {
       // Get assistantId from query string if it exists
       const urlParams = new URLSearchParams(window.location.search);
       const assistantId = urlParams.get('assistantId');
-      
+
       // Prepare chat thread data
       const chatData = {
         name: "New Chat",
@@ -203,12 +198,12 @@ export function LeftSidebar() {
         userId: username,
         ...(assistantId && { assistantId }) // Only add assistantId if it exists
       };
-      
+
       const newThread = await createChatThread(chatData);
-      
+
       if (newThread) {
         await loadChatThreads(false);
-         
+
         // Navigate to new chat
         navigate(`/chat/${newThread.id}`);
       } else {
@@ -221,7 +216,7 @@ export function LeftSidebar() {
     }
   };
 
-  
+
 
   const handleDeleteThread = async (threadId: string) => {
     setLoading(true);
@@ -270,23 +265,15 @@ export function LeftSidebar() {
         <TooltipProvider>
           {/* Home and Panel Toggle Buttons */}
           <div className="flex flex-col space-y-2 dark:text-white">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link to="/">
-                  <Button variant="ghost" size="icon">
-                    <Home className="h-5 w-5" />
-                  </Button>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">Home</TooltipContent>
-            </Tooltip>
+            <SideNavButton path="/" label="Home" Icon={Home} accessKey='h' />
 
             {/* Panel Toggle Button */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
-                  variant="ghost" 
-                  size="icon" 
+                variant="ghost" 
+                size="icon" 
+                aria-label="Home"
                   onClick={() => setIsPanelOpen(!isPanelOpen)}
                 >
                   {isPanelOpen ? (
@@ -304,18 +291,20 @@ export function LeftSidebar() {
 
           {/* Navigation Items */}
           <div className="flex flex-col space-y-2 mt-4 h-screen justify-center items-center  dark:text-white">
-            {navigationItems.map(({ path, icon: Icon, label }) => (
-              <Tooltip key={path}>
-                <TooltipTrigger asChild>
-                  <Link to={path}>
-                    <Button variant="ghost" size="icon">
-                      <Icon className="h-5 w-5" />
-                    </Button>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">{label}</TooltipContent>
-              </Tooltip>
-            ))}
+
+            <SideNavButton path="/chat" label="Chat" Icon={MessageCircleMore} accessKey='c' />
+            {(isSystemAdmin || isContentManager) && (
+              <>
+                <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey='a' />
+                <SideNavButton path="/files" label="Files" Icon={FileBox} accessKey='U' />
+              </>
+            )}
+            {(isSystemAdmin) && (
+              <>
+                <SideNavButton path="/containers" label="Database" Icon={Database} accessKey='i' />
+                <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey='t' />
+              </>
+            )}
           </div>
 
           {/* User Menu */}
@@ -335,7 +324,7 @@ export function LeftSidebar() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  
+
                   {/* Theme Options */}
                   <DropdownMenuItem onClick={() => applyTheme('light')}>
                     <Sun className="mr-2 h-4 w-4" />
@@ -349,10 +338,10 @@ export function LeftSidebar() {
                     <Monitor className="mr-2 h-4 w-4" />
                     <span>System</span>
                   </DropdownMenuItem>
-                  
-                   
+
+
                   <DropdownMenuSeparator />
-                  
+
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
@@ -376,10 +365,10 @@ export function LeftSidebar() {
             {/* Panel Header */}
             <div className="p-4 border-b flex justify-between">
               <h2 className="font-semibold">Recent Chats</h2>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                 
+              <Button
+                variant="ghost"
+                size="icon"
+
                 onClick={handleCreateChat}
                 disabled={loading}
               >
@@ -413,7 +402,7 @@ export function LeftSidebar() {
                         loading && "opacity-50 pointer-events-none"
                       )}
                     >
-                      <div 
+                      <div
                         className="flex flex-col flex-grow min-w-0"
                         // onClick={() => navigate(`/chat/${thread.id}`)}
                         onClick={() => navigate(`/chat/${thread.id}${thread.assistantId ? `?assistantId=${thread.assistantId}` : ''}`)}
@@ -439,7 +428,7 @@ export function LeftSidebar() {
                             ) : (
                               <Trash2 className="h-4 w-4" />
                             )}
-                            </Button>
+                          </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
@@ -450,7 +439,7 @@ export function LeftSidebar() {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
+                            <AlertDialogAction
                               onClick={() => handleDeleteThread(thread.id)}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
@@ -490,7 +479,7 @@ export function LeftSidebar() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction 
+                      <AlertDialogAction
                         onClick={handleClearHistory}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
@@ -507,7 +496,7 @@ export function LeftSidebar() {
 
       {/* Optional: Add an overlay for mobile when panel is open */}
       {isPanelOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-background/80 backdrop-blur-sm"
           onClick={() => setIsPanelOpen(false)}
         />
