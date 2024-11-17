@@ -17,13 +17,13 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({ Title, Subtitle, Document
       </div>
       {DocumentCount > 0 && (
         <div className="flex space-x-2">
-          <Button variant="outline" size="icon" aria-label="Chat Options">
+          {/* <Button variant="outline" size="icon" aria-label="Chat Options">
             <Menu className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="icon" aria-label="Chat Attachments">
             <Paperclip className="h-4 w-4 mr-1" />
             {DocumentCount}
-          </Button>
+          </Button> */}
         </div>
       )}
     </div>
