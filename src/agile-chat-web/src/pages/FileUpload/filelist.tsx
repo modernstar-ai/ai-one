@@ -107,11 +107,11 @@ export default function FileList() {
   return (
     <div className="flex h-screen bg-background text-foreground">
       <div className="flex-1  flex flex-col">
-       
+
         <SimpleHeading Title="Your Files" Subtitle="Manage your uploaded files" DocumentCount={0} />
         <div className="flex-1 p-4 overflow-auto">
-          
-        {/* <div className="flex space-x-4 mb-4">
+
+          {/* <div className="flex space-x-4 mb-4">
           <MultiSelectInput
             className="w-[30%] max-w-[500px]"
             label="Folders"
@@ -121,67 +121,67 @@ export default function FileList() {
           />
         </div> */}
 
-        <div className="flex justify-between items-center mb-4">
-          <Link to="/fileupload" aria-label="Add New File" accessKey="n">
-            <Button tabIndex={-1} aria-label="Add New File Button">
-              Add New
-            </Button>
-          </Link>
+          <div className="flex justify-between items-center mb-4">
+            <Link to="/fileupload" aria-label="Add New File" accessKey="n">
+              <Button tabIndex={-1} aria-label="Add New File Button">
+                Add New
+              </Button>
+            </Link>
 
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Refresh"
-              onClick={handleRefresh}
-              disabled={loading || isProcessing}
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Trash"
-              onClick={handleDeleteSelected}
-              disabled={selectedFiles.length === 0}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <div className="space-x-2">
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Refresh"
+                onClick={handleRefresh}
+                disabled={loading || isProcessing}
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Trash"
+                onClick={handleDeleteSelected}
+                disabled={selectedFiles.length === 0}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]" aria-label="Select row">
-                <span className="sr-only">Select</span>
-              </TableHead>
-              <TableHead>FileName</TableHead>
-              <TableHead>ContentType</TableHead>
-              <TableHead>Size</TableHead>
-              <TableHead>Submitted On</TableHead>
-              <TableHead>Folder</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedFiles.map((file) => (
-              <TableRow key={file.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedFiles.includes(file.id)}
-                    onCheckedChange={() => toggleFileSelection(file.id)}
-                    aria-label={`Select file ${file.fileName}`}
-                  />
-                </TableCell>
-                <TableCell>{removeFileExtension(file.fileName)}</TableCell>
-                <TableCell>{simplifyContentType(file.contentType || 'unknown')}</TableCell>
-                <TableCell>{formatBytesToKB(file.size)}</TableCell>
-                <TableCell>{file.submittedOn}</TableCell>
-                <TableCell>{file.folder}</TableCell>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]" aria-label="Select row">
+                  <span className="sr-only">Select</span>
+                </TableHead>
+                <TableHead>FileName</TableHead>
+                <TableHead>ContentType</TableHead>
+                <TableHead>Size</TableHead>
+                <TableHead>Submitted On</TableHead>
+                <TableHead>Container</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {sortedFiles.map((file) => (
+                <TableRow key={file.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedFiles.includes(file.id)}
+                      onCheckedChange={() => toggleFileSelection(file.id)}
+                      aria-label={`Select file ${file.fileName}`}
+                    />
+                  </TableCell>
+                  <TableCell>{removeFileExtension(file.fileName)}</TableCell>
+                  <TableCell>{simplifyContentType(file.contentType || 'unknown')}</TableCell>
+                  <TableCell>{formatBytesToKB(file.size)}</TableCell>
+                  <TableCell>{file.submittedOn}</TableCell>
+                  <TableCell>{file.folder}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>
