@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { useFetchFiles } from '@/hooks/use-files';
 import { FileMetadata } from '@/models/filemetadata';
 import { deleteFiles } from '@/services/files-service';
+import SimpleHeading from '@/components/Heading-Simple';
 
 export default function FileList() {
   // Using the custom hook to fetch files
@@ -104,10 +105,12 @@ export default function FileList() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
-      <div className="flex-1 p-8 overflow-y-auto">
-        <h1 className="text-3xl font-bold mb-6">Your Files</h1>
-
+    <div className="flex h-screen bg-background text-foreground">
+      <div className="flex-1  flex flex-col">
+       
+        <SimpleHeading Title="Your Files" Subtitle="Manage your uploaded files" DocumentCount={0} />
+        <div className="flex-1 p-4 overflow-auto">
+          
         {/* <div className="flex space-x-4 mb-4">
           <MultiSelectInput
             className="w-[30%] max-w-[500px]"
@@ -179,6 +182,7 @@ export default function FileList() {
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
     </div>
   );

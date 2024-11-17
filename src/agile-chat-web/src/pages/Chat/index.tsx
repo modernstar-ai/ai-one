@@ -9,7 +9,7 @@ import axios from '@/error-handling/axiosSetup';
 import MessageContent from '@/components/chat-page/message-content';
 import { ChatMessageArea } from '@/components/chat-page/chat-message-area';
 import { useAuth } from "@/services/auth-helpers";
-import { createChatThread, fetchChatsbythreadid, GetSystemAndWelcomeMessagesForExistingThread, GetSystemAndWelcomeMessagesForNewThreadFromAssistant } from '@/services/chatthreadservice';
+import { createChatThread, fetchChatsbythreadid,GetChatThreadMessages, GetSystemAndWelcomeMessagesForExistingThread, GetSystemAndWelcomeMessagesForNewThreadFromAssistant } from '@/services/chatthreadservice';
 import { fetchAssistantById } from '@/services/assistantservice';
 import { ChatThread, Message } from '@/types/ChatThread';
 import { Assistant } from '@/types/Assistant';
@@ -26,6 +26,7 @@ const ChatPage = () => {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [assistant, setAssistant] = useState<Assistant | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +53,7 @@ const ChatPage = () => {
   useEffect(() => {
     const initializeChatThread = async () => {
       try {
-        setIsLoading(true);
+
         let currentAssistant = null;
 
         // Step 1: Fetch assistant if ID is provided
@@ -64,62 +65,67 @@ const ChatPage = () => {
           }
         }
 
-        // Step 2: Handle chat thread initialization
-        if (!chatThreadId) {
+        // Step 2: Handle chat thread initialization when no chatThreadId is provided
+        //        then redirect back to this page with the new chatThreadId
+        console.log('Chat - chatThreadId:', chatThreadId);
+        if (!chatThreadId) { //looks at query string and state for the chatThreadId
           // Create new chat thread
           const newThread = await createChatThread({
-            name: "New Chat",
+            name: currentAssistant?.name || "New Chat",
             userId: username,
             personaMessage: currentAssistant?.systemMessage || "",
             personaMessageTitle: currentAssistant?.name || ""
           });
           console.log('Chat - newThread:', newThread);
 
-          if (newThread) {
-            const newUrl = assistantId
-              ? `/chat/${newThread.id}?assistantId=${assistantId}`
-              : `/chat/${newThread.id}`;
-            console.log('Chat - newUrl to redirect to:', newUrl);
-            navigate(newUrl, { replace: true });
-
-            // Initialize messages for new thread with assistant
-            if (currentAssistant) {
-              const initialMessages: Message[] = GetSystemAndWelcomeMessagesForNewThreadFromAssistant(username, currentAssistant, newThread);
-              console.log('Chat - set initialMessages from current assistant:', initialMessages);
-              setMessages(initialMessages);
-            }
-          } else {
+          if (!newThread) {
             throw new Error('Failed to create new chat thread');
           }
-        } else {
-          // Load existing chat thread messages
-          const existingMessages = await fetchChatsbythreadid(chatThreadId);
-          console.log('Chat - existingMessages:', existingMessages);
-          if (existingMessages) {
-            // If we have an assistant, prepend system and greeting messages
-            if (currentAssistant && existingMessages.length === 0) {
-              const initialMessages: Message[] = GetSystemAndWelcomeMessagesForExistingThread(username, currentAssistant, chatThreadId);
-              setMessages([...initialMessages, ...existingMessages]);
-            } else {
-              setMessages(existingMessages);
-            }
-          } else {
-            throw new Error('Failed to load chat messages');
-          }
-        }
+
+          const newUrl = assistantId
+            ? `/chat/${newThread.id}?assistantId=${assistantId}`
+            : `/chat/${newThread.id}`;
+          console.log('Chat - newUrl to redirect to:', newUrl);
+
+          navigate(newUrl, { replace: true });
+
+          // let messages = await GetChatThreadMessages(username, newThread.id, currentAssistant);
+          // setMessages(messages);          
+
+        };
+
+        // Step 3: Load existing chat thread messages when chatThreadId is available        
+      //  LoadChatThreadMessages()
       } catch (err) {
         console.error('Chat initialization error:', err);
         setError(err instanceof Error ? err.message : 'An error occurred while initializing chat');
-      } finally {
-        setIsLoading(false);
       }
     };
 
+    setIsLoading(true);
     initializeChatThread();
+    setIsLoading(false);
 
     setAssistant(null); // Clear assistant on unmount
+    
 
-  }, [chatThreadId, assistantId, username, navigate]);
+  }, [assistantId, username, navigate]);
+
+  // Effect to handle actions after chatThreadId is updated
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (chatThreadId) {
+        // Perform actions that depend on the new value of chatThreadId
+        console.log('New chatThreadId available:', chatThreadId);
+        
+        const getMessages = await GetChatThreadMessages(username, chatThreadId, assistant);
+        console.log('Chat - getMessages after new thread:', getMessages);
+        setMessages(getMessages);
+      }
+    };
+
+    fetchMessages();
+  }, [chatThreadId]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -246,12 +252,12 @@ const ChatPage = () => {
             {error}
           </div>
         )}
-        <pre>
+        {/* <pre>
           Chat ThreadID: {chatThreadId} <br />
 
           assistantId: {assistantId}
 
-        </pre>
+        </pre> */}
         <ScrollArea className="flex-1 p-4 space-y-4">
           {messages.map((message, index) =>
             message.sender !== 'system' && (

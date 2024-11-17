@@ -236,7 +236,7 @@ export function LeftSidebar() {
   };
 
   const handleClearHistory = async () => {
-    const confirmClear = window.confirm('Are you sure you want to clear all chat history?');
+    const confirmClear = true;
     if (confirmClear) {
       setLoading(true);
       try {
@@ -270,10 +270,10 @@ export function LeftSidebar() {
             {/* Panel Toggle Button */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                variant="ghost" 
-                size="icon" 
-                aria-label="Home"
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Home"
                   onClick={() => setIsPanelOpen(!isPanelOpen)}
                 >
                   {isPanelOpen ? (
@@ -300,14 +300,14 @@ export function LeftSidebar() {
               </>
             )}
             {(isSystemAdmin) && (
-                <SideNavButton path="/containers" label="Database" Icon={Database} accessKey='i' />                
+              <SideNavButton path="/containers" label="Database" Icon={Database} accessKey='i' />
             )}
             {/* //todo:todu enablePreviewFeatures===true is required. */}
-            {isSystemAdmin && enablePreviewFeatures==true && (                            
-                <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey='t' />         
+            {isSystemAdmin && enablePreviewFeatures == true && (
+              <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey='t' />
             )}
           </div>
-          
+
           {/* User Menu */}
           {isLoggedIn && (
             <div className="mt-auto dark:text-white dark">
@@ -366,13 +366,14 @@ export function LeftSidebar() {
             {/* Panel Header */}
             <div className="p-4 border-b flex justify-between">
               <h2 className="font-semibold">Recent Chats</h2>
+              
               <Button
                 variant="ghost"
                 size="icon"
-
                 onClick={handleCreateChat}
                 disabled={loading}
-              >
+                aria-label="New Chat"
+              > 
                 {loading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
@@ -411,9 +412,9 @@ export function LeftSidebar() {
                         <span className="text-sm font-medium truncate">
                           {thread.name}
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        {/* <span className="text-xs text-muted-foreground">
                           {new Date(thread.lastMessageAt).toLocaleDateString()}
-                        </span>
+                        </span> */}
                       </div>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
