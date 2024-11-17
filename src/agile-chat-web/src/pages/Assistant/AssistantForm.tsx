@@ -442,7 +442,7 @@ export default function AssistantForm() {
                     )}
                   />
                 )}
-                
+
                 <FormField
                   control={form.control}
                   name="temperature"
@@ -504,25 +504,25 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="pastMessages"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Past Messages Included</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          placeholder="Enter a number, by default value will be set to 10"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+                {enablePreviewFeatures == true && (
+                  <FormField
+                    control={form.control}
+                    name="pastMessages"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Past Messages Included</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            placeholder="Enter a number, by default value will be set to 10"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 <FormField
                   control={form.control}
                   name="strictness"
