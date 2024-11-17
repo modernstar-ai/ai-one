@@ -174,6 +174,72 @@ export async function createChatAndRedirect(): Promise<void> {
     }
 }
 
+
+
+export function GetSystemAndWelcomeMessagesForExistingThread(userName: string, currentAssistant: Assistant, chatThreadId): Message[] {
+    const initialMessages: Message[] = [
+      {
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
+        type: 'text',
+        isDeleted: false,
+        content: currentAssistant.systemMessage,
+        name: 'System',
+        role: 'system',
+        threadId: chatThreadId,
+        userId: userName,
+        multiModalImage: '',
+        sender: 'system'
+      },
+      {
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
+        type: 'text',
+        isDeleted: false,
+        content: currentAssistant.greeting,
+        name: currentAssistant.name,
+        role: 'assistant',
+        threadId: chatThreadId,
+        userId: userName,
+        multiModalImage: '',
+        sender: 'assistant'
+      }
+    ];
+
+    return initialMessages;
+  }
+  export function GetSystemAndWelcomeMessagesForNewThreadFromAssistant(userName: string, currentAssistant: Assistant, newThread: ChatThread): Message[] {
+    const initialMessages: Message[] = [
+      {
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
+        type: 'text',
+        isDeleted: false,
+        content: currentAssistant.systemMessage,
+        name: 'System',
+        role: 'system',
+        threadId: newThread.id,
+        userId: userName,
+        multiModalImage: '',
+        sender: 'system'
+      },
+      {
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
+        type: 'text',
+        isDeleted: false,
+        content: currentAssistant.greeting,
+        name: currentAssistant.name,
+        role: 'assistant',
+        threadId: newThread.id,
+        userId: userName,
+        multiModalImage: '',
+        sender: 'assistant'
+      }
+    ];
+    return initialMessages
+
+  }
  
 
 export type { ChatThread, NewChatThread, UpdateChatThreadTitle, ExtensionUpdate };

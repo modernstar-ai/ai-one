@@ -9,10 +9,12 @@ import axios from '@/error-handling/axiosSetup';
 import MessageContent from '@/components/chat-page/message-content';
 import { ChatMessageArea } from '@/components/chat-page/chat-message-area';
 import { useAuth } from "@/services/auth-helpers";
-import { createChatThread, fetchChatsbythreadid} from '@/services/chatthreadservice';
+import { createChatThread, fetchChatsbythreadid, GetSystemAndWelcomeMessagesForExistingThread, GetSystemAndWelcomeMessagesForNewThreadFromAssistant } from '@/services/chatthreadservice';
 import { fetchAssistantById } from '@/services/assistantservice';
-import { Message } from '@/types/ChatThread';
+import { ChatThread, Message } from '@/types/ChatThread';
 import { Assistant } from '@/types/Assistant';
+import { interactionInProgress } from 'node_modules/@azure/msal-browser/dist/error/BrowserAuthErrorCodes';
+
 
 const ChatPage = () => {
   const { "*": chatThreadId } = useParams();
@@ -20,13 +22,13 @@ const ChatPage = () => {
   const assistantId = urlParams.get('assistantId');
   const navigate = useNavigate();
   const { username } = useAuth();
-  
-  const [messages, setMessages] = useState<Message[]>([]);
+
   const [inputValue, setInputValue] = useState('');
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [assistant, setAssistant] = useState<Assistant | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Separate assistant fetching logic
   const fetchAssistant = async (id: string) => {
@@ -45,16 +47,18 @@ const ChatPage = () => {
     }
   };
 
+
   // Initialize chat thread or load existing thread
   useEffect(() => {
     const initializeChatThread = async () => {
       try {
         setIsLoading(true);
         let currentAssistant = null;
-        
+
         // Step 1: Fetch assistant if ID is provided
         if (assistantId) {
           currentAssistant = await fetchAssistant(assistantId);
+          console.log('Chat - currentAssistant:', currentAssistant);
           if (!currentAssistant) {
             throw new Error('Failed to load assistant');
           }
@@ -69,44 +73,20 @@ const ChatPage = () => {
             personaMessage: currentAssistant?.systemMessage || "",
             personaMessageTitle: currentAssistant?.name || ""
           });
-          
+          console.log('Chat - newThread:', newThread);
+
           if (newThread) {
-            const newUrl = assistantId 
+            const newUrl = assistantId
               ? `/chat/${newThread.id}?assistantId=${assistantId}`
               : `/chat/${newThread.id}`;
+            console.log('Chat - newUrl to redirect to:', newUrl);
             navigate(newUrl, { replace: true });
-            
+
             // Initialize messages for new thread with assistant
             if (currentAssistant) {
-              const initialMessages: Message[] = [
-                {
-                  id: crypto.randomUUID(),
-                  createdAt: new Date(),
-                  type: 'text',
-                  isDeleted: false,
-                  content: currentAssistant.systemMessage,
-                  name: 'System',
-                  role: 'system',
-                  threadId: newThread.id,
-                  userId: username,
-                  multiModalImage: '',
-                  sender: 'system'
-                },
-                {
-                  id: crypto.randomUUID(),
-                  createdAt: new Date(),
-                  type: 'text',
-                  isDeleted: false,
-                  content: currentAssistant.greeting,
-                  name: currentAssistant.name,
-                  role: 'assistant',
-                  threadId: newThread.id,
-                  userId: username,
-                  multiModalImage: '',
-                  sender: 'assistant'
-                }
-              ];          
-              setMessages(initialMessages);              
+              const initialMessages: Message[] = GetSystemAndWelcomeMessagesForNewThreadFromAssistant(username, currentAssistant, newThread);
+              console.log('Chat - set initialMessages from current assistant:', initialMessages);
+              setMessages(initialMessages);
             }
           } else {
             throw new Error('Failed to create new chat thread');
@@ -114,37 +94,11 @@ const ChatPage = () => {
         } else {
           // Load existing chat thread messages
           const existingMessages = await fetchChatsbythreadid(chatThreadId);
+          console.log('Chat - existingMessages:', existingMessages);
           if (existingMessages) {
             // If we have an assistant, prepend system and greeting messages
             if (currentAssistant && existingMessages.length === 0) {
-              const initialMessages: Message[] = [
-                {
-                  id: crypto.randomUUID(),
-                  createdAt: new Date(),
-                  type: 'text',
-                  isDeleted: false,
-                  content: currentAssistant.systemMessage,
-                  name: 'System',
-                  role: 'system',
-                  threadId: chatThreadId,
-                  userId: username,
-                  multiModalImage: '',
-                  sender: 'system'
-                },
-                {
-                  id: crypto.randomUUID(),
-                  createdAt: new Date(),
-                  type: 'text',
-                  isDeleted: false,
-                  content: currentAssistant.greeting,
-                  name: currentAssistant.name,
-                  role: 'assistant',
-                  threadId: chatThreadId,
-                  userId: username,
-                  multiModalImage: '',
-                  sender: 'assistant'
-                }
-              ];
+              const initialMessages: Message[] = GetSystemAndWelcomeMessagesForExistingThread(username, currentAssistant, chatThreadId);
               setMessages([...initialMessages, ...existingMessages]);
             } else {
               setMessages(existingMessages);
@@ -218,7 +172,7 @@ const ChatPage = () => {
 
       // Clear input after storing message
       setInputValue('');
-      
+
       const response = await axios.post(apiUrl, messageHistory, {
         headers: {
           Accept: 'text/plain',
@@ -240,7 +194,7 @@ const ChatPage = () => {
         threadId: chatThreadId,
         userId: username,
         multiModalImage: '',
-        sender : 'assistant'
+        sender: 'assistant'
       };
       setMessages(prev => [...prev, botMessage]);
 
@@ -254,7 +208,7 @@ const ChatPage = () => {
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        
+
         setMessages(prev => {
           const lastMessage = prev[prev.length - 1];
           const updatedMessage = {
@@ -281,10 +235,10 @@ const ChatPage = () => {
   return (
     <div className="flex h-screen bg-background text-foreground">
       <div className="flex-1 flex flex-col">
-        <SimpleHeading 
+        <SimpleHeading
           Title={assistant ? assistant.name : "Chat"}
           Subtitle={assistant ? assistant.description : "Why not have a chat"}
-          DocumentCount={messages.length} 
+          DocumentCount={messages.length}
         />
 
         {error && (
@@ -292,39 +246,44 @@ const ChatPage = () => {
             {error}
           </div>
         )}
+        <pre>
+          Chat ThreadID: {chatThreadId} <br />
 
-<ScrollArea className="flex-1 p-4 space-y-4">
-  {messages.map((message, index) =>
-    message.sender !== 'system' && (
-      
-        <ChatMessageArea
-          key={index}
-          profileName={message.sender === "user" ? (username || "User") : (assistant?.name || "AI Assistant")}
-          role={message.sender === "user" ? "user" : "assistant"}
-          onCopy={() => {
-            navigator.clipboard.writeText(message.content);
-          }}
-          profilePicture={
-            message.sender === "user" 
-              ? ""
-              : "/agile.png"
-          }
-        >  
-          <MessageContent 
-            message={{
-              role: message.sender === "user" ? "user" : "assistant",
-              content: message.content,
-              name: message.sender 
-            }}
-          />
-        </ChatMessageArea>
-      
-    )
-  )}
-</ScrollArea>
+          assistantId: {assistantId}
+
+        </pre>
+        <ScrollArea className="flex-1 p-4 space-y-4">
+          {messages.map((message, index) =>
+            message.sender !== 'system' && (
+
+              <ChatMessageArea
+                key={index}
+                profileName={message.sender === "user" ? (username || "User") : (assistant?.name || "AI Assistant")}
+                role={message.sender === "user" ? "user" : "assistant"}
+                onCopy={() => {
+                  navigator.clipboard.writeText(message.content);
+                }}
+                profilePicture={
+                  message.sender === "user"
+                    ? ""
+                    : "/agile.png"
+                }
+              >
+                <MessageContent
+                  message={{
+                    role: message.sender === "user" ? "user" : "assistant",
+                    content: message.content,
+                    name: message.sender
+                  }}
+                />
+              </ChatMessageArea>
+
+            )
+          )}
+        </ScrollArea>
 
         <div className="p-4 border-t">
-           
+
 
           <Textarea
             placeholder="Type your message here..."
@@ -339,10 +298,10 @@ const ChatPage = () => {
           />
 
 
-          <Button 
-            onClick={handleSendMessage} 
-            disabled={isStreaming || !chatThreadId} 
-            aria-label="Send Chat" 
+          <Button
+            onClick={handleSendMessage}
+            disabled={isStreaming || !chatThreadId}
+            aria-label="Send Chat"
             accessKey="j"
           >
             {isStreaming ? 'Sending...' : 'Send'}
@@ -350,8 +309,11 @@ const ChatPage = () => {
         </div>
       </div>
     </div>
-    
+
   );
 };
 
 export default ChatPage;
+
+
+
