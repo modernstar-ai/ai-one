@@ -197,6 +197,10 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
 
       appSettings: [
         {
+          name: 'AZURE_AI_SERVICES_KEY'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_KEY.name})'
+        }
+        {
           name: 'ALLOWED_ORIGINS'
           value: 'https://${webApp.properties.defaultHostName}'
         }
