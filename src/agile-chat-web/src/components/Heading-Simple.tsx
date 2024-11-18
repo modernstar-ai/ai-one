@@ -1,6 +1,4 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Menu, Paperclip } from 'lucide-react';
 
 interface SimpleHeadingProps {
   Title: string;
