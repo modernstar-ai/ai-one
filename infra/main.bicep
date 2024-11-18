@@ -81,11 +81,11 @@ param storageServiceImageContainerName string = 'images'
 param appInsightsKey string = ''
 
 //other
-//var tags = { 'azd-env-name': environmentName }
+var tags = { 'azd-env-name': environmentName }
 
 //Load tags from the file
-var tagsFilePath = './uts.tags.json'
-var tags = loadJsonContent(tagsFilePath)
+// var tagsFilePath = './uts.tags.json'
+// var tags = loadJsonContent(tagsFilePath)
 
 module resources 'resources.bicep' = {
   name: 'all-resources'

@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.31.34.60546",
-      "templateHash": "7726271392512865004"
+      "version": "0.31.92.45157",
+      "templateHash": "17480846608482689873"
     }
   },
   "parameters": {
@@ -160,20 +160,9 @@
     }
   },
   "variables": {
-    "$fxv#0": {
-      "uts_costcentre": "5000023.00000000",
-      "uts_primarycontact": "carl.young@uts.edu.au",
-      "uts_env": "test",
-      "uts_project": "2023-2035 Artificial Intelligence",
-      "uts_research": "Yes",
-      "uts_iac": "Yes",
-      "uts_repo": "https://github.com/uts-itd",
-      "uts_data_classification": "UTS Internal",
-      "uts_business_owner": "susan.gibson@uts.edu.au",
-      "azd-env-name": "uts-dev"
-    },
-    "tagsFilePath": "./uts.tags.json",
-    "tags": "[variables('$fxv#0')]"
+    "tags": {
+      "azd-env-name": "[parameters('environmentName')]"
+    }
   },
   "resources": [
     {
@@ -268,8 +257,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.31.34.60546",
-              "templateHash": "9603223799762360061"
+              "version": "0.31.92.45157",
+              "templateHash": "10495186097326820092"
             }
           },
           "parameters": {
