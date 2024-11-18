@@ -2,6 +2,10 @@
 {
     public static class AppConfigs
     {
+        public static string AppInsightsInstrumentationKey =
+            Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATIONKEY") ??
+            throw new InvalidOperationException("APPINSIGHTS_INSTRUMENTATIONKEY not set");
+        
         public static string CosmosEndpoint => Environment.GetEnvironmentVariable("AZURE_COSMOSDB_URI")
             ?? throw new InvalidOperationException("AZURE_COSMOSDB_URI not set.");
 

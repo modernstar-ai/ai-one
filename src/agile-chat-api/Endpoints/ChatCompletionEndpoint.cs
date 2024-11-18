@@ -9,14 +9,14 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 public static class ChatCompletionsEndpoint
 {
+    public class ChatCompletionsEndpointLogger{}
     public static void MapChatCompletionsEndpoint(this IEndpointRouteBuilder app)
     {
         app.MapPost("/chat",
-            async (HttpContext context, string? threadId, [FromServices] IAssistantService assistantService) =>
+            async (HttpContext context, string? threadId, [FromServices] IAssistantService assistantService, [FromServices] ILogger<ChatCompletionsEndpointLogger> logger) =>
             {
                 #region Service Initialization
-
-                var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+                
                 IChatThreadService chatThreadService = new ChatThreadService();
                 string assistantMessageContent = "";
 
@@ -277,7 +277,6 @@ public static class ChatCompletionsEndpoint
                     string content = contentPart.Text;
                     if (!string.IsNullOrEmpty(content))
                     {
-                        //Console.WriteLine(content);
                         // Send each chunk of the response to the client as an SSE event
                         await context.Response.WriteAsync(content);
                         await context.Response.Body.FlushAsync();

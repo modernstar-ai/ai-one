@@ -11,12 +11,13 @@ namespace agile_chat_api.Endpoints;
 
 public static class IndexesEndpoints
 {
+    public class IndexesEndpointsLogger{}
     public static void MapIndexesEndpoints(this IEndpointRouteBuilder app)
     {
         var api = app.MapGroup("api/indexes").RequireAuthorization();
 
         api.MapGet(pattern: string.Empty, [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
-            async ([FromServices] IContainerIndexerService cosmosService) =>
+            async ([FromServices] IContainerIndexerService cosmosService, [FromServices] ILogger<IndexesEndpointsLogger> logger) =>
             {
                 try
                 {
@@ -25,7 +26,7 @@ public static class IndexesEndpoints
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error occurred: {ex.Message}");
+                    logger.LogError("Error occurred: {Message} stacktrace: {StackTrace}", ex.Message, ex.StackTrace);
                     return Results.Problem("An error occurred while retrieving indexes.");
                 }
             }).DisableAntiforgery();
@@ -34,7 +35,8 @@ public static class IndexesEndpoints
         api.MapPost("create", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
             async ([FromBody] IndexesDto request,
                    [FromServices] IContainerIndexerService cosmosService,
-                [FromServices] IAzureAiSearchService searchService) =>
+                [FromServices] IAzureAiSearchService searchService,
+                [FromServices] ILogger<IndexesEndpointsLogger> logger) =>
             {
                 if(cosmosService.IndexExistsAsync(request.Name))
                     return Results.BadRequest("Container name already exists.");
@@ -53,19 +55,22 @@ public static class IndexesEndpoints
                 catch (ArgumentNullException ex)
                 {
                     // Handle specific case for null argument if needed
-                    Console.WriteLine($"Argument error: {ex.Message}");
+                    logger.LogError("Argument error: {Message} stacktrace: {StackTrace}", ex.Message, ex.StackTrace);
                     return Results.BadRequest(ex.Message);
                 }
                 catch (Exception ex)
                 {
                     // General error handling
-                    Console.WriteLine($"An error occurred while creating the index: {ex.Message}");
+                    logger.LogError("An error occurred while creating the index: {Message} stacktrace: {StackTrace}", ex.Message, ex.StackTrace);
                     return Results.Problem("An error occurred while creating the index. Please check logs for more details.");
                 }
             }).DisableAntiforgery();
 
         api.MapDelete("delete/{id}", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
-            async (string id, [FromServices] IContainerIndexerService cosmosService, [FromServices] IAzureAiSearchService azureSearchService, [FromServices] IFileUploadService fileUploadService, [FromServices] IStorageService storageService) =>
+            async (string id, [FromServices] IContainerIndexerService cosmosService, [FromServices] 
+                IAzureAiSearchService azureSearchService, [FromServices] IFileUploadService fileUploadService, 
+                [FromServices] IStorageService storageService,
+                [FromServices] ILogger<IndexesEndpointsLogger> logger) =>
             {
                 if (string.IsNullOrWhiteSpace(id))
                 {
@@ -86,12 +91,12 @@ public static class IndexesEndpoints
                 }
                 catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
                 {
-                    Console.WriteLine($"Rate limit hit for ID {id}. Deletion failed after retries: {ex.Message}");
+                    logger.LogError("Rate limit hit for ID {Id}. Deletion failed after retries: {Message}, Stacktrace: {StackTrace}", id, ex.Message, ex.StackTrace);
                     return Results.Problem("Rate limit exceeded. Please try again later.");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"An error occurred while deleting the index with ID {id}: {ex.Message}");
+                    logger.LogError("An error occurred while deleting the index with ID {Id}. Message: {Message}, Stacktrace: {StackTrace}", id, ex.Message, ex.StackTrace);
                     return Results.Problem("An error occurred while deleting the index. Please check logs for more details.");
                 }
             }).DisableAntiforgery();

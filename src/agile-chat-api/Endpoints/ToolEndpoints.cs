@@ -2,9 +2,10 @@ using Microsoft.AspNetCore.Mvc;
 
 public static class ToolEndpoints
 {
+    public class ToolEndpointsLogger {}
     public static void MapToolEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/tools", async (IToolService toolService, [FromServices] ILogger logger) =>
+        app.MapGet("/tools", async (IToolService toolService, [FromServices] ILogger<ToolEndpointsLogger> logger) =>
         {
             try
             {
@@ -18,7 +19,7 @@ public static class ToolEndpoints
             }
         }).RequireAuthorization();
 
-        app.MapGet("/tools/{id:guid}", async (Guid id, IToolService toolService, [FromServices] ILogger logger) =>
+        app.MapGet("/tools/{id:guid}", async (Guid id, IToolService toolService, [FromServices] ILogger<ToolEndpointsLogger> logger) =>
         {
             try
             {
@@ -32,7 +33,7 @@ public static class ToolEndpoints
             }
         }).RequireAuthorization();
 
-        app.MapPost("/tools", (Tool tool, IToolService toolService, [FromServices] ILogger logger) =>
+        app.MapPost("/tools", (Tool tool, IToolService toolService, [FromServices] ILogger<ToolEndpointsLogger> logger) =>
         {
             try
             {
@@ -46,7 +47,7 @@ public static class ToolEndpoints
             }
         }).RequireAuthorization();
 
-        app.MapPut("/tools/{id:guid}", async (Guid id, Tool updatedTool, IToolService toolService, [FromServices] ILogger logger) =>
+        app.MapPut("/tools/{id:guid}", async (Guid id, Tool updatedTool, IToolService toolService, [FromServices] ILogger<ToolEndpointsLogger> logger) =>
         {
             try
             {
@@ -66,7 +67,7 @@ public static class ToolEndpoints
             }
         }).RequireAuthorization();
 
-        app.MapDelete("/tools/{id:guid}", async (Guid id, IToolService toolService, [FromServices] ILogger logger) =>
+        app.MapDelete("/tools/{id:guid}", async (Guid id, IToolService toolService, [FromServices] ILogger<ToolEndpointsLogger> logger) =>
         {
             try
             {

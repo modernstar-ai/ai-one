@@ -5,11 +5,19 @@ using agile_chat_api.Services;
 using Azure;
 using Azure.AI.OpenAI.Chat;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 
 namespace agile_chat_api.Services;
 
 public class ChatService 
 {
+    private readonly ILogger<ChatService> _logger;
+
+    public ChatService(ILogger<ChatService> logger)
+    {
+        _logger = logger;
+    }
+    
     private static string GetAzureSearchServiceUri(string instanceName)
     {
         if (string.IsNullOrWhiteSpace(instanceName))
@@ -95,14 +103,13 @@ public class ChatService
         {
             // using var reader = new StreamReader(context.Request.Body);
             // var rawJson = await reader.ReadToEndAsync();
-            // Console.WriteLine(rawJson);
 
             messages = await context.Request.ReadFromJsonAsync<List<JsonChatMessage>>();
-            Console.WriteLine("messages: " + messages);
+            Log.Logger.Information("messages: {Messages}", messages);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            Log.Logger.Error("Error getting chat messages from context: {Message}, StackTrace: {StackTrace}", e.Message, e.StackTrace);
             throw;
         }
 

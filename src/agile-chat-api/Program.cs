@@ -7,11 +7,15 @@ using DotNetEnv;
 using Microsoft.Azure.Cosmos;
 using Services;
 using System.Text.Json.Serialization;
+using agile_chat_api.Configurations;
+using Microsoft.ApplicationInsights.Extensibility;
+using Serilog;
 
 // Load environment variables for OpenAI Endpoint and Cosmos DB access
 Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog();
 
 // Cosmos DB configuration
 string cosmosDbUri = Env.GetString("AZURE_COSMOSDB_URI");
@@ -21,6 +25,12 @@ if (string.IsNullOrEmpty(cosmosDbUri) || string.IsNullOrEmpty(cosmosDbKey))
 {
     throw new InvalidOperationException("Cosmos DB configuration is missing. Ensure that AZURE_COSMOSDB_URI and AZURE_COSMOSDB_KEY are set in the environment variables.");
 }
+
+builder.Services.AddSerilog(opt =>
+{
+    opt.WriteTo.Console();
+    opt.WriteTo.ApplicationInsights(new TelemetryConfiguration {InstrumentationKey = AppConfigs.AppInsightsInstrumentationKey}, TelemetryConverter.Traces);
+});
 
 builder.Services.AddAzureAdAuth();
 // Register CosmosClient as a singleton
@@ -42,10 +52,6 @@ builder.Services.AddSingleton<IPersonaService, PersonaService>();
 builder.Services.AddSingleton<IAzureAiSearchService, AzureAiSearchService>();
 builder.Services.AddSingleton<IChatThreadService, ChatThreadService>();
 builder.Services.AddSingleton<IContainerIndexerService, IndexerService>();
-
-// Register ConsoleLogger
-//builder.Services.AddLogging(); //todo: re-enable
-builder.Services.AddSingleton<ILogger>(_ => new ConsoleLogger("ConsoleLogger", LogLevel.Debug));
 
 
 // Define the CORS policy with allowed origins
