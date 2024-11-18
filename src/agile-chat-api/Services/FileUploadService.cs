@@ -67,9 +67,11 @@ namespace Services
     {
         private readonly CosmosClient _cosmosClient;
         private readonly Container _cosmosContainer;
+        private readonly ILogger<FileUploadService> _logger;
 
-        public FileUploadService()
+        public FileUploadService(ILogger<FileUploadService> logger)
         {
+            _logger = logger;
             _cosmosClient = new CosmosClient(AppConfigs.CosmosEndpoint, AppConfigs.CosmosKey);
             _cosmosContainer = EnsureCosmosContainerExists().GetAwaiter().GetResult();
         }
@@ -93,7 +95,7 @@ namespace Services
 
                 if (containerResponse == null)
                 {
-                    Console.WriteLine("ContainerResponse is null.");
+                    _logger.LogError("ContainerResponse is null");
                     throw new InvalidOperationException("Failed to create or retrieve the container.");
                 }
 
@@ -101,7 +103,7 @@ namespace Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error ensuring Cosmos container exists: {ex.Message}");
+                _logger.LogError("Error ensuring Cosmos container exists: {Message}, StackTrace: {StackTrace}", ex.Message, ex.StackTrace);
                 throw;
             }
         }
@@ -135,13 +137,13 @@ namespace Services
                     return true;
                 }
                 FileMetadata? data = results.FirstOrDefault();
-                Console.WriteLine($"Document count: {data}");
+                _logger.LogInformation("Document Count: {Data}", data);
                 return false;
 
             }
             catch (Exception)
             {
-                Console.WriteLine($"Error checking if file metadata exists for {fileName} in folder {folder}", fileName, folder);
+                _logger.LogError("Error checking if file metadata exists for {FileName} in folder {Folder}", fileName, folder);
                 return false;
             }
         }
@@ -172,7 +174,7 @@ namespace Services
             }
             catch (Exception)
             {
-                Console.WriteLine($"Error saving file metadata for {fileName} in index {indexName} and folder {folderName}");
+                _logger.LogError("Error saving file metadata for {FileName} in index {IndexName} and folder {FolderName}", fileName, indexName, folderName);
             }
         }
 
@@ -190,12 +192,12 @@ namespace Services
             }
             catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                Console.WriteLine($"File with ID {id} not found.", id);
+                _logger.LogError("File with ID {Id} not found.", id);
                 return null;
             }
             catch (Exception)
             {
-                Console.WriteLine($"Error retrieving file with ID {id}", id);
+                _logger.LogError("Error retrieving file with ID {Id}", id);
             }
             return null;
         }
@@ -216,9 +218,10 @@ namespace Services
                     results.AddRange(await feedIterator.ReadNextAsync());
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                Console.WriteLine($"Error retrieving all file metadata.");
+                
+                _logger.LogError("Error retrieving all file metadata. Message: {Message} StackTrace: {StackTrace}", e.Message, e.StackTrace);
                 return []; // Ensure non-null return
             }
             return results;
@@ -234,21 +237,21 @@ namespace Services
             try
             {
                 await _cosmosContainer.DeleteItemAsync<FileMetadata>(fileId, new PartitionKey(fileId));
-                Console.WriteLine($"File with ID {fileId} deleted successfully.", fileId);
+                _logger.LogInformation("File with ID {Id} deleted successfully.", fileId);
             }
             catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
             {
-                Console.WriteLine($"Rate limit hit for ID {fileId}. Retrying after delay...", fileId);
+                _logger.LogInformation("Rate limit hit for ID {Id}. Retrying after delay...", fileId);
                 await Task.Delay(ex.RetryAfter ?? TimeSpan.FromSeconds(1));
                 failedDeletions.Add(fileId);
             }
             catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                Console.WriteLine($"File with ID {fileId} not found. Skipping deletion.", fileId);
+                _logger.LogInformation("File with ID {fileId} not found. Skipping deletion.", fileId);
             }
             catch (Exception)
             {
-                Console.WriteLine($"Error deleting file with ID {fileId}", fileId);
+                _logger.LogInformation("Error deleting file with ID {Id}", fileId);
                 failedDeletions.Add(fileId);
             }
         }
@@ -276,11 +279,11 @@ namespace Services
                     await Task.WhenAll(deleteTasks);
                 }
 
-                Console.WriteLine($"File(s) with name {fileName} in folder {folder} deleted successfully.", fileName, folder);
+                _logger.LogInformation("File(s) with name {Name} in folder {Folder} deleted successfully.", fileName, folder);
             }
             catch (Exception)
             {
-                Console.WriteLine($"Error deleting file by name {fileName} in folder {folder}", fileName, folder);
+                _logger.LogError("Error deleting file by name {Name} in folder {Folder}", fileName, folder);
                 throw;
             }
         }
@@ -296,7 +299,7 @@ namespace Services
             await Task.WhenAll(deleteTasks);
             if (!failedDeletions.IsEmpty)
             {
-                Console.WriteLine($"Retrying failed deletions for {failedDeletions.Count} files.", failedDeletions.Count);
+                _logger.LogError($"Retrying failed deletions for {failedDeletions.Count} files.", failedDeletions.Count);
                 foreach (var fileId in failedDeletions)
                 {
                     await DeleteFileWithRetryAsync(fileId, failedDeletions);
@@ -323,11 +326,11 @@ namespace Services
                     {
                         // Delete the item by id and partition key
                         await _cosmosContainer.DeleteItemAsync<dynamic>(id, new PartitionKey(id));
-                        Console.WriteLine($"Deleted item with id {id}");
+                        _logger.LogInformation("Deleted item with id {Id}", id);
                     }
                     catch (CosmosException ex)
                     {
-                        Console.WriteLine($"Error deleting item with id {id}: {ex.Message}");
+                        _logger.LogError("Error deleting item with id {Id}: Message: {Message}, StackTrace: {StackTrace}", id, ex.Message, ex.StackTrace);
                     }
                 }
             }

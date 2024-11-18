@@ -2,10 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 
 public static class AssistantEndpoints
 {
+    public class AssistantEndpointsLogger {}
     public static void MapAssistantEndpoints(this IEndpointRouteBuilder app)
     {
 
-        app.MapGet("/assistants", async ([FromServices] IAssistantService assistantService, [FromServices] ILogger logger) =>
+        app.MapGet("/assistants", async ([FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
         {
             try
             {
@@ -21,7 +22,7 @@ public static class AssistantEndpoints
             }
         });
 
-        app.MapGet("/assistants/{id:guid}", async (Guid id, [FromServices] IAssistantService assistantService, [FromServices] ILogger logger) =>
+        app.MapGet("/assistants/{id:guid}", async (Guid id, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
         {
             try
             {
@@ -36,7 +37,7 @@ public static class AssistantEndpoints
             }
         });
 
-        app.MapPost("/assistants", async (Assistant assistant, [FromServices] IAssistantService assistantService, [FromServices] ILogger logger) =>
+        app.MapPost("/assistants", async (Assistant assistant, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
         {
             try
             {
@@ -51,7 +52,7 @@ public static class AssistantEndpoints
         });
 
         app.MapPut("/assistants/{id:guid}",
-            async (Guid id, Assistant updatedAssistant, [FromServices] IAssistantService assistantService, [FromServices] ILogger logger) =>
+            async (Guid id, Assistant updatedAssistant, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
             {
                 try
                 {
@@ -72,7 +73,7 @@ public static class AssistantEndpoints
                 }
             });
 
-        app.MapDelete("/assistants/{id:guid}", async (Guid id, [FromServices] IAssistantService assistantService, [FromServices] ILogger logger) =>
+        app.MapDelete("/assistants/{id:guid}", async (Guid id, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
         {
             try
             {

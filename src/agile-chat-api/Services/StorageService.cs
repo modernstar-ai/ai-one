@@ -51,9 +51,11 @@ namespace Services
     public class StorageService : IStorageService
     {
         private readonly BlobContainerClient _blobContainerClient;
+        private readonly ILogger<StorageService> _logger;
 
-        public StorageService()
+        public StorageService(ILogger<StorageService> logger)
         {
+            _logger = logger;
             BlobServiceClient blobServiceClient = new(Config.BlobStorageConnectionString);
             _blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.BlobStorageContainerName);
             _blobContainerClient.CreateIfNotExists();
@@ -77,7 +79,7 @@ namespace Services
             }
             catch (RequestFailedException ex)
             {
-                Console.WriteLine($"Error checking if file exists: {ex.Message}");
+                _logger.LogError("Error checking if file exists: {Message}, StackTrace: {StackTrace}", ex.Message, ex.StackTrace);
                 return false;
             }
         }
@@ -145,10 +147,11 @@ namespace Services
                 string blobPath = $"{file.IndexName}" + (!string.IsNullOrWhiteSpace(file.Folder) ? $"/{file.Folder}/{fileName}" : $"/{fileName}");
                 BlobClient _blobClient = _blobContainerClient.GetBlobClient(blobPath);
                 await _blobClient.DeleteIfExistsAsync();
-                Console.WriteLine($"Blob '{file.FileName}' deleted successfully from container '{blobPath}'.");
+                _logger.LogInformation("Blob '{Name}' deleted successfully from container '{Path}'.", fileName, blobPath);
             }
             catch (Exception ex)
             {
+                _logger.LogError("Error deleting file from blob storage: {Name}, Message: {Message} StackTrace: {StackTrace}", file.FileName, ex.Message, ex.StackTrace);
                 throw new InvalidOperationException($"Error deleting file from blob storage: {file.FileName}", ex);
             }
         }

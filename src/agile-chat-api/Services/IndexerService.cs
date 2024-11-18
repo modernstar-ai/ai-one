@@ -21,9 +21,11 @@ namespace Services
     {
         private readonly CosmosClient _cosmosClient = new(AppConfigs.CosmosEndpoint, AppConfigs.CosmosKey);
         private readonly Container _cosmosContainer;
+        private readonly ILogger<IndexerService> _logger;
 
-        public IndexerService()
+        public IndexerService(ILogger<IndexerService> logger)
         {
+            _logger = logger;
             _cosmosContainer = EnsureCosmosContainerExists().GetAwaiter().GetResult();
         }
 
@@ -40,13 +42,13 @@ namespace Services
                 });
 
                 if (containerResponse != null) return containerResponse.Container;
-                Console.WriteLine("ContainerResponse is null.");
+                _logger.LogCritical("ContainerResponse is null.");
                 throw new InvalidOperationException("Failed to create or retrieve the container.");
                 return containerResponse.Container;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error ensuring Cosmos container exists: {ex.Message}");
+                _logger.LogError("Error ensuring Cosmos container exists: {Message}, StackTrace: {StackTrace}", ex.Message, ex.StackTrace);
                 throw;
             }
         }
@@ -72,12 +74,12 @@ namespace Services
             }
             catch (CosmosException cosmosEx)
             {
-                Console.WriteLine($"Cosmos DB error: {cosmosEx.Message}");
+                _logger.LogError("Cosmos DB Error: {Message}, StackTrace: {StackTrace}", cosmosEx.Message, cosmosEx.StackTrace);
                 return Enumerable.Empty<Indexes>(); // Return an empty list to ensure non-null
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Unexpected error: {ex.Message}");
+                _logger.LogError("Unexpected Error: {Message}, StackTrace: {StackTrace}", ex.Message, ex.StackTrace);
                 return Enumerable.Empty<Indexes>(); // Return an empty list to ensure non-null
             }
         }
@@ -88,7 +90,7 @@ namespace Services
             {
                 if (indexRequest == null)
                 {
-                    Console.WriteLine("Index request cannot be null.");
+                    _logger.LogInformation("Index request cannot be null.");
                     return null;
                 }
 
@@ -105,15 +107,15 @@ namespace Services
                 var response = await _cosmosContainer.CreateItemAsync(indexMetadata, new PartitionKey(indexMetadata.id));
                 if (response.StatusCode == System.Net.HttpStatusCode.Created)
                 {
-                    Console.WriteLine("Index created successfully.");
+                    _logger.LogInformation("Index created successfully.");
                     return indexMetadata;
                 }
-                Console.WriteLine($"Failed to create item with status code: {response.StatusCode}");
+                _logger.LogError("Failed to create item with status code: {StatusCode}, Message: {Message}", response.StatusCode, response.Diagnostics.ToString());
                 return null;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error while saving index to Cosmos DB: {ex.Message}");
+                _logger.LogError("Error while saving index to Cosmos DB: {Message}, StackTrace: {StackTrace}", ex.Message, ex.StackTrace);
                 return null;
             }
         }
@@ -129,7 +131,7 @@ namespace Services
                 {
                     var index = _cosmosContainer.GetItemLinqQueryable<Indexes>().Where(x => x.id == indexId).FirstOrDefault();
                     var resp = await _cosmosContainer.DeleteItemAsync<Indexes>(indexId, new PartitionKey(indexId));
-                    Console.WriteLine($"Index with ID {indexId} deleted successfully.");
+                    _logger.LogInformation("Index with ID {Id} deleted successfully.", indexId);
                     return index;
                 }
                 catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
@@ -137,26 +139,30 @@ namespace Services
                     attempt++;
                     if (attempt >= maxRetries)
                     {
-                        Console.WriteLine($"Rate limit hit for ID {indexId}. Max retry attempts reached. Deletion failed.");
+                        _logger.LogError("Rate limit hit for ID: {IndexId}. Max retry attempts reached. Deletion failed. Message: {Message} StackTrace: {StackTrace}", 
+                            indexId, ex.Message, ex.StackTrace);
                         throw;
                     }
-                    Console.WriteLine($"Rate limit hit for ID {indexId}. Retrying after delay (attempt {attempt}/{maxRetries})...");
+                    
+                    _logger.LogError("Rate limit hit for ID: {IndexId}. Retrying after delay (atempt {Attempt}/{MaxTries}).... Message: {Message} StackTrace: {StackTrace}", 
+                        indexId, attempt, maxRetries, ex.Message, ex.StackTrace);
                     await Task.Delay(ex.RetryAfter ?? TimeSpan.FromSeconds(1));
                 }
                 catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
-                    Console.WriteLine($"Index with ID {indexId} not found. Skipping deletion.");
+                    _logger.LogInformation("Index with ID {Id} not found. Skipping deletion", indexId);
                     return null;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     attempt++;
                     if (attempt >= maxRetries)
                     {
-                        Console.WriteLine($"Error deleting Index with ID {indexId}. Max retry attempts reached. Deletion failed.");
+                        _logger.LogError("Error deleting Index with ID {Id}. Max Retry attempts reached. Deletion failed. Message: {Message}, StackTrace: {StackTrace}", 
+                            indexId, ex.Message, ex.StackTrace);
                         throw;
                     }
-                    Console.WriteLine($"Error deleting Index with ID {indexId}. Retrying (attempt {attempt}/{maxRetries})...");
+                    _logger.LogError("Error deleting Index with ID {Id}. Retrying (attempt {Attempt}/{MaxRetries})...", indexId, attempt, maxRetries);
                 }
             }
 
