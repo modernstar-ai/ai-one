@@ -151,6 +151,10 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
           value: 'false'
         }
+        {
+          name: 'ALLOWED_ORIGINS'
+          value: 'https://${apiapp_name}.azurewebsites.net'
+        }
       ]
     }
   }
@@ -192,6 +196,10 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
       ]
 
       appSettings: [
+        {
+          name: 'ALLOWED_ORIGINS'
+          value: 'https://${webapp_name}.azurewebsites.net'
+        }
         {
           name: 'AZURE_COSMOSDB_CHAT_THREADS_CONTAINER_NAME'
           value: azureCosmosDbChatThreadsName
