@@ -44,6 +44,9 @@ param storageServiceImageContainerName string
 var openai_name = toLower('${resourcePrefix}-aillm')
 var openai_dalle_name = toLower('${resourcePrefix}-aidalle')
 
+@description('Cosmos DB Chat threads container name')
+param azureCosmosDbChatThreadsName string = 'history'
+
 var form_recognizer_name = toLower('${resourcePrefix}-form')
 var speech_service_name = toLower('${resourcePrefix}-speech')
 var cosmos_name = toLower('${resourcePrefix}-cosmos')
@@ -188,7 +191,11 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         'string'
       ]
 
-      appSettings: [        
+      appSettings: [
+        {
+          name: 'AZURE_COSMOSDB_CHAT_THREADS_CONTAINER_NAME'
+          value: azureCosmosDbChatThreadsName
+        }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: appInsightsKey
