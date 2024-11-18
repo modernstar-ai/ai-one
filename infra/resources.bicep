@@ -198,7 +198,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
       appSettings: [
         {
           name: 'ALLOWED_ORIGINS'
-          value: 'https://${webapp_name}.azurewebsites.net'
+          value: 'https://${webApp.properties.defaultHostName}'
         }
         {
           name: 'AZURE_COSMOSDB_CHAT_THREADS_CONTAINER_NAME'
