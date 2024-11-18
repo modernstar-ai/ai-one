@@ -8,7 +8,7 @@ const ChatRouter: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [_searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState<React.ReactNode | null>(null);
 
