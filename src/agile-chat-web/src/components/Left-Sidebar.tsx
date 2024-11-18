@@ -1,21 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-import { useRoleContext } from "@/common/RoleContext";
+import { useRoleContext } from '@/common/RoleContext';
 
 import { useAuth } from '@/services/auth-helpers';
-import { cn } from "@/lib/utils";
-import {
-  fetchChatThreads,
-  createChatThread,
-  deleteChatThread,
-  type ChatThread
-} from '@/services/chatthreadservice';
+import { cn } from '@/lib/utils';
+import { fetchChatThreads, createChatThread, deleteChatThread, type ChatThread } from '@/services/chatthreadservice';
 
-import { Button } from "@/components/ui/button";
-import SideNavButton from "@/components/navigation/left-sidebar-button";
+import { Button } from '@/components/ui/button';
+import SideNavButton from '@/components/navigation/left-sidebar-button';
 
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,15 +29,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Sidebar, SidebarContent, SidebarTrigger } from '@/components/ui/sidebar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+} from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 import {
   Home,
@@ -51,33 +39,19 @@ import {
   User,
   VenetianMask,
   LogOut,
-  MessageSquareCode,
   Wrench,
   Plus,
   Trash2,
   Sun,
   Moon,
   Monitor,
-  ClipboardList,
-  Shield,
   PanelLeftOpen,
   PanelLeftClose,
   Loader2,
-  Database
+  Database,
 } from 'lucide-react';
 
-
 type Theme = 'light' | 'dark' | 'system';
-
-type NavItem = {
-  path: string;
-  icon: React.ElementType;
-  label: string;
-  accessKey: string;
-};
-
-
-
 
 export function LeftSidebar() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -85,23 +59,17 @@ export function LeftSidebar() {
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [threadToDelete, setThreadToDelete] = useState<string | null>(null);
   const navigate = useNavigate();
   const { instance, accounts, isLoggedIn, name, username } = useAuth();
-  const [currentTheme, setCurrentTheme] = useState<Theme>('system');
-
-
 
   // Theme handling
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme || 'system';
-    setCurrentTheme(savedTheme);
+    const savedTheme = (localStorage.getItem('theme') as Theme) || 'system';
     applyTheme(savedTheme);
   }, []);
 
   const applyTheme = (theme: Theme) => {
     localStorage.setItem('theme', theme);
-    setCurrentTheme(theme);
 
     if (theme === 'system') {
       if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -172,7 +140,7 @@ export function LeftSidebar() {
       } else {
         setError('Failed to load chat threads');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load chat threads');
     } finally {
       setLoading(false);
@@ -181,7 +149,6 @@ export function LeftSidebar() {
       }
     }
   };
-
 
   const handleCreateChat = async () => {
     setLoading(true);
@@ -192,11 +159,11 @@ export function LeftSidebar() {
 
       // Prepare chat thread data
       const chatData = {
-        name: "New Chat",
-        personaMessage: "",
-        personaMessageTitle: "",
+        name: 'New Chat',
+        personaMessage: '',
+        personaMessageTitle: '',
         userId: username,
-        ...(assistantId && { assistantId }) // Only add assistantId if it exists
+        ...(assistantId && { assistantId }), // Only add assistantId if it exists
       };
 
       const newThread = await createChatThread(chatData);
@@ -209,14 +176,12 @@ export function LeftSidebar() {
       } else {
         setError('Failed to create new chat');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to create new chat');
     } finally {
       setLoading(false);
     }
   };
-
-
 
   const handleDeleteThread = async (threadId: string) => {
     setLoading(true);
@@ -227,11 +192,10 @@ export function LeftSidebar() {
       } else {
         setError('Failed to delete chat thread');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to delete chat thread');
     } finally {
       setLoading(false);
-      setThreadToDelete(null);
     }
   };
 
@@ -240,10 +204,10 @@ export function LeftSidebar() {
     if (confirmClear) {
       setLoading(true);
       try {
-        const deletePromises = threads.map(thread => deleteChatThread(thread.id, name));
+        const deletePromises = threads.map((thread) => deleteChatThread(thread.id, name));
         await Promise.all(deletePromises);
         await loadChatThreads(false);
-      } catch (err) {
+      } catch {
         setError('Failed to clear chat history');
       } finally {
         setLoading(false);
@@ -265,46 +229,32 @@ export function LeftSidebar() {
         <TooltipProvider>
           {/* Home and Panel Toggle Buttons */}
           <div className="flex flex-col space-y-2 dark:text-white">
-            <SideNavButton path="/" label="Home" Icon={Home} accessKey='h' />
+            <SideNavButton path="/" label="Home" Icon={Home} accessKey="h" />
 
             {/* Panel Toggle Button */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Home"
-                  onClick={() => setIsPanelOpen(!isPanelOpen)}
-                >
-                  {isPanelOpen ? (
-                    <PanelLeftClose className="h-5 w-5" />
-                  ) : (
-                    <PanelLeftOpen className="h-5 w-5" />
-                  )}
+                <Button variant="ghost" size="icon" aria-label="Home" onClick={() => setIsPanelOpen(!isPanelOpen)}>
+                  {isPanelOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right">
-                {isPanelOpen ? 'Hide Recent Chats' : 'Show Recent Chats'}
-              </TooltipContent>
+              <TooltipContent side="right">{isPanelOpen ? 'Hide Recent Chats' : 'Show Recent Chats'}</TooltipContent>
             </Tooltip>
           </div>
 
           {/* Navigation Items */}
           <div className="flex flex-col space-y-2 mt-4 h-screen justify-center items-center  dark:text-white">
-
-            <SideNavButton path="/chat" label="Chat" Icon={MessageCircleMore} accessKey='c' />
+            <SideNavButton path="/chat" label="Chat" Icon={MessageCircleMore} accessKey="c" />
             {(isSystemAdmin || isContentManager) && (
               <>
-                <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey='a' />
-                <SideNavButton path="/files" label="Files" Icon={FileBox} accessKey='U' />
+                <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey="a" />
+                <SideNavButton path="/files" label="Files" Icon={FileBox} accessKey="U" />
               </>
             )}
-            {(isSystemAdmin) && (
-              <SideNavButton path="/containers" label="Database" Icon={Database} accessKey='i' />
-            )}
+            {isSystemAdmin && <SideNavButton path="/containers" label="Database" Icon={Database} accessKey="i" />}
             {/* //todo:todu enablePreviewFeatures===true is required. */}
             {isSystemAdmin && enablePreviewFeatures == true && (
-              <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey='t' />
+              <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey="t" />
             )}
           </div>
 
@@ -340,7 +290,6 @@ export function LeftSidebar() {
                     <span>System</span>
                   </DropdownMenuItem>
 
-
                   <DropdownMenuSeparator />
 
                   <DropdownMenuItem onClick={handleLogout}>
@@ -357,35 +306,23 @@ export function LeftSidebar() {
       {/* Collapsible Panel */}
       <div
         className={cn(
-          "border-r bg-background transition-all duration-300 ease-in-out",
-          isPanelOpen ? "w-80" : "w-0 opacity-0"
+          'border-r bg-background transition-all duration-300 ease-in-out',
+          isPanelOpen ? 'w-80' : 'w-0 opacity-0'
         )}
       >
         {isPanelOpen && (
-          <div className="h-full flex flex-col dark:text-white " >
+          <div className="h-full flex flex-col dark:text-white ">
             {/* Panel Header */}
             <div className="p-4 border-b flex justify-between">
               <h2 className="font-semibold">Recent Chats</h2>
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCreateChat}
-                disabled={loading}
-                aria-label="New Chat"
-              > 
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Plus className="h-5 w-5" />
-                )}
+
+              <Button variant="ghost" size="icon" onClick={handleCreateChat} disabled={loading} aria-label="New Chat">
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
               </Button>
             </div>
 
             {/* Error Message */}
-            {error && (
-              <div className="px-4 py-2 text-destructive text-sm">{error}</div>
-            )}
+            {error && <div className="px-4 py-2 text-destructive text-sm">{error}</div>}
 
             {/* Chat Threads */}
             {loading && threads.length === 0 ? (
@@ -399,19 +336,21 @@ export function LeftSidebar() {
                     <div
                       key={thread.id}
                       className={cn(
-                        "group flex items-center justify-between p-2 rounded-md",
-                        "hover:bg-muted cursor-pointer",
-                        loading && "opacity-50 pointer-events-none"
+                        'group flex items-center justify-between p-2 rounded-md',
+                        'hover:bg-muted cursor-pointer',
+                        loading && 'opacity-50 pointer-events-none'
                       )}
                     >
                       <div
                         className="flex flex-col flex-grow min-w-0"
                         // onClick={() => navigate(`/chat/${thread.id}`)}
-                        onClick={() => navigate(`/chat/${thread.id}${thread.assistantId ? `?assistantId=${thread.assistantId}` : ''}`)}
+                        onClick={() =>
+                          navigate(
+                            `/chat/${thread.id}${thread.assistantId ? `?assistantId=${thread.assistantId}` : ''}`
+                          )
+                        }
                       >
-                        <span className="text-sm font-medium truncate">
-                          {thread.name}
-                        </span>
+                        <span className="text-sm font-medium truncate">{thread.name}</span>
                         {/* <span className="text-xs text-muted-foreground">
                           {new Date(thread.lastMessageAt).toLocaleDateString()}
                         </span> */}
@@ -425,11 +364,7 @@ export function LeftSidebar() {
                             disabled={loading}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {loading ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
+                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -461,14 +396,8 @@ export function LeftSidebar() {
               <div className="p-4 border-t">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : null}
+                    <Button variant="outline" className="w-full" disabled={loading}>
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                       Clear History
                     </Button>
                   </AlertDialogTrigger>
@@ -476,7 +405,8 @@ export function LeftSidebar() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Clear All Chat History</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to clear all chat history? This action cannot be undone and will delete all your conversations.
+                        Are you sure you want to clear all chat history? This action cannot be undone and will delete
+                        all your conversations.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

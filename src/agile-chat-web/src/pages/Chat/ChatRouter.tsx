@@ -7,7 +7,8 @@ import { fetchAssistantById } from '@/services/assistantservice';
 const ChatRouter: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState<React.ReactNode | null>(null);
 
@@ -18,7 +19,7 @@ const ChatRouter: React.FC = () => {
         if (assistant) {
           if (assistant.type === 'Chat') {
             // Add assistantId to query parameters
-            setSearchParams(prev => {
+            setSearchParams((prev) => {
               const newParams = new URLSearchParams(prev);
               newParams.set('assistantId', id!);
               return newParams;
