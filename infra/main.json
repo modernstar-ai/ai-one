@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.31.34.60546",
-      "templateHash": "5809515111914088282"
+      "templateHash": "7726271392512865004"
     }
   },
   "parameters": {
@@ -150,6 +150,13 @@
     "storageServiceImageContainerName": {
       "type": "string",
       "defaultValue": "images"
+    },
+    "appInsightsKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Application Insights Instrumentation Key"
+      }
     }
   },
   "variables": {
@@ -248,6 +255,9 @@
           "storageServiceImageContainerName": {
             "value": "[parameters('storageServiceImageContainerName')]"
           },
+          "appInsightsKey": {
+            "value": "[parameters('appInsightsKey')]"
+          },
           "location": {
             "value": "[parameters('location')]"
           }
@@ -259,7 +269,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.31.34.60546",
-              "templateHash": "7311810575128951367"
+              "templateHash": "9603223799762360061"
             }
           },
           "parameters": {
@@ -278,6 +288,13 @@
             "tags": {
               "type": "object",
               "defaultValue": {}
+            },
+            "appInsightsKey": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Application Insights Instrumentation Key"
+              }
             },
             "openai_api_version": {
               "type": "string"
@@ -376,6 +393,13 @@
               "defaultValue": "",
               "metadata": {
                 "description": "AZURE_TENANT_ID"
+              }
+            },
+            "roleAssignmentName": {
+              "type": "string",
+              "defaultValue": "[newGuid()]",
+              "metadata": {
+                "description": "The name of the Role Assignment - from Guid."
               }
             }
           },
@@ -575,6 +599,10 @@
                   ],
                   "appSettings": [
                     {
+                      "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                      "value": "[parameters('appInsightsKey')]"
+                    },
+                    {
                       "name": "AZURE_CLIENT_ID",
                       "value": "[parameters('azureClientID')]"
                     },
@@ -693,6 +721,21 @@
               "dependsOn": [
                 "[resourceId('Microsoft.OperationalInsights/workspaces', variables('la_workspace_name'))]",
                 "[resourceId('Microsoft.Web/sites', variables('webapp_name'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.KeyVault/vaults/{0}', variables('keyVaultName'))]",
+              "name": "[parameters('roleAssignmentName')]",
+              "properties": {
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('apiapp_name')), '2020-06-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[variables('keyVaultSecretsOfficerRole')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('apiapp_name'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
               ]
             },
             {

@@ -10,6 +10,9 @@ var appservice_name = toLower('${resourcePrefix}-app')
 var webapp_name = toLower('${resourcePrefix}-webapp')
 var apiapp_name = toLower('${resourcePrefix}-apiapp')
 
+@description('Application Insights Instrumentation Key')
+param appInsightsKey string = ''
+
 param openai_api_version string
 
 param openAiLocation string
@@ -185,7 +188,11 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         'string'
       ]
 
-      appSettings: [
+      appSettings: [        
+        {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: appInsightsKey
+        }
         {
           name: 'AZURE_CLIENT_ID'
           value: azureClientID
