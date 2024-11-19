@@ -1,0 +1,534 @@
+{
+  "format": 1,
+  "restore": {
+    "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Api\\Agile.Chat.Api.csproj": {}
+  },
+  "projects": {
+    "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Api\\Agile.Chat.Api.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Api\\Agile.Chat.Api.csproj",
+        "projectName": "Agile.Chat.Api",
+        "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Api\\Agile.Chat.Api.csproj",
+        "packagesPath": "C:\\Users\\yasir\\.nuget\\packages\\",
+        "outputPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Api\\obj\\",
+        "projectStyle": "PackageReference",
+        "UsingMicrosoftNETSdk": false,
+        "configFilePaths": [
+          "C:\\Users\\yasir\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Application\\Agile.Chat.Application.csproj": {
+                "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Application\\Agile.Chat.Application.csproj"
+              },
+              "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Common\\Agile.Framework.Common.csproj": {
+                "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Common\\Agile.Framework.Common.csproj"
+              },
+              "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework\\Agile.Framework.csproj": {
+                "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework\\Agile.Framework.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Carter": {
+              "target": "Package",
+              "version": "[8.2.1, )"
+            },
+            "Mapster": {
+              "target": "Package",
+              "version": "[7.4.0, )"
+            },
+            "Mapster.DependencyInjection": {
+              "target": "Package",
+              "version": "[1.0.1, )"
+            },
+            "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Serilog.Extensions.Hosting": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.4.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Application\\Agile.Chat.Application.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Application\\Agile.Chat.Application.csproj",
+        "projectName": "Agile.Chat.Application",
+        "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Application\\Agile.Chat.Application.csproj",
+        "packagesPath": "C:\\Users\\yasir\\.nuget\\packages\\",
+        "outputPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Application\\obj\\",
+        "projectStyle": "PackageReference",
+        "UsingMicrosoftNETSdk": false,
+        "configFilePaths": [
+          "C:\\Users\\yasir\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Domain\\Agile.Chat.Domain.csproj": {
+                "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Domain\\Agile.Chat.Domain.csproj"
+              },
+              "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Mediator\\Agile.Framework.Mediator.csproj": {
+                "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Mediator\\Agile.Framework.Mediator.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "FluentValidation.DependencyInjectionExtensions": {
+              "target": "Package",
+              "version": "[11.11.0, )"
+            },
+            "MediatR": {
+              "target": "Package",
+              "version": "[12.4.1, )"
+            },
+            "MediatR.Extensions.Microsoft.DependencyInjection": {
+              "target": "Package",
+              "version": "[11.1.0, )"
+            },
+            "Microsoft.Extensions.DependencyInjection.Abstractions": {
+              "target": "Package",
+              "version": "[8.0.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Domain\\Agile.Chat.Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Domain\\Agile.Chat.Domain.csproj",
+        "projectName": "Agile.Chat.Domain",
+        "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Domain\\Agile.Chat.Domain.csproj",
+        "packagesPath": "C:\\Users\\yasir\\.nuget\\packages\\",
+        "outputPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Agile.Chat.Domain\\obj\\",
+        "projectStyle": "PackageReference",
+        "UsingMicrosoftNETSdk": false,
+        "configFilePaths": [
+          "C:\\Users\\yasir\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Authentication\\Agile.Framework.Authentication.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Authentication\\Agile.Framework.Authentication.csproj",
+        "projectName": "Agile.Framework.Authentication",
+        "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Authentication\\Agile.Framework.Authentication.csproj",
+        "packagesPath": "C:\\Users\\yasir\\.nuget\\packages\\",
+        "outputPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Authentication\\obj\\",
+        "projectStyle": "PackageReference",
+        "UsingMicrosoftNETSdk": false,
+        "configFilePaths": [
+          "C:\\Users\\yasir\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Common\\Agile.Framework.Common.csproj": {
+                "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Common\\Agile.Framework.Common.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.Extensions.Configuration": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.DependencyInjection.Abstractions": {
+              "target": "Package",
+              "version": "[8.0.2, )"
+            },
+            "Microsoft.Identity.Web": {
+              "target": "Package",
+              "version": "[3.4.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Common\\Agile.Framework.Common.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Common\\Agile.Framework.Common.csproj",
+        "projectName": "Agile.Framework.Common",
+        "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Common\\Agile.Framework.Common.csproj",
+        "packagesPath": "C:\\Users\\yasir\\.nuget\\packages\\",
+        "outputPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Common\\obj\\",
+        "projectStyle": "PackageReference",
+        "UsingMicrosoftNETSdk": false,
+        "configFilePaths": [
+          "C:\\Users\\yasir\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.Extensions.Configuration": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.Configuration.Binder": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Mediator\\Agile.Framework.Mediator.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Mediator\\Agile.Framework.Mediator.csproj",
+        "projectName": "Agile.Framework.Mediator",
+        "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Mediator\\Agile.Framework.Mediator.csproj",
+        "packagesPath": "C:\\Users\\yasir\\.nuget\\packages\\",
+        "outputPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Mediator\\obj\\",
+        "projectStyle": "PackageReference",
+        "UsingMicrosoftNETSdk": false,
+        "configFilePaths": [
+          "C:\\Users\\yasir\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "FluentValidation": {
+              "target": "Package",
+              "version": "[11.8.0, )"
+            },
+            "MediatR": {
+              "target": "Package",
+              "version": "[12.4.1, )"
+            },
+            "MediatR.Contracts": {
+              "target": "Package",
+              "version": "[2.0.1, )"
+            },
+            "Microsoft.Extensions.Logging.Abstractions": {
+              "target": "Package",
+              "version": "[8.0.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework\\Agile.Framework.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework\\Agile.Framework.csproj",
+        "projectName": "Agile.Framework",
+        "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework\\Agile.Framework.csproj",
+        "packagesPath": "C:\\Users\\yasir\\.nuget\\packages\\",
+        "outputPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework\\obj\\",
+        "projectStyle": "PackageReference",
+        "UsingMicrosoftNETSdk": false,
+        "configFilePaths": [
+          "C:\\Users\\yasir\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Authentication\\Agile.Framework.Authentication.csproj": {
+                "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Authentication\\Agile.Framework.Authentication.csproj"
+              },
+              "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Common\\Agile.Framework.Common.csproj": {
+                "projectPath": "D:\\Users\\yasir\\Desktop\\Agile\\agile-chat\\src\\Agile.Chat\\Framework\\Agile.Framework.Common\\Agile.Framework.Common.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Serilog.Extensions.Hosting": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Serilog.Sinks.ApplicationInsights": {
+              "target": "Package",
+              "version": "[4.0.0, )"
+            },
+            "Serilog.Sinks.Console": {
+              "target": "Package",
+              "version": "[6.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

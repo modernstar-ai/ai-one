@@ -1,0 +1,12 @@
+D:\Users\yasir\Desktop\Agile\agile-chat\src\Agile.Chat\Agile.Chat.Domain\bin\Debug\net8.0\Agile.Chat.Domain.deps.json
+D:\Users\yasir\Desktop\Agile\agile-chat\src\Agile.Chat\Agile.Chat.Domain\bin\Debug\net8.0\Agile.Chat.Domain.dll
+D:\Users\yasir\Desktop\Agile\agile-chat\src\Agile.Chat\Agile.Chat.Domain\bin\Debug\net8.0\Agile.Chat.Domain.pdb
+D:\Users\yasir\Desktop\Agile\agile-chat\src\Agile.Chat\Agile.Chat.Domain\obj\Debug\net8.0\Agile.Chat.Domain.GeneratedMSBuildEditorConfig.editorconfig
+D:\Users\yasir\Desktop\Agile\agile-chat\src\Agile.Chat\Agile.Chat.Domain\obj\Debug\net8.0\Agile.Chat.Domain.AssemblyInfoInputs.cache
+D:\Users\yasir\Desktop\Agile\agile-chat\src\Agile.Chat\Agile.Chat.Domain\obj\Debug\net8.0\Agile.Chat.Domain.AssemblyInfo.cs
+D:\Users\yasir\Desktop\Agile\agile-chat\src\Agile.Chat\Agile.Chat.Domain\obj\Debug\net8.0\Agile.Chat.Domain.csproj.CoreCompileInputs.cache
+D:\Users\yasir\Desktop\Agile\agile-chat\src\Agile.Chat\Agile.Chat.Domain\obj\Debug\net8.0\Agile.Chat.Domain.sourcelink.json
+D:\Users\yasir\Desktop\Agile\agile-chat\src\Agile.Chat\Agile.Chat.Domain\obj\Debug\net8.0\Agile.Chat.Domain.dll
+D:\Users\yasir\Desktop\Agile\agile-chat\src\Agile.Chat\Agile.Chat.Domain\obj\Debug\net8.0\refint\Agile.Chat.Domain.dll
+D:\Users\yasir\Desktop\Agile\agile-chat\src\Agile.Chat\Agile.Chat.Domain\obj\Debug\net8.0\Agile.Chat.Domain.pdb
+D:\Users\yasir\Desktop\Agile\agile-chat\src\Agile.Chat\Agile.Chat.Domain\obj\Debug\net8.0\ref\Agile.Chat.Domain.dll
