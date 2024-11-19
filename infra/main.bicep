@@ -77,9 +77,6 @@ param searchServiceSkuName string = 'standard'
 param storageServiceSku object = { name: 'Standard_LRS' }
 param storageServiceImageContainerName string = 'images'
 
-@description('Application Insights Instrumentation Key')
-param appInsightsKey string = ''
-
 //other
 var tags = { 'azd-env-name': environmentName }
 
@@ -113,7 +110,6 @@ module resources 'resources.bicep' = {
     searchServiceSkuName: searchServiceSkuName
     storageServiceSku: storageServiceSku
     storageServiceImageContainerName: storageServiceImageContainerName
-    appInsightsKey: appInsightsKey
     location: location
   }
 }

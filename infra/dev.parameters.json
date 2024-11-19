@@ -16,9 +16,7 @@
       },
       "dalleLocation": {
         "value": "australiaeast"
-      },
-      "appInsightsKey": {
-        "value": ""
-      } 
+      }
+      
     }
   }

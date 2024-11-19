@@ -9,9 +9,7 @@ var resourcePrefix = toLower('${projectName}-${environmentName}')
 var appservice_name = toLower('${resourcePrefix}-app')
 var webapp_name = toLower('${resourcePrefix}-webapp')
 var apiapp_name = toLower('${resourcePrefix}-apiapp')
-
-@description('Application Insights Instrumentation Key')
-param appInsightsKey string = ''
+var applicationInsightsName = toLower('${resourcePrefix}-apiapp')
 
 param openai_api_version string
 
@@ -210,7 +208,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: appInsightsKey
+          value: applicationInsights.properties.InstrumentationKey
         }
         {
           name: 'AZURE_CLIENT_ID'
@@ -330,6 +328,17 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-12
   name: la_workspace_name
   tags: tags
   location: location
+}
+
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: applicationInsightsName
+  location: location
+  tags: tags
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalyticsWorkspace.id
+  }
 }
 
 resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
