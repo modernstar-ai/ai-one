@@ -14,7 +14,7 @@ public interface IAssistantsService  : ICosmosRepository<Assistant>
     public Task<Assistant?> GetByIdAsync(Guid id);
 }
 
-[Export(typeof(IAssistantsService), ServiceLifetime.Scoped)]
+[Export(typeof(IAssistantsService), ServiceLifetime.Singleton)]
 public class AssistantsService(CosmosClient cosmosClient) : 
     CosmosRepository<Assistant>(Constants.COSMOS_ASSISTANTS_CONTAINER_NAME, cosmosClient), IAssistantsService
 {

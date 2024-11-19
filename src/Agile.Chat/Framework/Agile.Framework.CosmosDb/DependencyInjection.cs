@@ -1,4 +1,5 @@
 ﻿using Agile.Framework.Common.EnvironmentVariables;
+using Agile.Framework.CosmosDb.Interfaces;
 using Azure;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.DependencyInjection;

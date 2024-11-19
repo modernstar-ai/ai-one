@@ -8,7 +8,6 @@ using Microsoft.Azure.Cosmos.Linq;
 
 namespace Agile.Framework.CosmosDb;
 
-[Export(typeof(ICosmosRepository<>))]
 public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : AggregateRoot
 {
     protected CosmosClient CosmosClient { get; }
