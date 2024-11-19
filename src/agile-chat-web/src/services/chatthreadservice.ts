@@ -165,10 +165,11 @@ export async function GetChatThreadMessages(
   let existingMessages: Message[] | null;
 
   // if there is an assistant get the system and welcome messages
-  if (currentAssistant) {
+  //if (currentAssistant) {
+
     initialMessages = GetSystemAndWelcomeMessages(username, currentAssistant, chatThreadId);
     console.log('Chat - set initialMessages from current assistant:', initialMessages);
-  }
+  //}
 
   if (chatThreadId) {
     // Load existing chat thread messages
@@ -186,7 +187,7 @@ export async function GetChatThreadMessages(
 
 export function GetSystemAndWelcomeMessages(
   userName: string,
-  currentAssistant: Assistant,
+  currentAssistant: Assistant | null,
   chatThreadId: string
 ): Message[] {
   console.log('currentAssistant', currentAssistant);
@@ -195,7 +196,7 @@ export function GetSystemAndWelcomeMessages(
     createdAt: new Date(),
     type: 'text',
     isDeleted: false,
-    content: currentAssistant?.systemMessage || '',
+    content: currentAssistant?.systemMessage || 'Hello! How can I assist you today?',
     name: 'System',
     role: 'system',
     threadId: chatThreadId,
@@ -204,13 +205,13 @@ export function GetSystemAndWelcomeMessages(
     sender: 'system',
   };
 
-  if (currentAssistant?.systemMessage && currentAssistant?.greeting) {
+  //if (currentAssistant?.systemMessage && currentAssistant?.greeting) {
     const welcomeMessage: Message = {
       id: crypto.randomUUID(),
       createdAt: new Date(),
       type: 'text',
       isDeleted: false,
-      content: currentAssistant?.greeting || '',
+      content: currentAssistant?.greeting || 'Hello! How can I assist you today?',
       name: currentAssistant?.name || '',
       role: 'assistant',
       threadId: chatThreadId,
@@ -219,9 +220,10 @@ export function GetSystemAndWelcomeMessages(
       sender: 'assistant',
     };
     return [systemMessage, welcomeMessage];
-  } else {
-    return [systemMessage];
-  }
+    //} else {
+    //return [systemMessage];
+  //}
+  
 }
 
 export type { ChatThread, NewChatThread, UpdateChatThreadTitle, ExtensionUpdate };

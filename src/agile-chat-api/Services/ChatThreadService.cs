@@ -40,40 +40,10 @@ public class ChatThreadService : IChatThreadService
 
     public ChatThread GetOrCreateChatThread(string threadId, string prompt, string userId, string userName)
     {
-        try
-        {
-            ChatThread chatThread = null;
-
-            if (string.IsNullOrEmpty(threadId))
-            {
-                // Create new chat thread if no threadId provided
-                chatThread = new ChatThread
-                {
-                    name = prompt.Length > 30 ? prompt.Substring(0, 28) + "..." : prompt,
-                    userName = userName,
-                    userId = userId,
-                    type = "CHAT_THREAD",
-                    createdAt = DateTime.UtcNow,
-                    lastMessageAt = DateTime.UtcNow,
-                    bookmarked = false,
-                    isDeleted = false,
-                    assistantMessage = "current assistant system message",
-                    assistantTitle = "current assistant name"
-                };
-
-                _container.CreateItemAsync(chatThread, new PartitionKey(chatThread.userId.ToString())).GetAwaiter().GetResult();
-
-                threadId = chatThread.id;
-                return chatThread;
-            }
-
-            // Get existing chat thread
-            chatThread = GetById(threadId);
-
-            if (chatThread == null)
-            {
-                return null;
-            }
+            ChatThread chatThread = _container.GetItemLinqQueryable<ChatThread>(true)
+                  .Where(t => t.id.ToString() == threadId.ToString())
+                  .AsEnumerable()
+                  .First();
 
             if (chatThread.name == "New Chat")
             {
@@ -88,11 +58,7 @@ public class ChatThreadService : IChatThreadService
             }
 
             return chatThread;
-        }
-        catch (Exception)
-        {
-            return null;
-        }
+        
     }
 
 
@@ -112,10 +78,11 @@ public class ChatThreadService : IChatThreadService
     public IEnumerable<ChatThread> GetAllByUserId(string userId)
     {
         var queryDefinition = new QueryDefinition(
-            "SELECT * FROM c WHERE c.type = 'CHAT_THREAD' AND c.userId = @userId AND c.name <> @name AND c.isDeleted = @isDeleted")
+            "SELECT * FROM c WHERE c.type = 'CHAT_THREAD' AND c.userId = @userId AND c.name <> @name AND c.isDeleted = @isDeleted ORDER BY c.createdAt DESC")
             .WithParameter("@userId", userId)
             .WithParameter("@name", "New Chat")
             .WithParameter("@isDeleted", false);
+
 
         var query = _container.GetItemQueryIterator<ChatThread>(queryDefinition);
         var results = new List<ChatThread>();

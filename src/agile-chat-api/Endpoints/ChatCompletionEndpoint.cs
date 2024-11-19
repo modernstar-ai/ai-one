@@ -13,7 +13,7 @@ public static class ChatCompletionsEndpoint
     public static void MapChatCompletionsEndpoint(this IEndpointRouteBuilder app)
     {
         app.MapPost("/chat",
-            async (HttpContext context, string? threadId, [FromServices] IAssistantService assistantService, [FromServices] ILogger<ChatCompletionsEndpointLogger> logger) =>
+            async (HttpContext context, string threadId, [FromServices] IAssistantService assistantService, [FromServices] ILogger<ChatCompletionsEndpointLogger> logger) =>
             {
                 #region Service Initialization
                 
@@ -101,7 +101,7 @@ public static class ChatCompletionsEndpoint
                         threadId = threadId,
                         id = Guid.NewGuid().ToString(),
                         name = username,
-                        userId = userId,
+                        userId = username,
                         role = "user",
                         createdAt = DateTime.UtcNow,
                         isDeleted = false,
@@ -172,7 +172,7 @@ public static class ChatCompletionsEndpoint
                         threadId = threadId,
                         id = Guid.NewGuid().ToString(),
                         name = username,
-                        userId = userId,
+                        userId = username,
                         role = "assistant",
                         sender = "assistant",
                         createdAt = DateTime.UtcNow,
