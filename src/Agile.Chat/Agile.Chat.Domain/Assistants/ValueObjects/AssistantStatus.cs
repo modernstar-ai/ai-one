@@ -3,8 +3,9 @@
 namespace Agile.Chat.Domain.Assistants.ValueObjects;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum AssistantType
+public enum AssistantStatus
 {
-    Chat,
-    Search
+    Draft,
+    Published,
+    Archived,
 }

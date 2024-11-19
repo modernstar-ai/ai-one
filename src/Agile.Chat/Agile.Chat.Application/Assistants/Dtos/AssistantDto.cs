@@ -8,13 +8,11 @@ public class AssistantDto
 
     public string Description { get; set; }
 
-    public AssistantType Type { get; set; }
-
     public string Greeting { get; set; }
+    
+    public AssistantStatus Status { get; set; }
 
-    public string SystemMessage { get; set; }
+    public AssistantFilterOptions FilterOptions { get; set; } = new();
 
-    public string? Group { get; set; }
-
-    public string Index { get; set; }
+    public AssistantPromptOptions PromptOptions { get; set; } = new();
 }

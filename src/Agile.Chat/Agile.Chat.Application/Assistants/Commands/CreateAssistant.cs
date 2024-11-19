@@ -12,11 +12,10 @@ public static class CreateAssistant
     public record Command(
         string Name, 
         string Description, 
-        AssistantType Type, 
         string Greeting, 
-        string SystemMessage, 
-        string Group, 
-        string Index) : IRequest<IResult>;
+        AssistantStatus Status, 
+        AssistantFilterOptions FilterOptions, 
+        AssistantPromptOptions PromptOptions) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> Logger) : IRequestHandler<Command, IResult>
     {
@@ -27,11 +26,10 @@ public static class CreateAssistant
             var assistant = Assistant.Create(
                 request.Name, 
                 request.Description, 
-                request.Type, 
-                request.Greeting, 
-                request.SystemMessage, 
-                request.Group, 
-                request.Index);
+                request.Greeting,
+                request.Status,
+                request.FilterOptions,
+                request.PromptOptions);
             
             return Results.Created(assistant.Id.ToString(), assistant);
         }

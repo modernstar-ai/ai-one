@@ -11,13 +11,12 @@ public static class UpdateAssistantById
 {
     public record Command(
         string Id,
-        string Name,
-        string Description,
-        AssistantType Type,
-        string Greeting,
-        string SystemMessage,
-        string Group, 
-        string Index) : IRequest<IResult>;
+        string Name, 
+        string Description, 
+        string Greeting, 
+        AssistantStatus Status, 
+        AssistantFilterOptions FilterOptions, 
+        AssistantPromptOptions PromptOptions) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> Logger) : IRequestHandler<Command, IResult>
     {
@@ -25,16 +24,7 @@ public static class UpdateAssistantById
         {
             Logger.LogInformation("Handler executed {Handler}", typeof(Handler).Namespace);
             
-            var assistant = Assistant.Create(
-                request.Name, 
-                request.Description, 
-                request.Type, 
-                request.Greeting, 
-                request.SystemMessage, 
-                request.Group, 
-                request.Index);
-            
-            return Results.Created(assistant.Id.ToString(), assistant);
+            return Results.Created(request.Id.ToString(), null);
         }
     }
 

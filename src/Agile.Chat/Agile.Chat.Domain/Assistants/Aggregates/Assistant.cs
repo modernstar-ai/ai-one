@@ -8,32 +8,46 @@ public class Assistant
     
     public Guid Id { get; private set; }
     public string Name { get; private set; }
-
     public string Description { get; private set; }
-
-    public AssistantType Type { get; private set; }
-
     public string Greeting { get; private set; }
+    public AssistantStatus Status { get; private set; }
+    
+    public AssistantPromptOptions PromptOptions { get; private set; }
+    public AssistantFilterOptions FilterOptions { get; private set; }
 
-    public string SystemMessage { get; private set; }
-
-    public string? Group { get; private set; }
-
-    public string Index { get; private set; }
-
-    public static Assistant Create(string name, string description, AssistantType type, string greeting, string systemMessage, string? group, string index)
+    public static Assistant Create(string name,
+        string description, 
+        string greeting, 
+        AssistantStatus status, 
+        AssistantFilterOptions filterOptions, 
+        AssistantPromptOptions promptOptions)
     {
-        //Do validation logic and throw domain exceptions if fails
+        //Do validation logic and throw domain level exceptions if fails
         return new Assistant
         {
             Id = Guid.NewGuid(),
             Name = name,
             Description = description,
-            Type = type,
+            Status = status,
             Greeting = greeting,
-            SystemMessage = systemMessage,
-            Group = group,
-            Index = index
+            FilterOptions = filterOptions,
+            PromptOptions = promptOptions
         };
+    }
+    
+    public void Update(string name, 
+        string description, 
+        string greeting, 
+        AssistantStatus status, 
+        AssistantFilterOptions filterOptions, 
+        AssistantPromptOptions promptOptions)
+    {
+        //Do validation logic and throw domain level exceptions if fails
+        Name = name;
+        Description = description;
+        Status = status;
+        Greeting = greeting;
+        FilterOptions = filterOptions;
+        PromptOptions = promptOptions;
     }
 }
