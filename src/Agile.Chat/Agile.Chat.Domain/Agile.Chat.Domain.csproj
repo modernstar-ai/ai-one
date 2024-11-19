@@ -6,4 +6,8 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Framework\Agile.Framework.Common\Agile.Framework.Common.csproj" />
+    </ItemGroup>
+
 </Project>

@@ -16,6 +16,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agile.Framework", "Framewor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agile.Framework.Mediator", "Framework\Agile.Framework.Mediator\Agile.Framework.Mediator.csproj", "{78D6135C-F421-45A0-BF3D-A8F6F3D5FED2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agile.Framework.CosmosDb", "Framework\Agile.Framework.CosmosDb\Agile.Framework.CosmosDb.csproj", "{CFB4EF1E-8568-4B81-BA12-141D57DFE318}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -50,11 +52,16 @@ Global
 		{78D6135C-F421-45A0-BF3D-A8F6F3D5FED2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{78D6135C-F421-45A0-BF3D-A8F6F3D5FED2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{78D6135C-F421-45A0-BF3D-A8F6F3D5FED2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFB4EF1E-8568-4B81-BA12-141D57DFE318}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFB4EF1E-8568-4B81-BA12-141D57DFE318}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFB4EF1E-8568-4B81-BA12-141D57DFE318}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFB4EF1E-8568-4B81-BA12-141D57DFE318}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{1672E1EC-F0DE-44F3-93CE-51DD0D4B76EE} = {93608BB2-A304-41B6-A758-8AC30CA002FC}
 		{28AB9E1C-1A5C-4D3C-BCA6-00188FD0E974} = {93608BB2-A304-41B6-A758-8AC30CA002FC}
 		{85FA4D43-BF7B-4D02-8EF4-B1F2DDE43D52} = {93608BB2-A304-41B6-A758-8AC30CA002FC}
 		{78D6135C-F421-45A0-BF3D-A8F6F3D5FED2} = {93608BB2-A304-41B6-A758-8AC30CA002FC}
+		{CFB4EF1E-8568-4B81-BA12-141D57DFE318} = {93608BB2-A304-41B6-A758-8AC30CA002FC}
 	EndGlobalSection
 EndGlobal

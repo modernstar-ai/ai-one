@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using Agile.Chat.Application.Assistants.Services;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -8,13 +9,17 @@ public static class GetAssistantById
 {
     public record Query(Guid Id) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> Logger) : IRequestHandler<Query, IResult>
+    public class Handler(ILogger<Handler> logger, IAssistantsService assistantsService) : IRequestHandler<Query, IResult>
     {
 
         public async Task<IResult> Handle(Query request, CancellationToken cancellationToken)
         {
-            Logger.LogInformation("Executed handler {Handler}", typeof(Handler).Namespace);
-            return Results.Ok();
+            logger.LogInformation("Executed handler {Handler}", typeof(Handler).Namespace);
+            var assistant = await assistantsService.GetByIdAsync(request.Id);
+            if (assistant is null) return Results.NotFound();
+            
+            logger.LogInformation("Found Assistant name: {Name} with Id: {Id}", assistant.Name, assistant.Id);
+            return Results.Ok(assistant);
         }
     }
 }

@@ -15,6 +15,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Agile.Chat.Domain\Agile.Chat.Domain.csproj" />
+      <ProjectReference Include="..\Framework\Agile.Framework.CosmosDb\Agile.Framework.CosmosDb.csproj" />
       <ProjectReference Include="..\Framework\Agile.Framework.Mediator\Agile.Framework.Mediator.csproj" />
     </ItemGroup>
 

@@ -1,5 +1,7 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Reflection;
+using System.Text.Json.Serialization;
 using Agile.Chat.Api.Exceptions;
+using Agile.Framework.Common.Attributes;
 using Carter;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +16,7 @@ public static class DependencyInjection
         services.AddMapster();
         return services
             .AddGlobalExceptionHandling()
+            .AddExportedServices()
             .AddEndpoints()
             .AddSwagger();
     }
@@ -59,5 +62,73 @@ public static class DependencyInjection
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             })
             .AddCarter();
+
+    private static IServiceCollection AddExportedServices(this IServiceCollection services)
+    {
+        var entryAssembly = Assembly.GetEntryAssembly();
+        if (entryAssembly is null || string.IsNullOrEmpty(entryAssembly.FullName))
+            throw new ArgumentException("entryAssembly cannot be null.");
+            
+        var assembliesToCheck = new Queue<Assembly>();
+        var loadedAssemblies = new Dictionary<string, Assembly>();
+
+        assembliesToCheck.Enqueue(entryAssembly);
+        loadedAssemblies.Add(entryAssembly.FullName, entryAssembly);
+
+        while (assembliesToCheck.Any())
+        {
+            var assemblyToCheck = assembliesToCheck.Dequeue();
+
+            foreach (var reference in assemblyToCheck.GetReferencedAssemblies())
+            {
+                if (!loadedAssemblies.ContainsKey(reference.FullName) && !reference.FullName.StartsWith("System") && !reference.FullName.StartsWith("Microsoft"))
+                {
+                    var assembly = Assembly.Load(reference);
+                    assembliesToCheck.Enqueue(assembly);
+                    loadedAssemblies.Add(reference.FullName, assembly);
+                }
+            }
+        }
+
+        foreach (var assembly in loadedAssemblies)
+        {
+            RegisterServices(assembly.Value, services);
+        }
+
+        return services;
+    }
+    
+    private static void RegisterServices(Assembly assembly, IServiceCollection services)
+    {
+        foreach (var type in assembly.GetTypes())
+        {
+            var attributes = type.GetCustomAttributes<ExportAttribute>();
+            foreach (var att in attributes)
+            {
+                switch (att.Lifetime)
+                {
+                    case ServiceLifetime.Singleton:
+                        if (att.ServiceType != null)
+                            services.AddSingleton(att.ServiceType, type);
+                        else
+                            services.AddSingleton(type);
+                        break;
+
+                    case ServiceLifetime.Scoped:
+                        if (att.ServiceType != null)
+                            services.AddScoped(att.ServiceType, type);
+                        else
+                            services.AddScoped(type);
+                        break;
+                    case ServiceLifetime.Transient:
+                        if (att.ServiceType != null)
+                            services.AddTransient(att.ServiceType, type);
+                        else
+                            services.AddTransient(type);
+                        break;
+                }
+            }
+        }
+    }
     
 }

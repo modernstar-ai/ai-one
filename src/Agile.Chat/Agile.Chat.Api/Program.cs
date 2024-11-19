@@ -15,6 +15,7 @@ builder.Services
     .AddFramework(builder.Configuration);
 
 var app = builder.Build();
+await app.InitializeServicesAsync();
 
 if (app.Environment.IsEnvironment("Local"))
 {
