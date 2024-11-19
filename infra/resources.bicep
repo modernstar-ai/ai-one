@@ -9,6 +9,24 @@ var resourcePrefix = toLower('${projectName}-${environmentName}')
 var appservice_name = toLower('${resourcePrefix}-app')
 var webapp_name = toLower('${resourcePrefix}-webapp')
 var apiapp_name = toLower('${resourcePrefix}-apiapp')
+var applicationInsightsName = toLower('${resourcePrefix}-apiapp')
+
+
+@description('Deployment Environment')
+@allowed(['Development', 'Production'])
+param aspCoreEnvironment string = 'Development'
+
+@description('AZURE_CLIENT_ID')
+@secure()
+param azureClientID string = ''
+
+@description('AZURE_CLIENT_SECRET')
+@secure()
+param azureClientSecret string = ''
+
+@description('AZURE_TENANT_ID')
+@secure()
+param azureTenantId string = ''
 
 param openai_api_version string
 
@@ -21,6 +39,18 @@ param chatGptModelVersion string
 param embeddingDeploymentName string
 param embeddingDeploymentCapacity int
 param embeddingModelName string
+
+param OpenaiApiEmbeddingsModelName string = 'text-embedding-ada-002'
+param AdminEmailAddress string = 'adam-stephensen@agile-analytics.com.au'
+param AzureCosmosdbDbName string = 'chat'
+param AzureCosmosdbDatabaseName string = 'chat'
+param AzureCosmosdbContainerName string = 'history'
+param AzureCosmosdbConfigContainerName string = 'config'
+param AzureCosmosdbToolsContainerName string = 'tools'
+param AzureCosmosdbFilesContainerName string = 'fileUploads'
+param AzureSearchIndexNameRag string = 'rag_index'
+param MaxUploadDocumentSize string = '20000000'
+param AzureStorageFoldersContainerName string = 'folders'
 
 param dalleLocation string
 param dalleDeploymentCapacity int
@@ -40,6 +70,9 @@ param storageServiceImageContainerName string
 
 var openai_name = toLower('${resourcePrefix}-aillm')
 var openai_dalle_name = toLower('${resourcePrefix}-aidalle')
+
+@description('Cosmos DB Chat threads container name')
+param azureCosmosDbChatThreadsName string = 'history'
 
 var form_recognizer_name = toLower('${resourcePrefix}-form')
 var speech_service_name = toLower('${resourcePrefix}-speech')
@@ -92,6 +125,10 @@ var configContainerName = 'config'
 //   }
 // ]
 
+
+
+/* **************************************************** */
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
   name: appservice_name
   location: location
@@ -126,6 +163,10 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
           value: 'false'
+        }
+        {
+          name: 'ALLOWED_ORIGINS'
+          value: 'https://${apiapp_name}.azurewebsites.net'
         }
       ]
     }
@@ -169,8 +210,93 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
 
       appSettings: [
         {
+          name: 'AZURE_STORAGE_FOLDERS_CONTAINER_NAME'
+          value: AzureStorageFoldersContainerName
+        }
+        {
+          name: 'AZURE_STORAGE_ACCOUNT_CONNECTION'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storage_name};AccountKey=@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_KEY.name})'
+        }
+        {
+          name: 'MAX_UPLOAD_DOCUMENT_SIZE'
+          value: MaxUploadDocumentSize
+        }
+        {
+          name: 'AZURE_SEARCH_ENDPOINT'
+          value: 'https://${search_name}.search.windows.net'
+        }
+        {
+          name: 'AZURE_SEARCH_INDEX_NAME_RAG'
+          value: AzureSearchIndexNameRag
+        }
+
+        {
+          name: 'AZURE_OPENAI_API_EMBEDDINGS_MODEL_NAME'
+          value: OpenaiApiEmbeddingsModelName
+        }
+        {
+          name: 'ADMIN_EMAIL_ADDRESS'
+          value: AdminEmailAddress
+        }
+        {
+          name: 'AZURE_COSMOSDB_DB_NAME'
+          value: AzureCosmosdbDbName
+        }
+        {
+          name: 'AZURE_COSMOSDB_DATABASE_NAME'
+          value: AzureCosmosdbDatabaseName
+        }
+        {
+          name: 'AZURE_COSMOSDB_CONTAINER_NAME'
+          value: AzureCosmosdbContainerName
+        }
+        {
+          name: 'AZURE_COSMOSDB_CONFIG_CONTAINER_NAME'
+          value: AzureCosmosdbConfigContainerName
+        }
+        {
+          name: 'AZURE_COSMOSDB_TOOLS_CONTAINER_NAME'
+          value: AzureCosmosdbToolsContainerName
+        }
+        {
+          name: 'AZURE_COSMOSDB_FILES_CONTAINER_NAME'
+          value: AzureCosmosdbFilesContainerName
+        }
+        {
+          name: 'AZURE_AI_SERVICES_KEY'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_KEY.name})'
+        }
+        {
+          name: 'ALLOWED_ORIGINS'
+          value: 'https://${webApp.properties.defaultHostName}'
+        }
+        {
+          name: 'AZURE_COSMOSDB_CHAT_THREADS_CONTAINER_NAME'
+          value: azureCosmosDbChatThreadsName
+        }
+        {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: applicationInsights.properties.InstrumentationKey
+        }
+        {
+          name: 'AZURE_CLIENT_ID'
+          value: azureClientID
+        }
+        {
+          name: 'AZURE_CLIENT_SECRET'
+          value: azureClientSecret
+        }
+        {
+          name: 'AZURE_TENANT_ID'
+          value: azureTenantId
+        }
+        {
           name: 'AZURE_KEY_VAULT_NAME'
           value: keyVaultName
+        }
+        {
+          name: 'ASPNETCORE_ENVIRONMENT'
+          value: aspCoreEnvironment
         }
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
@@ -195,6 +321,10 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'AZURE_OPENAI_API_VERSION'
           value: openai_api_version
+        }
+        {
+          name: 'AZURE_OPENAI_ENDPOINT'
+          value: azureopenai.properties.endpoint
         }
         // {
         //   name: 'AZURE_OPENAI_DALLE_API_KEY'
@@ -268,6 +398,17 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-12
   location: location
 }
 
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: applicationInsightsName
+  location: location
+  tags: tags
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalyticsWorkspace.id
+  }
+}
+
 resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: diagnostic_setting_name
   scope: webApp
@@ -286,18 +427,18 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 //**************************************************************************
 //Add Role Assignment for web app to Key vault
 
-//@description('The name of the Role Assignment - from Guid.')
-//param roleAssignmentName string = newGuid()
+@description('The name of the Role Assignment - from Guid.')
+param roleAssignmentName string = newGuid()
 
-//resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-//  name: roleAssignmentName
-//  scope: kv
-//  properties: {
-//    principalId: apiApp.identity.principalId
- //   principalType: 'ServicePrincipal'
- //   roleDefinitionId: keyVaultSecretsOfficerRole
- // }
-//}
+resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: roleAssignmentName
+  scope: kv
+  properties: {
+    principalId: apiApp.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: keyVaultSecretsOfficerRole
+  }
+}
 
 //**************************************************************************
 
