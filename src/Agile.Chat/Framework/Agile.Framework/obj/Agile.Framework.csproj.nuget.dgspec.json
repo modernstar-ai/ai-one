@@ -192,6 +192,10 @@
               "target": "Package",
               "version": "[8.0.0, )"
             },
+            "Serilog.Settings.Configuration": {
+              "target": "Package",
+              "version": "[8.0.4, )"
+            },
             "Serilog.Sinks.ApplicationInsights": {
               "target": "Package",
               "version": "[4.0.0, )"

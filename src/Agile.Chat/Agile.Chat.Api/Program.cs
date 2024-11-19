@@ -12,7 +12,7 @@ Configs.InitializeConfigs(builder.Configuration);
 builder.Services
     .AddApi()
     .AddApplication()
-    .AddFramework();
+    .AddFramework(builder.Configuration);
 
 var app = builder.Build();
 

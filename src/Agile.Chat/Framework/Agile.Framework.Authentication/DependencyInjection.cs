@@ -1,4 +1,5 @@
-﻿using Agile.Framework.Common.EnvironmentVariables;
+﻿using System.Collections.Generic;
+using Agile.Framework.Common.EnvironmentVariables;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
