@@ -17,8 +17,17 @@
       "dalleLocation": {
         "value": "australiaeast"
       },
-      "appInsightsKey": {
+      "azureClientID": {
         "value": ""
-      } 
+      },
+      "azureClientSecret": {
+        "value": ""
+      },
+      "azureTenantId": {
+        "value": ""
+      },
+      "aspCoreEnvironment": {
+        "value": "Production"
+      }
     }
   }

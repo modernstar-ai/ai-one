@@ -11,6 +11,23 @@ var webapp_name = toLower('${resourcePrefix}-webapp')
 var apiapp_name = toLower('${resourcePrefix}-apiapp')
 var applicationInsightsName = toLower('${resourcePrefix}-apiapp')
 
+
+@description('Deployment Environment')
+@allowed(['Development', 'Production'])
+param aspCoreEnvironment string = 'Development'
+
+@description('AZURE_CLIENT_ID')
+@secure()
+param azureClientID string = ''
+
+@description('AZURE_CLIENT_SECRET')
+@secure()
+param azureClientSecret string = ''
+
+@description('AZURE_TENANT_ID')
+@secure()
+param azureTenantId string = ''
+
 param openai_api_version string
 
 param openAiLocation string
@@ -108,21 +125,7 @@ var configContainerName = 'config'
 //   }
 // ]
 
-@description('Deployment Environment')
-@allowed(['Development', 'Production'])
-param aspCoreEnvironment string = 'Development'
 
-@description('AZURE_CLIENT_ID')
-@secure()
-param azureClientID string = ''
-
-@description('AZURE_CLIENT_SECRET')
-@secure()
-param azureClientSecret string = ''
-
-@description('AZURE_TENANT_ID')
-@secure()
-param azureTenantId string = ''
 
 /* **************************************************** */
 

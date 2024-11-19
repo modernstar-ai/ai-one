@@ -77,6 +77,22 @@ param searchServiceSkuName string = 'standard'
 param storageServiceSku object = { name: 'Standard_LRS' }
 param storageServiceImageContainerName string = 'images'
 
+@description('Deployment Environment')
+@allowed(['Development', 'Production'])
+param aspCoreEnvironment string = 'Development'
+
+@description('AZURE_CLIENT_ID')
+@secure()
+param azureClientID string = ''
+
+@description('AZURE_CLIENT_SECRET')
+@secure()
+param azureClientSecret string = ''
+
+@description('AZURE_TENANT_ID')
+@secure()
+param azureTenantId string = ''
+
 //other
 var tags = { 'azd-env-name': environmentName }
 
@@ -111,6 +127,10 @@ module resources 'resources.bicep' = {
     storageServiceSku: storageServiceSku
     storageServiceImageContainerName: storageServiceImageContainerName
     location: location
+    aspCoreEnvironment: aspCoreEnvironment
+    azureClientID: azureClientID
+    azureClientSecret: azureClientSecret
+    azureTenantId: azureTenantId
   }
 }
 
