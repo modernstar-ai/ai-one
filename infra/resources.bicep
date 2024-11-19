@@ -23,6 +23,18 @@ param embeddingDeploymentName string
 param embeddingDeploymentCapacity int
 param embeddingModelName string
 
+param OpenaiApiEmbeddingsModelName string = 'text-embedding-ada-002'
+param AdminEmailAddress string = 'adam-stephensen@agile-analytics.com.au'
+param AzureCosmosdbDbName string = 'chat'
+param AzureCosmosdbDatabaseName string = 'chat'
+param AzureCosmosdbContainerName string = 'history'
+param AzureCosmosdbConfigContainerName string = 'config'
+param AzureCosmosdbToolsContainerName string = 'tools'
+param AzureCosmosdbFilesContainerName string = 'fileUploads'
+param AzureSearchIndexNameRag string = 'rag_index'
+param MaxUploadDocumentSize string = '20000000'
+param AzureStorageFoldersContainerName string = 'folders'
+
 param dalleLocation string
 param dalleDeploymentCapacity int
 param dalleDeploymentName string
@@ -195,6 +207,59 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
 
       appSettings: [
         {
+          name: 'AZURE_STORAGE_FOLDERS_CONTAINER_NAME'
+          value: AzureStorageFoldersContainerName
+        }
+        {
+          name: 'AZURE_STORAGE_ACCOUNT_CONNECTION'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storage_name};AccountKey=@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_KEY.name})'
+        }
+        {
+          name: 'MAX_UPLOAD_DOCUMENT_SIZE'
+          value: MaxUploadDocumentSize
+        }
+        {
+          name: 'AZURE_SEARCH_ENDPOINT'
+          value: 'https://${search_name}.search.windows.net'
+        }
+        {
+          name: 'AZURE_SEARCH_INDEX_NAME_RAG'
+          value: AzureSearchIndexNameRag
+        }
+
+        {
+          name: 'AZURE_OPENAI_API_EMBEDDINGS_MODEL_NAME'
+          value: OpenaiApiEmbeddingsModelName
+        }
+        {
+          name: 'ADMIN_EMAIL_ADDRESS'
+          value: AdminEmailAddress
+        }
+        {
+          name: 'AZURE_COSMOSDB_DB_NAME'
+          value: AzureCosmosdbDbName
+        }
+        {
+          name: 'AZURE_COSMOSDB_DATABASE_NAME'
+          value: AzureCosmosdbDatabaseName
+        }
+        {
+          name: 'AZURE_COSMOSDB_CONTAINER_NAME'
+          value: AzureCosmosdbContainerName
+        }
+        {
+          name: 'AZURE_COSMOSDB_CONFIG_CONTAINER_NAME'
+          value: AzureCosmosdbConfigContainerName
+        }
+        {
+          name: 'AZURE_COSMOSDB_TOOLS_CONTAINER_NAME'
+          value: AzureCosmosdbToolsContainerName
+        }
+        {
+          name: 'AZURE_COSMOSDB_FILES_CONTAINER_NAME'
+          value: AzureCosmosdbFilesContainerName
+        }
+        {
           name: 'AZURE_AI_SERVICES_KEY'
           value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_KEY.name})'
         }
@@ -256,7 +321,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'AZURE_OPENAI_ENDPOINT'
-          value: 'https://${azureopenai.properties.endpoint}/'
+          value: azureopenai.properties.endpoint
         }
         // {
         //   name: 'AZURE_OPENAI_DALLE_API_KEY'
