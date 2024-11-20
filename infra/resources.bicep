@@ -190,6 +190,8 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
+var AzureStorageAccountConnection = 'DefaultEndpointsProtocol=https;AccountName=${storage_name};AccountKey=@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_KEY.name})'
+
 resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
   name: apiapp_name
   location: location
@@ -221,7 +223,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'AZURE_STORAGE_ACCOUNT_CONNECTION'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storage_name};AccountKey=@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_KEY.name})'
+          value: AzureStorageAccountConnection
         }
         {
           name: 'MAX_UPLOAD_DOCUMENT_SIZE'
