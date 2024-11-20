@@ -1,4 +1,5 @@
-﻿using agile_chat_api.Authentication.UTS.Models;
+﻿using System.Net.Http.Headers;
+using agile_chat_api.Authentication.UTS.Models;
 
 namespace agile_chat_api.Authentication.UTS;
 
@@ -14,12 +15,10 @@ public class UTSRoleService(IHttpContextAccessor httpContextAccessor) : IUTSRole
     public async Task<List<string>> GetRolesByUserIdAsync(string userId)
     {
         var roles = new List<string>();
-        
         var client = new HttpClient();
         
         var message = new HttpRequestMessage(HttpMethod.Get, $"{endpoint}/rolelookup/getroles/{userId}");
         message.Headers.Add("XApiKey", xApiKey);
-        message.Headers.Add("Content-Type", "application/json");
         
         var response = await client.SendAsync(message);
         if (response.IsSuccessStatusCode)
