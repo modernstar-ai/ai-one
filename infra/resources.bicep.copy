@@ -188,6 +188,7 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
+//build storage account connection string
 var AzureStorageAccountConnection = 'DefaultEndpointsProtocol=https;AccountName=${storage_name};AccountKey=@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_KEY.name})'
 
 resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
