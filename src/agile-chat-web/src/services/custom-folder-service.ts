@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 
 const xApiKey = import.meta.env.VITE_XAPIKEY as string;
 
@@ -11,41 +11,37 @@ function getApiUrl(endpoint: string): string {
   return `${rootApiUrl}/${endpoint}`;
 }
 
-export async function fetchManageableFolders(
-  userEmail: string
-): Promise<Folder[] | null> {
+export async function fetchManageableFolders(userEmail: string): Promise<Folder[] | null> {
   const apiUrl = getApiUrl(`folderlookup/getmanageablefolders?userEmail=${userEmail}`);
-  
+
   try {
     const response = await axios.get<string[]>(apiUrl, {
       headers: {
-        "XApiKey": xApiKey,
-        "Content-Type": "application/json",
+        XApiKey: xApiKey,
+        'Content-Type': 'application/json',
       },
     });
-    console.log("API response data:", response.data);
+    console.log('API response data:', response.data);
     return response.data.map((item) => ({ folder: item }));
   } catch (error) {
-    console.error("Error fetching folders:", error);
+    console.error('Error fetching folders:', error);
     return null;
   }
 }
 
-export async function fetchAccessibleFolders(
-  userEmail: string
-): Promise<Folder[] | null> {
+export async function fetchAccessibleFolders(userEmail: string): Promise<Folder[] | null> {
   const apiUrl = getApiUrl(`folderlookup/getaccessiblefolders?userEmail=${userEmail}`);
-  
+
   try {
     const response = await axios.get<string[]>(apiUrl, {
       headers: {
-        "XApiKey": xApiKey,
-        "Content-Type": "application/json",
+        XApiKey: xApiKey,
+        'Content-Type': 'application/json',
       },
     });
     return response.data.map((item) => ({ folder: item }));
   } catch (error) {
-    console.error("Error fetching folders:", error);
+    console.error('Error fetching folders:', error);
     return null;
   }
 }
@@ -55,13 +51,13 @@ export async function fetchAllFolders(): Promise<Folder[] | null> {
   try {
     const response = await axios.get<string[]>(apiUrl, {
       headers: {
-        "XApiKey": xApiKey,
-        "Content-Type": "application/json",
+        XApiKey: xApiKey,
+        'Content-Type': 'application/json',
       },
     });
     return response.data.map((item) => ({ folder: item }));
   } catch (error) {
-    console.error("Error fetching folders:", error);
+    console.error('Error fetching folders:', error);
     return null;
   }
 }

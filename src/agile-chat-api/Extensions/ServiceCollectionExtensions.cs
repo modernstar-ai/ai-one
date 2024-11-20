@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
-
+using agile_chat_api.Authentication.UTS;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 
@@ -19,6 +20,8 @@ internal static class ServiceCollectionExtensions
             })
             .Build();
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            //UTS Custom Auth Scheme
+            .AddScheme<AuthenticationSchemeOptions, AuthenticationHandler>(AuthenticationHandler.SchemeName, null)
             .AddMicrosoftIdentityWebApi(azureAdConfig);
 
         return services;
