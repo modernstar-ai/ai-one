@@ -138,6 +138,7 @@ module resources 'resources.bicep' = {
   }
 }
 
+
 output APP_URL string = resources.outputs.url
 output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
