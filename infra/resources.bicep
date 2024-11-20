@@ -96,16 +96,16 @@ var keyVaultSecretsOfficerRole = subscriptionResourceId(
 
 var validStorageServiceImageContainerName = toLower(replace(storageServiceImageContainerName, '-', ''))
 
-var databaseName = 'chat'
-var historyContainerName = 'history'
-var configContainerName = 'config'
-
 //Event Grid config
 @description('The container name where files will be stored for folder search')
 param storageServiceFoldersContainerName string = 'index-content'
 
 @description('The Azure Active Directory Application ID or URI to get the access token that will be included as the bearer token in delivery requests')
 param azureADAppIdOrUri string = ''
+
+var databaseName = 'chat'
+var historyContainerName = 'history'
+var configContainerName = 'config'
 
 // var llmDeployments = [
 //   {
@@ -219,7 +219,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'AZURE_STORAGE_ACCOUNT_CONNECTION'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storage_name};AccountKey=@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_KEY.name})'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_CONNECTION.name})'
         }
         {
           name: 'MAX_UPLOAD_DOCUMENT_SIZE'
@@ -431,18 +431,18 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 //**************************************************************************
 //Add Role Assignment for web app to Key vault
 
-// @description('The name of the Role Assignment - from Guid.')
-// param roleAssignmentName string = newGuid()
+@description('The name of the Role Assignment - from Guid.')
+param roleAssignmentName string = newGuid()
 
-// resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-//   name: roleAssignmentName
-//   scope: kv
-//   properties: {
-//     principalId: apiApp.identity.principalId
-//     principalType: 'ServicePrincipal'
-//     roleDefinitionId: keyVaultSecretsOfficerRole
-//   }
-// }
+resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: roleAssignmentName
+  scope: kv
+  properties: {
+    principalId: apiApp.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: keyVaultSecretsOfficerRole
+  }
+}
 
 //**************************************************************************
 
@@ -515,6 +515,14 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     properties: {
       contentType: 'text/plain'
       value: storage.listKeys().keys[0].value
+    }
+  }
+
+  resource AZURE_STORAGE_ACCOUNT_CONNECTION 'secrets' = {
+    name: 'AZURE-STORAGE-ACCOUNT-CONNECTION'
+    properties: {
+      contentType: 'text/plain'
+      value: 'DefaultEndpointsProtocol=https;AccountName=${storage.name};AccountKey=${listKeys(storage.id, '2023-01-01').keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
     }
   }
 }
@@ -714,21 +722,31 @@ resource chatGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@202
 //   }
 // }
 
-resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
+//REF: https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.storage/storage-multi-blob-container/main.bicep
+
+resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storage_name
   location: location
   tags: tags
   kind: 'StorageV2'
   sku: storageServiceSku
+}
 
-  resource blobServices 'blobServices' = {
-    name: 'default'
-    resource container 'containers' = {
-      name: validStorageServiceImageContainerName
-      properties: {
-        publicAccess: 'None'
-      }
-    }
+resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
+  parent: storage
+  name: 'default'
+}
+
+resource imagesContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobServices
+  name: validStorageServiceImageContainerName
+}
+
+resource indexContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobServices
+  name: storageServiceFoldersContainerName
+  properties: {
+    publicAccess: 'Blob'
   }
 }
 
