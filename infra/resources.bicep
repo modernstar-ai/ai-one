@@ -96,6 +96,8 @@ var keyVaultSecretsOfficerRole = subscriptionResourceId(
 
 var validStorageServiceImageContainerName = toLower(replace(storageServiceImageContainerName, '-', ''))
 
+param indexContentContainerName string = 'index-content'
+
 var databaseName = 'chat'
 var historyContainerName = 'history'
 var configContainerName = 'config'
@@ -714,6 +716,7 @@ resource chatGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@202
 //   }
 // }
 
+// TODO: define good default Sku and settings for storage account
 resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: storage_name
   location: location
@@ -721,15 +724,30 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   kind: 'StorageV2'
   sku: storageServiceSku
 
-  resource blobServices 'blobServices' = {
-    name: 'default'
-    resource container 'containers' = {
-      name: validStorageServiceImageContainerName
-      properties: {
-        publicAccess: 'None'
-      }
-    }
-  }
+  // resource blobServices 'blobServices' = {
+  //   name: 'default'
+  //   resource container 'containers' = {
+  //     name: validStorageServiceImageContainerName
+  //     properties: {
+  //       publicAccess: 'None'
+  //     }
+  //   }
+  // }
+}
+
+resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
+  parent: storage
+  name: 'default'
+}
+
+resource imagesContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobServices
+  name: validStorageServiceImageContainerName
+}
+
+resource indexContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobServices
+  name: indexContentContainerName
 }
 
 @description('Event Grid System Topic')
