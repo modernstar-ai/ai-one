@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
       "projectName": {
-        "value": "agilechat"
+       "value": "agilechat"
       },
       "environmentName": {
         "value": "dev"
@@ -28,7 +28,9 @@
       },
       "aspCoreEnvironment": {
         "value": "Development"
-      }
-      
+      },
+      "azureADAppIdOrUri": {
+          "value": ""
+      }      
     }
   }

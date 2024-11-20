@@ -11,7 +11,6 @@ var webapp_name = toLower('${resourcePrefix}-webapp')
 var apiapp_name = toLower('${resourcePrefix}-apiapp')
 var applicationInsightsName = toLower('${resourcePrefix}-apiapp')
 
-
 @description('Deployment Environment')
 @allowed(['Development', 'Production'])
 param aspCoreEnvironment string = 'Development'
@@ -101,6 +100,13 @@ var databaseName = 'chat'
 var historyContainerName = 'history'
 var configContainerName = 'config'
 
+//Event Grid config
+@description('The container name where files will be stored for folder search')
+param storageServiceFoldersContainerName string = 'index-content'
+
+@description('The Azure Active Directory Application ID or URI to get the access token that will be included as the bearer token in delivery requests')
+param azureADAppIdOrUri string = ''
+
 // var llmDeployments = [
 //   {
 //     name: chatGptDeploymentName
@@ -124,8 +130,6 @@ var configContainerName = 'config'
 //     capacity: embeddingDeploymentCapacity
 //   }
 // ]
-
-
 
 /* **************************************************** */
 
@@ -427,18 +431,18 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 //**************************************************************************
 //Add Role Assignment for web app to Key vault
 
-@description('The name of the Role Assignment - from Guid.')
-param roleAssignmentName string = newGuid()
+// @description('The name of the Role Assignment - from Guid.')
+// param roleAssignmentName string = newGuid()
 
-resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: roleAssignmentName
-  scope: kv
-  properties: {
-    principalId: apiApp.identity.principalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: keyVaultSecretsOfficerRole
-  }
-}
+// resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+//   name: roleAssignmentName
+//   scope: kv
+//   properties: {
+//     principalId: apiApp.identity.principalId
+//     principalType: 'ServicePrincipal'
+//     roleDefinitionId: keyVaultSecretsOfficerRole
+//   }
+// }
 
 //**************************************************************************
 
@@ -710,7 +714,6 @@ resource chatGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@202
 //   }
 // }
 
-// TODO: define good default Sku and settings for storage account
 resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: storage_name
   location: location
@@ -727,6 +730,45 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
       }
     }
   }
+}
+
+@description('Event Grid System Topic')
+resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = {
+  name: '${storage_name}-blobs-updated'
+  location: location
+  tags: tags
+  properties: {
+    source: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Storage/storageAccounts/${storage_name}'
+    topicType: 'Microsoft.Storage.StorageAccounts'
+  }
+}
+
+@description('Event Grid Subscription')
+resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-01-preview' = {
+  name: '${storage_name}-blobs-updated'
+  parent: eventGridSystemTopic
+  properties: {
+    destination: {
+      endpointType: 'WebHook'
+      properties: {
+        azureActiveDirectoryApplicationIdOrUri: azureADAppIdOrUri
+        azureActiveDirectoryTenantId: azureTenantId
+        endpointUrl: 'https://${apiApp.properties.defaultHostName}/api/file/webhook'
+      }
+    }
+    filter: {
+      includedEventTypes: [
+        'Microsoft.Storage.BlobCreated'
+        'Microsoft.Storage.BlobDeleted'
+      ]
+      isSubjectCaseSensitive: false
+      enableAdvancedFilteringOnArrays: true
+      subjectBeginsWith: '/blobServices/default/containers/${storageServiceFoldersContainerName}/'
+    }
+  }
+  dependsOn: [
+    apiApp
+  ]
 }
 
 output url string = 'https://${webApp.properties.defaultHostName}'

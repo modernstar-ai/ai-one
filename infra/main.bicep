@@ -93,6 +93,9 @@ param azureClientSecret string = ''
 @secure()
 param azureTenantId string = ''
 
+@description('The Azure Active Directory Application ID or URI to get the access token that will be included as the bearer token in delivery requests')
+param azureADAppIdOrUri string = ''
+
 //other
 var tags = { 'azd-env-name': environmentName }
 
@@ -131,6 +134,7 @@ module resources 'resources.bicep' = {
     azureClientID: azureClientID
     azureClientSecret: azureClientSecret
     azureTenantId: azureTenantId
+    azureADAppIdOrUri: azureADAppIdOrUri
   }
 }
 
