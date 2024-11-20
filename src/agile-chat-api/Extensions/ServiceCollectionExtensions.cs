@@ -20,10 +20,10 @@ internal static class ServiceCollectionExtensions
             })
             .Build();
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            //UTS Custom Auth Scheme
-            .AddScheme<AuthenticationSchemeOptions, AuthenticationHandler>(AuthenticationHandler.SchemeName, null)
             .AddMicrosoftIdentityWebApi(azureAdConfig);
 
+        //UTS Role Service
+        services.AddSingleton(typeof(IUTSRoleService), typeof(UTSRoleService));
         return services;
     }
 }

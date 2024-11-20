@@ -36,12 +36,15 @@ builder.Services.AddAzureAdAuth();
 // Register CosmosClient as a singleton
 builder.Services.AddSingleton(_ => new CosmosClient(cosmosDbUri, cosmosDbKey));
 
+builder.Services.AddHttpContextAccessor();
 // Configure Json serialization options
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip; // Allows comments
     options.JsonSerializerOptions.AllowTrailingCommas = true; // Allows trailing commas
 });
+
+
 
 // Add services to the container
 builder.Services.AddSingleton<IFileUploadService, FileUploadService>();

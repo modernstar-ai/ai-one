@@ -10,9 +10,10 @@ public class AuthenticationHandler : AuthenticationHandler<AuthenticationSchemeO
 {
     private readonly IRoleService _roleService;
 
-    public AuthenticationHandler(IRoleService roleService, IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) 
+    public AuthenticationHandler(IUTSRoleService roleService, IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) 
         : base(options, logger, encoder, clock)
     {
+        _roleService = roleService;
     }
     
     public static string SchemeName => "ApiAuth";
