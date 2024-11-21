@@ -44,6 +44,7 @@ jobs:
       AGILE_RAGCHAT_API_SRC: "./src/agile-ragchat-api"
       AGILE_RAGCHAT_API_PUB: "./publish/agile-ragchat-api"
       AGILE_RAGCHAT_API_NAME: ${{ vars.AGILE_RAGCHAT_API_NAME }}
+      UTS_ROLE_API_ENDPOINT: ${{ vars.UTS_ROLE_API_ENDPOINT }}
       ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
 
     steps:
