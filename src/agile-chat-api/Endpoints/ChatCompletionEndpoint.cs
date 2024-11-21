@@ -9,14 +9,14 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 public static class ChatCompletionsEndpoint
 {
-    public class ChatCompletionsEndpointLogger{}
+    public class ChatCompletionsEndpointLogger { }
     public static void MapChatCompletionsEndpoint(this IEndpointRouteBuilder app)
     {
         app.MapPost("/chat",
-            async (HttpContext context, string? threadId, [FromServices] IAssistantService assistantService, [FromServices] ILogger<ChatCompletionsEndpointLogger> logger) =>
+            async (HttpContext context, string threadId, [FromServices] IAssistantService assistantService, [FromServices] ILogger<ChatCompletionsEndpointLogger> logger) =>
             {
                 #region Service Initialization
-                
+
                 IChatThreadService chatThreadService = new ChatThreadService();
                 string assistantMessageContent = "";
 
@@ -73,9 +73,8 @@ public static class ChatCompletionsEndpoint
 
                     string userQuery = chatThreadService.GetLatestUserMessageContent(oaiMessages);
 
-                    // Get or create chat thread
-                    ChatThread chatThread =
-                        chatThreadService.GetOrCreateChatThread(threadId, userQuery, userId, username);
+                    // Get chat thread 
+                    ChatThread chatThread = chatThreadService.GetChatThread(threadId, userQuery, userId, username);
 
                     // Get the IndexID if appropriate
                     var indexToSearch = string.Empty;
@@ -84,7 +83,7 @@ public static class ChatCompletionsEndpoint
                     if (!string.IsNullOrEmpty(assistantId))
                     {
                         var id = new System.Guid(assistantId);
-                         assistant = await assistantService.GetByIdAsync(id);
+                        assistant = await assistantService.GetByIdAsync(id);
                         if (assistant != null)
                         {
                             indexToSearch = assistant.Index;
@@ -101,7 +100,7 @@ public static class ChatCompletionsEndpoint
                         threadId = threadId,
                         id = Guid.NewGuid().ToString(),
                         name = username,
-                        userId = userId,
+                        userId = username,
                         role = "user",
                         createdAt = DateTime.UtcNow,
                         isDeleted = false,
@@ -124,16 +123,16 @@ public static class ChatCompletionsEndpoint
                             //By default, the system will make an automatic determination.
                             //dataSource.MaxSearchQueries = 1;
                             //The configured strictness of the search relevance filtering. 
-                             
+
                             if (assistant != null)
                             {
                                 //Higher strictness will increase precision but lower recall of the answer.
                                 dataSource.Strictness = assistant.Strictness;
                                 //the configured number of docs to feature in the query
-                                dataSource.TopNDocuments = assistant.DocumentLimit;    
+                                dataSource.TopNDocuments = assistant.DocumentLimit;
                             }
 
-                            
+
 
 
 #pragma warning disable AOAI001
@@ -172,7 +171,7 @@ public static class ChatCompletionsEndpoint
                         threadId = threadId,
                         id = Guid.NewGuid().ToString(),
                         name = username,
-                        userId = userId,
+                        userId = username,
                         role = "assistant",
                         sender = "assistant",
                         createdAt = DateTime.UtcNow,
@@ -190,13 +189,25 @@ public static class ChatCompletionsEndpoint
                     {
                         chatThread.lastMessageAt = DateTime.UtcNow;
 
+                        if (assistant != null)
+                        {
+                            chatThread.name = assistant.Name;
+                            chatThread.assistantTitle = assistant.Name;
+                            chatThread.assistantMessage = assistant.SystemMessage;
+                            chatThread.Temperature = assistant.Temperature;
+                            chatThread.TopP = assistant.TopP;
+                            chatThread.MaxResponseToken = assistant.MaxResponseToken;
+                            chatThread.Strictness = assistant.Strictness;
+                            chatThread.DocumentLimit = assistant.DocumentLimit;
+
+                        }
                         // Update title based on first message
-                        if (chatThread.createdAt == chatThread.lastMessageAt)
+                        else
                         {
                             // Use first few words of the assistant's response as the title
                             string[] words = assistantMessageContent.Split(' ');
                             string newTitle = string.Join(" ", words.Take(5)) + "...";
-                            chatThread.assistantTitle =
+                            chatThread.name =
                                 newTitle.Length > 42 ? newTitle.Substring(0, 39) + "..." : newTitle;
                         }
 

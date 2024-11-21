@@ -26,6 +26,7 @@ const ChatPage = () => {
   const [assistant, setAssistant] = useState<Assistant | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isMessagesLoading, setIsMessagesLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,12 +49,15 @@ const ChatPage = () => {
 
   // Initialize chat thread or load existing thread
   useEffect(() => {
+    let isMounted = true;
+
     const initializeChatThread = async () => {
       try {
+        setIsLoading(true);
         let currentAssistant = null;
 
         // Step 1: Fetch assistant if ID is provided
-        if (assistantId) {
+        if (assistantId && isMounted) {
           currentAssistant = await fetchAssistant(assistantId);
           console.log('Chat - currentAssistant:', currentAssistant);
           if (!currentAssistant) {
@@ -62,13 +66,9 @@ const ChatPage = () => {
         }
 
         // Step 2: Handle chat thread initialization when no chatThreadId is provided
-        //        then redirect back to this page with the new chatThreadId
-        console.log('Chat - chatThreadId:', chatThreadId);
-        if (!chatThreadId) {
-          //looks at query string and state for the chatThreadId
-          // Create new chat thread
+        if (!chatThreadId && isMounted) {
           const newThread = await createChatThread({
-            name: currentAssistant?.name || 'New Chat',
+            name: 'New Chat',
             userId: username,
             personaMessage: currentAssistant?.systemMessage || '',
             personaMessageTitle: currentAssistant?.name || '',
@@ -83,41 +83,47 @@ const ChatPage = () => {
           console.log('Chat - newUrl to redirect to:', newUrl);
 
           navigate(newUrl, { replace: true });
-
-          // let messages = await GetChatThreadMessages(username, newThread.id, currentAssistant);
-          // setMessages(messages);
         }
-
-        // Step 3: Load existing chat thread messages when chatThreadId is available
-        //  LoadChatThreadMessages()
       } catch (err) {
-        console.error('Chat initialization error:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred while initializing chat');
+        if (isMounted) {
+          console.error('Chat initialization error:', err);
+          setError(err instanceof Error ? err.message : 'An error occurred while initializing chat');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    setIsLoading(true);
     initializeChatThread();
-    setIsLoading(false);
 
-    setAssistant(null); // Clear assistant on unmount
+    return () => {
+      isMounted = false;
+      setAssistant(null);
+    };
   }, [assistantId, username, navigate]);
 
-  // Effect to handle actions after chatThreadId is updated
+  // Effect to handle message fetching after chatThreadId is updated
   useEffect(() => {
     const fetchMessages = async () => {
       if (chatThreadId) {
-        // Perform actions that depend on the new value of chatThreadId
-        console.log('New chatThreadId available:', chatThreadId);
-
-        const getMessages = await GetChatThreadMessages(username, chatThreadId, assistant);
-        console.log('Chat - getMessages after new thread:', getMessages);
-        setMessages(getMessages);
+        setIsMessagesLoading(true);
+        try {
+          const getMessages = await GetChatThreadMessages(username, chatThreadId, assistant);
+          console.log('Chat - getMessages after new thread:', getMessages);
+          setMessages(getMessages);
+        } catch (err) {
+          console.error('Error fetching messages:', err);
+          setError('Failed to load messages');
+        } finally {
+          setIsMessagesLoading(false);
+        }
       }
     };
 
     fetchMessages();
-  }, [chatThreadId]);
+  }, [chatThreadId, username, assistant]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -239,34 +245,35 @@ const ChatPage = () => {
         />
 
         {error && <div className="p-4 bg-red-100 text-red-700 rounded-md m-4">{error}</div>}
-        {/* <pre>
-          Chat ThreadID: {chatThreadId} <br />
-
-          assistantId: {assistantId}
-
-        </pre> */}
+        
         <ScrollArea className="flex-1 p-4 space-y-4">
-          {messages.map(
-            (message, index) =>
-              message.sender !== 'system' && (
-                <ChatMessageArea
-                  key={index}
-                  profileName={message.sender === 'user' ? username || 'User' : assistant?.name || 'AI Assistant'}
-                  role={message.sender === 'user' ? 'user' : 'assistant'}
-                  onCopy={() => {
-                    navigator.clipboard.writeText(message.content);
-                  }}
-                  profilePicture={message.sender === 'user' ? '' : '/agile.png'}
-                >
-                  <MessageContent
-                    message={{
-                      role: message.sender === 'user' ? 'user' : 'assistant',
-                      content: message.content,
-                      name: message.sender,
+          {isMessagesLoading ? (
+            <div className="flex justify-center items-center h-full">
+              Loading messages...
+            </div>
+          ) : (
+            messages.map(
+              (message, index) =>
+                //message.sender !== 'system' && (
+                  <ChatMessageArea
+                    key={index}
+                    profileName={message.sender === 'user' ? username || 'User' : assistant?.name || 'AI Assistant'}
+                    role={message.sender === 'user' ? 'user' : 'assistant'}
+                    onCopy={() => {
+                      navigator.clipboard.writeText(message.content);
                     }}
-                  />
-                </ChatMessageArea>
-              )
+                    profilePicture={message.sender === 'user' ? '' : '/agile.png'}
+                  >
+                    <MessageContent
+                      message={{
+                        role: message.sender === 'user' ? 'user' : 'assistant',
+                        content: message.content,
+                        name: message.sender,
+                      }}
+                    />
+                  </ChatMessageArea>
+                //)
+            )
           )}
         </ScrollArea>
 
@@ -285,7 +292,7 @@ const ChatPage = () => {
 
           <Button
             onClick={handleSendMessage}
-            disabled={isStreaming || !chatThreadId}
+            disabled={isStreaming || !chatThreadId || isMessagesLoading}
             aria-label="Send Chat"
             accessKey="j"
           >
