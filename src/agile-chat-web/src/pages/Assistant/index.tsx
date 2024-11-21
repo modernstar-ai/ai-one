@@ -2,11 +2,11 @@ import { Button } from '@/components/ui/button';
 import AssistantsComponent from '@/components/AssistantsComponent';
 import SimpleHeading from '@/components/Heading-Simple';
 import { useNavigate } from 'react-router-dom';
-import { useRoleContext } from "@/common/RoleContext";
+import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
+import { UserRole } from '@/authentication/user-roles';
 
 const AssistantsPage = () => {
   const navigate = useNavigate();
-  const { isSystemAdmin } = useRoleContext();
 
   const handleNewAssistant = () => {
     console.log('Connect to Database clicked');
@@ -23,11 +23,11 @@ const AssistantsPage = () => {
         <div className="flex-1 p-4 overflow-auto">
           <main className="flex-1 space-y-6">
             {/* CTA Buttons */}
-            {isSystemAdmin && (
-            <Button className="bg-black text-white hover:bg-gray-800 h-12" onClick={handleNewAssistant}>
-              New AI Assistant
-            </Button>
-            )}
+            <PermissionHandler role={UserRole.SystemAdmin}>
+              <Button className="bg-black text-white hover:bg-gray-800 h-12" onClick={handleNewAssistant}>
+                New AI Assistant
+              </Button>
+            </PermissionHandler>
             {/* Tools Component */}
             <AssistantsComponent />
           </main>

@@ -3,6 +3,7 @@ using Microsoft.Azure.Cosmos;
 using System.Reflection;
 using agile_chat_api.Authentication;
 using agile_chat_api.Authentication.UTS;
+using agile_chat_api.Enums;
 using Microsoft.Azure.Cosmos.Linq;
 using Config = agile_chat_api.Configurations.AppConfigs;
 
@@ -48,8 +49,15 @@ public class AssistantService : IAssistantService
 
             while (iterator.HasMoreResults)
             {
-                var response =await iterator.ReadNextAsync();
-                results.AddRange([.. response]);
+                var response = await iterator.ReadNextAsync();
+                results.AddRange(response.Where(assistant =>
+                {
+                    if (string.IsNullOrWhiteSpace(assistant.Group))
+                        return true;
+
+                    return assistant.Status == AssistantStatus.Published ||
+                           _roleService.IsUserInRole(UserRole.ContentManager, assistant.Group.ToLower());
+                }));
             }
         }
         catch (Exception ex)

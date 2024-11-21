@@ -1,5 +1,4 @@
-using agile_chat_api.Authentication;
-using agile_chat_api.Authentication.UTS;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 
 public static class UserEndpoints
@@ -7,14 +6,13 @@ public static class UserEndpoints
     public class UserEndpointsLogger {}
     public static void MapUserEndpoints(this IEndpointRouteBuilder app)
     {
-        var users = app.MapGroup("/api/user").RequireAuthorization();
-        users.MapGet("/{id}", async (string id, [FromServices] IRoleService roleService, [FromServices] ILogger<UserEndpointsLogger> logger) =>
+        var users = app.MapGroup("api/user").RequireAuthorization();
+        users.MapGet(string.Empty, async (HttpContext context, [FromServices] ILogger<UserEndpointsLogger> logger) =>
         {
-            var (roles, groups) = await roleService.GetRolesAndGroupsByUserIdAsync(id);
             return Results.Ok(new
             {
-                Roles = roles,
-                Groups = groups
+                Roles = context.User.Claims.Where(x => x.Type == ClaimTypes.Role).Select(x => x.Value) ?? [],
+                Groups = context.User.Claims.Where(x => x.Type == "Groups").Select(x => x.Value) ?? []
             });
         });
     }

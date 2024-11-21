@@ -26,8 +26,7 @@ import { fetchTools } from '@/services/toolservice';
 import { Tool } from '@/types/Tool';
 import { useIndexes } from '@/hooks/use-indexes';
 import { Loader2 } from 'lucide-react';
-import { useRoleContext } from "@/common/RoleContext";
-import { fetchManageableGroups } from "@/services/custom-group-service";
+import { enablePreviewFeatures } from '@/globals';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
@@ -66,43 +65,6 @@ export default function AssistantForm() {
   const { indexes } = useIndexes();
   const [selectedToolIds, setSelectedToolIds] = useState<Set<string>>(new Set());
   const [tools, setTools] = useState<Tool[]>([]);
-  const { isContentManager, enablePreviewFeatures } = useRoleContext();
-  const userEmail = import.meta.env.VITE_USER_EMAIL as string;
-  const [filteredIndexes, setFilteredIndexes] = useState(indexes || []);
-
-
-  const fetchGroups = async (): Promise<string[]> => {
-    if (isContentManager) {
-      const groups = await fetchManageableGroups(userEmail);
-      return groups?.map(group => group.group) ?? [];
-    }
-    return [];
-  };
-
-  // Filter indexes based on the groups accessible to ContentManager
-  const filterIndexesForContentManager = async () => {
-    if (!indexes) {
-      setFilteredIndexes([]);
-      return;
-    }
-
-    if (isContentManager) {
-      try {
-        const groups = await fetchGroups();
-        if (groups.length > 0) {
-          const filtered = indexes.filter((index) => groups.includes(index.group || ''));
-          setFilteredIndexes(filtered);
-        } else {
-          setFilteredIndexes([]); // No groups available
-        }
-      } catch (error) {
-        console.error("Error fetching groups:", error);
-        setFilteredIndexes([]);
-      }
-    } else {
-      setFilteredIndexes(indexes); // Keep original indexes for non-content managers
-    }
-  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -179,13 +141,6 @@ export default function AssistantForm() {
 
     load();
   }, []);
-
-  useEffect(() => {
-    const intializeContainers = async () => {
-      await filterIndexesForContentManager();
-    };
-    intializeContainers();
-  }, [indexes]);
 
   useEffect(() => {
     form.setValue(
@@ -367,7 +322,7 @@ export default function AssistantForm() {
                           </FormControl>
 
                           <SelectContent>
-                            {filteredIndexes?.map((index) => (
+                            {indexes?.map((index) => (
                               <SelectItem key={index.id} value={index.name}>
                                 {index.name}
                               </SelectItem>

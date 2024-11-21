@@ -1,14 +1,14 @@
-import axios from 'axios';
+import axios from '@/error-handling/axiosSetup';
 import { Assistant } from '../types/Assistant';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
-  return `${rootApiUrl}/${endpoint}`;
+  return `${rootApiUrl}/api/assistants/${endpoint}`;
 }
 
 // Fetch all assistants
 export async function fetchAssistants(): Promise<Assistant[] | null> {
-  const apiUrl = getApiUrl('assistants');
+  const apiUrl = getApiUrl('');
   try {
     const response = await axios.get<Assistant[]>(apiUrl);
     return response.data;
