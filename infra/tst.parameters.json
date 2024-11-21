@@ -31,7 +31,9 @@
       },
       "azureADAppIdOrUri": {
           "value": ""
+      },
+      "UtsRoleApiEndpoint": {
+          "value": ""
       } 
-
     }
   }
