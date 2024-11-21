@@ -12,7 +12,7 @@ public interface IRoleService
 
 public class DefaultRoleService : IRoleService
 {
-    public async Task<(List<string>, List<string>)> GetRolesAndGroupsByUserIdAsync(string userId) => ([], []);
+    public async Task<(List<string>, List<string>)> GetRolesAndGroupsByUserIdAsync(string userId) => ([UserRole.SystemAdmin.ToString()], []);
     public bool IsSystemAdmin() => true;
     public bool IsUserInRole(UserRole userRole, string group) => true;
     public bool IsUserInGroup(string group) => true;
