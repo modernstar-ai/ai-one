@@ -107,6 +107,9 @@ var databaseName = 'chat'
 var historyContainerName = 'history'
 var configContainerName = 'config'
 
+@description('UTS Role Endpoint')
+param UtsRoleApiEndpoint string = ''
+
 // var llmDeployments = [
 //   {
 //     name: chatGptDeploymentName
@@ -213,6 +216,10 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
       ]
 
       appSettings: [
+        {
+          name: 'UTS_ROLE_API_ENDPOINT'
+          value: UtsRoleApiEndpoint
+        }        
         {
           name: 'AZURE_STORAGE_FOLDERS_CONTAINER_NAME'
           value: AzureStorageFoldersContainerName

@@ -99,6 +99,9 @@ param azureADAppIdOrUri string = ''
 //other
 var tags = { 'azd-env-name': environmentName }
 
+@description('UTS Role Endpoint')
+param UtsRoleApiEndpoint string = ''
+
 //Load tags from the file
 // var tagsFilePath = './uts.tags.json'
 // var tags = loadJsonContent(tagsFilePath)
@@ -135,9 +138,9 @@ module resources 'resources.bicep' = {
     azureClientSecret: azureClientSecret
     azureTenantId: azureTenantId
     azureADAppIdOrUri: azureADAppIdOrUri
+    UtsRoleApiEndpoint: UtsRoleApiEndpoint
   }
 }
-
 
 output APP_URL string = resources.outputs.url
 output AZURE_LOCATION string = location
