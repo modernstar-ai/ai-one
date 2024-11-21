@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Azure.Cosmos;
 using System.Reflection;
+using agile_chat_api.Authentication;
+using agile_chat_api.Authentication.UTS;
+using Microsoft.Azure.Cosmos.Linq;
 using Config = agile_chat_api.Configurations.AppConfigs;
 
 public interface IAssistantService
@@ -16,9 +19,11 @@ public class AssistantService : IAssistantService
 {
     private readonly Container _container;
     private readonly ILogger<AssistantService> _logger;
+    private readonly IRoleService _roleService;
 
-    public AssistantService(ILogger<AssistantService> logger)
+    public AssistantService(ILogger<AssistantService> logger, IRoleService roleService)
     {
+        _roleService = roleService;
         _logger = logger;
         const string containerName = "assistants";
 
@@ -32,11 +37,18 @@ public class AssistantService : IAssistantService
 
         try
         {
-            var query = _container.GetItemQueryIterator<Assistant>();
-
-            while (query.HasMoreResults)
+            var query = _container.GetItemLinqQueryable<Assistant>().AsQueryable();
+            if (!_roleService.IsSystemAdmin())
             {
-                var response =await query.ReadNextAsync();
+                var groupClaims = _roleService.GetGroupClaims();
+                query = query.Where(x => x.Group == null || x.Group == "" || groupClaims.Contains(x.Group));
+            }
+
+            var iterator = query.ToFeedIterator();
+
+            while (iterator.HasMoreResults)
+            {
+                var response =await iterator.ReadNextAsync();
                 results.AddRange([.. response]);
             }
         }
@@ -57,6 +69,10 @@ public class AssistantService : IAssistantService
                 .Where(t => t.Id == id)
                 .AsEnumerable()
                 .FirstOrDefault();
+
+            if (query is not null && !string.IsNullOrWhiteSpace(query.Group) &&
+                !_roleService.IsUserInGroup(query.Group))
+                return null;
 
             return await Task.FromResult(query);
         }

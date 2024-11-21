@@ -2,6 +2,10 @@
 
 public interface IRoleService
 {
-    Task<List<string>> GetRolesByUserIdAsync(string userId);
-    bool IsUserInRole(string role);
+    Task<(List<string>, List<string>)> GetRolesAndGroupsByUserIdAsync(string userId);
+    bool IsSystemAdmin();
+    bool IsUserInRole(UserRole userRole, string group);
+    bool IsUserInGroup(string group);
+    List<string> GetRoleClaims();
+    List<string> GetGroupClaims();
 }

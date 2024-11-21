@@ -5,8 +5,8 @@ namespace agile_chat_api.Authentication.UTS;
 
 public class UTSClaimsTransformation : IClaimsTransformation
 {
-    private readonly IUTSRoleService _roleService;
-    public UTSClaimsTransformation(IUTSRoleService roleService)
+    private readonly IRoleService _roleService;
+    public UTSClaimsTransformation(IRoleService roleService)
     {
         _roleService = roleService;
     }
@@ -18,14 +18,12 @@ public class UTSClaimsTransformation : IClaimsTransformation
             return principal;
 
         var userObjectId = claimsIdentity.Name;
-        var roles = await _roleService.GetRolesByUserIdAsync(userObjectId!);
+        var (roles, groups) = await _roleService.GetRolesAndGroupsByUserIdAsync(userObjectId!);
 
         var customClaims = new List<Claim>();
-        foreach (var role in roles)
-        {
-            customClaims.Add(new Claim(ClaimTypes.Role, role));
-        }
-        
+        customClaims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+        customClaims.AddRange(groups.Select(group => new Claim("Groups", group)));
+
         foreach (var claim in customClaims)
         {
             if (!claimsIdentity.HasClaim(c => c.Type == claim.Type && c.Value == claim.Value))

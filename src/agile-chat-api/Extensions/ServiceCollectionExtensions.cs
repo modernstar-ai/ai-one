@@ -1,4 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
+
+using agile_chat_api.Authentication;
 using agile_chat_api.Authentication.UTS;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -31,7 +33,7 @@ internal static class ServiceCollectionExtensions
             .AddInMemoryTokenCaches();
         
         // Register the claims transformation
-        services.AddScoped<IUTSRoleService, UTSRoleService>();
+        services.AddScoped<IRoleService, UTSRoleService>();
         services.AddScoped<IClaimsTransformation, UTSClaimsTransformation>();
 
         // Configure JWT Bearer options

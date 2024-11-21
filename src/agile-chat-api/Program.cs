@@ -50,11 +50,11 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddSingleton<IFileUploadService, FileUploadService>();
 builder.Services.AddSingleton<IStorageService, StorageService>();
 builder.Services.AddSingleton<IToolService, ToolService>();
-builder.Services.AddSingleton<IAssistantService, AssistantService>();
 builder.Services.AddSingleton<IPersonaService, PersonaService>();
 builder.Services.AddSingleton<IAzureAiSearchService, AzureAiSearchService>();
 builder.Services.AddSingleton<IChatThreadService, ChatThreadService>();
 builder.Services.AddSingleton<IContainerIndexerService, IndexerService>();
+builder.Services.AddScoped<IAssistantService, AssistantService>();
 
 
 // Define the CORS policy with allowed origins
@@ -107,5 +107,6 @@ app.MapPersonaEndpoints();
 app.MapFileEndpoints();
 app.MapIndexesEndpoints();
 app.MapChatThreadEndpoints();
+app.MapUserEndpoints();
 
 app.Run();
