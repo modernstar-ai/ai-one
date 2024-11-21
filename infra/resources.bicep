@@ -11,7 +11,6 @@ var webapp_name = toLower('${resourcePrefix}-webapp')
 var apiapp_name = toLower('${resourcePrefix}-apiapp')
 var applicationInsightsName = toLower('${resourcePrefix}-apiapp')
 
-
 @description('Deployment Environment')
 @allowed(['Development', 'Production'])
 param aspCoreEnvironment string = 'Development'
@@ -97,6 +96,13 @@ var keyVaultSecretsOfficerRole = subscriptionResourceId(
 
 var validStorageServiceImageContainerName = toLower(replace(storageServiceImageContainerName, '-', ''))
 
+//Event Grid config
+@description('The container name where files will be stored for folder search')
+param storageServiceFoldersContainerName string = 'index-content'
+
+@description('The Azure Active Directory Application ID or URI to get the access token that will be included as the bearer token in delivery requests')
+param azureADAppIdOrUri string = ''
+
 var databaseName = 'chat'
 var historyContainerName = 'history'
 var configContainerName = 'config'
@@ -124,8 +130,6 @@ var configContainerName = 'config'
 //     capacity: embeddingDeploymentCapacity
 //   }
 // ]
-
-
 
 /* **************************************************** */
 
@@ -215,7 +219,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'AZURE_STORAGE_ACCOUNT_CONNECTION'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storage_name};AccountKey=@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_KEY.name})'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_CONNECTION.name})'
         }
         {
           name: 'MAX_UPLOAD_DOCUMENT_SIZE'
@@ -513,6 +517,14 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
       value: storage.listKeys().keys[0].value
     }
   }
+
+  resource AZURE_STORAGE_ACCOUNT_CONNECTION 'secrets' = {
+    name: 'AZURE-STORAGE-ACCOUNT-CONNECTION'
+    properties: {
+      contentType: 'text/plain'
+      value: 'DefaultEndpointsProtocol=https;AccountName=${storage.name};AccountKey=${listKeys(storage.id, '2023-01-01').keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
+    }
+  }
 }
 
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
@@ -710,23 +722,71 @@ resource chatGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@202
 //   }
 // }
 
-// TODO: define good default Sku and settings for storage account
-resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
+//REF: https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.storage/storage-multi-blob-container/main.bicep
+
+resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storage_name
   location: location
   tags: tags
   kind: 'StorageV2'
   sku: storageServiceSku
+}
 
-  resource blobServices 'blobServices' = {
-    name: 'default'
-    resource container 'containers' = {
-      name: validStorageServiceImageContainerName
+resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
+  parent: storage
+  name: 'default'
+}
+
+resource imagesContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobServices
+  name: validStorageServiceImageContainerName
+}
+
+resource indexContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobServices
+  name: storageServiceFoldersContainerName
+  properties: {
+    publicAccess: 'Blob'
+  }
+}
+
+@description('Event Grid System Topic')
+resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = {
+  name: '${storage_name}-blobs-updated'
+  location: location
+  tags: tags
+  properties: {
+    source: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Storage/storageAccounts/${storage_name}'
+    topicType: 'Microsoft.Storage.StorageAccounts'
+  }
+}
+
+@description('Event Grid Subscription')
+resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-01-preview' = {
+  name: '${storage_name}-blobs-updated'
+  parent: eventGridSystemTopic
+  properties: {
+    destination: {
+      endpointType: 'WebHook'
       properties: {
-        publicAccess: 'None'
+        azureActiveDirectoryApplicationIdOrUri: azureADAppIdOrUri
+        azureActiveDirectoryTenantId: azureTenantId
+        endpointUrl: 'https://${apiApp.properties.defaultHostName}/api/file/webhook'
       }
     }
+    filter: {
+      includedEventTypes: [
+        'Microsoft.Storage.BlobCreated'
+        'Microsoft.Storage.BlobDeleted'
+      ]
+      isSubjectCaseSensitive: false
+      enableAdvancedFilteringOnArrays: true
+      subjectBeginsWith: '/blobServices/default/containers/${storageServiceFoldersContainerName}/'
+    }
   }
+  dependsOn: [
+    apiApp
+  ]
 }
 
 output url string = 'https://${webApp.properties.defaultHostName}'

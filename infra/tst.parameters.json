@@ -27,7 +27,11 @@
         "value": ""
       },
       "aspCoreEnvironment": {
-        "value": "Production"
-      }
+        "value": "Development"
+      },
+      "azureADAppIdOrUri": {
+          "value": ""
+      } 
+
     }
   }
