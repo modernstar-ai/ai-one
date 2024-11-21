@@ -2,12 +2,13 @@
 using System.Security.Claims;
 using agile_chat_api.Authentication.Extensions;
 using agile_chat_api.Authentication.UTS.Models;
+using agile_chat_api.Configurations;
 
 namespace agile_chat_api.Authentication.UTS;
 
 public class UTSRoleService(IHttpContextAccessor httpContextAccessor) : IRoleService
 {
-    private const string endpoint = "https://subjapi-dev-api-phmd3jzubzalo.azurewebsites.net/api";
+    private string endpoint = AppConfigs.UTSRoleApiEndpoint;
     private const string xApiKey = "611632d4-5a8e-4b00-81c1-ea5cc76ac0ac";
     
     public async Task<(List<string>, List<string>)> GetRolesAndGroupsByUserIdAsync(string userId)
