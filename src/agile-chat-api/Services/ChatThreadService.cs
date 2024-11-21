@@ -16,7 +16,7 @@ public interface IChatThreadService
 
     string GetLatestUserMessageContent(List<ChatMessage> messages);
 
-    ChatThread GetOrCreateChatThread(string threadId, string prompt, string userId, string userName);
+    ChatThread GetChatThread(string threadId, string prompt, string userId, string userName);
     void Delete(string id, string userid);
     //void AddExtension(ExtensionUpdate data);
     //void RemoveExtension(ExtensionUpdate data);
@@ -38,24 +38,12 @@ public class ChatThreadService : IChatThreadService
     }
 
 
-    public ChatThread GetOrCreateChatThread(string threadId, string prompt, string userId, string userName)
+    public ChatThread GetChatThread(string threadId, string prompt, string userId, string userName)
     {
             ChatThread chatThread = _container.GetItemLinqQueryable<ChatThread>(true)
                   .Where(t => t.id.ToString() == threadId.ToString())
                   .AsEnumerable()
                   .First();
-
-            if (chatThread.name == "New Chat")
-            {
-                chatThread.name = prompt.Length > 30 ? prompt.Substring(0, 28) + "..." : prompt;
-                chatThread.lastMessageAt = DateTime.UtcNow;
-                Update(chatThread);
-            }
-            else
-            {
-                chatThread.lastMessageAt = DateTime.UtcNow;
-                Update(chatThread);
-            }
 
             return chatThread;
         

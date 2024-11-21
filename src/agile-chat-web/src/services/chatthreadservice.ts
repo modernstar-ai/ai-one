@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { ChatThread, NewChatThread, Message, UpdateChatThreadTitle, ExtensionUpdate } from '@/types/ChatThread';
 import { Assistant } from '@/types/Assistant';
+import { tagElse } from '@markdoc/markdoc/dist/src/tags/conditional';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -154,6 +155,7 @@ export async function createChatAndRedirect(): Promise<void> {
   }
 }
 
+
 export async function GetChatThreadMessages(
   username: string,
   chatThreadId: string,
@@ -165,47 +167,8 @@ export async function GetChatThreadMessages(
   let existingMessages: Message[] | null;
 
   // if there is an assistant get the system and welcome messages
-  //if (currentAssistant) {
-
-    initialMessages = GetSystemAndWelcomeMessages(username, currentAssistant, chatThreadId);
-    console.log('Chat - set initialMessages from current assistant:', initialMessages);
-  //}
-
-  if (chatThreadId) {
-    // Load existing chat thread messages
-    existingMessages = await fetchChatsbythreadid(chatThreadId);
-    console.log('Chat - existingMessages:', existingMessages);
-
-    if (existingMessages) {
-      mergedMessages = [...initialMessages, ...existingMessages];
-    } else {
-      mergedMessages = initialMessages;
-    }
-  }
-  return mergedMessages;
-}
-
-export function GetSystemAndWelcomeMessages(
-  userName: string,
-  currentAssistant: Assistant | null,
-  chatThreadId: string
-): Message[] {
-  console.log('currentAssistant', currentAssistant);
-  const systemMessage: Message = {
-    id: crypto.randomUUID(),
-    createdAt: new Date(),
-    type: 'text',
-    isDeleted: false,
-    content: currentAssistant?.systemMessage || 'Hello! How can I assist you today?',
-    name: 'System',
-    role: 'system',
-    threadId: chatThreadId,
-    userId: userName,
-    multiModalImage: '',
-    sender: 'system',
-  };
-
-  //if (currentAssistant?.systemMessage && currentAssistant?.greeting) {
+    if (currentAssistant)
+  {
     const welcomeMessage: Message = {
       id: crypto.randomUUID(),
       createdAt: new Date(),
@@ -215,15 +178,50 @@ export function GetSystemAndWelcomeMessages(
       name: currentAssistant?.name || '',
       role: 'assistant',
       threadId: chatThreadId,
-      userId: userName,
+      userId: username,
       multiModalImage: '',
       sender: 'assistant',
     };
-    return [systemMessage, welcomeMessage];
-    //} else {
-    //return [systemMessage];
-  //}
+    initialMessages = [welcomeMessage];
+
+  }
+  else
+  {
+    
+    const systemMessage: Message = {
+      id: crypto.randomUUID(),
+      createdAt: new Date(),
+      type: 'text',
+      isDeleted: false,
+      content: 'Hello! How can I assist you today?',
+      name: 'System',
+      role: 'system',
+      threadId: chatThreadId,
+      userId: username,
+      multiModalImage: '',
+      sender: 'system',
+    };
+    initialMessages = [systemMessage];
+  }
   
+    console.log('Chat - set initialMessages from current assistant:', initialMessages);
+  //}
+
+  if (chatThreadId) {
+    // Load existing chat thread messages
+    existingMessages = await fetchChatsbythreadid(chatThreadId);
+
+    console.log('Chat - existingMessages:', existingMessages);
+
+    if (existingMessages && existingMessages.length > 0) {
+      mergedMessages = existingMessages;
+    } else {
+      mergedMessages = initialMessages;
+    }
+  }
+  return mergedMessages;
 }
+
+ 
 
 export type { ChatThread, NewChatThread, UpdateChatThreadTitle, ExtensionUpdate };
