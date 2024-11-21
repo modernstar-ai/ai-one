@@ -47,9 +47,6 @@ jobs:
       VITE_AGILECHAT_API_URL: ${{ vars.VITE_AGILECHAT_API_URL }}
       VITE_AZURE_AD_CLIENT_ID:  ${{ vars.AZURE_CLIENT_ID }}
       VITE_AZURE_AD_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-      VITE_CUSTOM_API_URL: ${{ vars.VITE_CUSTOM_API_URL }}
-      VITE_USER_EMAIL: ${{ vars.VITE_USER_EMAIL }}
-      VITE_XAPIKEY: ${{ secrets.VITE_XAPIKEY }}
 
     steps:
       - name: Checkout code
