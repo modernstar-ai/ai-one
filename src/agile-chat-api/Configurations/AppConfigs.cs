@@ -36,5 +36,7 @@
         public static string AzureOpenAiEmbeddingsModelName =
             Environment.GetEnvironmentVariable("AZURE_OPENAI_API_EMBEDDINGS_MODEL_NAME") ??
             throw new InvalidOperationException("AZURE_OPENAI_API_EMBEDDINGS_MODEL_NAME not set");
+        public static string UTSRoleApiEndpoint => Environment.GetEnvironmentVariable("UTS_ROLE_API_ENDPOINT")
+                                               ?? throw new InvalidOperationException("UTS_ROLE_API_ENDPOINT not set.");
     }
 }
