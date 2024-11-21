@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { ChatThread, NewChatThread, Message, UpdateChatThreadTitle, ExtensionUpdate } from '@/types/ChatThread';
 import { Assistant } from '@/types/Assistant';
-import { tagElse } from '@markdoc/markdoc/dist/src/tags/conditional';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -155,7 +154,6 @@ export async function createChatAndRedirect(): Promise<void> {
   }
 }
 
-
 export async function GetChatThreadMessages(
   username: string,
   chatThreadId: string,
@@ -167,8 +165,7 @@ export async function GetChatThreadMessages(
   let existingMessages: Message[] | null;
 
   // if there is an assistant get the system and welcome messages
-    if (currentAssistant)
-  {
+  if (currentAssistant) {
     const welcomeMessage: Message = {
       id: crypto.randomUUID(),
       createdAt: new Date(),
@@ -183,11 +180,7 @@ export async function GetChatThreadMessages(
       sender: 'assistant',
     };
     initialMessages = [welcomeMessage];
-
-  }
-  else
-  {
-    
+  } else {
     const systemMessage: Message = {
       id: crypto.randomUUID(),
       createdAt: new Date(),
@@ -203,8 +196,8 @@ export async function GetChatThreadMessages(
     };
     initialMessages = [systemMessage];
   }
-  
-    console.log('Chat - set initialMessages from current assistant:', initialMessages);
+
+  console.log('Chat - set initialMessages from current assistant:', initialMessages);
   //}
 
   if (chatThreadId) {
@@ -221,7 +214,5 @@ export async function GetChatThreadMessages(
   }
   return mergedMessages;
 }
-
- 
 
 export type { ChatThread, NewChatThread, UpdateChatThreadTitle, ExtensionUpdate };
