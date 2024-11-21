@@ -15,13 +15,14 @@ public class UTSRoleService(IHttpContextAccessor httpContextAccessor) : IRoleSer
         var roles = new List<string>();
         var groups = new List<string>();
         var client = new HttpClient();
-        
+
         var message = new HttpRequestMessage(HttpMethod.Get, $"{endpoint}/rolelookup/getroles?userEmail={userId}");
         message.Headers.Add("XApiKey", xApiKey);
         
         var response = await client.SendAsync(message);
         if (!response.IsSuccessStatusCode) return (roles, groups);
         
+        var userRolesstr = await response.Content.ReadAsStringAsync();
         var userRoles = await response.Content.ReadFromJsonAsync<List<UTSUserRole>>();
         foreach (var userRole in userRoles)
         {
@@ -32,8 +33,8 @@ public class UTSRoleService(IHttpContextAccessor httpContextAccessor) : IRoleSer
                 continue;
             }
 
-            roles.AddRange(userRole.Groups.Select(group => $"{userRole.Role.ToString()}.{group}"));
-            groups.AddRange(userRole.Groups.Select(group => group));
+            roles.AddRange(userRole.Groups.Select(group => $"{userRole.Role.ToString()}.{group.ToLower()}"));
+            groups.AddRange(userRole.Groups.Select(group => group.ToLower()));
         }
 
         return (roles, groups);
@@ -43,11 +44,11 @@ public class UTSRoleService(IHttpContextAccessor httpContextAccessor) : IRoleSer
         (httpContextAccessor.HttpContext?.User.IsInRole(UserRole.SystemAdmin.ToString()) ?? false);
     public bool IsUserInRole(UserRole userRole, string group) => 
         (httpContextAccessor.HttpContext?.User.IsInRole(UserRole.SystemAdmin.ToString()) ?? false) ||
-        (httpContextAccessor.HttpContext?.User.IsInRole($"{userRole.ToString()}.{group}") ?? false);
+        (httpContextAccessor.HttpContext?.User.IsInRole($"{userRole.ToString()}.{group.ToLower()}") ?? false);
     
     public bool IsUserInGroup(string group) => 
         (httpContextAccessor.HttpContext?.User.IsInRole(UserRole.SystemAdmin.ToString()) ?? false) || 
-        (httpContextAccessor.HttpContext?.User.IsInGroup(group) ?? false);
+        (httpContextAccessor.HttpContext?.User.IsInGroup(group.ToLower()) ?? false);
     
     public List<string> GetRoleClaims() => httpContextAccessor.HttpContext?.User.Claims
         .Where(x => x.Type == ClaimTypes.Role)

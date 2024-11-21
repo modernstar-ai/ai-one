@@ -47,13 +47,13 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
 
 // Add services to the container
-builder.Services.AddSingleton<IFileUploadService, FileUploadService>();
+builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 builder.Services.AddSingleton<IStorageService, StorageService>();
 builder.Services.AddSingleton<IToolService, ToolService>();
 builder.Services.AddSingleton<IPersonaService, PersonaService>();
 builder.Services.AddSingleton<IAzureAiSearchService, AzureAiSearchService>();
 builder.Services.AddSingleton<IChatThreadService, ChatThreadService>();
-builder.Services.AddSingleton<IContainerIndexerService, IndexerService>();
+builder.Services.AddScoped<IContainerIndexerService, IndexerService>();
 builder.Services.AddScoped<IAssistantService, AssistantService>();
 
 

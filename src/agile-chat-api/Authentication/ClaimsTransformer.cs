@@ -1,12 +1,12 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 
-namespace agile_chat_api.Authentication.UTS;
+namespace agile_chat_api.Authentication;
 
-public class UTSClaimsTransformation : IClaimsTransformation
+public class ClaimsTransformer : IClaimsTransformation
 {
     private readonly IRoleService _roleService;
-    public UTSClaimsTransformation(IRoleService roleService)
+    public ClaimsTransformer(IRoleService roleService)
     {
         _roleService = roleService;
     }

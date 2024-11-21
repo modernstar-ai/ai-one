@@ -41,7 +41,7 @@ public class AssistantService : IAssistantService
             if (!_roleService.IsSystemAdmin())
             {
                 var groupClaims = _roleService.GetGroupClaims();
-                query = query.Where(x => x.Group == null || x.Group == "" || groupClaims.Contains(x.Group));
+                query = query.Where(x => x.Group == null || x.Group == "" || groupClaims.Contains(x.Group.ToLower()));
             }
 
             var iterator = query.ToFeedIterator();

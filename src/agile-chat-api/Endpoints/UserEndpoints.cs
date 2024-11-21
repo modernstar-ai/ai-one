@@ -7,8 +7,8 @@ public static class UserEndpoints
     public class UserEndpointsLogger {}
     public static void MapUserEndpoints(this IEndpointRouteBuilder app)
     {
-
-        app.MapGet("/{id}", async (string id, [FromServices] IRoleService roleService, [FromServices] ILogger<UserEndpointsLogger> logger) =>
+        var users = app.MapGroup("/api/user").RequireAuthorization();
+        users.MapGet("/{id}", async (string id, [FromServices] IRoleService roleService, [FromServices] ILogger<UserEndpointsLogger> logger) =>
         {
             var (roles, groups) = await roleService.GetRolesAndGroupsByUserIdAsync(id);
             return Results.Ok(new

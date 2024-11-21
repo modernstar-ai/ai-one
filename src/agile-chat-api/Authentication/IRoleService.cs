@@ -9,3 +9,13 @@ public interface IRoleService
     List<string> GetRoleClaims();
     List<string> GetGroupClaims();
 }
+
+public class DefaultRoleService : IRoleService
+{
+    public async Task<(List<string>, List<string>)> GetRolesAndGroupsByUserIdAsync(string userId) => ([], []);
+    public bool IsSystemAdmin() => true;
+    public bool IsUserInRole(UserRole userRole, string group) => true;
+    public bool IsUserInGroup(string group) => true;
+    public List<string> GetRoleClaims() => [];
+    public List<string> GetGroupClaims() => [];
+}

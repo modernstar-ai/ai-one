@@ -39,8 +39,10 @@ public static class AssistantEndpoints
             }
         });
 
-        assistants.MapPost("/", async (Assistant assistant, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
+        assistants.MapPost("/", async (Assistant assistant, [FromServices] IRoleService roleService, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
         {
+            if (!roleService.IsSystemAdmin())
+                return Results.Forbid();
             try
             {
                 await assistantService.CreateAsync(assistant);
@@ -81,6 +83,9 @@ public static class AssistantEndpoints
 
         assistants.MapDelete("/{id:guid}", async (Guid id, [FromServices] IRoleService roleService, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
         {
+            if (!roleService.IsSystemAdmin())
+                return Results.Forbid();
+            
             try
             {
                 var assistant = await assistantService.GetByIdAsync(id);
@@ -88,9 +93,6 @@ public static class AssistantEndpoints
                 {
                     return Results.NotFound();
                 }
-                if (!string.IsNullOrWhiteSpace(assistant.Group) &&
-                    !roleService.IsUserInRole(UserRole.ContentManager, assistant.Group))
-                    return Results.Forbid();
 
                 await assistantService.DeleteAsync(assistant.Id);
                 return Results.NoContent();

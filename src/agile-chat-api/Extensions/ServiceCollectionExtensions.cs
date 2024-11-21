@@ -34,7 +34,7 @@ internal static class ServiceCollectionExtensions
         
         // Register the claims transformation
         services.AddScoped<IRoleService, UTSRoleService>();
-        services.AddScoped<IClaimsTransformation, UTSClaimsTransformation>();
+        services.AddScoped<IClaimsTransformation, ClaimsTransformer>();
 
         // Configure JWT Bearer options
         services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
