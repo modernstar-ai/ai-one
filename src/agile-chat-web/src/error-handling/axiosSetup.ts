@@ -1,6 +1,6 @@
 import ax from 'axios';
 import { errorHandler } from './errorHandler';
-import { msalScopes, pca } from '@/msal-configs';
+import { msalScopes, pca } from '@/authentication/msal-configs';
 
 const axios = ax.create({});
 

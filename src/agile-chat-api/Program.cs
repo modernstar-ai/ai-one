@@ -36,6 +36,7 @@ builder.Services.AddAzureAdAuth();
 // Register CosmosClient as a singleton
 builder.Services.AddSingleton(_ => new CosmosClient(cosmosDbUri, cosmosDbKey));
 
+builder.Services.AddHttpContextAccessor();
 // Configure Json serialization options
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -43,15 +44,17 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.AllowTrailingCommas = true; // Allows trailing commas
 });
 
+
+
 // Add services to the container
-builder.Services.AddSingleton<IFileUploadService, FileUploadService>();
+builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 builder.Services.AddSingleton<IStorageService, StorageService>();
 builder.Services.AddSingleton<IToolService, ToolService>();
-builder.Services.AddSingleton<IAssistantService, AssistantService>();
 builder.Services.AddSingleton<IPersonaService, PersonaService>();
 builder.Services.AddSingleton<IAzureAiSearchService, AzureAiSearchService>();
 builder.Services.AddSingleton<IChatThreadService, ChatThreadService>();
-builder.Services.AddSingleton<IContainerIndexerService, IndexerService>();
+builder.Services.AddScoped<IContainerIndexerService, IndexerService>();
+builder.Services.AddScoped<IAssistantService, AssistantService>();
 
 
 // Define the CORS policy with allowed origins
@@ -104,5 +107,6 @@ app.MapPersonaEndpoints();
 app.MapFileEndpoints();
 app.MapIndexesEndpoints();
 app.MapChatThreadEndpoints();
+app.MapUserEndpoints();
 
 app.Run();

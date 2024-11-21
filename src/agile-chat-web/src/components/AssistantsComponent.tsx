@@ -20,8 +20,8 @@ import { Badge } from '@/components/ui/badge';
 import { Pencil, Trash2, Loader2, Info, FileSearch, MessageSquare } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useRoleContext } from "@/common/RoleContext";
-import { fetchManageableGroups } from "@/services/custom-group-service";
+import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
+import { UserRole } from '@/authentication/user-roles';
 
 type Assistant = Omit<BaseAssistant, 'status'> & {
   status: string | number;
@@ -33,37 +33,13 @@ const AssistantsComponent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
-  const { isSystemAdmin, isContentManager, enablePreviewFeatures } = useRoleContext();
-  const userEmail = import.meta.env.VITE_USER_EMAIL as string;
-
-  const fetchGroups = async (): Promise<string[]> => {
-    if (isContentManager) {
-      const groups = await fetchManageableGroups(userEmail);
-      return groups?.map(group => group.group) ?? [];
-    }
-    return [];
-  };
-
-  const getAssistants = async (manageableGroups: string[]): Promise<Assistant[]> => {
-    const assistantsData = await fetchAssistants();
-    if (!assistantsData) return [];
-
-    if (isContentManager && manageableGroups.length > 0) {
-      return assistantsData.filter((assistant: Assistant) =>
-        manageableGroups.includes(assistant.group ?? "")
-      );
-    }
-    return assistantsData;
-  };
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const groups = await fetchGroups();
-        //setManageableGroups(groups);
-        const assistants = await getAssistants(groups);
-        setAssistants(assistants);
+        const assistants = await fetchAssistants();
+        setAssistants(assistants ?? []);
       } catch (error) {
         console.error('Failed to fetch data:', error);
         toast({
@@ -177,9 +153,7 @@ const AssistantsComponent: React.FC = () => {
                   <TableHead className="w-[40px]">Status</TableHead>
                   <TableHead className="w-[200px]">Container</TableHead>
                   <TableHead className="w-[200px]">Group</TableHead>
-                  {enablePreviewFeatures == true && (
-                    <TableHead className="w-[200px]">Type</TableHead>
-                  )}
+                  <TableHead className="w-[200px]">Type</TableHead>
                   <TableHead className="w-[500px]">Description</TableHead>
                 </TableRow>
               </TableHeader>
@@ -224,7 +198,7 @@ const AssistantsComponent: React.FC = () => {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                        {isSystemAdmin && (
+                        <PermissionHandler role={UserRole.SystemAdmin}>
                           <AlertDialog>
                             <TooltipProvider>
                               <Tooltip>
@@ -269,21 +243,19 @@ const AssistantsComponent: React.FC = () => {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
-                        )}
+                        </PermissionHandler>
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{assistant.name}</TableCell>
                     <TableCell>{getStatusBadge(assistant.status)}</TableCell>
                     <TableCell>{assistant.index}</TableCell>
                     <TableCell>{assistant.group}</TableCell>
-                    {enablePreviewFeatures == true && (
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getTypeIcon(assistant.type)}
-                          <span>{AssistantType[assistant.type]}</span>
-                        </div>
-                      </TableCell>
-                    )}
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {getTypeIcon(assistant.type)}
+                        <span>{AssistantType[assistant.type]}</span>
+                      </div>
+                    </TableCell>
                     {/* <TableCell className="font-mono text-xs">
                       <TooltipProvider>
                         <Tooltip>

@@ -1,3 +1,4 @@
+using agile_chat_api.Authentication;
 using Microsoft.AspNetCore.Mvc;
 
 public static class AssistantEndpoints
@@ -5,8 +6,9 @@ public static class AssistantEndpoints
     public class AssistantEndpointsLogger {}
     public static void MapAssistantEndpoints(this IEndpointRouteBuilder app)
     {
+        var assistants = app.MapGroup("/api/assistants").RequireAuthorization();
 
-        app.MapGet("/assistants", async ([FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
+        assistants.MapGet("/", async ([FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
         {
             try
             {
@@ -22,7 +24,7 @@ public static class AssistantEndpoints
             }
         });
 
-        app.MapGet("/assistants/{id:guid}", async (Guid id, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
+        assistants.MapGet("/{id:guid}", async (Guid id, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
         {
             try
             {
@@ -37,8 +39,10 @@ public static class AssistantEndpoints
             }
         });
 
-        app.MapPost("/assistants", async (Assistant assistant, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
+        assistants.MapPost("/", async (Assistant assistant, [FromServices] IRoleService roleService, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
         {
+            if (!roleService.IsSystemAdmin())
+                return Results.Forbid();
             try
             {
                 await assistantService.CreateAsync(assistant);
@@ -51,8 +55,8 @@ public static class AssistantEndpoints
             }
         });
 
-        app.MapPut("/assistants/{id:guid}",
-            async (Guid id, Assistant updatedAssistant, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
+        assistants.MapPut("/{id:guid}",
+            async (Guid id, Assistant updatedAssistant, [FromServices] IRoleService roleService, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
             {
                 try
                 {
@@ -62,6 +66,10 @@ public static class AssistantEndpoints
                     {
                         return Results.NotFound();
                     }
+
+                    if (!string.IsNullOrWhiteSpace(existingAssistant.Group) &&
+                        !roleService.IsUserInRole(UserRole.ContentManager, existingAssistant.Group))
+                        return Results.Forbid();
 
                     await assistantService.UpdateAsync(updatedAssistant);
                     return Results.NoContent();
@@ -73,8 +81,11 @@ public static class AssistantEndpoints
                 }
             });
 
-        app.MapDelete("/assistants/{id:guid}", async (Guid id, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
+        assistants.MapDelete("/{id:guid}", async (Guid id, [FromServices] IRoleService roleService, [FromServices] IAssistantService assistantService, [FromServices] ILogger<AssistantEndpointsLogger> logger) =>
         {
+            if (!roleService.IsSystemAdmin())
+                return Results.Forbid();
+            
             try
             {
                 var assistant = await assistantService.GetByIdAsync(id);

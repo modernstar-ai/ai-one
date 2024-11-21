@@ -3,6 +3,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using Models;
 using System.Collections.Concurrent;
+using agile_chat_api.Authentication;
 using agile_chat_api.Configurations;
 using agile_chat_api.Utils;
 using Constants = agile_chat_api.Configurations.Constants;
@@ -68,9 +69,13 @@ namespace Services
         private readonly CosmosClient _cosmosClient;
         private readonly Container _cosmosContainer;
         private readonly ILogger<FileUploadService> _logger;
+        private readonly IRoleService _roleService;
+        private readonly IContainerIndexerService _containerIndexerService;
 
-        public FileUploadService(ILogger<FileUploadService> logger)
+        public FileUploadService(ILogger<FileUploadService> logger, IRoleService roleService, IContainerIndexerService containerIndexerService)
         {
+            _containerIndexerService = containerIndexerService;
+            _roleService = roleService;
             _logger = logger;
             _cosmosClient = new CosmosClient(AppConfigs.CosmosEndpoint, AppConfigs.CosmosKey);
             _cosmosContainer = EnsureCosmosContainerExists().GetAwaiter().GetResult();
@@ -208,11 +213,18 @@ namespace Services
         /// <returns></returns>
         public async Task<IEnumerable<FileMetadata?>> GetFileUploadsAsync()
         {
-            var query = new QueryDefinition("SELECT * FROM c");
             var results = new List<FileMetadata>();
             try
             {
-                using var feedIterator = _cosmosContainer.GetItemQueryIterator<FileMetadata>(query);
+                var query = _cosmosContainer.GetItemLinqQueryable<FileMetadata>().AsQueryable();
+                if (!_roleService.IsSystemAdmin())
+                {
+                    var indexes = await _containerIndexerService.GetContainerIndexesAsync();
+                    var indexNames = indexes.Select(x => x.Name);
+                    query = query.Where(x => indexNames.Contains(x.IndexName));
+                }
+
+                var feedIterator = query.ToFeedIterator();
                 while (feedIterator.HasMoreResults)
                 {
                     results.AddRange(await feedIterator.ReadNextAsync());

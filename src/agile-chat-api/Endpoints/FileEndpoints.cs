@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using agile_chat_api.Authentication;
 using Dtos;
 using agile_chat_api.Services;
 using agile_chat_api.Utils;
@@ -58,19 +59,20 @@ public static class FileEndpoints
 
         });
 
-        api.MapGet("folders", async ([FromServices] IStorageService blobStorageService) =>
-        {
-            var folders = await blobStorageService.GetHighLevelFolders();
-            return Results.Ok(folders);
-        });
-
-
         api.MapPost("upload", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
         async ([FromForm] FileUploadsDto request,
                 [FromServices] IFileUploadService cosmosService,
                 [FromServices] IStorageService blobStorageService,
+                [FromServices] IContainerIndexerService containerIndexerService,
+            [FromServices] IRoleService roleService,
             [FromServices] ILogger<FileEndpointsLogger> logger) =>
         {
+            var index = await containerIndexerService.GetContainerIndexByNameAsync(request.Index);
+            if(index == null) return Results.NotFound("Container not found");
+            if (!string.IsNullOrWhiteSpace(index.Group) &&
+                !roleService.IsUserInRole(UserRole.ContentManager, index.Group))
+                return Results.Forbid();
+            
             // Get the folder name from the form data
             var resultMessages = new List<string>();
 
@@ -160,8 +162,12 @@ public static class FileEndpoints
 
         api.MapDelete(string.Empty, async ([FromServices] IFileUploadService cosmosService,
                                        [FromServices] IStorageService blobStorageService,
+                                       [FromServices] IRoleService roleService,
                                        [FromBody] DeleteFilesRequestDto request) =>
         {
+            if(!roleService.IsSystemAdmin())
+                return Results.Forbid();
+            
             try
             {
                 if (request == null || request.FileIds == null || !request.FileIds.Any())
