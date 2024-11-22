@@ -6,39 +6,93 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Index } from '@/models/indexmetadata';
+import { updateIndex } from '@/services/indexes-service';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
-export const EditIndex = () => {
+const editFormSchema = z.object({
+  id: z.string(),
+  description: z.string(),
+  group: z.string(),
+});
+type FormValues = z.infer<typeof editFormSchema>;
+
+interface IEditIndexProps {
+  index: Index | undefined;
+  setIndexEditing: (index: Index | undefined) => void;
+  refreshIndexes: () => Promise<void>;
+}
+export const EditIndexDialog = (props: IEditIndexProps) => {
+  const { index, setIndexEditing, refreshIndexes } = props;
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(editFormSchema),
+    values: {
+      id: index?.id ?? '',
+      description: index?.description ?? '',
+      group: index?.group ?? '',
+    },
+  });
+
+  const onSubmit = async (values: FormValues) => {
+    try {
+      await updateIndex(values);
+      await refreshIndexes();
+      setIndexEditing(undefined);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Edit Profile</Button>
-      </DialogTrigger>
+    <Dialog open={index !== undefined} onOpenChange={(isOpen) => !isOpen && setIndexEditing(undefined)}>
       <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Edit profile</DialogTitle>
-          <DialogDescription>Make changes to your profile here. Click save when you're done.</DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input id="name" defaultValue="Pedro Duarte" className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="username" className="text-right">
-              Username
-            </Label>
-            <Input id="username" defaultValue="@peduarte" className="col-span-3" />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button type="submit">Save changes</Button>
-        </DialogFooter>
+        {index && (
+          <Form {...form}>
+            <DialogHeader>
+              <DialogTitle>Edit Container</DialogTitle>
+              <DialogDescription>Make changes to your container here. Click save when you're done.</DialogDescription>
+            </DialogHeader>
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="A brief overview of your container" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="group"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Group</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Security group" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button type="submit" disabled={form.formState.isSubmitting} onClick={form.handleSubmit(onSubmit)}>
+                Save changes
+              </Button>
+            </DialogFooter>
+          </Form>
+        )}
       </DialogContent>
     </Dialog>
   );

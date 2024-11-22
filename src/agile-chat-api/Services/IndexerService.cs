@@ -11,6 +11,8 @@ namespace Services
     public interface IContainerIndexerService
     { 
         bool IndexExistsAsync(string indexName);
+        Task<Indexes?> GetContainerIndexByIdAsync(string id);
+        Task UpdateAsync(Indexes index, string newDescription, string newGroup);
         Task<Indexes?> GetContainerIndexByNameAsync(string indexName);
         Task<IEnumerable<Indexes>> GetContainerIndexesAsync();
         Task<Indexes?> SaveIndexToCosmosDbAsync(IndexesDto indexRequest);
@@ -62,10 +64,50 @@ namespace Services
         {
             return _cosmosContainer.GetItemLinqQueryable<Indexes>().Where(x => x.Name == indexName).FirstOrDefault() != null;
         }
+        
+        public async Task UpdateAsync(Indexes index, string newDescription, string newGroup)
+        {
+            if (!_roleService.IsSystemAdmin())
+            {
+                var groupClaims = _roleService.GetGroupClaims();
+                if (!string.IsNullOrWhiteSpace(index.Group) && !groupClaims.Contains(index.Group.ToLower()))
+                    throw new Exception("Not authorized");
+            }
+            
+            index.Description = newDescription;
+            index.Group = newGroup;
+            try
+            {
+                await _cosmosContainer.ReplaceItemAsync(index, index.id,
+                    new PartitionKey(index.id));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while updating the assistant with ID {index.id}.");
+                throw;
+            }
+        }
+        
+        public async Task<Indexes?> GetContainerIndexByIdAsync(string id)
+        {
+            var index = _cosmosContainer.GetItemLinqQueryable<Indexes>()
+                .Where(x => x.id == id)
+                .FirstOrDefault();
+            if (!_roleService.IsSystemAdmin())
+            {
+                var groupClaims = _roleService.GetGroupClaims();
+                if(!string.IsNullOrWhiteSpace(index?.Group) && !groupClaims.Contains(index.Group.ToLower()))
+                    return null;
+            }
+
+            return index;
+        }
 
         public async Task<Indexes?> GetContainerIndexByNameAsync(string indexName)
         {
-            var index = _cosmosContainer.GetItemLinqQueryable<Indexes>().FirstOrDefault(x => x.Name == indexName);
+            var index = _cosmosContainer.GetItemLinqQueryable<Indexes>()
+                .Where(x => x.Name == indexName)
+                .FirstOrDefault();
             if (!_roleService.IsSystemAdmin())
             {
                 var groupClaims = _roleService.GetGroupClaims();

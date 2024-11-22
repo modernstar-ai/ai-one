@@ -21,13 +21,13 @@ import { useIndexes } from '@/hooks/use-indexes';
 import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
 import { UserRole } from '@/authentication/user-roles';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { useNavigate } from 'react-router-dom';
+import { EditIndexDialog } from '@/pages/Indexes/Edit/EditIndex';
 
 const IndexerComponent: React.FC = () => {
   const { indexes, indexesLoading, refreshIndexes } = useIndexes();
   const [indexToDelete, setIndexToDelete] = useState<Index | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const navigate = useNavigate();
+  const [indexEditing, setIndexEditing] = useState<Index | undefined>(undefined);
 
   if (indexesLoading) {
     return (
@@ -44,8 +44,8 @@ const IndexerComponent: React.FC = () => {
     setIndexToDelete(index);
   };
 
-  const handleEditIndex = async (indexId: string) => {
-    navigate(`${indexId}`);
+  const handleEditIndex = async (index: Index) => {
+    setIndexEditing(index);
   };
 
   const confirmDelete = async () => {
@@ -109,7 +109,7 @@ const IndexerComponent: React.FC = () => {
                                   variant="outline"
                                   size="sm"
                                   className="h-8 w-8 p-0"
-                                  onClick={() => handleEditIndex(index.id)}
+                                  onClick={() => handleEditIndex(index)}
                                 >
                                   <Pencil className="h-4 w-4" />
                                   <span className="sr-only">Edit {index.name}</span>
@@ -188,6 +188,7 @@ const IndexerComponent: React.FC = () => {
           </div>
         )}
       </CardContent>
+      <EditIndexDialog index={indexEditing} setIndexEditing={setIndexEditing} refreshIndexes={refreshIndexes} />
     </Card>
   );
 };
