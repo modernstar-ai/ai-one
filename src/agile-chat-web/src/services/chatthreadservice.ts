@@ -35,12 +35,37 @@ export async function fetchChatsbythreadid(threadId: string): Promise<Message[] 
 
 export async function fetchChatThread(id: string): Promise<ChatThread | null> {
   const apiUrl = getApiUrl(`/${id}`);
+  
   try {
     const response = await axios.get<ChatThread>(apiUrl);
+    
     return {
       ...response.data,
+      // Handle strings
+      id: response.data.id,
+      name: response.data.name || 'Untitled Chat',
+      userName: response.data.userName || 'Anonymous',
+      userId: response.data.userId,
+      type: response.data.type || 'CHAT_THREAD',
+      assistantMessage: response.data.assistantMessage || '',
+      assistantTitle: response.data.assistantTitle || 'Assistant',
+      assistantId: response.data.assistantId || '',
+      // Handle dates
       createdAt: new Date(response.data.createdAt),
       lastMessageAt: new Date(response.data.lastMessageAt),
+      updatedAt: new Date(response.data.updatedAt),
+      // Handle booleans
+      bookmarked: response.data.bookmarked ?? false,
+      isDeleted: response.data.isDeleted ?? false,
+      // Handle arrays
+      extension: response.data.extension || [],
+      // Handle nullable numbers
+      temperature: response.data.temperature ?? null,
+      topP: response.data.topP ?? null,
+      maxResponseToken: response.data.maxResponseToken ?? null,
+      strictness: response.data.strictness ?? null,
+      // Handle non-nullable number
+      documentLimit: response.data.documentLimit ?? 0
     };
   } catch {
     return null;

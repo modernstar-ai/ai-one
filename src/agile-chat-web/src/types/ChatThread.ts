@@ -1,19 +1,24 @@
 export interface ChatThread {
-    id: string;
-    name: string;
-    useName: string;
-    userId: string;
-    createdAt: Date;
-    lastMessageAt: Date;
-    bookmarked: boolean;
-    isDeleted: boolean;
-    type: string;
-    assistantMessage: string;
-    assistantTitle: string;
-    assistantId: string;
-    extension: string[];
-  }
-  
+  id: string;
+  name: string;
+  userName: string;
+  userId: string;
+  type: string;
+  createdAt: Date;
+  lastMessageAt: Date;
+  updatedAt: Date;
+  bookmarked: boolean;
+  isDeleted: boolean;
+  assistantMessage: string;
+  assistantTitle: string;
+  assistantId: string;
+  extension: string[];
+  temperature: number | null;
+  topP: number | null;
+  maxResponseToken: number | null;
+  strictness: number | null;
+  documentLimit: number;
+}
   
  
   export interface Message {

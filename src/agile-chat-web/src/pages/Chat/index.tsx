@@ -246,11 +246,12 @@ const ChatPage = () => {
   return (
     <div className="flex h-screen bg-background text-foreground">
       <div className="flex-1 flex flex-col">
-        <SimpleHeading
-          Title={assistant ? assistant.name : 'Chat'}
-          Subtitle={assistant ? assistant.description : 'Why not have a chat'}
-          DocumentCount={messages.length}
-        />
+      <SimpleHeading
+        Title={assistant ? assistant.name : 'Chat'}
+        Subtitle={assistant ? assistant.description : 'Why not have a chat'}
+        DocumentCount={messages.length}
+        threadId={chatThreadId}
+      />
 
         {error && <div className="p-4 bg-red-100 text-red-700 rounded-md m-4">{error}</div>}
 
