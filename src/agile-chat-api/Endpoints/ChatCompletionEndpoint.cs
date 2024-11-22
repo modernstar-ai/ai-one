@@ -30,10 +30,7 @@ public static class ChatCompletionsEndpoint
                     var messages = await ChatService.GetChatMessagesFromContext(context);
                     if (messages == null || !messages.Any())
                     {
-                        context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                        await context.Response.WriteAsync("No messages provided.");
-                        await context.Response.Body.FlushAsync();
-                        return;
+                        return Results.BadRequest("No messages provided.");
                     }
 
                     #endregion
@@ -58,9 +55,7 @@ public static class ChatCompletionsEndpoint
                     if (chatClient == null)
                     {
                         const string error = "OpenAI endpoint or API key is not set in environment variables.";
-                        await context.Response.WriteAsync(error);
-                        await context.Response.Body.FlushAsync();
-                        return;
+                        return Results.BadRequest(error);
                     }
 
                     #endregion
@@ -219,6 +214,10 @@ public static class ChatCompletionsEndpoint
                     // Complete the response
                     await context.Response.CompleteAsync();
                 }
+                catch (Exception ex) when (ex is ClientResultException clientException && clientException.Message.Contains("content_filter"))
+                {
+                    return Results.BadRequest("High likelyhook of adult profanity");
+                }
                 catch (Exception ex)
                 {
                     #region Error Handling
@@ -241,6 +240,8 @@ public static class ChatCompletionsEndpoint
 
                     #endregion
                 }
+
+                return Results.Ok();
             }).RequireAuthorization();
 
 
