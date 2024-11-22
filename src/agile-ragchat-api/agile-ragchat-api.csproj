@@ -29,6 +29,7 @@
     <PackageReference Include="PdfSharpCore" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
     <PackageReference Include="DotNetEnv" />
+    <PackageReference Include="SixLabors.ImageSharp" />
   </ItemGroup>
 
   <ItemGroup>
