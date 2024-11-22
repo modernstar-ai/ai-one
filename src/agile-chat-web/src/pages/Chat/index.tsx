@@ -13,6 +13,7 @@ import { createChatThread, GetChatThreadMessages } from '@/services/chatthreadse
 import { fetchAssistantById } from '@/services/assistantservice';
 import { Message } from '@/types/ChatThread';
 import { Assistant } from '@/types/Assistant';
+import { AxiosError } from 'axios';
 
 const ChatPage = () => {
   const { '*': chatThreadId } = useParams();
@@ -223,8 +224,15 @@ const ChatPage = () => {
         });
       }
     } catch (err) {
+      let message = 'failed to send message';
+      const axiosErr = err as AxiosError;
+      const stream = axiosErr.response?.data as ReadableStream;
+      if (stream) {
+        const read = await stream.getReader().read();
+        message = new TextDecoder('utf-8').decode(read.value).replace(/^"(.*)"$/, '$1');
+      }
       console.error('Error sending message:', err);
-      setError('Failed to send message');
+      setError(message);
     } finally {
       setIsStreaming(false);
       setInputValue('');
@@ -245,34 +253,33 @@ const ChatPage = () => {
         />
 
         {error && <div className="p-4 bg-red-100 text-red-700 rounded-md m-4">{error}</div>}
-        
+
         <ScrollArea className="flex-1 p-4 space-y-4">
           {isMessagesLoading ? (
-            <div className="flex justify-center items-center h-full">
-              Loading messages...
-            </div>
+            <div className="flex justify-center items-center h-full">Loading messages...</div>
           ) : (
             messages.map(
-              (message, index) =>
+              (message, index) => (
                 //message.sender !== 'system' && (
-                  <ChatMessageArea
-                    key={index}
-                    profileName={message.sender === 'user' ? username || 'User' : assistant?.name || 'AI Assistant'}
-                    role={message.sender === 'user' ? 'user' : 'assistant'}
-                    onCopy={() => {
-                      navigator.clipboard.writeText(message.content);
+                <ChatMessageArea
+                  key={index}
+                  profileName={message.sender === 'user' ? username || 'User' : assistant?.name || 'AI Assistant'}
+                  role={message.sender === 'user' ? 'user' : 'assistant'}
+                  onCopy={() => {
+                    navigator.clipboard.writeText(message.content);
+                  }}
+                  profilePicture={message.sender === 'user' ? '' : '/agile.png'}
+                >
+                  <MessageContent
+                    message={{
+                      role: message.sender === 'user' ? 'user' : 'assistant',
+                      content: message.content,
+                      name: message.sender,
                     }}
-                    profilePicture={message.sender === 'user' ? '' : '/agile.png'}
-                  >
-                    <MessageContent
-                      message={{
-                        role: message.sender === 'user' ? 'user' : 'assistant',
-                        content: message.content,
-                        name: message.sender,
-                      }}
-                    />
-                  </ChatMessageArea>
-                //)
+                  />
+                </ChatMessageArea>
+              )
+              //)
             )
           )}
         </ScrollArea>

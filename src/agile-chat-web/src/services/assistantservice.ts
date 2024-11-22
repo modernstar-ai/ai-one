@@ -22,7 +22,7 @@ export async function fetchAssistants(): Promise<Assistant[] | null> {
 export async function fetchAssistantById(id: string): Promise<Assistant | null> {
   try {
     if (id) {
-      const apiUrl = getApiUrl(`assistants/${id}`);
+      const apiUrl = getApiUrl(`${id}`);
       const response = await axios.get<Assistant>(apiUrl);
       return response.data;
     } else {
@@ -37,7 +37,7 @@ export async function fetchAssistantById(id: string): Promise<Assistant | null> 
 
 // Create a new assistant
 export async function createAssistant(newAssistant: Assistant): Promise<Assistant | null> {
-  const apiUrl = getApiUrl('assistants');
+  const apiUrl = getApiUrl('');
   try {
     // Ensure all required fields are included in the request
     const assistantData = {
@@ -73,7 +73,7 @@ export async function createAssistant(newAssistant: Assistant): Promise<Assistan
 }
 
 export async function updateAssistant(updatedAssistant: Assistant): Promise<Assistant | null> {
-  const apiUrl = getApiUrl(`assistants/${updatedAssistant.id}`);
+  const apiUrl = getApiUrl(`${updatedAssistant.id}`);
   try {
     // Ensure all required fields are included in the request
     const assistantData = {
@@ -118,7 +118,7 @@ export async function updateAssistant(updatedAssistant: Assistant): Promise<Assi
 
 // Delete a assistant
 export async function deleteAssistant(id: string): Promise<boolean> {
-  const apiUrl = getApiUrl(`assistants/${id}`);
+  const apiUrl = getApiUrl(`${id}`);
   try {
     await axios.delete(apiUrl);
     return true;
