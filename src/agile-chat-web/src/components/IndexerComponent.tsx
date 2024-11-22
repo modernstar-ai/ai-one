@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { toast } from './ui/use-toast';
 import { deleteIndex } from '@/services/indexes-service';
 import { Index } from '@/models/indexmetadata';
-import { Loader2, Info, Trash2 } from 'lucide-react';
+import { Loader2, Info, Trash2, Pencil } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from './ui/button';
@@ -20,11 +20,14 @@ import {
 import { useIndexes } from '@/hooks/use-indexes';
 import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
 import { UserRole } from '@/authentication/user-roles';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { useNavigate } from 'react-router-dom';
 
 const IndexerComponent: React.FC = () => {
   const { indexes, indexesLoading, refreshIndexes } = useIndexes();
   const [indexToDelete, setIndexToDelete] = useState<Index | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const navigate = useNavigate();
 
   if (indexesLoading) {
     return (
@@ -39,6 +42,10 @@ const IndexerComponent: React.FC = () => {
 
   const handleDeleteIndex = async (index: Index) => {
     setIndexToDelete(index);
+  };
+
+  const handleEditIndex = async (indexId: string) => {
+    navigate(`${indexId}`);
   };
 
   const confirmDelete = async () => {
@@ -78,38 +85,35 @@ const IndexerComponent: React.FC = () => {
       <CardContent>
         {indexes && indexes.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border">
-              <thead>
-                <tr>
-                  {
-                    <PermissionHandler role={UserRole.SystemAdmin}>
-                      <th className="w-[100px] py-2 px-4 border">Actions</th>
-                    </PermissionHandler>
-                  }
-                  <th className="w-[150px] py-2 px-4 border">Name</th>
-                  <th className="w-[900px] py-2 px-4 border">Description</th>
-                  <th className="w-[100px] py-2 px-4 border">Group</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table aria-label="Available Assistants">
+              <TableHeader>
+                <TableRow>
+                  <PermissionHandler role={UserRole.ContentManager}>
+                    <TableHead className="w-[100px]">Actions</TableHead>
+                  </PermissionHandler>
+                  <TableHead className="w-[250px]">Name</TableHead>
+                  <TableHead className="w-[500px]">Description</TableHead>
+                  <TableHead className="w-[200px]">Group</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {indexes.map((index) => (
-                  <tr key={index.id} className="text-center border">
-                    <PermissionHandler role={UserRole.SystemAdmin}>
-                      <td className="py-2 px-4 border">
+                  <TableRow key={index.id} className="text-center border">
+                    <PermissionHandler role={UserRole.ContentManager} group={index.group}>
+                      <TableCell className="py-2 px-4 border">
                         <div className="flex items-center justify-center space-x-2">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                {/* <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                //onClick={() => handleEditIndex(index.id)}
-                                disabled={true} // Disable the edit button (TBD)
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => handleEditIndex(index.id)}
                                 >
-                                <Pencil className="h-4 w-4" />
-                                <span className="sr-only">Edit {index.name}</span>
-                              </Button> */}
+                                  <Pencil className="h-4 w-4" />
+                                  <span className="sr-only">Edit {index.name}</span>
+                                </Button>
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p>Edit {index.name}</p>
@@ -117,68 +121,70 @@ const IndexerComponent: React.FC = () => {
                             </Tooltip>
                           </TooltipProvider>
 
-                          <AlertDialog>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-8 w-8 p-0"
-                                      onClick={() => handleDeleteIndex(index)}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                      <span className="sr-only">Delete {index.name}</span>
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Delete {index.name}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the container "
-                                  {indexToDelete?.name}" and remove it from our servers.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter className="flex-col items-stretch sm:flex-row sm:justify-start sm:space-x-2">
-                                <AlertDialogCancel className="mb-2 sm:mb-0">Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
-                                  {isDeleting ? (
-                                    <>
-                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                      Deleting...
-                                    </>
-                                  ) : (
-                                    'Yes, delete container'
-                                  )}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          <PermissionHandler role={UserRole.SystemAdmin}>
+                            <AlertDialog>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 w-8 p-0"
+                                        onClick={() => handleDeleteIndex(index)}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="sr-only">Delete {index.name}</span>
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Delete {index.name}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the container "
+                                    {indexToDelete?.name}" and remove it from our servers.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="flex-col items-stretch sm:flex-row sm:justify-start sm:space-x-2">
+                                  <AlertDialogCancel className="mb-2 sm:mb-0">Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
+                                    {isDeleting ? (
+                                      <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Deleting...
+                                      </>
+                                    ) : (
+                                      'Yes, delete container'
+                                    )}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </PermissionHandler>
                         </div>
-                      </td>
+                      </TableCell>
                     </PermissionHandler>
-                    <td className="py-2 px-4 border font-medium">{index.name}</td>
-                    <td className="py-2 px-4 border text-left font-medium">
+                    <TableCell className="py-2 px-4 border font-medium">{index.name}</TableCell>
+                    <TableCell className="py-2 px-4 border text-left font-medium">
                       {index.description ? index.description : 'N/A'}
-                    </td>
-                    <td className="py-2 px-4 border font-medium">{index.group ? index.group : 'N/A'}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="py-2 px-4 border font-medium">{index.group ? index.group : 'N/A'}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         ) : (
           <div className="text-center py-8">
             <Info className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-900">No Containers available</p>
-            <p className="mt-1 text-sm text-gray-500">Get started by adding new containers to your system.</p>
+            <p className="text-lg font-medium text-gray-900">No containers available</p>
+            <p className="mt-1 text-sm text-gray-500">Get started by adding a new container to your system.</p>
           </div>
         )}
       </CardContent>

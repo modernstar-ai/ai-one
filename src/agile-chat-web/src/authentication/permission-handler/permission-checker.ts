@@ -12,7 +12,12 @@ export const hasPermission = (
   if (assignedRoles.includes(UserRole.SystemAdmin)) return true;
 
   //If both roles and groups are needed, check if the user has both
-  if (roleRequired && groupRequired && !assignedRoles.includes(roleRequired + `.${groupRequired.toLowerCase()}`)) {
+  if (
+    roleRequired &&
+    groupRequired &&
+    groupRequired.length > 0 &&
+    !assignedRoles.includes(roleRequired + `.${groupRequired.toLowerCase()}`)
+  ) {
     return false;
   }
 
@@ -27,7 +32,7 @@ export const hasPermission = (
   }
 
   //If only a group is required, check if the users groups contains that group
-  if (groupRequired) {
+  if (groupRequired && groupRequired.length > 0) {
     if (!groupRequired?.includes(groupRequired.toLowerCase())) return false;
   }
 
