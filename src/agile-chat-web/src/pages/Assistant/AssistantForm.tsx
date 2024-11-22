@@ -373,6 +373,7 @@ export default function AssistantForm() {
                           placeholder="Enter a number between 0 and 1000"
                           min={0}
                           max={1000}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -453,6 +454,7 @@ export default function AssistantForm() {
                           {...field}
                           type="number"
                           placeholder="Enter a number, by default value will be set to 800 tokens"
+                          onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -489,6 +491,7 @@ export default function AssistantForm() {
                           {...field}
                           type="number"
                           placeholder="Enter a number, by default value will be set to 3"
+                          onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
