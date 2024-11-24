@@ -32,9 +32,19 @@ export interface ChatThread {
       threadId: string;
       userId: string;
       multiModalImage: string;
-      sender: 'function' | 'user' | 'assistant' | 'system' | 'tool' ;  // Changed from string to SenderType
+      sender: 'function' | 'user' | 'assistant' | 'system' | 'tool' ;
+      like: boolean;
+      disLike: boolean;
   }
   
+  export interface MessageReactionsProps {
+    messageId: string;
+    userId: string;
+    initialLikes?: boolean;
+    initialDislikes?: boolean;
+    disabled?: boolean;
+  }
+
   export interface NewChatThread {
     name: string;
     personaMessage?: string;

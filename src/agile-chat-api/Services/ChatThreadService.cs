@@ -1,7 +1,9 @@
 ﻿
 using DotNetEnv;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Graph.TermStore;
 using OpenAI.Chat;
+using System.Net;
 
 public interface IChatThreadService
 {
@@ -18,8 +20,7 @@ public interface IChatThreadService
 
     ChatThread GetChatThread(string threadId, string prompt, string userId, string userName);
     void Delete(string id, string userid);
-    //void AddExtension(ExtensionUpdate data);
-    //void RemoveExtension(ExtensionUpdate data);
+    void UpdateMessageReaction(string messageId, string userId, ReactionType reactionType, bool value);
 }
 
 public class ChatThreadService : IChatThreadService
@@ -133,6 +134,69 @@ public class ChatThreadService : IChatThreadService
             new PartitionKey(chatThread.userId.ToString())
         ).GetAwaiter().GetResult();
     }
+
+    public void UpdateMessageReaction(string messageId, string userId, ReactionType reactionType, bool value)
+    {
+        try
+        {
+            string propertyPath;
+            if (reactionType == ReactionType.Like)
+            {
+                propertyPath = "/like";
+            }
+            else
+            {
+                propertyPath = "/disLike";
+            }
+
+            if (value)
+            {
+                string oppositePropertyPath;
+                if (reactionType == ReactionType.Like)
+                {
+                    oppositePropertyPath = "/disLike";
+                }
+                else
+                {
+                    oppositePropertyPath = "/like";
+                }
+
+                var patchOperations = new[]
+                {
+                    PatchOperation.Set(propertyPath, value),
+                    PatchOperation.Set(oppositePropertyPath, false)
+                };
+
+                _container.PatchItemAsync<Message>(
+                    messageId,
+                    new PartitionKey(userId),
+                    patchOperations
+                ).GetAwaiter().GetResult();
+            }
+            else
+            {
+                var patchOperations = new[]
+                {
+                    PatchOperation.Set(propertyPath, value)
+                };
+
+                _container.PatchItemAsync<Message>(
+                    messageId,
+                    new PartitionKey(userId),
+                    patchOperations
+                ).GetAwaiter().GetResult();
+            }
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            //Message not found
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to update message reaction: userId: {userId} {ex.Message}", ex);
+        }
+    }
+
 
     public void Delete(string id, string userId)
     {

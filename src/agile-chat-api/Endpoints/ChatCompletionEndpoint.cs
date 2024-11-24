@@ -109,7 +109,7 @@ public static class ChatCompletionsEndpoint
 
                                 // Update variables with assistant properties
                                 chatThread.name = assistant.Name;
-                                
+
                                 assistantTitle = assistant.Name;
                                 assistantSystemMessage = assistant.SystemMessage;
                                 temperature = assistant.Temperature;
@@ -122,7 +122,7 @@ public static class ChatCompletionsEndpoint
 
 
                         // Add to chatThread properties
-                        
+
                         chatThread.assistantTitle = assistantTitle;
                         chatThread.assistantMessage = assistantSystemMessage;  // Note: property name remains the same
                         chatThread.temperature = temperature;
@@ -132,6 +132,7 @@ public static class ChatCompletionsEndpoint
                         chatThread.documentLimit = documentLimit;
 
                         chatThreadService.Update(chatThread);
+
 
 
                     }
@@ -157,31 +158,35 @@ public static class ChatCompletionsEndpoint
                             }
                         }
 
+                    }
+                    #endregion
 
 
-                        // Create and save user message
-                        Message userMessage = new Message
-                        {
-                            threadId = threadId,
-                            id = Guid.NewGuid().ToString(),
-                            name = username,
-                            userId = username,
-                            role = "user",
-                            createdAt = DateTime.UtcNow,
-                            isDeleted = false,
-                            content = userQuery,
-                            sender = "user"
-                        };
-                        chatThreadService.CreateChat(userMessage);
+                    #region Create and save user message
+                    
+                    Message userMessage = new Message
+                    {
+                        threadId = threadId,
+                        id = Guid.NewGuid().ToString(),
+                        name = username,
+                        userId = username,
+                        role = "user",
+                        createdAt = DateTime.UtcNow,
+                        isDeleted = false,
+                        content = userQuery,
+                        sender = "user",
+                        like = false,
+                        disLike = false,
+                    };
+                    chatThreadService.CreateChat(userMessage);
 
-                        #endregion
+                    #endregion
 
 
 
+                    #region RAG
 
-                        #region RAG
-
-                        if (!string.IsNullOrEmpty(assistantId))
+                    if (!string.IsNullOrEmpty(assistantId))
                         {
                             var id = new System.Guid(assistantId);
 
@@ -214,7 +219,7 @@ public static class ChatCompletionsEndpoint
                                 }
                             }
                         }
-                    }
+                     
 
                     #endregion
 
@@ -253,6 +258,8 @@ public static class ChatCompletionsEndpoint
                         createdAt = DateTime.UtcNow,
                         isDeleted = false,
                         content = assistantMessageContent,
+                        like = false,
+                        disLike = false,
                     };
                     chatThreadService.CreateChat(assistantMessage);
 

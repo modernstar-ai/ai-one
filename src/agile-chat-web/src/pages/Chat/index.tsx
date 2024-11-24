@@ -148,6 +148,8 @@ const ChatPage = () => {
       userId: username,
       multiModalImage: '',
       sender: 'user',
+      like:false,
+      disLike:false
     };
 
     // Add user message to chat
@@ -200,6 +202,8 @@ const ChatPage = () => {
         userId: username,
         multiModalImage: '',
         sender: 'assistant',
+        like:false,
+        disLike:false
       };
       setMessages((prev) => [...prev, botMessage]);
 
@@ -262,14 +266,18 @@ const ChatPage = () => {
             messages.map(
               (message, index) => (
                 //message.sender !== 'system' && (
-                <ChatMessageArea
+                  <ChatMessageArea
                   key={index}
+                  messageId={message.id}
+                  userId={username || ''} // Ensure username is never undefined
                   profileName={message.sender === 'user' ? username || 'User' : assistant?.name || 'AI Assistant'}
                   role={message.sender === 'user' ? 'user' : 'assistant'}
                   onCopy={() => {
                     navigator.clipboard.writeText(message.content);
                   }}
                   profilePicture={message.sender === 'user' ? '' : '/agile.png'}
+                  initialLikes={message.like}
+                  initialDislikes={message.disLike}
                 >
                   <MessageContent
                     message={{
