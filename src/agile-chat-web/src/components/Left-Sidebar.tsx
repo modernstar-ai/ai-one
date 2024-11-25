@@ -51,6 +51,9 @@ import {
 import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
 import { UserRole } from '@/authentication/user-roles';
 
+import Logo from '@/assets/logo.png';
+
+
 type Theme = 'light' | 'dark' | 'system';
 
 export function LeftSidebar() {
@@ -311,8 +314,12 @@ export function LeftSidebar() {
         {isPanelOpen && (
           <div className="h-full flex flex-col dark:text-white ">
             {/* Panel Header */}
+            <div className="p-4 space-y-2">
+            <img src={Logo} alt="UTS Logo" className="w-1/2" />
+            </div>
+             
             <div className="p-4 border-b flex justify-between">
-              <h2 className="font-semibold">Recent Chats</h2>
+                <h2 className="font-semibold">Recent Chats</h2>
 
               <Button variant="ghost" size="icon" onClick={handleCreateChat} disabled={loading} aria-label="New Chat">
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
