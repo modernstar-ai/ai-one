@@ -66,6 +66,7 @@ public class ChatService
             Endpoint = new Uri(aiSearchUri),
             IndexName = searchIndexName,
             Authentication = DataSourceAuthentication.FromApiKey(azureSearchApiKey),
+            FieldMappings = new DataSourceFieldMappings { UrlFieldName = "metadata_storage_path", ContentFieldSeparator = "\n" }
         };
         return dataSource;
     }

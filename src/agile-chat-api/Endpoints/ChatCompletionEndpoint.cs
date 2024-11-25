@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using agile_chat_api.Models;
 
 public static class ChatCompletionsEndpoint
 {
@@ -19,6 +20,7 @@ public static class ChatCompletionsEndpoint
 
                 IChatThreadService chatThreadService = new ChatThreadService();
                 string assistantMessageContent = "";
+                var responseCitations = new List<Citation>(); // To hold citation objects
 
                 #endregion
 
@@ -139,26 +141,61 @@ public static class ChatCompletionsEndpoint
 
                     #region Chat Completion Streaming
 
+                    AzureChatMessageContext? aggregatedMessageContext = null;
+                    var aggregatedCitations = new List<AzureChatCitation>(); // Separate collection for citations
+
                     // Stream chat completion responses
                     var completionUpdates = chatClient.CompleteChatStreaming(oaiMessages, options);
 
                     foreach (var completionUpdate in completionUpdates)
                     {
+                        var currentMessageContext = completionUpdate.GetAzureMessageContext();
+                        // Aggregate the context if it's not null
+                        if (currentMessageContext != null)
+                        {
+                            aggregatedMessageContext ??= currentMessageContext; // Keep the first available message context
+                            // Add citations to the separate collection
+                            if (currentMessageContext.Citations != null)
+                            {
+                                aggregatedCitations.AddRange(currentMessageContext.Citations);
+                            }
+                        }
+
                         foreach (var contentPart in completionUpdate.ContentUpdate)
                         {
                             var content = contentPart.Text;
                             if (!string.IsNullOrEmpty(content))
                             {
                                 assistantMessageContent += content;
-                                await context.Response.WriteAsync(content);
-                                await context.Response.Body.FlushAsync();
+                                //await context.Response.WriteAsync(content);
+                                //await context.Response.Body.FlushAsync();
                             }
                         }
                     }
-
+                    // At this point, `aggregatedCitations` contains all collected citations
+                    if (aggregatedCitations.Any())
+                    {
+                        var uniqueCitations = aggregatedCitations
+                        .Where(citation => !string.IsNullOrEmpty(citation.Url) && !string.IsNullOrEmpty(citation.Title))
+                        .GroupBy(citation => new { citation.Title, citation.Url }) // Group by Title and Url to ensure uniqueness
+                        .Select(group => group.First()) // Take the first instance of each unique pair
+                        .ToList();
+                        responseCitations = uniqueCitations.Select(citation => new Citation
+                        {
+                            FileName = citation.Title,
+                            FileUrl = citation.Url
+                        }).ToList();
+                    }
                     #endregion
 
                     #region Save Assistant Response
+
+                    // Format responseCitations into a string representation
+                    var citationsString = string.Join(Environment.NewLine, responseCitations.Select(citation =>
+                        $"{citation.FileName}: {citation.FileUrl}"));
+                    // Combine assistant message content with citations
+                    var assistantMessageResponse = $"{assistantMessageContent}{Environment.NewLine}{citationsString}";
+
 
                     // Create and save assistant message
                     Message assistantMessage = new Message
@@ -171,7 +208,7 @@ public static class ChatCompletionsEndpoint
                         sender = "assistant",
                         createdAt = DateTime.UtcNow,
                         isDeleted = false,
-                        content = assistantMessageContent,
+                        content = assistantMessageResponse,
                     };
                     chatThreadService.CreateChat(assistantMessage);
 
@@ -211,8 +248,15 @@ public static class ChatCompletionsEndpoint
 
                     #endregion
 
-                    // Complete the response
-                    await context.Response.CompleteAsync();
+                    // Create response structure
+                    var response = new
+                    {
+                        response = assistantMessageContent,
+                        citations = responseCitations
+                    };
+                    // Send the response as JSON
+                    await context.Response.WriteAsJsonAsync(response);
+
                 }
                 catch (Exception ex) when (ex is ClientResultException clientException && clientException.Message.Contains("content_filter"))
                 {

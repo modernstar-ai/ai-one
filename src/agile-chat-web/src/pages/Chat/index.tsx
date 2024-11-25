@@ -110,16 +110,31 @@ const ChatPage = () => {
     const fetchMessages = async () => {
       if (chatThreadId) {
         setIsMessagesLoading(true);
-        try {
+       
           const getMessages = await GetChatThreadMessages(username, chatThreadId, assistant);
           console.log('Chat - getMessages after new thread:', getMessages);
-          setMessages(getMessages);
-        } catch (err) {
-          console.error('Error fetching messages:', err);
-          setError('Failed to load messages');
-        } finally {
-          setIsMessagesLoading(false);
-        }
+          
+          // Parse and manage AssistantMessageContent
+        const parsedMessages = getMessages.map((message) => {
+          if (message.role === 'assistant' && typeof message.content === 'string') {
+            try {
+              const parsedContent = JSON.parse(message.content); // Parse AssistantMessageContent JSON
+              console.log("parsedContent:", parsedContent);
+              return {
+                ...message,
+                content: parsedContent.response || message.content, // Display `response` field or fallback to raw content
+                citations: parsedContent.citations || [], // Handle citations if included
+              };
+            } catch (err) {
+              console.error('Failed to parse AssistantMessageContent:', err);
+            }
+            finally {
+              setIsMessagesLoading(false);
+            }
+          }
+          return message; // Return unmodified message for non-assistant roles
+        });
+        setMessages(parsedMessages);
       }
     };
 
@@ -178,15 +193,6 @@ const ChatPage = () => {
       // Clear input after storing message
       setInputValue('');
 
-      const response = await axios.post(apiUrl, messageHistory, {
-        headers: {
-          Accept: 'text/plain',
-          'Content-Type': 'application/json',
-        },
-        responseType: 'stream',
-        adapter: 'fetch',
-      });
-
       // Create placeholder for bot response
       const botMessage: Message = {
         id: crypto.randomUUID(),
@@ -203,26 +209,60 @@ const ChatPage = () => {
       };
       setMessages((prev) => [...prev, botMessage]);
 
-      // Handle streaming response
-      const stream: ReadableStream = response.data;
+      const response = await axios.post(apiUrl, messageHistory, {
+        headers: {
+          Accept: 'text/plain',
+          'Content-Type': 'application/json',
+        },
+        responseType: 'stream',
+        adapter: 'fetch',
+      });
+
+      
+
+      // // Handle streaming response
+      const stream = response.data as ReadableStream;
       const reader = stream.getReader();
       const decoder = new TextDecoder('utf-8');
+
+      let content = ''; // Store the content
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
+        content += chunk;
 
+        console.log("content:", content);
+
+        // Update the message incrementally for partial updates
         setMessages((prev) => {
           const lastMessage = prev[prev.length - 1];
           const updatedMessage = {
             ...lastMessage,
-            content: lastMessage.content + chunk,
+            content: content.trim(), // Partial content
           };
           return [...prev.slice(0, prev.length - 1), updatedMessage];
         });
       }
+
+      // Finalize message with parsed response
+      const responseJson = JSON.parse(content);
+      const { response: botContent, citations } = responseJson;
+      console.log("Bot content:", botContent);
+
+      // Update the last message with the new content
+      setMessages((prev) => {
+        const lastMessage = prev[prev.length - 1];
+        const updatedMessage = {
+          ...lastMessage,
+          content: botContent || "No content available", // Only update with content, not the entire JSON
+          citations: citations || [], // Add citations if available
+        };
+        return [...prev.slice(0, prev.length - 1), updatedMessage];
+      });
+
     } catch (err) {
       let message = 'failed to send message';
       const axiosErr = err as AxiosError;
@@ -275,6 +315,7 @@ const ChatPage = () => {
                       role: message.sender === 'user' ? 'user' : 'assistant',
                       content: message.content,
                       name: message.sender,
+                      citations: message.citations
                     }}
                   />
                 </ChatMessageArea>
