@@ -27,6 +27,7 @@ export interface ChatThread {
       threadId: string;
       userId: string;
       multiModalImage: string;
+      citations?: { fileName: string; fileUrl: string }[];
       sender: 'function' | 'user' | 'assistant' | 'system' | 'tool' ;  // Changed from string to SenderType
   }
   

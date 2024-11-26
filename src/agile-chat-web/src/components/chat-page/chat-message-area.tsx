@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 import {
   CheckIcon,
-  ClipboardIcon,
+  Copy,
   PocketKnife,
   UserCircle,
 } from "lucide-react";
@@ -97,7 +97,7 @@ export const ChatMessageArea = (props: {
               {isIconChecked ? (
                 <CheckIcon size={16} />
               ) : (
-                <ClipboardIcon size={16} />
+                <Copy size={16} />
               )}
             </Button>
           </div>

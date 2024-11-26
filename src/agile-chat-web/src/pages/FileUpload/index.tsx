@@ -17,8 +17,7 @@ import { useForm } from 'react-hook-form';
 import { uploadFiles } from '@/services/files-service';
 import { useIndexes } from '@/hooks/use-indexes';
 
-const maxFileCount = 5; // Maximum number of files allowed
-const maxSize = 26214400; // 25MB
+const maxFileCount = 25; // Maximum number of files allowed
 
 const formSchema = z.object({
   index: z.string().min(1, { message: 'Container is required' }),
@@ -26,7 +25,7 @@ const formSchema = z.object({
   files: z
     .array(z.instanceof(File))
     .refine((files) => files.length > 0, { message: 'No files selected' })
-    .refine((files) => files.length <= maxFileCount, { message: 'Maximum of 5 files can be uploaded at a time' }),
+    .refine((files) => files.length <= maxFileCount, { message: 'Maximum of 25 files can be uploaded at a time' }),
 });
 type FormValues = z.infer<typeof formSchema>;
 
@@ -166,7 +165,6 @@ export default function FileUploadComponent() {
                       <Dropzone
                         onDrop={onDrop}
                         accept={{}} // Allow all file types
-                        maxSize={maxSize}
                         maxFiles={maxFileCount}
                       >
                         {({
@@ -204,8 +202,7 @@ export default function FileUploadComponent() {
                                   Drag 'n' drop files here, or click to select files
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                  You can upload up to {maxFileCount} files (up to {Math.round(maxSize / (1024 * 1024))}
-                                  MB each)
+                                  You can upload up to {maxFileCount} files
                                 </p>
                               </div>
                             )}

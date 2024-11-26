@@ -1,6 +1,7 @@
 import { Config } from "@markdoc/markdoc";
 import { fence } from "./code-block";
 import { paragraph } from "./paragraph";
+import { citation } from "./citation";
 
 export const citationConfig: Config = {
   nodes: {
@@ -8,6 +9,6 @@ export const citationConfig: Config = {
     fence,
   },
   tags: {
-    //citation,
+    citation,
   },
 };
