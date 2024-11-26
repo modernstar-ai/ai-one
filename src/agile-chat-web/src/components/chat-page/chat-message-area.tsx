@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   CheckIcon,
   ClipboardIcon,
+  Copy,
   PocketKnife,
   UserCircle,
 } from "lucide-react";
@@ -95,6 +96,19 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
             )}
           >
             {profileName}
+          </div>
+        </div>
+        <div className=" h-7 flex items-center justify-between">
+          <div>
+            <Button
+              variant={"ghost"}
+              size={"sm"}
+              title="Copy text"
+              className="justify-right flex"
+              onClick={handleButtonClick}
+            >
+              {isIconChecked ? <CheckIcon size={16} /> : <Copy size={16} />}
+            </Button>
           </div>
         </div>
       </div>

@@ -35,6 +35,7 @@ export interface ChatThread {
       sender: 'function' | 'user' | 'assistant' | 'system' | 'tool' ;
       like: boolean;
       disLike: boolean;
+      citations?: { fileName: string; fileUrl: string }[];
   }
   
   export interface MessageReactionsProps {

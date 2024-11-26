@@ -71,6 +71,15 @@ public static class IndexesEndpoints
                 }
             }).DisableAntiforgery();
 
+        api.MapPut("{id}", async (string id, [FromBody] UpdateIndexDto dto, IContainerIndexerService cosmosService) =>
+        {
+            var index = await cosmosService.GetContainerIndexByIdAsync(id);
+            if (index == null) return Results.NotFound();
+
+            await cosmosService.UpdateAsync(index, dto.Description ?? "", dto.Group ?? "");
+            return Results.Ok();
+        });
+
         api.MapDelete("delete/{id}", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
             async (string id, [FromServices] IContainerIndexerService cosmosService, [FromServices] 
                 IAzureAiSearchService azureSearchService, [FromServices] IFileUploadService fileUploadService, 
