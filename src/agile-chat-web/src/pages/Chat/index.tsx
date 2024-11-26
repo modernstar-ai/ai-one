@@ -1,28 +1,31 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import SimpleHeading from '@/components/Heading-Simple';
-import { getApiUri } from '@/services/uri-helpers';
-import axios from '@/error-handling/axiosSetup';
-import MessageContent from '@/components/chat-page/message-content';
-import { ChatMessageArea } from '@/components/chat-page/chat-message-area';
-import { useAuth } from '@/services/auth-helpers';
-import { createChatThread, GetChatThreadMessages } from '@/services/chatthreadservice';
-import { fetchAssistantById } from '@/services/assistantservice';
-import { Message } from '@/types/ChatThread';
-import { Assistant } from '@/types/Assistant';
-import { AxiosError } from 'axios';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import SimpleHeading from "@/components/Heading-Simple";
+import { getApiUri } from "@/services/uri-helpers";
+import axios from "@/error-handling/axiosSetup";
+import MessageContent from "@/components/chat-page/message-content";
+import { ChatMessageArea } from "@/components/chat-page/chat-message-area";
+import { useAuth } from "@/services/auth-helpers";
+import {
+  createChatThread,
+  GetChatThreadMessages,
+} from "@/services/chatthreadservice";
+import { fetchAssistantById } from "@/services/assistantservice";
+import { Message } from "@/types/ChatThread";
+import { Assistant } from "@/types/Assistant";
+import { AxiosError } from "axios";
 
 const ChatPage = () => {
-  const { '*': chatThreadId } = useParams();
+  const { "*": chatThreadId } = useParams();
   const urlParams = new URLSearchParams(window.location.search);
-  const assistantId = urlParams.get('assistantId');
+  const assistantId = urlParams.get("assistantId");
   const navigate = useNavigate();
   const { username } = useAuth();
 
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [assistant, setAssistant] = useState<Assistant | null>(null);
 
@@ -37,13 +40,13 @@ const ChatPage = () => {
       const fetchedAssistant = await fetchAssistantById(id);
       if (fetchedAssistant) {
         setAssistant(fetchedAssistant);
-        console.log('Assistant loaded:', fetchedAssistant);
+        console.log("Assistant loaded:", fetchedAssistant);
         return fetchedAssistant;
       }
-      throw new Error('Assistant not found');
+      throw new Error("Assistant not found");
     } catch (err) {
-      console.error('Error fetching assistant:', err);
-      setError('Failed to load assistant');
+      console.error("Error fetching assistant:", err);
+      setError("Failed to load assistant");
       return null;
     }
   };
@@ -60,35 +63,41 @@ const ChatPage = () => {
         // Step 1: Fetch assistant if ID is provided
         if (assistantId && isMounted) {
           currentAssistant = await fetchAssistant(assistantId);
-          console.log('Chat - currentAssistant:', currentAssistant);
+          console.log("Chat - currentAssistant:", currentAssistant);
           if (!currentAssistant) {
-            throw new Error('Failed to load assistant');
+            throw new Error("Failed to load assistant");
           }
         }
 
         // Step 2: Handle chat thread initialization when no chatThreadId is provided
         if (!chatThreadId && isMounted) {
           const newThread = await createChatThread({
-            name: 'New Chat',
+            name: "New Chat",
             userId: username,
-            personaMessage: currentAssistant?.systemMessage || '',
-            personaMessageTitle: currentAssistant?.name || '',
+            personaMessage: currentAssistant?.systemMessage || "",
+            personaMessageTitle: currentAssistant?.name || "",
           });
-          console.log('Chat - newThread:', newThread);
+          console.log("Chat - newThread:", newThread);
 
           if (!newThread) {
-            throw new Error('Failed to create new chat thread');
+            throw new Error("Failed to create new chat thread");
           }
 
-          const newUrl = assistantId ? `/chat/${newThread.id}?assistantId=${assistantId}` : `/chat/${newThread.id}`;
-          console.log('Chat - newUrl to redirect to:', newUrl);
+          const newUrl = assistantId
+            ? `/chat/${newThread.id}?assistantId=${assistantId}`
+            : `/chat/${newThread.id}`;
+          console.log("Chat - newUrl to redirect to:", newUrl);
 
           navigate(newUrl, { replace: true });
         }
       } catch (err) {
         if (isMounted) {
-          console.error('Chat initialization error:', err);
-          setError(err instanceof Error ? err.message : 'An error occurred while initializing chat');
+          console.error("Chat initialization error:", err);
+          setError(
+            err instanceof Error
+              ? err.message
+              : "An error occurred while initializing chat"
+          );
         }
       } finally {
         if (isMounted) {
@@ -110,13 +119,20 @@ const ChatPage = () => {
     const fetchMessages = async () => {
       if (chatThreadId) {
         setIsMessagesLoading(true);
-       
-          const getMessages = await GetChatThreadMessages(username, chatThreadId, assistant);
-          console.log('Chat - getMessages after new thread:', getMessages);
-          
-          // Parse and manage AssistantMessageContent
+
+        const getMessages = await GetChatThreadMessages(
+          username,
+          chatThreadId,
+          assistant
+        );
+        console.log("Chat - getMessages after new thread:", getMessages);
+
+        // Parse and manage AssistantMessageContent
         const parsedMessages = getMessages.map((message) => {
-          if (message.role === 'assistant' && typeof message.content === 'string') {
+          if (
+            message.role === "assistant" &&
+            typeof message.content === "string"
+          ) {
             try {
               const parsedContent = JSON.parse(message.content); // Parse AssistantMessageContent JSON
               console.log("parsedContent:", parsedContent);
@@ -126,9 +142,8 @@ const ChatPage = () => {
                 citations: parsedContent.citations || [], // Handle citations if included
               };
             } catch (err) {
-              console.error('Failed to parse AssistantMessageContent:', err);
-            }
-            finally {
+              console.error("Failed to parse AssistantMessageContent:", err);
+            } finally {
               setIsMessagesLoading(false);
             }
           }
@@ -142,7 +157,7 @@ const ChatPage = () => {
   }, [chatThreadId, username, assistant]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -154,15 +169,17 @@ const ChatPage = () => {
     const newMessage: Message = {
       id: crypto.randomUUID(),
       createdAt: new Date(),
-      type: 'text',
+      type: "text",
       isDeleted: false,
       content: inputValue,
       name: username,
-      role: 'user',
+      role: "user",
       threadId: chatThreadId,
       userId: username,
-      multiModalImage: '',
-      sender: 'user',
+      multiModalImage: "",
+      sender: "user",
+      like: false,
+      disLike: false,
     };
 
     // Add user message to chat
@@ -171,12 +188,12 @@ const ChatPage = () => {
 
     try {
       // Use new /chat endpoint
-      const apiUrl = getApiUri('chat', {
+      const apiUrl = getApiUri("chat", {
         threadId: chatThreadId,
         ...(assistantId && { assistantId }),
       });
 
-      console.log('Chat apiUrl: ', apiUrl);
+      console.log("Chat apiUrl: ", apiUrl);
 
       // Create message history format
       const messageHistory = messages.map((msg) => ({
@@ -187,45 +204,45 @@ const ChatPage = () => {
       // Add current message
       messageHistory.push({
         text: inputValue,
-        role: 'user',
+        role: "user",
       });
 
       // Clear input after storing message
-      setInputValue('');
+      setInputValue("");
 
       // Create placeholder for bot response
       const botMessage: Message = {
         id: crypto.randomUUID(),
         createdAt: new Date(),
-        type: 'text',
+        type: "text",
         isDeleted: false,
-        content: '',
-        name: 'Assistant',
-        role: 'assistant',
+        content: "",
+        name: "Assistant",
+        role: "assistant",
         threadId: chatThreadId,
         userId: username,
-        multiModalImage: '',
-        sender: 'assistant',
+        multiModalImage: "",
+        sender: "assistant",
+        like: false,
+        disLike: false,
       };
       setMessages((prev) => [...prev, botMessage]);
 
       const response = await axios.post(apiUrl, messageHistory, {
         headers: {
-          Accept: 'text/plain',
-          'Content-Type': 'application/json',
+          Accept: "text/plain",
+          "Content-Type": "application/json",
         },
-        responseType: 'stream',
-        adapter: 'fetch',
+        responseType: "stream",
+        adapter: "fetch",
       });
-
-      
 
       // // Handle streaming response
       const stream = response.data as ReadableStream;
       const reader = stream.getReader();
-      const decoder = new TextDecoder('utf-8');
+      const decoder = new TextDecoder("utf-8");
 
-      let content = ''; // Store the content
+      let content = ""; // Store the content
 
       while (true) {
         const { done, value } = await reader.read();
@@ -262,60 +279,80 @@ const ChatPage = () => {
         };
         return [...prev.slice(0, prev.length - 1), updatedMessage];
       });
-
     } catch (err) {
-      let message = 'failed to send message';
+      let message = "failed to send message";
       const axiosErr = err as AxiosError;
       const stream = axiosErr.response?.data as ReadableStream;
       if (stream) {
         const read = await stream.getReader().read();
-        message = new TextDecoder('utf-8').decode(read.value).replace(/^"(.*)"$/, '$1');
+        message = new TextDecoder("utf-8")
+          .decode(read.value)
+          .replace(/^"(.*)"$/, "$1");
       }
-      console.error('Error sending message:', err);
+      console.error("Error sending message:", err);
       setError(message);
     } finally {
       setIsStreaming(false);
-      setInputValue('');
+      setInputValue("");
     }
   };
 
   if (isLoading) {
-    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
   return (
     <div className="flex h-screen bg-background text-foreground">
       <div className="flex-1 flex flex-col">
         <SimpleHeading
-          Title={assistant ? assistant.name : 'Chat'}
-          Subtitle={assistant ? assistant.description : 'Why not have a chat'}
+          Title={assistant ? assistant.name : "Chat"}
+          Subtitle={assistant ? assistant.description : "Why not have a chat"}
           DocumentCount={messages.length}
+          threadId={chatThreadId}
         />
 
-        {error && <div className="p-4 bg-red-100 text-red-700 rounded-md m-4">{error}</div>}
+        {error && (
+          <div className="p-4 bg-red-100 text-red-700 rounded-md m-4">
+            {error}
+          </div>
+        )}
 
         <ScrollArea className="flex-1 p-4 space-y-4">
           {isMessagesLoading ? (
-            <div className="flex justify-center items-center h-full">Loading messages...</div>
+            <div className="flex justify-center items-center h-full">
+              Loading messages...
+            </div>
           ) : (
             messages.map(
               (message, index) => (
                 //message.sender !== 'system' && (
                 <ChatMessageArea
                   key={index}
-                  profileName={message.sender === 'user' ? username || 'User' : assistant?.name || 'AI Assistant'}
-                  role={message.sender === 'user' ? 'user' : 'assistant'}
+                  messageId={message.id}
+                  userId={username || ""} // Ensure username is never undefined
+                  profileName={
+                    message.sender === "user"
+                      ? username || "User"
+                      : assistant?.name || "AI Assistant"
+                  }
+                  role={message.sender === "user" ? "user" : "assistant"}
                   onCopy={() => {
                     navigator.clipboard.writeText(message.content);
                   }}
-                  profilePicture={message.sender === 'user' ? '' : '/agile.png'}
+                  profilePicture={message.sender === "user" ? "" : "/agile.png"}
+                  initialLikes={message.like}
+                  initialDislikes={message.disLike}
                 >
                   <MessageContent
                     message={{
-                      role: message.sender === 'user' ? 'user' : 'assistant',
+                      role: message.sender === "user" ? "user" : "assistant",
                       content: message.content,
                       name: message.sender,
-                      citations: message.citations
+                      citations: message.citations,
                     }}
                   />
                 </ChatMessageArea>
@@ -344,7 +381,7 @@ const ChatPage = () => {
             aria-label="Send Chat"
             accessKey="j"
           >
-            {isStreaming ? 'Sending...' : 'Send'}
+            {isStreaming ? "Sending..." : "Send"}
           </Button>
         </div>
       </div>

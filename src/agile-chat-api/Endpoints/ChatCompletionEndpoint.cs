@@ -71,76 +71,157 @@ public static class ChatCompletionsEndpoint
 
                    #region Message Processing
 
-                   // Process incoming messages and create chat options
-                   var options = new ChatCompletionOptions();
-                   var oaiMessages = ChatService.GetOaiChatMessages(messages);
+                    // Process incoming messages and create chat options
+                    var options = new ChatCompletionOptions();
+                    var oaiMessages = ChatService.GetOaiChatMessages(messages);
 
                    string userQuery = chatThreadService.GetLatestUserMessageContent(oaiMessages);
 
                    // Get chat thread
                    ChatThread chatThread = chatThreadService.GetChatThread(threadId, userQuery, userId, username);
 
-                   // Get the IndexID if appropriate
-                   var indexToSearch = string.Empty;
-                   var assistantId = chatThread.assistantId;
-                   Assistant? assistant = null;
-                   if (!string.IsNullOrEmpty(assistantId))
-                   {
-                       var id = new System.Guid(assistantId);
-                       assistant = await assistantService.GetByIdAsync(id);
-                       if (assistant != null)
-                       {
-                           indexToSearch = assistant.Index;
-                           options.Temperature = (float?)assistant.Temperature; // 0.5;
-                           if (assistant.TopP != null) options.TopP = (float?)assistant.TopP; // 1;
-                           options.MaxOutputTokenCount = assistant.MaxResponseToken; // 100;
-                       }
-                   }
+                    // Get the IndexID if appropriate
+                    var indexToSearch = string.Empty;
+                    var assistantId = chatThread.assistantId;
+                    Assistant? assistant = null;
+
+                    if (chatThread.name == "New Chat")
+                    {
+                        // First, generate initial variables with default values
+                        string assistantTitle = string.Empty;
+                        string assistantSystemMessage = string.Empty;
+                        int? strictness = 0;
+                        int documentLimit = 0;
 
 
-                   // Create and save user message
-                   Message userMessage = new Message
-                   {
-                       threadId = threadId,
-                       id = Guid.NewGuid().ToString(),
-                       name = username,
-                       userId = username,
-                       role = "user",
-                       createdAt = DateTime.UtcNow,
-                       isDeleted = false,
-                       content = userQuery,
-                       sender = "user"
-                   };
-                   chatThreadService.CreateChat(userMessage);
+                        //Todo get defaults from config
+                        //GPT-4o maxtokens defaults to 4096.
+                        //TopP defaults is 1.
+                        //temperature defaults is 1
+                        decimal? temperature = 1;
+                        decimal? topP = 1;
+                        int? maxResponseToken = 4096;
+
+
+                        if (!string.IsNullOrEmpty(assistantId))
+                        {
+                            var id = new System.Guid(assistantId);
+
+                            assistant = await assistantService.GetByIdAsync(id);
+
+                            if (assistant != null)
+                            {
+                                options.Temperature = (float?)assistant.Temperature; // 0.5;
+                                if (assistant.TopP != null) options.TopP = (float?)assistant.TopP; // 1;
+                                options.MaxOutputTokenCount = assistant.MaxResponseToken; // 100;
+
+                                // Update variables with assistant properties
+                                chatThread.name = assistant.Name;
+
+                                assistantTitle = assistant.Name;
+                                assistantSystemMessage = assistant.SystemMessage;
+                                temperature = assistant.Temperature;
+                                topP = assistant.TopP;
+                                maxResponseToken = assistant.MaxResponseToken;
+                                strictness = assistant.Strictness;
+                                documentLimit = assistant.DocumentLimit;
+                            }
+                        }
+
+
+                        // Add to chatThread properties
+
+                        chatThread.assistantTitle = assistantTitle;
+                        chatThread.assistantMessage = assistantSystemMessage;  // Note: property name remains the same
+                        chatThread.temperature = temperature;
+                        chatThread.topP = topP;
+                        chatThread.maxResponseToken = maxResponseToken;
+                        chatThread.strictness = strictness;
+                        chatThread.documentLimit = documentLimit;
+
+                        chatThreadService.Update(chatThread);
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(assistantId))
+                        {
+                            var id = new System.Guid(assistantId);
+
+                            assistant = await assistantService.GetByIdAsync(id);
+
+                            if (assistant != null)
+                            {
+                                options.Temperature = (float?)chatThread.temperature;
+
+                                if (chatThread.topP != null)
+                                {
+                                    options.TopP = (float?)chatThread.topP;
+                                }
+
+                                options.MaxOutputTokenCount = chatThread.maxResponseToken;
+                            }
+                        }
+
+                    }
+                    #endregion
+
+
+                    #region Create and save user message
+                    
+                    Message userMessage = new Message
+                    {
+                        threadId = threadId,
+                        id = Guid.NewGuid().ToString(),
+                        name = username,
+                        userId = username,
+                        role = "user",
+                        createdAt = DateTime.UtcNow,
+                        isDeleted = false,
+                        content = userQuery,
+                        sender = "user",
+                        like = false,
+                        disLike = false,
+                    };
+                    chatThreadService.CreateChat(userMessage);
 
                    #endregion
 
                    #region RAG
 
-                   if (!string.IsNullOrEmpty(indexToSearch))
+                   if (!string.IsNullOrEmpty(assistantId))
                    {
-                       var dataSource = ChatService.GetChatCompletionOptionsDataSource(indexToSearch);
-                       if (dataSource is not null)
+                       var id = new System.Guid(assistantId);
+
+                       assistant = await assistantService.GetByIdAsync(id);
+
+                       if (assistant != null)
                        {
-                           //The maximum number of rewritten queries that should be sent to the search
-                           //        provider for a single user message.
-                           //By default, the system will make an automatic determination.
-                           //dataSource.MaxSearchQueries = 1;
-                           //The configured strictness of the search relevance filtering. 
+                           indexToSearch = assistant.Index;
 
-                           if (assistant != null)
+                           if (!string.IsNullOrEmpty(indexToSearch))
                            {
-                               //Higher strictness will increase precision but lower recall of the answer.
-                               dataSource.Strictness = assistant.Strictness;
-                               //the configured number of docs to feature in the query
-                               dataSource.TopNDocuments = assistant.DocumentLimit;
-                           }
+                               var dataSource = ChatService.GetChatCompletionOptionsDataSource(indexToSearch);
 
+                               if (dataSource is not null)
+                               {
+                                   //The maximum number of rewritten queries that should be sent to the search
+                                   //        provider for a single user message.
+                                   //By default, the system will make an automatic determination.
+                                   //dataSource.MaxSearchQueries = 1;
+                                   //The configured strictness of the search relevance filtering. 
 
-
+                                   if (assistant != null)
+                                   {
+                                       //Higher strictness will increase precision but lower recall of the answer.
+                                       dataSource.Strictness = assistant.Strictness;
+                                       //the configured number of docs to feature in the query
+                                       dataSource.TopNDocuments = assistant.DocumentLimit;
+                                   }
 
 #pragma warning disable AOAI001
-                           options.AddDataSource(dataSource);
+                                   options.AddDataSource(dataSource);
+                               }
+                           }
                        }
                    }
 
@@ -202,54 +283,39 @@ public static class ChatCompletionsEndpoint
                    var assistantMessageResponse = $"{assistantMessageContent}{Environment.NewLine}{citationsString}";
                 
                    
-                   // Create and save assistant message
-                   Message assistantMessage = new Message
-                   {
-                       threadId = threadId,
-                       id = Guid.NewGuid().ToString(),
-                       name = username,
-                       userId = username,
-                       role = "assistant",
-                       sender = "assistant",
-                       createdAt = DateTime.UtcNow,
-                       isDeleted = false,
-                       content = assistantMessageResponse,
-                   };
-                   chatThreadService.CreateChat(assistantMessage);
+                    // Create and save assistant message
+                    Message assistantMessage = new Message
+                    {
+                        threadId = threadId,
+                        id = Guid.NewGuid().ToString(),
+                        name = username,
+                        userId = username,
+                        role = "assistant",
+                        sender = "assistant",
+                        createdAt = DateTime.UtcNow,
+                        isDeleted = false,
+                        content = assistantMessageContent,
+                        like = false,
+                        disLike = false,
+                    };
+                    chatThreadService.CreateChat(assistantMessage);
 
                    #endregion
 
                    #region Update Chat Thread
+                    // Update chat thread title for new chats
+                    if (chatThread.name == "New Chat" && assistant is null)
+                    {
+                        chatThread.lastMessageAt = DateTime.UtcNow;
 
-                   // Update chat thread title for new chats
-                   if (chatThread.name == "New Chat")
-                   {
-                       chatThread.lastMessageAt = DateTime.UtcNow;
+                        // Use first few words of the assistant's response as the title
+                        string[] words = assistantMessageContent.Split(' ');
+                        string newTitle = string.Join(" ", words.Take(5)) + "...";
+                        chatThread.name =
+                            newTitle.Length > 42 ? newTitle.Substring(0, 39) + "..." : newTitle;
 
-                       if (assistant != null)
-                       {
-                           chatThread.name = assistant.Name;
-                           chatThread.assistantTitle = assistant.Name;
-                           chatThread.assistantMessage = assistant.SystemMessage;
-                           chatThread.Temperature = assistant.Temperature;
-                           chatThread.TopP = assistant.TopP;
-                           chatThread.MaxResponseToken = assistant.MaxResponseToken;
-                           chatThread.Strictness = assistant.Strictness;
-                           chatThread.DocumentLimit = assistant.DocumentLimit;
-
-                       }
-                       // Update title based on first message
-                       else
-                       {
-                           // Use first few words of the assistant's response as the title
-                           string[] words = assistantMessageContent.Split(' ');
-                           string newTitle = string.Join(" ", words.Take(5)) + "...";
-                           chatThread.name =
-                               newTitle.Length > 42 ? newTitle.Substring(0, 39) + "..." : newTitle;
-                       }
-
-                       chatThreadService.Update(chatThread);
-                   }
+                        chatThreadService.Update(chatThread);
+                    }
 
                    #endregion
 

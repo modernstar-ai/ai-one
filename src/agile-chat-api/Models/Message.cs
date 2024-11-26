@@ -11,7 +11,13 @@
     public string? userId { get; set; }
     public string? multiModalImage { get; set; }
     public string? sender { get; set; }
+    public bool like { get; set; }
+    public bool disLike { get; set; }
+}
 
-    
 
+public enum ReactionType
+{
+    Like,
+    Dislike
 }

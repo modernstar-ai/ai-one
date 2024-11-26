@@ -1,11 +1,95 @@
 import axios from 'axios';
-import { ChatThread, NewChatThread, Message, UpdateChatThreadTitle, ExtensionUpdate } from '@/types/ChatThread';
+import { ChatThread, NewChatThread, Message, UpdateChatThreadTitle, ExtensionUpdate, MessageReactionsProps } from '@/types/ChatThread';
 import { Assistant } from '@/types/Assistant';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
   return `${rootApiUrl}/chat-threads${endpoint}`;
 }
+  
+  
+
+
+// Add like to a message
+export async function addLikeReaction(
+  messageId: string,
+  userId: string
+): Promise<boolean> {
+  const apiUrl = getApiUrl(`/messagereaction/like/${messageId}`);
+  try {
+    await axios.post(
+      apiUrl,
+      null,
+      {
+        params: { userId }
+      }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Remove like from a message
+export async function removeLikeReaction(
+  messageId: string,
+  userId: string
+): Promise<boolean> {
+  const apiUrl = getApiUrl(`/messagereaction/removelike/${messageId}`);
+  try {
+    await axios.post(
+      apiUrl,
+      null,
+      {
+        params: { userId }
+      }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Add dislike to a message
+export async function addDislikeReaction(
+  messageId: string,
+  userId: string
+): Promise<boolean> {
+  const apiUrl = getApiUrl(`/messagereaction/dislike/${messageId}`);
+  try {
+    await axios.post(
+      apiUrl,
+      null,
+      {
+        params: { userId }
+      }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Remove dislike from a message
+export async function removeDislikeReaction(
+  messageId: string,
+  userId: string
+): Promise<boolean> {
+  const apiUrl = getApiUrl(`/messagereaction/removedislike/${messageId}`);
+  try {
+    await axios.post(
+      apiUrl,
+      null,
+      {
+        params: { userId }
+      }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 
 // Fetch chat threads by user ID
 export async function fetchChatThreads(userId: string): Promise<ChatThread[] | null> {
@@ -35,12 +119,37 @@ export async function fetchChatsbythreadid(threadId: string): Promise<Message[] 
 
 export async function fetchChatThread(id: string): Promise<ChatThread | null> {
   const apiUrl = getApiUrl(`/${id}`);
+  
   try {
     const response = await axios.get<ChatThread>(apiUrl);
+    
     return {
       ...response.data,
+      // Handle strings
+      id: response.data.id,
+      name: response.data.name || 'Untitled Chat',
+      userName: response.data.userName || 'Anonymous',
+      userId: response.data.userId,
+      type: response.data.type || 'CHAT_THREAD',
+      assistantMessage: response.data.assistantMessage || '',
+      assistantTitle: response.data.assistantTitle || 'Assistant',
+      assistantId: response.data.assistantId || '',
+      // Handle dates
       createdAt: new Date(response.data.createdAt),
       lastMessageAt: new Date(response.data.lastMessageAt),
+      updatedAt: new Date(response.data.updatedAt),
+      // Handle booleans
+      bookmarked: response.data.bookmarked ?? false,
+      isDeleted: response.data.isDeleted ?? false,
+      // Handle arrays
+      extension: response.data.extension || [],
+      // Handle nullable numbers
+      temperature: response.data.temperature ?? null,
+      topP: response.data.topP ?? null,
+      maxResponseToken: response.data.maxResponseToken ?? null,
+      strictness: response.data.strictness ?? null,
+      // Handle non-nullable number
+      documentLimit: response.data.documentLimit ?? 0
     };
   } catch {
     return null;
@@ -108,35 +217,9 @@ export async function deleteChatThread(id: string, userid: string): Promise<bool
   }
 }
 
-export async function addExtensionToChatThread(data: ExtensionUpdate): Promise<ChatThread | null> {
-  const apiUrl = getApiUrl(`/${data.chatThreadId}/extensions`);
-  try {
-    const response = await axios.post<ChatThread>(apiUrl, {
-      extensionId: data.extensionId,
-    });
-    return {
-      ...response.data,
-      createdAt: new Date(response.data.createdAt),
-      lastMessageAt: new Date(response.data.lastMessageAt),
-    };
-  } catch {
-    return null;
-  }
-}
+ 
 
-export async function removeExtensionFromChatThread(data: ExtensionUpdate): Promise<ChatThread | null> {
-  const apiUrl = getApiUrl(`/${data.chatThreadId}/extensions/${data.extensionId}`);
-  try {
-    const response = await axios.delete<ChatThread>(apiUrl);
-    return {
-      ...response.data,
-      createdAt: new Date(response.data.createdAt),
-      lastMessageAt: new Date(response.data.lastMessageAt),
-    };
-  } catch {
-    return null;
-  }
-}
+ 
 
 export async function createChatAndRedirect(): Promise<void> {
   try {
@@ -178,6 +261,8 @@ export async function GetChatThreadMessages(
       userId: username,
       multiModalImage: '',
       sender: 'assistant',
+      like:false,
+      disLike:false
     };
     initialMessages = [welcomeMessage];
   } else {
@@ -193,6 +278,8 @@ export async function GetChatThreadMessages(
       userId: username,
       multiModalImage: '',
       sender: 'system',
+      like:false,
+      disLike:false
     };
     initialMessages = [systemMessage];
   }
@@ -207,7 +294,7 @@ export async function GetChatThreadMessages(
     console.log('Chat - existingMessages:', existingMessages);
 
     if (existingMessages && existingMessages.length > 0) {
-      mergedMessages = existingMessages;
+      mergedMessages = [...initialMessages, ...existingMessages];
     } else {
       mergedMessages = initialMessages;
     }

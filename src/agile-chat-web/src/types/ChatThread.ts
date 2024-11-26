@@ -1,19 +1,24 @@
 export interface ChatThread {
-    id: string;
-    name: string;
-    useName: string;
-    userId: string;
-    createdAt: Date;
-    lastMessageAt: Date;
-    bookmarked: boolean;
-    isDeleted: boolean;
-    type: string;
-    assistantMessage: string;
-    assistantTitle: string;
-    assistantId: string;
-    extension: string[];
-  }
-  
+  id: string;
+  name: string;
+  userName: string;
+  userId: string;
+  type: string;
+  createdAt: Date;
+  lastMessageAt: Date;
+  updatedAt: Date;
+  bookmarked: boolean;
+  isDeleted: boolean;
+  assistantMessage: string;
+  assistantTitle: string;
+  assistantId: string;
+  extension: string[];
+  temperature: number | null;
+  topP: number | null;
+  maxResponseToken: number | null;
+  strictness: number | null;
+  documentLimit: number;
+}
   
  
   export interface Message {
@@ -27,10 +32,20 @@ export interface ChatThread {
       threadId: string;
       userId: string;
       multiModalImage: string;
+      sender: 'function' | 'user' | 'assistant' | 'system' | 'tool' ;
+      like: boolean;
+      disLike: boolean;
       citations?: { fileName: string; fileUrl: string }[];
-      sender: 'function' | 'user' | 'assistant' | 'system' | 'tool' ;  // Changed from string to SenderType
   }
   
+  export interface MessageReactionsProps {
+    messageId: string;
+    userId: string;
+    initialLikes?: boolean;
+    initialDislikes?: boolean;
+    disabled?: boolean;
+  }
+
   export interface NewChatThread {
     name: string;
     personaMessage?: string;
