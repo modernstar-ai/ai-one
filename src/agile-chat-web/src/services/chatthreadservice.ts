@@ -1,14 +1,17 @@
-import axios from 'axios';
-import { ChatThread, NewChatThread, Message, UpdateChatThreadTitle, ExtensionUpdate, MessageReactionsProps } from '@/types/ChatThread';
-import { Assistant } from '@/types/Assistant';
+import axios from "axios";
+import {
+  ChatThread,
+  NewChatThread,
+  Message,
+  UpdateChatThreadTitle,
+  ExtensionUpdate,
+} from "@/types/ChatThread";
+import { Assistant } from "@/types/Assistant";
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
   return `${rootApiUrl}/chat-threads${endpoint}`;
 }
-  
-  
-
 
 // Add like to a message
 export async function addLikeReaction(
@@ -17,13 +20,9 @@ export async function addLikeReaction(
 ): Promise<boolean> {
   const apiUrl = getApiUrl(`/messagereaction/like/${messageId}`);
   try {
-    await axios.post(
-      apiUrl,
-      null,
-      {
-        params: { userId }
-      }
-    );
+    await axios.post(apiUrl, null, {
+      params: { userId },
+    });
     return true;
   } catch {
     return false;
@@ -37,13 +36,9 @@ export async function removeLikeReaction(
 ): Promise<boolean> {
   const apiUrl = getApiUrl(`/messagereaction/removelike/${messageId}`);
   try {
-    await axios.post(
-      apiUrl,
-      null,
-      {
-        params: { userId }
-      }
-    );
+    await axios.post(apiUrl, null, {
+      params: { userId },
+    });
     return true;
   } catch {
     return false;
@@ -57,13 +52,9 @@ export async function addDislikeReaction(
 ): Promise<boolean> {
   const apiUrl = getApiUrl(`/messagereaction/dislike/${messageId}`);
   try {
-    await axios.post(
-      apiUrl,
-      null,
-      {
-        params: { userId }
-      }
-    );
+    await axios.post(apiUrl, null, {
+      params: { userId },
+    });
     return true;
   } catch {
     return false;
@@ -77,22 +68,19 @@ export async function removeDislikeReaction(
 ): Promise<boolean> {
   const apiUrl = getApiUrl(`/messagereaction/removedislike/${messageId}`);
   try {
-    await axios.post(
-      apiUrl,
-      null,
-      {
-        params: { userId }
-      }
-    );
+    await axios.post(apiUrl, null, {
+      params: { userId },
+    });
     return true;
   } catch {
     return false;
   }
 }
 
-
 // Fetch chat threads by user ID
-export async function fetchChatThreads(userId: string): Promise<ChatThread[] | null> {
+export async function fetchChatThreads(
+  userId: string
+): Promise<ChatThread[] | null> {
   const apiUrl = getApiUrl(`/user/${userId}`);
   try {
     const response = await axios.get<ChatThread[]>(apiUrl);
@@ -107,7 +95,9 @@ export async function fetchChatThreads(userId: string): Promise<ChatThread[] | n
 }
 
 // Fetch chat messages by threadid
-export async function fetchChatsbythreadid(threadId: string): Promise<Message[] | null> {
+export async function fetchChatsbythreadid(
+  threadId: string
+): Promise<Message[] | null> {
   const apiUrl = getApiUrl(`/threads/${threadId}`);
   try {
     const response = await axios.get<Message[]>(apiUrl);
@@ -119,21 +109,21 @@ export async function fetchChatsbythreadid(threadId: string): Promise<Message[] 
 
 export async function fetchChatThread(id: string): Promise<ChatThread | null> {
   const apiUrl = getApiUrl(`/${id}`);
-  
+
   try {
     const response = await axios.get<ChatThread>(apiUrl);
-    
+
     return {
       ...response.data,
       // Handle strings
       id: response.data.id,
-      name: response.data.name || 'Untitled Chat',
-      userName: response.data.userName || 'Anonymous',
+      name: response.data.name || "Untitled Chat",
+      userName: response.data.userName || "Anonymous",
       userId: response.data.userId,
-      type: response.data.type || 'CHAT_THREAD',
-      assistantMessage: response.data.assistantMessage || '',
-      assistantTitle: response.data.assistantTitle || 'Assistant',
-      assistantId: response.data.assistantId || '',
+      type: response.data.type || "CHAT_THREAD",
+      assistantMessage: response.data.assistantMessage || "",
+      assistantTitle: response.data.assistantTitle || "Assistant",
+      assistantId: response.data.assistantId || "",
       // Handle dates
       createdAt: new Date(response.data.createdAt),
       lastMessageAt: new Date(response.data.lastMessageAt),
@@ -149,19 +139,21 @@ export async function fetchChatThread(id: string): Promise<ChatThread | null> {
       maxResponseToken: response.data.maxResponseToken ?? null,
       strictness: response.data.strictness ?? null,
       // Handle non-nullable number
-      documentLimit: response.data.documentLimit ?? 0
+      documentLimit: response.data.documentLimit ?? 0,
     };
   } catch {
     return null;
   }
 }
 
-export async function createChatThread(data?: NewChatThread): Promise<ChatThread | null> {
-  const apiUrl = getApiUrl('');
+export async function createChatThread(
+  data?: NewChatThread
+): Promise<ChatThread | null> {
+  const apiUrl = getApiUrl("");
 
   // Get assistantId from query string if it exists
   const urlParams = new URLSearchParams(window.location.search);
-  const assistantId = urlParams.get('assistantId');
+  const assistantId = urlParams.get("assistantId");
 
   try {
     // Add assistantId to data if it exists in query string
@@ -174,7 +166,9 @@ export async function createChatThread(data?: NewChatThread): Promise<ChatThread
   }
 }
 
-export async function updateChatThread(chatThread: ChatThread): Promise<ChatThread | null> {
+export async function updateChatThread(
+  chatThread: ChatThread
+): Promise<ChatThread | null> {
   const apiUrl = getApiUrl(`/${chatThread.id}`);
   try {
     const response = await axios.put<ChatThread>(apiUrl, chatThread);
@@ -188,7 +182,10 @@ export async function updateChatThread(chatThread: ChatThread): Promise<ChatThre
   }
 }
 
-export async function updateChatTitle({ id, title }: UpdateChatThreadTitle): Promise<ChatThread | null> {
+export async function updateChatTitle({
+  id,
+  title,
+}: UpdateChatThreadTitle): Promise<ChatThread | null> {
   const apiUrl = getApiUrl(`/${id}/title`);
   try {
     const response = await axios.patch<ChatThread>(apiUrl, {
@@ -204,12 +201,15 @@ export async function updateChatTitle({ id, title }: UpdateChatThreadTitle): Pro
   }
 }
 
-export async function deleteChatThread(id: string, userid: string): Promise<boolean> {
+export async function deleteChatThread(
+  id: string,
+  userid: string
+): Promise<boolean> {
   const apiUrl = getApiUrl(`/${id}`);
   try {
     await axios.delete(apiUrl, {
       params: { userid },
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
     return true;
   } catch {
@@ -217,17 +217,13 @@ export async function deleteChatThread(id: string, userid: string): Promise<bool
   }
 }
 
- 
-
- 
-
 export async function createChatAndRedirect(): Promise<void> {
   try {
     const newThread = await createChatThread({
-      name: '',
-      userId: '',
-      personaMessage: '',
-      personaMessageTitle: '',
+      name: "",
+      userId: "",
+      personaMessage: "",
+      personaMessageTitle: "",
     });
     if (newThread) {
       window.location.href = `/chat/${newThread.id}`;
@@ -242,7 +238,7 @@ export async function GetChatThreadMessages(
   chatThreadId: string,
   currentAssistant: Assistant | null
 ): Promise<Message[]> {
-  console.log('Chat - chatThreadId:', chatThreadId, currentAssistant, username);
+  console.log("Chat - chatThreadId:", chatThreadId, currentAssistant, username);
   let mergedMessages: Message[] = [];
   let initialMessages: Message[] = [];
   let existingMessages: Message[] | null;
@@ -252,46 +248,50 @@ export async function GetChatThreadMessages(
     const welcomeMessage: Message = {
       id: crypto.randomUUID(),
       createdAt: new Date(),
-      type: 'text',
+      type: "text",
       isDeleted: false,
-      content: currentAssistant?.greeting || 'Hello! How can I assist you today?',
-      name: currentAssistant?.name || '',
-      role: 'assistant',
+      content:
+        currentAssistant?.greeting || "Hello! How can I assist you today?",
+      name: currentAssistant?.name || "",
+      role: "assistant",
       threadId: chatThreadId,
       userId: username,
-      multiModalImage: '',
-      sender: 'assistant',
-      like:false,
-      disLike:false
+      multiModalImage: "",
+      sender: "assistant",
+      like: false,
+      disLike: false,
     };
     initialMessages = [welcomeMessage];
   } else {
     const systemMessage: Message = {
       id: crypto.randomUUID(),
       createdAt: new Date(),
-      type: 'text',
+      type: "text",
       isDeleted: false,
-      content: 'Hello! How can I assist you today?',
-      name: 'System',
-      role: 'system',
+      content: "Hello! How can I assist you today?",
+      name: "System",
+      role: "system",
       threadId: chatThreadId,
       userId: username,
-      multiModalImage: '',
-      sender: 'system',
-      like:false,
-      disLike:false
+      multiModalImage: "",
+      sender: "system",
+      like: false,
+      disLike: false,
     };
     initialMessages = [systemMessage];
   }
 
-  console.log('Chat - set initialMessages from current assistant:', initialMessages);
+  console.log(
+    "Chat - set initialMessages from current assistant:",
+    initialMessages
+  );
   //}
 
   if (chatThreadId) {
     // Load existing chat thread messages
     existingMessages = await fetchChatsbythreadid(chatThreadId);
 
-    console.log('Chat - existingMessages:', existingMessages);
+    console.log("Chat - existingMessages:", existingMessages);
 
     if (existingMessages && existingMessages.length > 0) {
       mergedMessages = [...initialMessages, ...existingMessages];
@@ -302,4 +302,9 @@ export async function GetChatThreadMessages(
   return mergedMessages;
 }
 
-export type { ChatThread, NewChatThread, UpdateChatThreadTitle, ExtensionUpdate };
+export type {
+  ChatThread,
+  NewChatThread,
+  UpdateChatThreadTitle,
+  ExtensionUpdate,
+};
