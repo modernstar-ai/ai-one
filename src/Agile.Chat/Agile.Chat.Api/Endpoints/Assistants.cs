@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Agile.Chat.Api.Endpoints;
 
-public class Assistants(IMediator Mediator) : CarterModule("/api")
+public class Assistants(IMediator mediator) : CarterModule("/api")
 {
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -33,35 +33,35 @@ public class Assistants(IMediator Mediator) : CarterModule("/api")
     private async Task<IResult> GetAssistants()
     {
         var query = new GetAssistants.Query();
-        var result = await Mediator.Send(query);
+        var result = await mediator.Send(query);
         return result;
     }
     
     private async Task<IResult> GetAssistantById(Guid id)
     {
         var query = new GetAssistantById.Query(id);
-        var result = await Mediator.Send(query);
+        var result = await mediator.Send(query);
         return result;
     }
     
     private async Task<IResult> CreateAssistant([FromBody] AssistantDto assistantDto)
     {
         var command = assistantDto.Adapt<CreateAssistant.Command>();
-        var result = await Mediator.Send(command);
+        var result = await mediator.Send(command);
         return result;
     }
     
-    private async Task<IResult> UpdateAssistantById([FromRoute] string id, [FromBody] AssistantDto assistantDto)
+    private async Task<IResult> UpdateAssistantById([FromRoute] Guid id, [FromBody] AssistantDto assistantDto)
     {
         var command = assistantDto.Adapt<UpdateAssistantById.Command>();
-        var result = await Mediator.Send(command with { Id = id });
+        var result = await mediator.Send(command with { Id = id });
         return result;
     }
     
     private async Task<IResult> DeleteAssistantById(Guid id)
     {
         var command = new DeleteAssistantById.Command(id);
-        var result = await Mediator.Send(command);
+        var result = await mediator.Send(command);
         return result;
     }
 }

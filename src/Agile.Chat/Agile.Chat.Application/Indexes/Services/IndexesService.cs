@@ -6,7 +6,7 @@ using Agile.Framework.CosmosDb.Interfaces;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Agile.Chat.Application.Assistants.Services;
+namespace Agile.Chat.Application.Indexes.Services;
 
 public interface IAssistantsService  : ICosmosRepository<Assistant>
 {
@@ -14,7 +14,7 @@ public interface IAssistantsService  : ICosmosRepository<Assistant>
 }
 
 [Export(typeof(IAssistantsService), ServiceLifetime.Singleton)]
-public class AssistantsService(CosmosClient cosmosClient) : 
+public class IndexesService(CosmosClient cosmosClient) : 
     CosmosRepository<Assistant>(Constants.COSMOS_ASSISTANTS_CONTAINER_NAME, cosmosClient), IAssistantsService
 {
     public async Task<List<Assistant>> GetAllAsync()

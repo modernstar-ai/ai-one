@@ -1,4 +1,5 @@
-﻿using Agile.Chat.Domain.Assistants.Aggregates;
+﻿using Agile.Chat.Application.Assistants.Services;
+using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Assistants.ValueObjects;
 using FluentValidation;
 using MediatR;
@@ -10,7 +11,7 @@ namespace Agile.Chat.Application.Assistants.Commands;
 public static class UpdateAssistantById
 {
     public record Command(
-        string Id,
+        Guid Id,
         string Name, 
         string Description, 
         string Greeting, 
@@ -18,19 +19,26 @@ public static class UpdateAssistantById
         AssistantFilterOptions FilterOptions, 
         AssistantPromptOptions PromptOptions) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> Logger) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IAssistantsService assistantsService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            Logger.LogInformation("Handler executed {Handler}", typeof(Handler).Namespace);
+            logger.LogInformation("Handler executed {Handler}", typeof(Handler).Namespace);
+            var assistant = await assistantsService.GetItemByIdAsync(request.Id.ToString());
+            if(assistant is null) return Results.NotFound();
             
-            return Results.Created(request.Id.ToString(), null);
+            logger.LogInformation("Updating Assistant old values: {@Assistant}", assistant);
+            assistant.Update(request.Name, request.Description, request.Greeting, request.Status, request.FilterOptions, request.PromptOptions);
+            await assistantsService.UpdateItemByIdAsync(assistant.Id, assistant);
+            logger.LogInformation("Updated Assistant Successfully: {@Assistant}", assistant);
+            
+            return Results.Ok();
         }
     }
 
     public class Validator : AbstractValidator<Command>
     {
-        public Validator(ILogger<Validator> Logger)
+        public Validator(ILogger<Validator> logger)
         {
             RuleFor(request => request.Name)
                 .MinimumLength(1)

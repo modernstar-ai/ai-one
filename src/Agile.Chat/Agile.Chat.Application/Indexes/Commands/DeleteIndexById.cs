@@ -1,16 +1,15 @@
-﻿using Agile.Chat.Application.Assistants.Services;
-using FluentValidation;
+﻿using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace Agile.Chat.Application.Assistants.Commands;
+namespace Agile.Chat.Application.Indexes.Commands;
 
-public static class DeleteAssistantById
+public static class DeleteIndexById
 {
     public record Command(Guid Id) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IAssistantsService assistantsService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {

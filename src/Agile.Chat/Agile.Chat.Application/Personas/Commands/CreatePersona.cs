@@ -1,14 +1,13 @@
-﻿using Agile.Chat.Application.Assistants.Services;
-using Agile.Chat.Domain.Assistants.Aggregates;
+﻿using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Assistants.ValueObjects;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace Agile.Chat.Application.Assistants.Commands;
+namespace Agile.Chat.Application.Personas.Commands;
 
-public static class CreateAssistant
+public static class CreatePersona
 {
     public record Command(
         string Name, 
@@ -18,7 +17,7 @@ public static class CreateAssistant
         AssistantFilterOptions FilterOptions, 
         AssistantPromptOptions PromptOptions) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IAssistantsService assistantsService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -31,8 +30,7 @@ public static class CreateAssistant
                 request.Status,
                 request.FilterOptions,
                 request.PromptOptions);
-
-            await assistantsService.AddItemAsync(assistant);
+            
             return Results.Created(assistant.Id, assistant);
         }
     }

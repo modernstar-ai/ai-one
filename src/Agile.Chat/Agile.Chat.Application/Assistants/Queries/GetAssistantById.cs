@@ -15,7 +15,7 @@ public static class GetAssistantById
         public async Task<IResult> Handle(Query request, CancellationToken cancellationToken)
         {
             logger.LogInformation("Executed handler {Handler}", typeof(Handler).Namespace);
-            var assistant = await assistantsService.GetByIdAsync(request.Id);
+            var assistant = await assistantsService.GetItemByIdAsync(request.Id.ToString());
             if (assistant is null) return Results.NotFound();
             
             logger.LogInformation("Found Assistant name: {Name} with Id: {Id}", assistant.Name, assistant.Id);

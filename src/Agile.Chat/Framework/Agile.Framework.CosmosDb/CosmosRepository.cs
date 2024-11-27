@@ -22,9 +22,9 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
     }
     
     //All the supported LINQ operations ref: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/linq-to-sql#supported-linq-operators
-    public IOrderedQueryable<T> LinqQuery() => Container.GetItemLinqQueryable<T>(allowSynchronousQueryExecution: true);
+    protected IOrderedQueryable<T> LinqQuery() => Container.GetItemLinqQueryable<T>(allowSynchronousQueryExecution: true);
 
-    public async Task<List<T>> CollectResultsAsync(IQueryable<T> query)
+    protected async Task<List<T>> CollectResultsAsync(IQueryable<T> query)
     {
         var results = new List<T>();
         var feed = query.ToFeedIterator();
@@ -44,13 +44,13 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
         return Container.CreateItemAsync(item, partitionKey);
     }
 
-    public Task DeleteItemAsync(string id, string? partitionKeyValue = null)
+    public Task DeleteItemByIdAsync(string id, string? partitionKeyValue = null)
     {
         var partitionKey = partitionKeyValue != null ? new PartitionKey(partitionKeyValue) : new PartitionKey(id);
         return Container.DeleteItemAsync<T>(id, partitionKey);
     }
 
-    public async Task<T?> GetItemAsync(string id, string? partitionKeyValue = null)
+    public async Task<T?> GetItemByIdAsync(string id, string? partitionKeyValue = null)
     {
         var partitionKey = partitionKeyValue != null ? new PartitionKey(partitionKeyValue) : new PartitionKey(id);
         try
@@ -77,7 +77,7 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
     //     return results;
     // }
 
-    public async Task UpdateItemAsync(string id, T item, string? partitionKeyValue = null)
+    public async Task UpdateItemByIdAsync(string id, T item, string? partitionKeyValue = null)
     {
         var partitionKey = partitionKeyValue != null ? new PartitionKey(partitionKeyValue) : new PartitionKey(id);
         await Container.UpsertItemAsync(item, partitionKey);

@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Agile.Chat.Api.Endpoints;
 
-public class ChatCompletions(IMediator Mediator) : CarterModule("/api")
+public class ChatCompletions(IMediator mediator) : CarterModule("/api")
 {
     public override void AddRoutes(IEndpointRouteBuilder app)
     {

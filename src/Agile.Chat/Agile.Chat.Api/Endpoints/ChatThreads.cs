@@ -1,11 +1,15 @@
-﻿using Carter;
+﻿using Agile.Chat.Application.ChatThreads.Commands;
+using Agile.Chat.Application.ChatThreads.Dtos;
+using Agile.Chat.Application.ChatThreads.Queries;
+using Carter;
 using Carter.OpenApi;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Agile.Chat.Api.Endpoints;
 
-public class ChatThreads(IMediator Mediator) : CarterModule("/api")
+public class ChatThreads(IMediator mediator) : CarterModule("/api")
 {
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -28,26 +32,31 @@ public class ChatThreads(IMediator Mediator) : CarterModule("/api")
 
     private async Task<IResult> GetThreads()
     {
-        throw new NotImplementedException();
+        var query = new GetChatThreads.Query();
+        return await mediator.Send(query);
     }
     
     private async Task<IResult> GetThreadById(Guid id)
     {
-        throw new NotImplementedException();
+        var query = new GetChatThreadById.Query(id);
+        return await mediator.Send(query);
     }
     
-    private async Task<IResult> CreateThread()
+    private async Task<IResult> CreateThread([FromBody] ChatThreadDto chatThreadDto)
     {
-        throw new NotImplementedException();
+        var command = chatThreadDto.Adapt<CreateChatThread.Command>();
+        return await mediator.Send(command);
     }
     
-    private async Task<IResult> UpdateThreadById([FromRoute] string id)
+    private async Task<IResult> UpdateThreadById([FromBody] ChatThreadDto chatThreadDto, [FromRoute] Guid id)
     {
-        throw new NotImplementedException();
+        var command = chatThreadDto.Adapt<UpdateChatThreadById.Command>();
+        return await mediator.Send(command with {Id = id});
     }
     
     private async Task<IResult> DeleteThreadById(Guid id)
     {
-        throw new NotImplementedException();
+        var command = new DeleteChatThreadById.Command(id);
+        return await mediator.Send(command);
     }
 }
