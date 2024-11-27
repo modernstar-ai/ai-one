@@ -119,8 +119,6 @@ param UtsRoleApiEndpoint string = ''
 @description('AI Services  Name')
 var aiServices_name = toLower('${projectName}${environmentName}-ai-services')
 
-
-
 var llmDeployments = [
   {
     name: chatGptDeploymentName
@@ -144,7 +142,6 @@ var llmDeployments = [
     capacity: embeddingDeploymentCapacity
   }
 ]
-
 
 /* **************************************************** */
 
@@ -672,6 +669,7 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
 //     capacity: deployment.capacity
 //   }
 // }]
+
 @batchSize(1)
 resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [
   for deployment in llmDeployments: {

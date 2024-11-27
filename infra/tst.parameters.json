@@ -1,39 +1,39 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-      "projectName": {
-        "value": "agilechat"
-      },
-      "environmentName": {
-        "value": "tst"
-      },
-     "location": {
-        "value": "australiaeast"
-      },
-      "openAILocation": {
-        "value": "australiaeast"
-      },
-      "dalleLocation": {
-        "value": "australiaeast"
-      },
-      "azureClientID": {
-        "value": "67767137-5caa-4643-af45-159b927e8354"
-      },
-      "azureClientSecret": {
-        "value": "BJN8Q~9i0jNOcmA-QCy6m5qsT~-6PTUkNLsRMb~m"
-      },
-      "azureTenantId": {
-        "value": "036f815c-3d92-42f2-a595-d69e17a03194"
-      },
-      "aspCoreEnvironment": {
-        "value": "Development"
-      },
-      "azureADAppIdOrUri": {
-          "value": "api://67767137-5caa-4643-af45-159b927e8354"
-      },
-      "UtsRoleApiEndpoint": {
-          "value": "https://subjapi-dev-api-phmd3jzubzalo.azurewebsites.net/api"
-      } 
-    }
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "projectName": {
+      "value": "agilechat"
+    },
+    "environmentName": {
+      "value": "tst"
+    },
+    "location": {
+      "value": "australiaeast"
+    },
+    "openAILocation": {
+      "value": "australiaeast"
+    },
+    "dalleLocation": {
+      "value": "australiaeast"
+    },
+    "azureClientID": {
+      "value": ""
+    },
+    "azureClientSecret": {
+      "value": ""
+    },
+    "azureTenantId": {
+      "value": ""
+    },
+    "aspCoreEnvironment": {
+      "value": "Development"
+    } ,
+    "azureADAppIdOrUri": {
+        "value": ""
+    },
+    "UtsRoleApiEndpoint": {
+        "value": ""
+    }  
   }
+}
