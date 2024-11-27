@@ -117,6 +117,19 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
           {children}
         </div>
         <div className="flex justify-start items-center gap-1 mt-2">
+        {/* <Button
+            variant="ghost"
+            size="icon"
+            title="Copy text"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={handleButtonClick}
+          >
+            {isIconChecked ? (
+              <CheckIcon size={16} />
+            ) : (
+              <ClipboardIcon size={16} />
+            )}
+          </Button> */}
           <MessageReactions
             messageId={messageId}
             userId={userId}
