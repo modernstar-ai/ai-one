@@ -12,7 +12,7 @@ var apiapp_name = toLower('${resourcePrefix}-apiapp')
 var applicationInsightsName = toLower('${resourcePrefix}-apiapp')
 
 @description('Deployment Environment')
-@allowed(['Development', 'Production'])
+@allowed(['Development', 'Test', 'UAT', 'Production'])
 param aspCoreEnvironment string = 'Development'
 
 @description('AZURE_CLIENT_ID')
@@ -249,11 +249,10 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AZURE_SEARCH_INDEX_NAME_RAG'
           value: AzureSearchIndexNameRag
         }
-
-        {
-          name: 'AZURE_OPENAI_API_EMBEDDINGS_MODEL_NAME'
-          value: OpenaiApiEmbeddingsModelName
-        }
+        // {
+        //   name: 'AZURE_OPENAI_API_EMBEDDINGS_DEPLOYMENT_NAME'
+        //   value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_EMBEDDINGS_DEPLOYMENT_NAME.name})'
+        // }
         {
           name: 'ADMIN_EMAIL_ADDRESS'
           value: AdminEmailAddress
@@ -447,18 +446,18 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 //**************************************************************************
 //Add Role Assignment for web app to Key vault
 
-// @description('The name of the Role Assignment - from Guid.')
-// param roleAssignmentName string = newGuid()
+@description('The name of the Role Assignment - from Guid.')
+param roleAssignmentName string = newGuid()
 
-// resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-//   name: roleAssignmentName
-//   scope: kv
-//   properties: {
-//     principalId: apiApp.identity.principalId
-//     principalType: 'ServicePrincipal'
-//     roleDefinitionId: keyVaultSecretsOfficerRole
-//   }
-// }
+resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: roleAssignmentName
+  scope: kv
+  properties: {
+    principalId: apiApp.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: keyVaultSecretsOfficerRole
+  }
+}
 
 //**************************************************************************
 
@@ -564,8 +563,6 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
         failoverPriority: 0
       }
     ]
-    //remove this!!!
-    //disableKeyBasedMetadataWriteAccess: true
   }
 }
 
@@ -867,7 +864,6 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
   ]
 }
 
-//resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
 @description('AI Cognitive Services')
 resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
   name: aiServices_name

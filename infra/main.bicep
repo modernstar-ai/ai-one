@@ -15,6 +15,7 @@ param environmentName string
 //param location string
 param location string = resourceGroup().location
 
+
 // azure open ai -- regions currently support gpt-4o global-standard
 @description('Location for the OpenAI resource group')
 @allowed([
@@ -77,7 +78,7 @@ param storageServiceSku object = { name: 'Standard_LRS' }
 param storageServiceImageContainerName string = 'images'
 
 @description('Deployment Environment')
-@allowed(['Development', 'Production'])
+@allowed(['Development', 'Test', 'UAT', 'Production'])
 param aspCoreEnvironment string = 'Development'
 
 @description('AZURE_CLIENT_ID')
