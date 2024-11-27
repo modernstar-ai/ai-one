@@ -11,14 +11,16 @@ namespace Agile.Framework.CosmosDb;
 public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : AggregateRoot
 {
     protected CosmosClient CosmosClient { get; }
-    protected Database Database { get; }
-    protected Container Container { get; }
+    private Database Database { get; }
+    private Container Container { get; }
+    private readonly string? _partitionKey;
 
-    public CosmosRepository(string containerId, CosmosClient cosmosClient)
+    public CosmosRepository(string containerId, CosmosClient cosmosClient, string? partitionKey = null)
     {
         CosmosClient = cosmosClient;
         Database = cosmosClient.GetDatabase(Constants.COSMOS_DATABASE_NAME);
         Container = Database.GetContainer(containerId);
+        _partitionKey = partitionKey;
     }
     
     //All the supported LINQ operations ref: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/linq-to-sql#supported-linq-operators
@@ -38,21 +40,21 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
         return results;
     }
 
-    public Task AddItemAsync(T item, string? partitionKeyValue = null)
+    public Task AddItemAsync(T item)
     {
-        var partitionKey = partitionKeyValue != null ? new PartitionKey(partitionKeyValue) : new PartitionKey(item.Id);
+        var partitionKey = _partitionKey != null ? new PartitionKey(_partitionKey) : new PartitionKey(item.Id);
         return Container.CreateItemAsync(item, partitionKey);
     }
 
-    public Task DeleteItemByIdAsync(string id, string? partitionKeyValue = null)
+    public Task DeleteItemByIdAsync(string id)
     {
-        var partitionKey = partitionKeyValue != null ? new PartitionKey(partitionKeyValue) : new PartitionKey(id);
+        var partitionKey = _partitionKey != null ? new PartitionKey(_partitionKey) : new PartitionKey(id);
         return Container.DeleteItemAsync<T>(id, partitionKey);
     }
 
-    public async Task<T?> GetItemByIdAsync(string id, string? partitionKeyValue = null)
+    public async Task<T?> GetItemByIdAsync(string id)
     {
-        var partitionKey = partitionKeyValue != null ? new PartitionKey(partitionKeyValue) : new PartitionKey(id);
+        var partitionKey = _partitionKey != null ? new PartitionKey(_partitionKey) : new PartitionKey(id);
         try
         {
             ItemResponse<T> response = await Container.ReadItemAsync<T>(id, partitionKey);
@@ -77,9 +79,9 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
     //     return results;
     // }
 
-    public async Task UpdateItemByIdAsync(string id, T item, string? partitionKeyValue = null)
+    public async Task UpdateItemByIdAsync(string id, T item)
     {
-        var partitionKey = partitionKeyValue != null ? new PartitionKey(partitionKeyValue) : new PartitionKey(id);
+        var partitionKey = _partitionKey != null ? new PartitionKey(_partitionKey) : new PartitionKey(id);
         await Container.UpsertItemAsync(item, partitionKey);
     }
 }

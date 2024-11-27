@@ -1,4 +1,6 @@
-﻿using FluentValidation;
+﻿using System.Security.Claims;
+using Agile.Chat.Application.ChatThreads.Services;
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -9,11 +11,22 @@ public static class DeleteChatThreadById
 {
     public record Command(Guid Id) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            logger.LogInformation("Handler executed {Handler} with Id {Id}", typeof(Handler).Namespace, request.Id);
+            var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;
+            logger.LogInformation("Fetched user: {Username}", username);
+            if(string.IsNullOrWhiteSpace(username)) return Results.Forbid();
+            
+            logger.LogInformation("Fetching Chat Thread to delete with Id {Id}", request.Id);
+            var chatThread = await chatThreadService.GetItemByIdAsync(request.Id.ToString());
+            if(chatThread == null) return Results.NotFound();
+            if (!chatThread.UserId.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                return Results.Forbid();
+            
+            await chatThreadService.DeleteItemByIdAsync(chatThread.Id);
+            logger.LogInformation("Deleted Chat Thread with Id {Id}", chatThread.Id);
             
             return Results.Ok();
         }

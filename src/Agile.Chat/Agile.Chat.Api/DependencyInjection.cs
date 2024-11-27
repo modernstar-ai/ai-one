@@ -15,6 +15,7 @@ public static class DependencyInjection
     {
         services.AddMapster();
         return services
+            .AddHttpContextAccessor()
             .AddGlobalExceptionHandling()
             .AddExportedServices()
             .AddEndpoints()

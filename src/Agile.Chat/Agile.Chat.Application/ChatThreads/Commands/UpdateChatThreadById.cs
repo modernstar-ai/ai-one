@@ -1,4 +1,7 @@
-﻿using Agile.Chat.Domain.Assistants.ValueObjects;
+﻿using System.Security.Claims;
+using Agile.Chat.Application.ChatThreads.Services;
+using Agile.Chat.Domain.Assistants.ValueObjects;
+using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -10,25 +13,28 @@ public static class UpdateChatThreadById
 {
     public record Command(
         Guid Id,
-        string Name, 
-        string Description, 
-        string Greeting, 
-        AssistantStatus Status, 
-        AssistantFilterOptions FilterOptions, 
-        AssistantPromptOptions PromptOptions) : IRequest<IResult>;
+        string Name,
+        bool IsBookmarked,
+        ChatThreadOptions Options) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            logger.LogInformation("Handler executed {Handler}", typeof(Handler).Namespace);
-            //var chatThread = await chatThreadService.GetItemByIdAsync(request.Id.ToString());
-            //if(chatThread is null) return Results.NotFound();
+            var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;
+            logger.LogInformation("Fetched user: {Username}", username);
+            if(string.IsNullOrWhiteSpace(username)) return Results.Forbid();
             
-            //.LogInformation("Updating Assistant old values: {@Assistant}", chatThread);
-            //chatThread.Update(request.Name, request.Description, request.Greeting, request.Status, request.FilterOptions, request.PromptOptions);
-            //await chatThreadService.UpdateItemByIdAsync(chatThread.Id, chatThread);
-            //logger.LogInformation("Updated Assistant Successfully: {@Assistant}", chatThread);
+            logger.LogInformation("Getting Chat Thrread Id: {Id}", request.Id);
+            var chatThread = await chatThreadService.GetItemByIdAsync(request.Id.ToString());
+            if(chatThread is null) return Results.NotFound();
+            if (!chatThread.UserId.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                return Results.Forbid();
+            
+            logger.LogInformation("Updating ChatThread old values: {@ChatThread}", chatThread);
+            chatThread.Update(request.Name, request.IsBookmarked, request.Options);
+            await chatThreadService.UpdateItemByIdAsync(chatThread.Id, chatThread);
+            logger.LogInformation("Updated Assistant Successfully: {@Assistant}", chatThread);
             
             return Results.Ok();
         }

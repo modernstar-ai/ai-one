@@ -1,4 +1,5 @@
-﻿using Carter;
+﻿using Agile.Chat.Application.Users.Queries;
+using Carter;
 using Carter.OpenApi;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +22,7 @@ public class Users(IMediator mediator) : CarterModule("/api")
 
     private async Task<IResult> GetPermissions()
     {
-        throw new NotImplementedException();
+        var query = new GetUserPermissionsById.Query();
+        return await mediator.Send(query);
     }
 }

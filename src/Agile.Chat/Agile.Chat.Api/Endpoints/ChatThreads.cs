@@ -42,13 +42,13 @@ public class ChatThreads(IMediator mediator) : CarterModule("/api")
         return await mediator.Send(query);
     }
     
-    private async Task<IResult> CreateThread([FromBody] ChatThreadDto chatThreadDto)
+    private async Task<IResult> CreateThread([FromBody] CreateChatThreadDto chatThreadDto)
     {
         var command = chatThreadDto.Adapt<CreateChatThread.Command>();
         return await mediator.Send(command);
     }
     
-    private async Task<IResult> UpdateThreadById([FromBody] ChatThreadDto chatThreadDto, [FromRoute] Guid id)
+    private async Task<IResult> UpdateThreadById([FromBody] UpdateChatThreadDto chatThreadDto, [FromRoute] Guid id)
     {
         var command = chatThreadDto.Adapt<UpdateChatThreadById.Command>();
         return await mediator.Send(command with {Id = id});

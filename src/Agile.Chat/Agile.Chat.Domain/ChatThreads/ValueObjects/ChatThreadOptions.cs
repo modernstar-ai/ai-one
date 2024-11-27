@@ -1,4 +1,4 @@
-﻿namespace Agile.Chat.Domain.ChatThreads.Aggregates;
+﻿namespace Agile.Chat.Domain.ChatThreads.ValueObjects;
 
 public class ChatThreadOptions
 {

@@ -1,4 +1,5 @@
 ﻿using Agile.Chat.Domain.Assistants.Aggregates;
+using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.EnvironmentVariables;
 using Agile.Framework.CosmosDb;
@@ -8,18 +9,21 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Agile.Chat.Application.ChatThreads.Services;
 
-public interface IAssistantsService  : ICosmosRepository<Assistant>
+public interface IChatThreadService  : ICosmosRepository<ChatThread>
 {
-    public Task<List<Assistant>> GetAllAsync();
+    public Task<List<ChatThread>> GetAllAsync(string username);
 }
 
-[Export(typeof(IAssistantsService), ServiceLifetime.Singleton)]
+[Export(typeof(IChatThreadService), ServiceLifetime.Singleton)]
 public class ChatThreadService(CosmosClient cosmosClient) : 
-    CosmosRepository<Assistant>(Constants.COSMOS_ASSISTANTS_CONTAINER_NAME, cosmosClient), IAssistantsService
+    CosmosRepository<ChatThread>(Constants.COSMOS_CHATS_CONTAINER_NAME, cosmosClient, nameof(ChatThread.UserId)), IChatThreadService
 {
-    public async Task<List<Assistant>> GetAllAsync()
+    public async Task<List<ChatThread>> GetAllAsync(string username)
     {
-        var query = LinqQuery().OrderBy(a => a.Name);
+        var query = LinqQuery()
+            .Where(c => c.UserId == username)
+            .OrderBy(c => c.LastModified);
+        
         var results = await CollectResultsAsync(query);
         return results;
     }

@@ -19,7 +19,7 @@ public class ChatThread : AuditableAggregateRoot
         ChatType type, 
         bool isBookmarked,
         ChatThreadOptions options,
-        Assistant? assistant = null)
+        string? assistantId = null)
     {
         //Do validation logic and throw domain level exceptions if fails
         return new ChatThread
@@ -29,16 +29,18 @@ public class ChatThread : AuditableAggregateRoot
             Type = type,
             IsBookmarked = isBookmarked,
             Options = options,
-            AssistantId = assistant?.Id
+            AssistantId = assistantId
         };
     }
     
-    public void Update(string name, 
-        string description, 
-        string greeting)
+    public void Update(string name,
+        bool isBookmarked,
+        ChatThreadOptions options)
     {
         //Do validation logic and throw domain level exceptions if fails
         Name = name;
+        IsBookmarked = isBookmarked;
+        Options = options;
         LastModified = DateTime.UtcNow;
     }
 }
