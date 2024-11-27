@@ -39,7 +39,7 @@ const formSchema = z.object({
   folder: z.array(z.string()),
   temperature: z.number(),
   topP: z.number().min(0).max(1).optional(), // <-- Added topP validation
-  maxResponseToken: z.number().optional(),
+  maxResponseToken: z.number().max(16384).optional(),
   pastMessages: z.number().optional(),
   strictness: z.number().optional(),
   documentLimit: z.number(),

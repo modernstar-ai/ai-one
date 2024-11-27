@@ -8,6 +8,7 @@ export interface FileMetadata {
     contentType?: string;  // MIME type of the file
     size: number;          // File size in bytes
     folder?: string;       // Folder name (optional)
+    indexName?: string;       // Index name (optional)
     submittedOn?: string;  // Submission date (optional)     // File processing state (optional)
   }
   

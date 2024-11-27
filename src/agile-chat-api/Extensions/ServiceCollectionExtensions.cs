@@ -33,7 +33,7 @@ internal static class ServiceCollectionExtensions
             .AddInMemoryTokenCaches();
         
         // Register the claims transformation
-        services.AddScoped<IRoleService, DefaultRoleService>();
+        services.AddScoped<IRoleService, UTSRoleService>();
         services.AddScoped<IClaimsTransformation, ClaimsTransformer>();
 
         // Configure JWT Bearer options
