@@ -6,231 +6,358 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using agile_chat_api.Models;
 
 public static class ChatCompletionsEndpoint
 {
-    public class ChatCompletionsEndpointLogger{}
+    public class ChatCompletionsEndpointLogger { }
     public static void MapChatCompletionsEndpoint(this IEndpointRouteBuilder app)
     {
         app.MapPost("/chat",
-            async (HttpContext context, string? threadId, [FromServices] IAssistantService assistantService, [FromServices] ILogger<ChatCompletionsEndpointLogger> logger) =>
-            {
-                #region Service Initialization
-                
-                IChatThreadService chatThreadService = new ChatThreadService();
-                string assistantMessageContent = "";
+           async (HttpContext context, string threadId, [FromServices] IAssistantService assistantService, [FromServices] ILogger<ChatCompletionsEndpointLogger> logger) =>
+           {
+               #region Service Initialization
 
-                #endregion
+               IChatThreadService chatThreadService = new ChatThreadService();
+               string assistantMessageContent = "";
+               var responseCitations = new List<Citation>(); // To hold citation objects
 
-                try
-                {
-                    #region Message Validation
+               #endregion
 
-                    // Validate and get incoming messages
-                    var messages = await ChatService.GetChatMessagesFromContext(context);
-                    if (messages == null || !messages.Any())
-                    {
-                        context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                        await context.Response.WriteAsync("No messages provided.");
-                        await context.Response.Body.FlushAsync();
-                        return;
-                    }
+               try
+               {
+                   #region Message Validation
 
-                    #endregion
+                   // Validate and get incoming messages
+                   var messages = await ChatService.GetChatMessagesFromContext(context);
+                   if (messages == null || !messages.Any())
+                   {
+                       //return Results.BadRequest("No messages provided."); -- Commented Yasir's change to make citations work 
+                       context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                       await context.Response.WriteAsync("No messages provided.");
+                       await context.Response.Body.FlushAsync();
+                       return;
+                   }
 
-                    #region User Authentication - Extract user information from claims
+                   #endregion
 
-                    var user = context.User;
-                    var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "unknown";
-                    var username = user.FindFirst(ClaimTypes.Name)?.Value ?? "unknown";
+                   #region User Authentication - Extract user information from claims
 
-                    // Configure Server-Sent Events headers
-                    context.Response.Headers.ContentType = "text/event-stream";
-                    context.Response.Headers.CacheControl = "no-cache";
-                    context.Response.Headers.Connection = "keep-alive";
+                   var user = context.User;
+                   var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "unknown";
+                   var username = user.FindFirst(ClaimTypes.Name)?.Value ?? "unknown";
 
-                    #endregion
+                   // Configure Server-Sent Events headers
+                   context.Response.Headers.ContentType = "text/event-stream";
+                   context.Response.Headers.CacheControl = "no-cache";
+                   context.Response.Headers.Connection = "keep-alive";
 
-                    #region Chat Client Initialization
+                   #endregion
 
-                    // Initialize and validate chat client
-                    var chatClient = ChatService.GetChatClient();
-                    if (chatClient == null)
-                    {
-                        const string error = "OpenAI endpoint or API key is not set in environment variables.";
-                        await context.Response.WriteAsync(error);
-                        await context.Response.Body.FlushAsync();
-                        return;
-                    }
+                   #region Chat Client Initialization
 
-                    #endregion
+                   // Initialize and validate chat client
+                   var chatClient = ChatService.GetChatClient();
+                   if (chatClient == null)
+                   {
+                       const string error = "OpenAI endpoint or API key is not set in environment variables.";
+                       //return Results.BadRequest(error); --commented Yasir's change to make citations work
+                       await context.Response.WriteAsync(error);
+                       await context.Response.Body.FlushAsync();
+                       return;
+                   }
 
-                    #region Message Processing
+                   #endregion
+
+                   #region Message Processing
 
                     // Process incoming messages and create chat options
                     var options = new ChatCompletionOptions();
                     var oaiMessages = ChatService.GetOaiChatMessages(messages);
 
-                    string userQuery = chatThreadService.GetLatestUserMessageContent(oaiMessages);
+                   string userQuery = chatThreadService.GetLatestUserMessageContent(oaiMessages);
 
-                    // Get or create chat thread
-                    ChatThread chatThread =
-                        chatThreadService.GetOrCreateChatThread(threadId, userQuery, userId, username);
+                   // Get chat thread
+                   ChatThread chatThread = chatThreadService.GetChatThread(threadId, userQuery, userId, username);
 
                     // Get the IndexID if appropriate
                     var indexToSearch = string.Empty;
                     var assistantId = chatThread.assistantId;
                     Assistant? assistant = null;
-                    if (!string.IsNullOrEmpty(assistantId))
+
+                    if (chatThread.name == "New Chat")
                     {
-                        var id = new System.Guid(assistantId);
-                         assistant = await assistantService.GetByIdAsync(id);
-                        if (assistant != null)
+                        // First, generate initial variables with default values
+                        string assistantTitle = string.Empty;
+                        string assistantSystemMessage = string.Empty;
+                        int? strictness = 0;
+                        int documentLimit = 0;
+
+
+                        //Todo get defaults from config
+                        //GPT-4o maxtokens defaults to 4096.
+                        //TopP defaults is 1.
+                        //temperature defaults is 1
+                        decimal? temperature = 1;
+                        decimal? topP = 1;
+                        int? maxResponseToken = 4096;
+
+
+                        if (!string.IsNullOrEmpty(assistantId))
                         {
-                            indexToSearch = assistant.Index;
-                            options.Temperature = (float?)assistant.Temperature; // 0.5;
-                            if (assistant.TopP != null) options.TopP = (float?)assistant.TopP; // 1;
-                            options.MaxOutputTokenCount = assistant.MaxResponseToken; // 100;
+                            var id = new System.Guid(assistantId);
+
+                            assistant = await assistantService.GetByIdAsync(id);
+
+                            if (assistant != null)
+                            {
+                                options.Temperature = (float?)assistant.Temperature; // 0.5;
+                                if (assistant.TopP != null) options.TopP = (float?)assistant.TopP; // 1;
+                                options.MaxOutputTokenCount = assistant.MaxResponseToken; // 100;
+
+                                // Update variables with assistant properties
+                                chatThread.name = assistant.Name;
+
+                                assistantTitle = assistant.Name;
+                                assistantSystemMessage = assistant.SystemMessage;
+                                temperature = assistant.Temperature;
+                                topP = assistant.TopP;
+                                maxResponseToken = assistant.MaxResponseToken;
+                                strictness = assistant.Strictness;
+                                documentLimit = assistant.DocumentLimit;
+                            }
                         }
+
+
+                        // Add to chatThread properties
+
+                        chatThread.assistantTitle = assistantTitle;
+                        chatThread.assistantMessage = assistantSystemMessage;  // Note: property name remains the same
+                        chatThread.temperature = temperature;
+                        chatThread.topP = topP;
+                        chatThread.maxResponseToken = maxResponseToken;
+                        chatThread.strictness = strictness;
+                        chatThread.documentLimit = documentLimit;
+
+                        chatThreadService.Update(chatThread);
                     }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(assistantId))
+                        {
+                            var id = new System.Guid(assistantId);
+
+                            assistant = await assistantService.GetByIdAsync(id);
+
+                            if (assistant != null)
+                            {
+                                options.Temperature = (float?)chatThread.temperature;
+
+                                if (chatThread.topP != null)
+                                {
+                                    options.TopP = (float?)chatThread.topP;
+                                }
+
+                                options.MaxOutputTokenCount = chatThread.maxResponseToken;
+                            }
+                        }
+
+                    }
+                    #endregion
 
 
-                    // Create and save user message
+                    #region Create and save user message
+                    
                     Message userMessage = new Message
                     {
                         threadId = threadId,
                         id = Guid.NewGuid().ToString(),
                         name = username,
-                        userId = userId,
+                        userId = username,
                         role = "user",
                         createdAt = DateTime.UtcNow,
                         isDeleted = false,
                         content = userQuery,
-                        sender = "user"
+                        sender = "user",
+                        like = false,
+                        disLike = false,
                     };
                     chatThreadService.CreateChat(userMessage);
 
-                    #endregion
+                   #endregion
 
-                    #region RAG
+                   #region RAG
 
-                    if (!string.IsNullOrEmpty(indexToSearch))
-                    {
-                        var dataSource = ChatService.GetChatCompletionOptionsDataSource(indexToSearch);
-                        if (dataSource is not null)
-                        {
-                            //The maximum number of rewritten queries that should be sent to the search
-                            //        provider for a single user message.
-                            //By default, the system will make an automatic determination.
-                            //dataSource.MaxSearchQueries = 1;
-                            //The configured strictness of the search relevance filtering. 
-                             
-                            if (assistant != null)
-                            {
-                                //Higher strictness will increase precision but lower recall of the answer.
-                                dataSource.Strictness = assistant.Strictness;
-                                //the configured number of docs to feature in the query
-                                dataSource.TopNDocuments = assistant.DocumentLimit;    
-                            }
+                   if (!string.IsNullOrEmpty(assistantId))
+                   {
+                       var id = new System.Guid(assistantId);
 
-                            
+                       assistant = await assistantService.GetByIdAsync(id);
 
+                       if (assistant != null)
+                       {
+                           indexToSearch = assistant.Index;
+
+                           if (!string.IsNullOrEmpty(indexToSearch))
+                           {
+                               var dataSource = ChatService.GetChatCompletionOptionsDataSource(indexToSearch);
+
+                               if (dataSource is not null)
+                               {
+                                   //The maximum number of rewritten queries that should be sent to the search
+                                   //        provider for a single user message.
+                                   //By default, the system will make an automatic determination.
+                                   //dataSource.MaxSearchQueries = 1;
+                                   //The configured strictness of the search relevance filtering. 
+
+                                   if (assistant != null)
+                                   {
+                                       //Higher strictness will increase precision but lower recall of the answer.
+                                       dataSource.Strictness = assistant.Strictness;
+                                       //the configured number of docs to feature in the query
+                                       dataSource.TopNDocuments = assistant.DocumentLimit;
+                                   }
 
 #pragma warning disable AOAI001
-                            options.AddDataSource(dataSource);
-                        }
-                    }
+                                   options.AddDataSource(dataSource);
+                               }
+                           }
+                       }
+                   }
 
-                    #endregion
+                   #endregion
 
-                    #region Chat Completion Streaming
+                   #region Chat Completion Streaming
 
-                    // Stream chat completion responses
-                    var completionUpdates = chatClient.CompleteChatStreaming(oaiMessages, options);
+                   AzureChatMessageContext? aggregatedMessageContext = null;
+                   var aggregatedCitations = new List<AzureChatCitation>(); // Separate collection for citations
 
-                    foreach (var completionUpdate in completionUpdates)
-                    {
-                        foreach (var contentPart in completionUpdate.ContentUpdate)
-                        {
-                            var content = contentPart.Text;
-                            if (!string.IsNullOrEmpty(content))
-                            {
-                                assistantMessageContent += content;
-                                await context.Response.WriteAsync(content);
-                                await context.Response.Body.FlushAsync();
-                            }
-                        }
-                    }
+                   // Stream chat completion responses
+                   var completionUpdates = chatClient.CompleteChatStreaming(oaiMessages, options);
 
-                    #endregion
+                   foreach (var completionUpdate in completionUpdates)
+                   {
+                       var currentMessageContext = completionUpdate.GetAzureMessageContext();
+                       // Aggregate the context if it's not null
+                       if (currentMessageContext != null)
+                       {
+                           aggregatedMessageContext ??= currentMessageContext; // Keep the first available message context
+                           // Add citations to the separate collection
+                           if (currentMessageContext.Citations != null)
+                           {
+                               aggregatedCitations.AddRange(currentMessageContext.Citations);
+                           }
+                       }
 
-                    #region Save Assistant Response
+                       foreach (var contentPart in completionUpdate.ContentUpdate)
+                       {
+                           var content = contentPart.Text;
+                           if (!string.IsNullOrEmpty(content))
+                           {
+                               assistantMessageContent += content;
+                           }
+                       }
+                   }
+                   // At this point, `aggregatedCitations` contains all collected citations
+                   if (aggregatedCitations.Any())
+                   {
+                       var uniqueCitations = aggregatedCitations
+                       .Where(citation => !string.IsNullOrEmpty(citation.Url) && !string.IsNullOrEmpty(citation.Title))
+                       .GroupBy(citation => new { citation.Title, citation.Url }) // Group by Title and Url to ensure uniqueness
+                       .Select(group => group.First()) // Take the first instance of each unique pair
+                       .ToList();
+                       responseCitations = uniqueCitations.Select(citation => new Citation
+                       {
+                           FileName = citation.Title,
+                           FileUrl = citation.Url
+                       }).ToList();
+                   }
+                   #endregion
 
+                   #region Save Assistant Response
+
+                   // Format responseCitations into a string representation
+                   var citationsString = string.Join(Environment.NewLine, responseCitations.Select(citation =>
+                       $"{citation.FileName}: {citation.FileUrl}"));
+                   // Combine assistant message content with citations
+                   var assistantMessageResponse = $"{assistantMessageContent}{Environment.NewLine}{citationsString}";
+                
+                   
                     // Create and save assistant message
                     Message assistantMessage = new Message
                     {
                         threadId = threadId,
                         id = Guid.NewGuid().ToString(),
                         name = username,
-                        userId = userId,
+                        userId = username,
                         role = "assistant",
                         sender = "assistant",
                         createdAt = DateTime.UtcNow,
                         isDeleted = false,
                         content = assistantMessageContent,
+                        like = false,
+                        disLike = false,
                     };
                     chatThreadService.CreateChat(assistantMessage);
 
-                    #endregion
+                   #endregion
 
-                    #region Update Chat Thread
-
+                   #region Update Chat Thread
                     // Update chat thread title for new chats
-                    if (chatThread.name == "New Chat")
+                    if (chatThread.name == "New Chat" && assistant is null)
                     {
                         chatThread.lastMessageAt = DateTime.UtcNow;
 
-                        // Update title based on first message
-                        if (chatThread.createdAt == chatThread.lastMessageAt)
-                        {
-                            // Use first few words of the assistant's response as the title
-                            string[] words = assistantMessageContent.Split(' ');
-                            string newTitle = string.Join(" ", words.Take(5)) + "...";
-                            chatThread.assistantTitle =
-                                newTitle.Length > 42 ? newTitle.Substring(0, 39) + "..." : newTitle;
-                        }
+                        // Use first few words of the assistant's response as the title
+                        string[] words = assistantMessageContent.Split(' ');
+                        string newTitle = string.Join(" ", words.Take(5)) + "...";
+                        chatThread.name =
+                            newTitle.Length > 42 ? newTitle.Substring(0, 39) + "..." : newTitle;
 
                         chatThreadService.Update(chatThread);
                     }
 
-                    #endregion
+                   #endregion
 
-                    // Complete the response
-                    await context.Response.CompleteAsync();
-                }
-                catch (Exception ex)
-                {
-                    #region Error Handling
+                   // Create response structure
+                   var response = new
+                   {
+                       response = assistantMessageContent,
+                       citations = responseCitations
+                   };
+                   // Send the response as JSON
+                   await context.Response.WriteAsJsonAsync(response);
+                // }
+                //  catch (Exception ex) when (ex is ClientResultException clientException && clientException.Message.Contains("content_filter"))
+                //     {
+                //         return Results.BadRequest("High likelyhook of adult profanity");
+                //     }
+               }
+               catch (Exception ex)
+               {
+                   #region Error Handling
 
-                    // Log and handle any errors
-                    logger.LogError(ex, "Error processing chat completion request.");
+                   // Log and handle any errors
+                   logger.LogError(ex, "Error processing chat completion request.");
 
-                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                    await context.Response.WriteAsync("An error occurred while processing the request.");
-                    await context.Response.Body.FlushAsync();
+                   context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                   await context.Response.WriteAsync("An error occurred while processing the request.");
+                   await context.Response.Body.FlushAsync();
 
-                    #endregion
-                }
-                finally
-                {
-                    #region Cleanup
+                   #endregion
+               }
+               finally
+               {
+                   #region Cleanup
 
-                    // Clean up resources
-                    context.Response.Body.Close();
+                   // Clean up resources
+                   context.Response.Body.Close();
 
-                    #endregion
-                }
-            }).RequireAuthorization();
+                   #endregion
+               }
+               
+           //return Results.Ok();
+           }).RequireAuthorization();
 
 
         app.MapPost("/purechat", async (HttpContext context) =>

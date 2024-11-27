@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
       "projectName": {
-        "value": "agilechat"
+       "value": "agilechat"
       },
       "environmentName": {
         "value": "dev"
@@ -16,6 +16,24 @@
       },
       "dalleLocation": {
         "value": "australiaeast"
-      } 
+      },
+      "azureClientID": {
+        "value": ""
+      },
+      "azureClientSecret": {
+        "value": ""
+      },
+      "azureTenantId": {
+        "value": ""
+      },
+      "aspCoreEnvironment": {
+        "value": "Development"
+      },
+      "azureADAppIdOrUri": {
+          "value": ""
+      },
+      "UtsRoleApiEndpoint": {
+          "value": ""
+      }      
     }
   }

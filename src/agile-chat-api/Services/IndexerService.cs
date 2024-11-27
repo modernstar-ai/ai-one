@@ -1,7 +1,9 @@
+using agile_chat_api.Authentication;
 using agile_chat_api.Configurations;
 using Microsoft.Azure.Cosmos;
 using Models;
 using Dtos;
+using Microsoft.Azure.Cosmos.Linq;
 using Constants = agile_chat_api.Configurations.Constants;
 
 namespace Services
@@ -9,6 +11,9 @@ namespace Services
     public interface IContainerIndexerService
     { 
         bool IndexExistsAsync(string indexName);
+        Task<Indexes?> GetContainerIndexByIdAsync(string id);
+        Task UpdateAsync(Indexes index, string newDescription, string newGroup);
+        Task<Indexes?> GetContainerIndexByNameAsync(string indexName);
         Task<IEnumerable<Indexes>> GetContainerIndexesAsync();
         Task<Indexes?> SaveIndexToCosmosDbAsync(IndexesDto indexRequest);
         Task<Indexes?> DeleteIndexWithRetryAsync(string indexId);
@@ -22,9 +27,11 @@ namespace Services
         private readonly CosmosClient _cosmosClient = new(AppConfigs.CosmosEndpoint, AppConfigs.CosmosKey);
         private readonly Container _cosmosContainer;
         private readonly ILogger<IndexerService> _logger;
+        private readonly IRoleService _roleService;
 
-        public IndexerService(ILogger<IndexerService> logger)
+        public IndexerService(ILogger<IndexerService> logger, IRoleService roleService)
         {
+            _roleService = roleService;
             _logger = logger;
             _cosmosContainer = EnsureCosmosContainerExists().GetAwaiter().GetResult();
         }
@@ -57,14 +64,73 @@ namespace Services
         {
             return _cosmosContainer.GetItemLinqQueryable<Indexes>().Where(x => x.Name == indexName).FirstOrDefault() != null;
         }
+        
+        public async Task UpdateAsync(Indexes index, string newDescription, string newGroup)
+        {
+            if (!_roleService.IsSystemAdmin())
+            {
+                var groupClaims = _roleService.GetGroupClaims();
+                if (!string.IsNullOrWhiteSpace(index.Group) && !groupClaims.Contains(index.Group.ToLower()))
+                    throw new Exception("Not authorized");
+            }
+            
+            index.Description = newDescription;
+            index.Group = newGroup;
+            try
+            {
+                await _cosmosContainer.ReplaceItemAsync(index, index.id,
+                    new PartitionKey(index.id));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while updating the assistant with ID {index.id}.");
+                throw;
+            }
+        }
+        
+        public async Task<Indexes?> GetContainerIndexByIdAsync(string id)
+        {
+            var index = _cosmosContainer.GetItemLinqQueryable<Indexes>()
+                .Where(x => x.id == id)
+                .FirstOrDefault();
+            if (!_roleService.IsSystemAdmin())
+            {
+                var groupClaims = _roleService.GetGroupClaims();
+                if(!string.IsNullOrWhiteSpace(index?.Group) && !groupClaims.Contains(index.Group.ToLower()))
+                    return null;
+            }
 
+            return index;
+        }
+
+        public async Task<Indexes?> GetContainerIndexByNameAsync(string indexName)
+        {
+            var index = _cosmosContainer.GetItemLinqQueryable<Indexes>()
+                .Where(x => x.Name == indexName)
+                .FirstOrDefault();
+            if (!_roleService.IsSystemAdmin())
+            {
+                var groupClaims = _roleService.GetGroupClaims();
+                if(!string.IsNullOrWhiteSpace(index?.Group) && !groupClaims.Contains(index.Group.ToLower()))
+                    return null;
+            }
+
+            return index;
+        }
+        
         public async Task<IEnumerable<Indexes>> GetContainerIndexesAsync()
         {
-            var query = new QueryDefinition("SELECT * FROM c");
             var results = new List<Indexes>();
             try
             {
-                using var feedIterator = _cosmosContainer.GetItemQueryIterator<Indexes>(query);
+                var query = _cosmosContainer.GetItemLinqQueryable<Indexes>().AsQueryable();
+                if (!_roleService.IsSystemAdmin())
+                {
+                    var groupClaims = _roleService.GetGroupClaims();
+                    query = query.Where(x => x.Group == null || x.Group == "" || groupClaims.Contains(x.Group.ToLower()));
+                }
+
+                var feedIterator = query.ToFeedIterator();
                 while (feedIterator.HasMoreResults)
                 {
                     var response = await feedIterator.ReadNextAsync();

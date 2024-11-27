@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useRoleContext } from '@/common/RoleContext';
-
 import { useAuth } from '@/services/auth-helpers';
 import { cn } from '@/lib/utils';
 import { fetchChatThreads, createChatThread, deleteChatThread, type ChatThread } from '@/services/chatthreadservice';
@@ -50,6 +48,11 @@ import {
   Loader2,
   Database,
 } from 'lucide-react';
+import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
+import { UserRole } from '@/authentication/user-roles';
+
+import Logo from '@/assets/logo.png';
+
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -220,7 +223,6 @@ export function LeftSidebar() {
       instance.logoutPopup({ account: accounts[0] });
     });
   };
-  const { isSystemAdmin, isContentManager, enablePreviewFeatures } = useRoleContext();
 
   return (
     <div className="flex h-screen dark">
@@ -245,17 +247,16 @@ export function LeftSidebar() {
           {/* Navigation Items */}
           <div className="flex flex-col space-y-2 mt-4 h-screen justify-center items-center  dark:text-white">
             <SideNavButton path="/chat" label="Chat" Icon={MessageCircleMore} accessKey="c" />
-            {(isSystemAdmin || isContentManager) && (
-              <>
-                <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey="a" />
-                <SideNavButton path="/files" label="Files" Icon={FileBox} accessKey="U" />
-              </>
-            )}
-            {isSystemAdmin && <SideNavButton path="/containers" label="Database" Icon={Database} accessKey="i" />}
-            {/* //todo:todu enablePreviewFeatures===true is required. */}
-            {isSystemAdmin && enablePreviewFeatures == true && (
+            <PermissionHandler role={UserRole.ContentManager}>
+              <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey="a" />
+              <SideNavButton path="/files" label="Files" Icon={FileBox} accessKey="U" />
+            </PermissionHandler>
+            <PermissionHandler role={UserRole.ContentManager}>
+              <SideNavButton path="/containers" label="Database" Icon={Database} accessKey="i" />
+            </PermissionHandler>
+            <PermissionHandler role={UserRole.SystemAdmin}>
               <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey="t" />
-            )}
+            </PermissionHandler>
           </div>
 
           {/* User Menu */}
@@ -313,8 +314,12 @@ export function LeftSidebar() {
         {isPanelOpen && (
           <div className="h-full flex flex-col dark:text-white ">
             {/* Panel Header */}
+            <div className="p-4 space-y-2">
+            <img src={Logo} alt="UTS Logo" className="w-1/2" />
+            </div>
+             
             <div className="p-4 border-b flex justify-between">
-              <h2 className="font-semibold">Recent Chats</h2>
+                <h2 className="font-semibold">Recent Chats</h2>
 
               <Button variant="ghost" size="icon" onClick={handleCreateChat} disabled={loading} aria-label="New Chat">
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}

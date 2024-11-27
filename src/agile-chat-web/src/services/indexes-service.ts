@@ -42,6 +42,20 @@ export async function createIndex(newIndex: Partial<Index>): Promise<Index | nul
   }
 }
 
+//Update index in cosmos
+export async function updateIndex(body: { id: string; group: string; description: string }): Promise<void> {
+  const apiUrl = getApiUrl(body.id);
+  try {
+    await axios.put(apiUrl, body, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch (error) {
+    console.error('Error creating index:', error);
+  }
+}
+
 //Delete index in cosmos
 export async function deleteIndex(id: string): Promise<boolean> {
   const apiUrl = getApiUrl(`delete/${id}`);

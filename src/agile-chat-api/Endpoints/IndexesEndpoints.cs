@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using agile_chat_api.Authentication;
 using agile_chat_api.Services;
 using Azure.Storage.Blobs;
 using Dtos;
@@ -36,8 +37,12 @@ public static class IndexesEndpoints
             async ([FromBody] IndexesDto request,
                    [FromServices] IContainerIndexerService cosmosService,
                 [FromServices] IAzureAiSearchService searchService,
-                [FromServices] ILogger<IndexesEndpointsLogger> logger) =>
+                [FromServices] ILogger<IndexesEndpointsLogger> logger,
+                [FromServices] IRoleService roleService) =>
             {
+                if (!roleService.IsSystemAdmin())
+                    return Results.Forbid();
+                
                 if(cosmosService.IndexExistsAsync(request.Name))
                     return Results.BadRequest("Container name already exists.");
                 
@@ -66,12 +71,25 @@ public static class IndexesEndpoints
                 }
             }).DisableAntiforgery();
 
+        api.MapPut("{id}", async (string id, [FromBody] UpdateIndexDto dto, IContainerIndexerService cosmosService) =>
+        {
+            var index = await cosmosService.GetContainerIndexByIdAsync(id);
+            if (index == null) return Results.NotFound();
+
+            await cosmosService.UpdateAsync(index, dto.Description ?? "", dto.Group ?? "");
+            return Results.Ok();
+        });
+
         api.MapDelete("delete/{id}", [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
             async (string id, [FromServices] IContainerIndexerService cosmosService, [FromServices] 
                 IAzureAiSearchService azureSearchService, [FromServices] IFileUploadService fileUploadService, 
                 [FromServices] IStorageService storageService,
-                [FromServices] ILogger<IndexesEndpointsLogger> logger) =>
+                [FromServices] ILogger<IndexesEndpointsLogger> logger,
+                [FromServices] IRoleService roleService) =>
             {
+                if(!roleService.IsSystemAdmin())
+                    return Results.Forbid();
+                
                 if (string.IsNullOrWhiteSpace(id))
                 {
                     return Results.BadRequest("Invalid ID. Please provide a valid index ID.");

@@ -17,6 +17,12 @@ public class ChatThread
     public string assistantId { get; set; } = string.Empty;
     public List<string> extension { get; set; } = new List<string>();
 
+    public decimal? temperature { get; set; } 
+    public decimal? topP { get; set; }
+    public int? maxResponseToken { get; set; }
+    public int? strictness { get; set; }
+    public int documentLimit { get; set; }
+
     public static string PartitionKey = "userId";
 }
 

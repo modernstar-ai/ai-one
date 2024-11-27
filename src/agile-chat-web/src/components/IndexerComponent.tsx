@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import { toast } from "./ui/use-toast";
-import { deleteIndex, getIndexes } from "@/services/indexes-service";
-import { Index } from "@/models/indexmetadata";
-import { Loader2, Info, Trash2 } from "lucide-react";
+import { useState } from 'react';
+import { toast } from './ui/use-toast';
+import { deleteIndex } from '@/services/indexes-service';
+import { Index } from '@/models/indexmetadata';
+import { Loader2, Info, Trash2, Pencil } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from "./ui/button";
+import { Button } from './ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,62 +17,19 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { useRoleContext } from "@/common/RoleContext";
-import { fetchManageableGroups } from "@/services/custom-group-service";
- 
-const IndexerComponent: React.FC = () => {
+import { useIndexes } from '@/hooks/use-indexes';
+import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
+import { UserRole } from '@/authentication/user-roles';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { EditIndexDialog } from '@/pages/Indexes/Edit/EditIndex';
 
-  const [indexes, setIndexes] = useState<Index[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+const IndexerComponent: React.FC = () => {
+  const { indexes, indexesLoading, refreshIndexes } = useIndexes();
   const [indexToDelete, setIndexToDelete] = useState<Index | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { isSystemAdmin, isContentManager } = useRoleContext();
-  const userEmail = import.meta.env.VITE_USER_EMAIL as string;
+  const [indexEditing, setIndexEditing] = useState<Index | undefined>(undefined);
 
-  const fetchGroups = async (): Promise<string[]> => {
-    if (isContentManager) {
-      const groups = await fetchManageableGroups(userEmail);
-      return groups?.map(group => group.group) ?? [];
-    }
-    return [];
-  };
-
-  const fetchIndexes = async (manageableGroups: string[]): Promise<Index[]> => {
-    const indexData = await getIndexes();
-    if (!indexData) return [];
-    
-    if (isContentManager && manageableGroups.length > 0) {
-      return indexData.filter((index: Index) =>
-        manageableGroups.includes(index.group ?? "")
-      );
-    }
-    return indexData;
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const groups = await fetchGroups();
-        //setManageableGroups(groups);
-        const indexes = await fetchIndexes(groups);
-        setIndexes(indexes);
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load data. Please try again later.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-  
-    fetchData();
-  }, []); // Run only once when the component mounts
-
-  if (isLoading) {
+  if (indexesLoading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center h-64">
@@ -87,13 +44,17 @@ const IndexerComponent: React.FC = () => {
     setIndexToDelete(index);
   };
 
+  const handleEditIndex = async (index: Index) => {
+    setIndexEditing(index);
+  };
+
   const confirmDelete = async () => {
     if (indexToDelete) {
       setIsDeleting(true);
       try {
         const success = await deleteIndex(indexToDelete.id);
         if (success) {
-          setIndexes((prevIndexes) => prevIndexes.filter((t) => t.id !== indexToDelete.id));
+          refreshIndexes();
           toast({
             title: 'Success',
             description: `Index "${indexToDelete.name}" has been deleted.`,
@@ -115,54 +76,54 @@ const IndexerComponent: React.FC = () => {
     }
   };
 
-    return (
-      <Card>
+  return (
+    <Card>
       <CardHeader>
         <CardTitle className="text-2xl font-bold">Available Containers</CardTitle>
         <CardDescription>Manage and view all available containers in the system.</CardDescription>
       </CardHeader>
       <CardContent>
-      {indexes.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border">
-            <thead>
-              <tr>
-                {isSystemAdmin && (
-                  <th className="w-[100px] py-2 px-4 border">Actions</th>
-                )}
-                <th className="w-[150px] py-2 px-4 border">Name</th>
-                <th className="w-[900px] py-2 px-4 border">Description</th>
-                <th className="w-[100px] py-2 px-4 border">Group</th>
-              </tr>
-            </thead>
-            <tbody>
-              {indexes.map((index) => (
-                <tr key={index.id} className="text-center border">
-                  {isSystemAdmin && (
-                    <td className="py-2 px-4 border">
-                      <div className="flex items-center justify-center space-x-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              {/* <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                //onClick={() => handleEditIndex(index.id)}
-                                disabled={true} // Disable the edit button (TBD)
-                                >
-                                <Pencil className="h-4 w-4" />
-                                <span className="sr-only">Edit {index.name}</span>
-                              </Button> */}
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Edit {index.name}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      
-                          <AlertDialog>
+        {indexes && indexes.length > 0 ? (
+          <div className="overflow-x-auto">
+            <Table aria-label="Available Assistants">
+              <TableHeader>
+                <TableRow>
+                  <PermissionHandler role={UserRole.ContentManager}>
+                    <TableHead className="w-[100px]">Actions</TableHead>
+                  </PermissionHandler>
+                  <TableHead className="w-[250px]">Name</TableHead>
+                  <TableHead className="w-[500px]">Description</TableHead>
+                  <TableHead className="w-[200px]">Group</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {indexes.map((index) => (
+                  <TableRow key={index.id} className="text-center border">
+                    <PermissionHandler role={UserRole.ContentManager} group={index.group}>
+                      <TableCell className="py-2 px-4 border">
+                        <div className="flex items-center justify-center space-x-2">
                           <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => handleEditIndex(index)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                  <span className="sr-only">Edit {index.name}</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Edit {index.name}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
+                          <PermissionHandler role={UserRole.SystemAdmin}>
+                            <AlertDialog>
+                              <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <AlertDialogTrigger asChild>
@@ -204,28 +165,31 @@ const IndexerComponent: React.FC = () => {
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
-                          </AlertDialog>
-                      
-                      </div>
-                    </td>
-                  )}
-                  <td className="py-2 px-4 border font-medium">{index.name}</td>
-                  <td className="py-2 px-4 border text-left font-medium">{index.description ? index.description : "N/A"}</td>
-                  <td className="py-2 px-4 border font-medium">{index.group ? index.group : "N/A"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="text-center py-8">
-          <Info className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-lg font-medium text-gray-900">No Containers available</p>
-          <p className="mt-1 text-sm text-gray-500">Get started by adding new containers to your system.</p>
-        </div>
-      )}
-    </CardContent>
+                            </AlertDialog>
+                          </PermissionHandler>
+                        </div>
+                      </TableCell>
+                    </PermissionHandler>
+                    <TableCell className="py-2 px-4 border font-medium">{index.name}</TableCell>
+                    <TableCell className="py-2 px-4 border text-left font-medium">
+                      {index.description ? index.description : 'N/A'}
+                    </TableCell>
+                    <TableCell className="py-2 px-4 border font-medium">{index.group ? index.group : 'N/A'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <Info className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-lg font-medium text-gray-900">No containers available</p>
+            <p className="mt-1 text-sm text-gray-500">Get started by adding a new container to your system.</p>
+          </div>
+        )}
+      </CardContent>
+      <EditIndexDialog index={indexEditing} setIndexEditing={setIndexEditing} refreshIndexes={refreshIndexes} />
     </Card>
-    );
+  );
 };
 export default IndexerComponent;

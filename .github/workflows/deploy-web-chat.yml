@@ -44,12 +44,9 @@ jobs:
       AGILE_CHAT_API_NAME: ${{ vars.AGILE_CHAT_API_NAME }}
       AGILE_RAGCHAT_API_NAME: ${{ vars.AGILE_RAGCHAT_API_NAME }}
       ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
-      VITE_AGILECHAT_API_URL: "https://${{ vars.AGILE_CHAT_API_NAME }}.azurewebsites.net"
+      VITE_AGILECHAT_API_URL: ${{ vars.VITE_AGILECHAT_API_URL }}
       VITE_AZURE_AD_CLIENT_ID:  ${{ vars.AZURE_CLIENT_ID }}
       VITE_AZURE_AD_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-      VITE_CUSTOM_API_URL: ${{ vars.VITE_CUSTOM_API_URL }}
-      VITE_USER_EMAIL: ${{ vars.VITE_USER_EMAIL }}
-      VITE_XAPIKEY: ${{ secrets.VITE_XAPIKEY }}
 
     steps:
       - name: Checkout code

@@ -6,13 +6,17 @@ export function useIndexes() {
   const [indexes, setIndexes] = useState<Index[] | undefined>(undefined);
   const [indexesLoading, setIndexesLoading] = useState<boolean>(indexes === undefined);
 
-  useEffect(() => {
+  const refreshIndexes = async () => {
     setIndexesLoading(true);
 
     getIndexes()
       .then(setIndexes)
       .finally(() => setIndexesLoading(false));
+  };
+
+  useEffect(() => {
+    refreshIndexes();
   }, []);
 
-  return { indexes, indexesLoading };
+  return { indexes, indexesLoading, refreshIndexes };
 }

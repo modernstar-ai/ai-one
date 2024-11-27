@@ -1,7 +1,9 @@
 ﻿
 using DotNetEnv;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Graph.TermStore;
 using OpenAI.Chat;
+using System.Net;
 
 public interface IChatThreadService
 {
@@ -16,10 +18,9 @@ public interface IChatThreadService
 
     string GetLatestUserMessageContent(List<ChatMessage> messages);
 
-    ChatThread GetOrCreateChatThread(string threadId, string prompt, string userId, string userName);
+    ChatThread GetChatThread(string threadId, string prompt, string userId, string userName);
     void Delete(string id, string userid);
-    //void AddExtension(ExtensionUpdate data);
-    //void RemoveExtension(ExtensionUpdate data);
+    void UpdateMessageReaction(string messageId, string userId, ReactionType reactionType, bool value);
 }
 
 public class ChatThreadService : IChatThreadService
@@ -38,61 +39,15 @@ public class ChatThreadService : IChatThreadService
     }
 
 
-    public ChatThread GetOrCreateChatThread(string threadId, string prompt, string userId, string userName)
+    public ChatThread GetChatThread(string threadId, string prompt, string userId, string userName)
     {
-        try
-        {
-            ChatThread chatThread = null;
-
-            if (string.IsNullOrEmpty(threadId))
-            {
-                // Create new chat thread if no threadId provided
-                chatThread = new ChatThread
-                {
-                    name = prompt.Length > 30 ? prompt.Substring(0, 28) + "..." : prompt,
-                    userName = userName,
-                    userId = userId,
-                    type = "CHAT_THREAD",
-                    createdAt = DateTime.UtcNow,
-                    lastMessageAt = DateTime.UtcNow,
-                    bookmarked = false,
-                    isDeleted = false,
-                    assistantMessage = "current assistant system message",
-                    assistantTitle = "current assistant name"
-                };
-
-                _container.CreateItemAsync(chatThread, new PartitionKey(chatThread.userId.ToString())).GetAwaiter().GetResult();
-
-                threadId = chatThread.id;
-                return chatThread;
-            }
-
-            // Get existing chat thread
-            chatThread = GetById(threadId);
-
-            if (chatThread == null)
-            {
-                return null;
-            }
-
-            if (chatThread.name == "New Chat")
-            {
-                chatThread.name = prompt.Length > 30 ? prompt.Substring(0, 28) + "..." : prompt;
-                chatThread.lastMessageAt = DateTime.UtcNow;
-                Update(chatThread);
-            }
-            else
-            {
-                chatThread.lastMessageAt = DateTime.UtcNow;
-                Update(chatThread);
-            }
+            ChatThread chatThread = _container.GetItemLinqQueryable<ChatThread>(true)
+                  .Where(t => t.id.ToString() == threadId.ToString())
+                  .AsEnumerable()
+                  .First();
 
             return chatThread;
-        }
-        catch (Exception)
-        {
-            return null;
-        }
+        
     }
 
 
@@ -112,10 +67,11 @@ public class ChatThreadService : IChatThreadService
     public IEnumerable<ChatThread> GetAllByUserId(string userId)
     {
         var queryDefinition = new QueryDefinition(
-            "SELECT * FROM c WHERE c.type = 'CHAT_THREAD' AND c.userId = @userId AND c.name <> @name AND c.isDeleted = @isDeleted")
+            "SELECT * FROM c WHERE c.type = 'CHAT_THREAD' AND c.userId = @userId AND c.name <> @name AND c.isDeleted = @isDeleted ORDER BY c.createdAt DESC")
             .WithParameter("@userId", userId)
             .WithParameter("@name", "New Chat")
             .WithParameter("@isDeleted", false);
+
 
         var query = _container.GetItemQueryIterator<ChatThread>(queryDefinition);
         var results = new List<ChatThread>();
@@ -178,6 +134,69 @@ public class ChatThreadService : IChatThreadService
             new PartitionKey(chatThread.userId.ToString())
         ).GetAwaiter().GetResult();
     }
+
+    public void UpdateMessageReaction(string messageId, string userId, ReactionType reactionType, bool value)
+    {
+        try
+        {
+            string propertyPath;
+            if (reactionType == ReactionType.Like)
+            {
+                propertyPath = "/like";
+            }
+            else
+            {
+                propertyPath = "/disLike";
+            }
+
+            if (value)
+            {
+                string oppositePropertyPath;
+                if (reactionType == ReactionType.Like)
+                {
+                    oppositePropertyPath = "/disLike";
+                }
+                else
+                {
+                    oppositePropertyPath = "/like";
+                }
+
+                var patchOperations = new[]
+                {
+                    PatchOperation.Set(propertyPath, value),
+                    PatchOperation.Set(oppositePropertyPath, false)
+                };
+
+                _container.PatchItemAsync<Message>(
+                    messageId,
+                    new PartitionKey(userId),
+                    patchOperations
+                ).GetAwaiter().GetResult();
+            }
+            else
+            {
+                var patchOperations = new[]
+                {
+                    PatchOperation.Set(propertyPath, value)
+                };
+
+                _container.PatchItemAsync<Message>(
+                    messageId,
+                    new PartitionKey(userId),
+                    patchOperations
+                ).GetAwaiter().GetResult();
+            }
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            //Message not found
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to update message reaction: userId: {userId} {ex.Message}", ex);
+        }
+    }
+
 
     public void Delete(string id, string userId)
     {

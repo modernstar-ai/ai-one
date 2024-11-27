@@ -15,6 +15,7 @@ import LoginPage from '../pages/Login/login';
 import IndexesPage from '@/pages/Indexes/indexesPage';
 import IndexForm from '@/pages/Indexes/indexForm';
 import { ProtectedRoute } from './protected-route';
+import { UserRole } from '@/authentication/user-roles';
 
 const AppRoutes = () => (
   <Routes>
@@ -36,7 +37,7 @@ const AppRoutes = () => (
       }
     />
     <Route
-        path="/chat/*"
+      path="/chat/*"
       element={
         <ProtectedRoute>
           <ChatPage />
@@ -54,7 +55,7 @@ const AppRoutes = () => (
     <Route
       path="/fileupload"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute role={UserRole.ContentManager}>
           <FileUploadPage />
         </ProtectedRoute>
       }
@@ -62,7 +63,7 @@ const AppRoutes = () => (
     <Route
       path="/containers"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute role={UserRole.ContentManager}>
           <IndexesPage />
         </ProtectedRoute>
       }
@@ -78,7 +79,7 @@ const AppRoutes = () => (
     <Route
       path="/assistant"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute role={UserRole.ContentManager}>
           <AssistantForm />
         </ProtectedRoute>
       }
@@ -86,7 +87,7 @@ const AppRoutes = () => (
     <Route
       path="/files"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute role={UserRole.ContentManager}>
           <FileListPage />
         </ProtectedRoute>
       }
@@ -95,7 +96,7 @@ const AppRoutes = () => (
     <Route
       path="/tools"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute role={UserRole.SystemAdmin}>
           <ToolsPage />
         </ProtectedRoute>
       }
@@ -103,7 +104,7 @@ const AppRoutes = () => (
     <Route
       path="/indexes"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute role={UserRole.ContentManager}>
           <IndexesPage />
         </ProtectedRoute>
       }
@@ -111,7 +112,7 @@ const AppRoutes = () => (
     <Route
       path="/container-form"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute role={UserRole.ContentManager}>
           <IndexForm />
         </ProtectedRoute>
       }
@@ -120,7 +121,7 @@ const AppRoutes = () => (
     <Route
       path="/connecttodb"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute role={UserRole.SystemAdmin}>
           <ConnectToDB />
         </ProtectedRoute>
       }
@@ -128,7 +129,7 @@ const AppRoutes = () => (
     <Route
       path="/connecttologicapp"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute role={UserRole.SystemAdmin}>
           <ConnectToLogicApp />
         </ProtectedRoute>
       }
@@ -136,7 +137,7 @@ const AppRoutes = () => (
     <Route
       path="/connecttoapi"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute role={UserRole.SystemAdmin}>
           <ConnectToApi />
         </ProtectedRoute>
       }
