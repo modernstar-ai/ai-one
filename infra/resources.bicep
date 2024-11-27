@@ -150,7 +150,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
   location: location
   tags: tags
   properties: {
-    reserved: true
+    reserved: true  
   }
   sku: {
     name: 'P0v3'
@@ -169,12 +169,14 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
+    clientAffinityEnabled:false
     siteConfig: {
       linuxFxVersion: 'node|18-lts'
       alwaysOn: true
       appCommandLine: 'npx serve -s dist'
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
+      
       appSettings: [
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
@@ -207,6 +209,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
+    clientAffinityEnabled:false
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true
