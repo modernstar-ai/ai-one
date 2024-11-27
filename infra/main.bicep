@@ -50,7 +50,6 @@ param openAILocation string
 
 param openAISku string = 'S0'
 param openAIApiVersion string = '2024-08-01-preview'
-
 param chatGptDeploymentCapacity int = 8 //30
 param chatGptDeploymentName string = 'gpt-4o'
 param chatGptModelName string = 'gpt-4o'

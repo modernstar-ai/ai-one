@@ -18,22 +18,22 @@
         "value": "australiaeast"
       },
       "azureClientID": {
-        "value": ""
+        "value": "67767137-5caa-4643-af45-159b927e8354"
       },
       "azureClientSecret": {
-        "value": ""
+        "value": "BJN8Q~9i0jNOcmA-QCy6m5qsT~-6PTUkNLsRMb~m"
       },
       "azureTenantId": {
-        "value": ""
+        "value": "036f815c-3d92-42f2-a595-d69e17a03194"
       },
       "aspCoreEnvironment": {
         "value": "Development"
       },
       "azureADAppIdOrUri": {
-          "value": ""
+          "value": "api://67767137-5caa-4643-af45-159b927e8354"
       },
       "UtsRoleApiEndpoint": {
-          "value": ""
+          "value": "https://subjapi-dev-api-phmd3jzubzalo.azurewebsites.net/api"
       } 
     }
   }

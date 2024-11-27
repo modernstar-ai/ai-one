@@ -103,6 +103,12 @@ param storageServiceFoldersContainerName string = 'index-content'
 @description('The Azure Active Directory Application ID or URI to get the access token that will be included as the bearer token in delivery requests')
 param azureADAppIdOrUri string = ''
 
+@description('Event Grid System Topic Name')
+var EventGridSystemTopicName = toLower('${resourcePrefix}-folders-listener')
+
+@description('Event Grid Subscription')
+var EventGridSystemTopicSubName = toLower('${resourcePrefix}-folders-blobs-listener')
+
 var databaseName = 'chat'
 var historyContainerName = 'history'
 var configContainerName = 'config'
@@ -110,29 +116,35 @@ var configContainerName = 'config'
 @description('UTS Role Endpoint')
 param UtsRoleApiEndpoint string = ''
 
-// var llmDeployments = [
-//   {
-//     name: chatGptDeploymentName
-//     model: {
-//       format: 'OpenAI'
-//       name: chatGptModelName
-//       version: chatGptModelVersion
-//     }
-//     sku: {
-//       name: 'GlobalStandard'
-//       capacity: chatGptDeploymentCapacity
-//     }
-//   }
-//   {
-//     name: embeddingDeploymentName
-//     model: {
-//       format: 'OpenAI'
-//       name: embeddingModelName
-//       version: '2'
-//     }
-//     capacity: embeddingDeploymentCapacity
-//   }
-// ]
+@description('AI Services  Name')
+var aiServices_name = toLower('${projectName}${environmentName}-ai-services')
+
+
+
+var llmDeployments = [
+  {
+    name: chatGptDeploymentName
+    model: {
+      format: 'OpenAI'
+      name: chatGptModelName
+      version: chatGptModelVersion
+    }
+    sku: {
+      name: 'GlobalStandard'
+      capacity: chatGptDeploymentCapacity
+    }
+  }
+  {
+    name: embeddingDeploymentName
+    model: {
+      format: 'OpenAI'
+      name: embeddingModelName
+      version: '2'
+    }
+    capacity: embeddingDeploymentCapacity
+  }
+]
+
 
 /* **************************************************** */
 
@@ -219,7 +231,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'UTS_ROLE_API_ENDPOINT'
           value: UtsRoleApiEndpoint
-        }        
+        }
         {
           name: 'AZURE_STORAGE_FOLDERS_CONTAINER_NAME'
           value: AzureStorageFoldersContainerName
@@ -275,7 +287,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'AZURE_AI_SERVICES_KEY'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_KEY.name})'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_AI_SERVICES_KEY.name})'
         }
         {
           name: 'ALLOWED_ORIGINS'
@@ -438,18 +450,18 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 //**************************************************************************
 //Add Role Assignment for web app to Key vault
 
-@description('The name of the Role Assignment - from Guid.')
-param roleAssignmentName string = newGuid()
+// @description('The name of the Role Assignment - from Guid.')
+// param roleAssignmentName string = newGuid()
 
-resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: roleAssignmentName
-  scope: kv
-  properties: {
-    principalId: apiApp.identity.principalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: keyVaultSecretsOfficerRole
-  }
-}
+// resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+//   name: roleAssignmentName
+//   scope: kv
+//   properties: {
+//     principalId: apiApp.identity.principalId
+//     principalType: 'ServicePrincipal'
+//     roleDefinitionId: keyVaultSecretsOfficerRole
+//   }
+// }
 
 //**************************************************************************
 
@@ -532,6 +544,14 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
       value: 'DefaultEndpointsProtocol=https;AccountName=${storage.name};AccountKey=${listKeys(storage.id, '2023-01-01').keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
     }
   }
+
+  resource AZURE_AI_SERVICES_KEY 'secrets' = {
+    name: 'AZURE-AI-SERVICES-KEY'
+    properties: {
+      contentType: 'text/plain'
+      value: aiServices.listKeys().key1
+    }
+  }
 }
 
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
@@ -547,7 +567,8 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
         failoverPriority: 0
       }
     ]
-    disableKeyBasedMetadataWriteAccess: true
+    //remove this!!!
+    //disableKeyBasedMetadataWriteAccess: true
   }
 }
 
@@ -620,6 +641,7 @@ resource searchService 'Microsoft.Search/searchServices@2022-09-01' = {
   sku: {
     name: searchServiceSkuName
   }
+  identity: { type: 'SystemAssigned' }
 }
 
 resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
@@ -636,7 +658,7 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   }
 }
 
-// throwing depployment errors
+// throwing deployment errors
 // @batchSize(1)
 // resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [for deployment in llmDeployments: {
 //   parent: azureopenai
@@ -650,23 +672,42 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
 //     capacity: deployment.capacity
 //   }
 // }]
+@batchSize(1)
+resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [
+  for deployment in llmDeployments: {
+    parent: azureopenai
+    name: deployment.name
+    properties: {
+      model: deployment.model
+      #disable-next-line use-safe-access BCP053
+      raiPolicyName: contains(deployment, 'raiPolicyName') ? deployment.?raiPolicyName : null
+    }
+    #disable-next-line use-safe-access
+    sku: contains(deployment, 'sku')
+      ? deployment.sku
+      : {
+          name: 'Standard'
+          capacity: deployment.capacity
+        }
+  }
+]
 
 // ChatGptDeployment
-resource chatGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-  name: chatGptDeploymentName
-  sku: {
-    name: 'GlobalStandard'
-    capacity: chatGptDeploymentCapacity
-  }
-  parent: azureopenai
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: chatGptModelName
-      version: chatGptModelVersion
-    }
-  }
-}
+// resource chatGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
+//   name: chatGptDeploymentName
+//   sku: {
+//     name: 'GlobalStandard'
+//     capacity: chatGptDeploymentCapacity
+//   }
+//   parent: azureopenai
+//   properties: {
+//     model: {
+//       format: 'OpenAI'
+//       name: chatGptModelName
+//       version: chatGptModelVersion
+//     }
+//   }
+// }
 
 // embeddingDeployment
 // resource embeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
@@ -731,6 +772,7 @@ resource chatGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@202
 
 //REF: https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.storage/storage-multi-blob-container/main.bicep
 
+@description('Storage Account')
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storage_name
   location: location
@@ -742,6 +784,12 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
 resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
   parent: storage
   name: 'default'
+  properties: {
+    deleteRetentionPolicy: {
+      enabled: true
+      days: 7
+    }
+  }
 }
 
 resource imagesContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
@@ -757,20 +805,38 @@ resource indexContainer 'Microsoft.Storage/storageAccounts/blobServices/containe
   }
 }
 
+@description('Role Assignment for search to access blob storage')
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(storage.id, searchService.id, 'blob-reader')
+  scope: storage
+  properties: {
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
+    )
+    principalId: searchService.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 @description('Event Grid System Topic')
 resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = {
-  name: '${storage_name}-blobs-updated'
+  name: EventGridSystemTopicName
   location: location
   tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
-    source: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Storage/storageAccounts/${storage_name}'
+    source: storage.id
+    //source: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Storage/storageAccounts/${storage_name}'
     topicType: 'Microsoft.Storage.StorageAccounts'
   }
 }
 
 @description('Event Grid Subscription')
 resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-01-preview' = {
-  name: '${storage_name}-blobs-updated'
+  name: EventGridSystemTopicSubName
   parent: eventGridSystemTopic
   properties: {
     destination: {
@@ -779,6 +845,8 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
         azureActiveDirectoryApplicationIdOrUri: azureADAppIdOrUri
         azureActiveDirectoryTenantId: azureTenantId
         endpointUrl: 'https://${apiApp.properties.defaultHostName}/api/file/webhook'
+        maxEventsPerBatch: 1
+        preferredBatchSizeInKilobytes: 64
       }
     }
     filter: {
@@ -790,10 +858,36 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
       enableAdvancedFilteringOnArrays: true
       subjectBeginsWith: '/blobServices/default/containers/${storageServiceFoldersContainerName}/'
     }
+    eventDeliverySchema: 'EventGridSchema'
+    retryPolicy: {
+      maxDeliveryAttempts: 30
+      eventTimeToLiveInMinutes: 1440
+    }
   }
   dependsOn: [
     apiApp
   ]
+}
+
+//resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+@description('AI Cognitive Services')
+resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
+  name: aiServices_name
+  location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
+  sku: {
+    name: 'S0'
+  }
+  kind: 'CognitiveServices'
+  properties: {
+    disableLocalAuth: false
+    publicNetworkAccess: 'Enabled'
+    networkAcls: {
+      defaultAction: 'Allow'
+    }
+  }
 }
 
 output url string = 'https://${webApp.properties.defaultHostName}'
