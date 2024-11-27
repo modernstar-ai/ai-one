@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import {
   CheckIcon,
-  ClipboardIcon,
+  /*ClipboardIcon,*/
   Copy,
   PocketKnife,
   UserCircle,
