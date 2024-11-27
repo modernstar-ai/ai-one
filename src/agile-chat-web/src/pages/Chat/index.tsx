@@ -87,7 +87,7 @@ const ChatPage = () => {
             ? `/chat/${newThread.id}?assistantId=${assistantId}`
             : `/chat/${newThread.id}`;
           console.log("Chat - newUrl to redirect to:", newUrl);
-
+          setIsLoading(false);
           navigate(newUrl, { replace: true });
         }
       } catch (err) {
@@ -149,6 +149,7 @@ const ChatPage = () => {
           }
           return message; // Return unmodified message for non-assistant roles
         });
+        setIsMessagesLoading(false);
         setMessages(parsedMessages);
       }
     };

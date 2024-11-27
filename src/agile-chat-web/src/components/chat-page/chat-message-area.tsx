@@ -117,7 +117,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
           {children}
         </div>
         <div className="flex justify-start items-center gap-1 mt-2">
-          <Button
+        {/* <Button
             variant="ghost"
             size="icon"
             title="Copy text"
@@ -129,7 +129,7 @@ export const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
             ) : (
               <ClipboardIcon size={16} />
             )}
-          </Button>
+          </Button> */}
           <MessageReactions
             messageId={messageId}
             userId={userId}
