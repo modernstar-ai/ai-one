@@ -38,5 +38,7 @@
             throw new InvalidOperationException("AZURE_OPENAI_API_EMBEDDINGS_MODEL_NAME not set");
         public static string UTSRoleApiEndpoint => Environment.GetEnvironmentVariable("UTS_ROLE_API_ENDPOINT")
                                                ?? throw new InvalidOperationException("UTS_ROLE_API_ENDPOINT not set.");
+        public static string UTSXApiKey => Environment.GetEnvironmentVariable("UTS_XAPI_KEY")
+                                               ?? throw new InvalidOperationException("UTS_XAPI_KEY not set.");
     }
 }
