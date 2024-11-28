@@ -1,4 +1,8 @@
-﻿using MediatR;
+﻿using System.Net;
+using System.Security.Claims;
+using Agile.Chat.Application.Files.Services;
+using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -8,13 +12,25 @@ public static class GetFiles
 {
     public record Query() : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger) : IRequestHandler<Query, IResult>
+    public class Handler(ILogger<Handler> logger, IFilesService filesService) : IRequestHandler<Query, IResult>
     {
 
         public async Task<IResult> Handle(Query request, CancellationToken cancellationToken)
         {
-            logger.LogInformation("Executed handler {Handler}", typeof(Handler).Namespace);
-            return Results.Ok();
+            var files = await filesService.GetAllAsync();
+            return Results.Ok(files);
+        }
+    }
+    
+    public class Validator : AbstractValidator<Query>
+    {
+        public Validator(IHttpContextAccessor contextAccessor)
+        {
+            var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;
+            RuleFor(x => username)
+                .NotNull()
+                .WithMessage("Username is required")
+                .WithErrorCode(HttpStatusCode.Forbidden.ToString());
         }
     }
 }

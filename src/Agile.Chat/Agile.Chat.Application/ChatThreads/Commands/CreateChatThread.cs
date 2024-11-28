@@ -13,7 +13,6 @@ public static class CreateChatThread
 {
     public record Command(
         string Name,
-        ChatType Type,
         bool IsBookmarked,
         string? AssistantId,
         ChatThreadOptions Options) : IRequest<IResult>;
@@ -30,7 +29,6 @@ public static class CreateChatThread
             var chatThread = ChatThread.Create(
                 username,
                 request.Name,
-                request.Type,
                 request.IsBookmarked,
                 request.Options,
                 request.AssistantId);

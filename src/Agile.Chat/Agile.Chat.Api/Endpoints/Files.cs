@@ -1,4 +1,7 @@
-﻿using Carter;
+﻿using Agile.Chat.Application.Files.Commands;
+using Agile.Chat.Application.Files.Dtos;
+using Agile.Chat.Application.Files.Queries;
+using Carter;
 using Carter.OpenApi;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -17,37 +20,27 @@ public class Files(IMediator mediator) : CarterModule("/api")
 
         //GET
         threads.MapGet("/", GetFiles);
-        threads.MapGet("/{id:guid}", GetFileById);
         //POST
-        threads.MapPost("/", CreateFile);
-        //PUT
-        threads.MapPut("/{id:guid}", UpdateFileById);
+        threads.MapPost("/", UploadFile);
         //DELETE
         threads.MapDelete("/{id:guid}", DeleteFileById);
     }
 
     private async Task<IResult> GetFiles()
     {
-        throw new NotImplementedException();
+        var query = new GetFiles.Query();
+        return await mediator.Send(query);
     }
     
-    private async Task<IResult> GetFileById(Guid id)
+    private async Task<IResult> UploadFile([FromForm] UploadFileDto dto)
     {
-        throw new NotImplementedException();
-    }
-    
-    private async Task<IResult> CreateFile()
-    {
-        throw new NotImplementedException();
-    }
-    
-    private async Task<IResult> UpdateFileById([FromRoute] string id)
-    {
-        throw new NotImplementedException();
+        var command = new UploadFile.Command(dto.File, dto.IndexName, dto.FolderName);
+        return await mediator.Send(command);
     }
     
     private async Task<IResult> DeleteFileById(Guid id)
     {
-        throw new NotImplementedException();
+        var command = new DeleteFileById.Command(id);
+        return await mediator.Send(command);
     }
 }

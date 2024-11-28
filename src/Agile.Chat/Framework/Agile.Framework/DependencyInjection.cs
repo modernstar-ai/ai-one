@@ -1,4 +1,7 @@
-﻿using Agile.Framework.Authentication;
+﻿using Agile.Framework.Ai;
+using Agile.Framework.Authentication;
+using Agile.Framework.AzureAiSearch;
+using Agile.Framework.BlobStorage;
 using Agile.Framework.Common.EnvironmentVariables;
 using Agile.Framework.Common.Interfaces;
 using Agile.Framework.CosmosDb;
@@ -15,8 +18,11 @@ public static class DependencyInjection
     public static IServiceCollection AddFramework(this IServiceCollection services, IConfiguration configuration) =>
         services
             .AddSeriLogLogging(configuration)
+            .AddAgileAi()
             .AddCosmosDb()
-            .AddAzureAdAuth();
+            .AddBlobStorage()
+            .AddAzureAiSearch()
+            .AddAgileAuthentication();
     
     public static async Task InitializeServicesAsync(this IApplicationBuilder app)
     {

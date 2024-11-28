@@ -1,4 +1,9 @@
-﻿using MediatR;
+﻿using System.Net;
+using Agile.Chat.Application.Indexes.Services;
+using Agile.Framework.Authentication.Enums;
+using Agile.Framework.Authentication.Interfaces;
+using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -8,12 +13,34 @@ public static class GetIndexById
 {
     public record Query(Guid Id) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger) : IRequestHandler<Query, IResult>
+    public class Handler(ILogger<Handler> logger, IIndexService indexService, IRoleService roleService) : IRequestHandler<Query, IResult>
     {
-
         public async Task<IResult> Handle(Query request, CancellationToken cancellationToken)
         {
-            return Results.Ok();
+            var index = await indexService.GetItemByIdAsync(request.Id.ToString());
+            if(index is null) return Results.NotFound();
+
+            if (!string.IsNullOrWhiteSpace(index.Group) &&
+                !roleService.IsUserInRole(UserRole.ContentManager, index.Group))
+                return Results.Forbid();
+            
+            
+            return Results.Ok(index);
+        }
+    }
+    
+    public class Validator : AbstractValidator<Query>
+    {
+        public Validator(IRoleService roleService)
+        {
+            RuleFor(request => roleService.IsContentManager())
+                .Must(contentManager => contentManager)
+                .WithMessage("Unauthorized to perform action")
+                .WithErrorCode(HttpStatusCode.Forbidden.ToString());
+            
+            RuleFor(request => request.Id)
+                .NotNull()
+                .WithMessage("Id is required");
         }
     }
 }

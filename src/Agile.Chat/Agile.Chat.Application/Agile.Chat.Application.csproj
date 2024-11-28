@@ -15,18 +15,16 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Agile.Chat.Domain\Agile.Chat.Domain.csproj" />
+      <ProjectReference Include="..\Framework\Agile.Framework.Authentication\Agile.Framework.Authentication.csproj" />
+      <ProjectReference Include="..\Framework\Agile.Framework.AzureAiSearch\Agile.Framework.AzureAiSearch.csproj" />
+      <ProjectReference Include="..\Framework\Agile.Framework.BlobStorage\Agile.Framework.BlobStorage.csproj" />
       <ProjectReference Include="..\Framework\Agile.Framework.CosmosDb\Agile.Framework.CosmosDb.csproj" />
       <ProjectReference Include="..\Framework\Agile.Framework.Mediator\Agile.Framework.Mediator.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Tools\Commands\" />
-      <Folder Include="Tools\Dtos\" />
-      <Folder Include="Tools\Queries\" />
-      <Folder Include="Tools\Services\" />
-      <Folder Include="Users\Commands\" />
-      <Folder Include="Users\Dtos\" />
-      <Folder Include="Users\Services\" />
+      <Folder Include="ChatCompletions\Dtos\" />
+      <Folder Include="Tools\" />
     </ItemGroup>
 
 </Project>

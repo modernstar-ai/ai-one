@@ -1,6 +1,7 @@
 ﻿using Agile.Chat.Application.ChatThreads.Commands;
 using Agile.Chat.Application.ChatThreads.Dtos;
 using Agile.Chat.Application.ChatThreads.Queries;
+using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Carter;
 using Carter.OpenApi;
 using Mapster;
@@ -22,10 +23,12 @@ public class ChatThreads(IMediator mediator) : CarterModule("/api")
         //GET
         threads.MapGet("/", GetThreads);
         threads.MapGet("/{id:guid}", GetThreadById);
+        threads.MapGet("/Messages/{id:guid}", GetMessagesByThreadId);
         //POST
         threads.MapPost("/", CreateThread);
         //PUT
         threads.MapPut("/{id:guid}", UpdateThreadById);
+        threads.MapPut("/Messages/{id:guid}", UpdateMessageById);
         //DELETE
         threads.MapDelete("/{id:guid}", DeleteThreadById);
     }
@@ -42,6 +45,12 @@ public class ChatThreads(IMediator mediator) : CarterModule("/api")
         return await mediator.Send(query);
     }
     
+    private async Task<IResult> GetMessagesByThreadId(Guid id)
+    {
+        var query = new GetMessagesByThreadId.Query(id);
+        return await mediator.Send(query);
+    }
+    
     private async Task<IResult> CreateThread([FromBody] CreateChatThreadDto chatThreadDto)
     {
         var command = chatThreadDto.Adapt<CreateChatThread.Command>();
@@ -49,6 +58,12 @@ public class ChatThreads(IMediator mediator) : CarterModule("/api")
     }
     
     private async Task<IResult> UpdateThreadById([FromBody] UpdateChatThreadDto chatThreadDto, [FromRoute] Guid id)
+    {
+        var command = chatThreadDto.Adapt<UpdateChatThreadById.Command>();
+        return await mediator.Send(command with {Id = id});
+    }
+    
+    private async Task<IResult> UpdateMessageById([FromBody] MessageOptions chatThreadDto, [FromRoute] Guid id)
     {
         var command = chatThreadDto.Adapt<UpdateChatThreadById.Command>();
         return await mediator.Send(command with {Id = id});

@@ -18,7 +18,7 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
     public CosmosRepository(string containerId, CosmosClient cosmosClient, string? partitionKey = null)
     {
         CosmosClient = cosmosClient;
-        Database = cosmosClient.GetDatabase(Constants.COSMOS_DATABASE_NAME);
+        Database = cosmosClient.GetDatabase(Constants.CosmosDatabaseName);
         Container = Database.GetContainer(containerId);
         _partitionKey = partitionKey;
     }

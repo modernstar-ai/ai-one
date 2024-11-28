@@ -1,5 +1,6 @@
-﻿using Agile.Chat.Domain.Assistants.Aggregates;
-using Agile.Chat.Domain.Assistants.ValueObjects;
+﻿using Agile.Chat.Application.Files.Services;
+using Agile.Chat.Domain.Files.Aggregates;
+using Agile.Framework.BlobStorage.Interfaces;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -10,39 +11,40 @@ namespace Agile.Chat.Application.Files.Commands;
 public static class UploadFile
 {
     public record Command(
-        string Name, 
-        string Description, 
-        string Greeting, 
-        AssistantStatus Status, 
-        AssistantFilterOptions FilterOptions, 
-        AssistantPromptOptions PromptOptions) : IRequest<IResult>;
+        IFormFile File,
+        string IndexName, 
+        string? FolderName) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IBlobStorage blobStorage, IFilesService filesService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            logger.LogInformation("Handler executed {Handler}", typeof(Handler).Namespace);
+            var url = await blobStorage.UploadAsync(request.File.OpenReadStream(), request.File.FileName, request.IndexName, request.FolderName);
             
-            var assistant = Assistant.Create(
-                request.Name, 
-                request.Description, 
-                request.Greeting,
-                request.Status,
-                request.FilterOptions,
-                request.PromptOptions);
-
-            //await assistantsService.AddItemAsync(assistant);
-            return Results.Created(assistant.Id, assistant);
+            var cosmosFile = CosmosFile.Create(
+                request.File.FileName, 
+                url, 
+                request.File.ContentType, 
+                request.File.Length, 
+                request.IndexName, 
+                request.FolderName);
+            
+            await filesService.UpdateItemByIdAsync(cosmosFile.Id, cosmosFile);
+            return Results.Created(cosmosFile.Id, cosmosFile);
         }
     }
 
     public class Validator : AbstractValidator<Command>
     {
-        public Validator(ILogger<Validator> logger)
+        public Validator()
         {
-            RuleFor(request => request.Name)
-                .MinimumLength(1)
-                .WithMessage("Name is required");
+            RuleFor(request => request.File)
+                .NotNull()
+                .WithMessage("File is required");
+            
+            RuleFor(request => request.IndexName)
+                .NotNull()
+                .WithMessage("Index Name is required");
         }
     }
 }

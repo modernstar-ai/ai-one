@@ -1,4 +1,5 @@
-﻿using Agile.Chat.Domain.Assistants.Aggregates;
+﻿using Agile.Chat.Domain.Indexes.Aggregates;
+using Agile.Framework.Authentication.Interfaces;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.EnvironmentVariables;
 using Agile.Framework.CosmosDb;
@@ -8,19 +9,31 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Agile.Chat.Application.Indexes.Services;
 
-public interface IAssistantsService  : ICosmosRepository<Assistant>
+public interface IIndexService  : ICosmosRepository<CosmosIndex>
 {
-    public Task<List<Assistant>> GetAllAsync();
+    public bool Exists(string indexName);
+    public Task<List<CosmosIndex>> GetAllAsync();
 }
 
-[Export(typeof(IAssistantsService), ServiceLifetime.Singleton)]
-public class IndexesService(CosmosClient cosmosClient) : 
-    CosmosRepository<Assistant>(Constants.COSMOS_ASSISTANTS_CONTAINER_NAME, cosmosClient), IAssistantsService
+[Export(typeof(IIndexService), ServiceLifetime.Scoped)]
+public class IndexesService(CosmosClient cosmosClient, IRoleService roleService) : 
+    CosmosRepository<CosmosIndex>(Constants.CosmosIndexesContainerName, cosmosClient), IIndexService
 {
-    public async Task<List<Assistant>> GetAllAsync()
+    public async Task<List<CosmosIndex>> GetAllAsync()
     {
-        var query = LinqQuery().OrderBy(a => a.Name);
+        var query = LinqQuery().AsQueryable();
+        if (!roleService.IsSystemAdmin())
+        {
+            var groupClaims = roleService.GetGroupClaims();
+            query = query.Where(x => x.Group == null || x.Group == "" || groupClaims.Contains(x.Group.ToLower()));
+        }
+        
         var results = await CollectResultsAsync(query);
         return results;
+    }
+
+    public bool Exists(string indexName)
+    {
+        return LinqQuery().Where(x => x.Name == indexName).FirstOrDefault() != null;
     }
 }

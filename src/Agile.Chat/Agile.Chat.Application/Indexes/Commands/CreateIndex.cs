@@ -1,5 +1,8 @@
-﻿using Agile.Chat.Domain.Assistants.Aggregates;
-using Agile.Chat.Domain.Assistants.ValueObjects;
+﻿using System.Net;
+using Agile.Chat.Application.Indexes.Services;
+using Agile.Chat.Domain.Indexes.Aggregates;
+using Agile.Framework.Authentication.Interfaces;
+using Agile.Framework.AzureAiSearch.Interfaces;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -9,39 +12,37 @@ namespace Agile.Chat.Application.Indexes.Commands;
 
 public static class CreateIndex
 {
-    public record Command(
-        string Name, 
-        string Description, 
-        string Greeting, 
-        AssistantStatus Status, 
-        AssistantFilterOptions FilterOptions, 
-        AssistantPromptOptions PromptOptions) : IRequest<IResult>;
+    public record Command(string Name, string Description, string? Group) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IIndexService indexService, IAzureAiSearch azureAiSearch) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            logger.LogInformation("Handler executed {Handler}", typeof(Handler).Namespace);
+            if(indexService.Exists(request.Name))
+                return Results.BadRequest("Index already exists");
             
-            var assistant = Assistant.Create(
+            var index = CosmosIndex.Create(
                 request.Name, 
                 request.Description, 
-                request.Greeting,
-                request.Status,
-                request.FilterOptions,
-                request.PromptOptions);
+                request.Group);
+
+            if (await azureAiSearch.IndexerExistsAsync(index.Name))
+                return Results.BadRequest("Indexer on Azure AI Search already exists.");
+
+            await azureAiSearch.CreateIndexerAsync(index.Name);
+            await indexService.AddItemAsync(index);
             
-            return Results.Created(assistant.Id, assistant);
+            return Results.Created(index.Id, index);
         }
     }
 
     public class Validator : AbstractValidator<Command>
     {
-        public Validator(ILogger<Validator> logger)
+        public Validator(IRoleService roleService)
         {
-            RuleFor(request => request.Name)
-                .MinimumLength(1)
-                .WithMessage("Name is required");
+            RuleFor(request => roleService.IsSystemAdmin())
+                .Must(admin => admin)
+                .WithErrorCode(HttpStatusCode.Forbidden.ToString());
         }
     }
 }

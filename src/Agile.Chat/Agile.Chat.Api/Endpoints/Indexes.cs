@@ -1,5 +1,9 @@
-﻿using Carter;
+﻿using Agile.Chat.Application.Indexes.Commands;
+using Agile.Chat.Application.Indexes.Dtos;
+using Agile.Chat.Application.Indexes.Queries;
+using Carter;
 using Carter.OpenApi;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,26 +32,31 @@ public class Indexes(IMediator mediator) : CarterModule("/api")
 
     private async Task<IResult> GetIndexes()
     {
-        throw new NotImplementedException();
+        var query = new GetIndexes.Query();
+        return await mediator.Send(query);
     }
     
     private async Task<IResult> GetIndexById(Guid id)
     {
-        throw new NotImplementedException();
+        var query = new GetIndexById.Query(id);
+        return await mediator.Send(query);
     }
     
-    private async Task<IResult> CreateIndex()
+    private async Task<IResult> CreateIndex([FromBody] CreateIndexDto dto)
     {
-        throw new NotImplementedException();
+        var command = dto.Adapt<CreateIndex.Command>();
+        return await mediator.Send(command);
     }
     
-    private async Task<IResult> UpdateIndexById([FromRoute] string id)
+    private async Task<IResult> UpdateIndexById([FromRoute] Guid id, [FromBody] UpdateIndexDto dto)
     {
-        throw new NotImplementedException();
+        var command = dto.Adapt<UpdateIndexById.Command>();
+        return await mediator.Send(command with {Id = id});
     }
     
     private async Task<IResult> DeleteIndexById(Guid id)
     {
-        throw new NotImplementedException();
+        var command = new DeleteIndexById.Command(id);
+        return await mediator.Send(command);
     }
 }

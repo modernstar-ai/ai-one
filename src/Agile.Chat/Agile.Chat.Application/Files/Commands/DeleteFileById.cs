@@ -1,4 +1,8 @@
-﻿using FluentValidation;
+﻿using System.Net;
+using Agile.Chat.Application.Files.Services;
+using Agile.Framework.Authentication.Interfaces;
+using Agile.Framework.BlobStorage.Interfaces;
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -9,11 +13,17 @@ public static class DeleteFileById
 {
     public record Command(Guid Id) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IFilesService filesService, IBlobStorage blobStorage) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            logger.LogInformation("Handler executed {Handler} with Id {Id}", typeof(Handler).Namespace, request.Id);
+            var file = await filesService.GetItemByIdAsync(request.Id.ToString());
+            if (file == null) return Results.NotFound();
+
+            logger.LogInformation("Beginning to delete cosmos file {@File}", file);
+            await blobStorage.DeleteAsync(file.Name, file.IndexName, file.FolderName);
+            logger.LogInformation("File from blob deleted. Beginning to delete cosmos record");
+            await filesService.DeleteItemByIdAsync(file.Id);
             
             return Results.Ok();
         }
@@ -21,11 +31,17 @@ public static class DeleteFileById
     
     public class Validator : AbstractValidator<Command>
     {
-        public Validator(ILogger<Validator> logger)
+        public Validator(IRoleService roleService)
         {
             RuleFor(request => request.Id)
                 .NotNull()
-                .WithMessage("Id is required");
+                .NotEmpty()
+                .WithMessage("Id cannot be empty");
+            
+            RuleFor(request => roleService.IsSystemAdmin())
+                .Must(x => x)
+                .WithMessage("Must be a system admin")
+                .WithErrorCode(HttpStatusCode.Forbidden.ToString());
         }
     }
 }

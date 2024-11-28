@@ -1,4 +1,8 @@
-﻿using Agile.Chat.Domain.Assistants.ValueObjects;
+﻿using System.Net;
+using Agile.Chat.Application.Indexes.Services;
+using Agile.Chat.Domain.Assistants.ValueObjects;
+using Agile.Framework.Authentication.Enums;
+using Agile.Framework.Authentication.Interfaces;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -8,20 +12,22 @@ namespace Agile.Chat.Application.Indexes.Commands;
 
 public static class UpdateIndexById
 {
-    public record Command(
-        Guid Id,
-        string Name, 
-        string Description, 
-        string Greeting, 
-        AssistantStatus Status, 
-        AssistantFilterOptions FilterOptions, 
-        AssistantPromptOptions PromptOptions) : IRequest<IResult>;
+    public record Command(Guid Id, string Description, string? Group) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IRoleService roleService, IIndexService indexService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            logger.LogInformation("Handler executed {Handler}", typeof(Handler).Namespace);
+            var index = await indexService.GetItemByIdAsync(request.Id.ToString());
+            if (index is null) return Results.NotFound();
+            
+            //Check permissions to see if group exists for user
+            if (!string.IsNullOrWhiteSpace(index.Group) &&
+                !roleService.IsUserInRole(UserRole.ContentManager, index.Group))
+                return Results.Forbid();
+            
+            index.Update(request.Description, request.Group);
+            await indexService.UpdateItemByIdAsync(index.Id, index);
             
             return Results.Ok();
         }
@@ -29,11 +35,16 @@ public static class UpdateIndexById
 
     public class Validator : AbstractValidator<Command>
     {
-        public Validator(ILogger<Validator> logger)
+        public Validator(IRoleService roleService)
         {
-            RuleFor(request => request.Name)
-                .MinimumLength(1)
-                .WithMessage("Name is required");
+            RuleFor(request => roleService.IsContentManager())
+                .Must(contentManager => contentManager)
+                .WithMessage("Unauthorized to perform action")
+                .WithErrorCode(HttpStatusCode.Forbidden.ToString());
+            
+            RuleFor(request => request.Id)
+                .NotNull()
+                .WithMessage("Id is required");
         }
     }
 }

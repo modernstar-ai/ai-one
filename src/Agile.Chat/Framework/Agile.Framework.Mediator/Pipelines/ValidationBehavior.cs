@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
@@ -8,6 +9,12 @@ using Microsoft.AspNetCore.Http;
 
 namespace Agile.Framework.Mediator.Pipelines;
 
+public class ErrorResult
+{
+    public string Key { get; set; }
+    public string Value { get; set; }
+    public string Code { get; set; }
+}
     public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, IResult> 
         where TRequest : notnull, IRequest<IResult>
     {
@@ -32,21 +39,27 @@ namespace Agile.Framework.Mediator.Pipelines;
                 .Where(x => x != null)
                 .GroupBy(
                     x => x.PropertyName,
-                    x => x.ErrorMessage,
-                    (propertyName, errorMessages) => new
+                    x => x,
+                    (propertyName, validationFailure) => new ErrorResult
                     {
                         Key = propertyName,
-                        Values = errorMessages.Distinct().ToArray()
+                        Value = validationFailure.FirstOrDefault()?.ErrorMessage,
+                        Code = validationFailure.FirstOrDefault()?.ErrorCode
                     })
                 .ToList();
             
             if (errors.Count > 0)
-            {
-                return errors[0].Values.Length > 0
-                    ? Results.BadRequest(errors[0].Values[0])
-                    : Results.BadRequest("Validation failed");
-            }
+                return ConvertErrorToResult(errors[0]);
             
             return await next();
+        }
+
+        private IResult ConvertErrorToResult(ErrorResult result)
+        {
+            return result.Code switch
+            {
+                "403" => Results.Unauthorized(),
+                _ => Results.BadRequest(result.Value)
+            };
         }
     }

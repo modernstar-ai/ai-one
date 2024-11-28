@@ -18,4 +18,9 @@ public static class Configs
     public static AzureSearchConfig AzureSearch => config.GetSection("AzureSearch").Get<AzureSearchConfig>()!;
     public static CosmosDbConfig CosmosDb => config.GetSection("CosmosDb").Get<CosmosDbConfig>()!;
     public static List<string> AdminEmailAddresses => config.GetSection("AdminEmailAddresses").Get<List<string>>()!;
+    
+    #region UTS
+    public static string UtsRoleApiEndpoint => config["UtsRoleApiEndpoint"] ?? throw new NullReferenceException("UtsRoleApiEndpoint is null");
+    public static string UtsXApiKey => config["UtsXApiKey"] ?? throw new NullReferenceException("UtsXApiKey is null");
+    #endregion
 }

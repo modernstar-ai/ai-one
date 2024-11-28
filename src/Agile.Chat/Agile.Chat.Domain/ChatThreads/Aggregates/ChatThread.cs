@@ -16,7 +16,6 @@ public class ChatThread : AuditableAggregateRoot
 
     public static ChatThread Create(string userId,
         string name, 
-        ChatType type, 
         bool isBookmarked,
         ChatThreadOptions options,
         string? assistantId = null)
@@ -26,7 +25,7 @@ public class ChatThread : AuditableAggregateRoot
         {
             Name = name,
             UserId = userId,
-            Type = type,
+            Type = ChatType.Thread,
             IsBookmarked = isBookmarked,
             Options = options,
             AssistantId = assistantId
