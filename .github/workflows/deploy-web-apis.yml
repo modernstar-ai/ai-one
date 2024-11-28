@@ -42,7 +42,7 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       AGILE_CHAT_API_SRC: "./src/agile-chat-api"
       AGILE_CHAT_API_PUB: "./publish/agile-chat-api"
-      AGILE_CHAT_API_NAME: ${{ github.event.inputs.api_web_app_name }}"
+      AGILE_CHAT_API_NAME: "${{ github.event.inputs.api_web_app_name }}"
       ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input       
         #AGILE_RAGCHAT_API_SRC: "./src/agile-ragchat-api"
       #AGILE_RAGCHAT_API_PUB: "./publish/agile-ragchat-api"
