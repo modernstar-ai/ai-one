@@ -39,7 +39,6 @@ param embeddingDeploymentName string
 param embeddingDeploymentCapacity int
 param embeddingModelName string
 
-//param OpenaiApiEmbeddingsModelName string = 'text-embedding-ada-002'
 param AdminEmailAddress string = 'adam-stephensen@agile-analytics.com.au'
 param AzureCosmosdbDbName string = 'chat'
 param AzureCosmosdbDatabaseName string = 'chat'
@@ -50,16 +49,6 @@ param AzureCosmosdbFilesContainerName string = 'fileUploads'
 param AzureSearchIndexNameRag string = 'rag_index'
 param MaxUploadDocumentSize string = '20000000'
 param AzureStorageFoldersContainerName string = 'folders'
-
-// param dalleLocation string
-// param dalleDeploymentCapacity int
-// param dalleDeploymentName string
-// param dalleModelName string
-// param dalleApiVersion string
-
-// param speechServiceSkuName string = 'S0'
-
-// param formRecognizerSkuName string = 'S0'
 
 param searchServiceSkuName string = 'standard'
 param searchServiceIndexName string = 'azure-chat'
@@ -73,18 +62,13 @@ var openai_name = toLower('${resourcePrefix}-aillm')
 @description('Cosmos DB Chat threads container name')
 param azureCosmosDbChatThreadsName string = 'history'
 
-// var form_recognizer_name = toLower('${resourcePrefix}-form')
-// var speech_service_name = toLower('${resourcePrefix}-speech')
 var cosmos_name = toLower('${resourcePrefix}-cosmos')
 var search_name = toLower('${resourcePrefix}-search')
-// storage name must be < 24 chars, alphanumeric only. 'sto' is 3 and resourceToken is 13
+
 var clean_name = replace(replace('${resourcePrefix}', '-', ''), '_', '')
 var storage_prefix = take(clean_name, 13)
 var storage_name = toLower('${storage_prefix}sto')
-// keyvault name must be less than 24 chars - token is 13
-//var kv_prefix = take(projectName, 7)
-//var keyVaultName = toLower('${kv_prefix}${environmentName}-kv')
-//todo: apply toLower to resourcePrefix and ensure it is small enough to fit all resources.
+
 var keyVaultName = toLower('${resourcePrefix}-kv')
 var la_workspace_name = toLower('${resourcePrefix}-la')
 var diagnostic_setting_name = 'AppServiceConsoleLogs'
@@ -253,10 +237,6 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AZURE_SEARCH_INDEX_NAME_RAG'
           value: AzureSearchIndexNameRag
         }
-        // {
-        //   name: 'AZURE_OPENAI_API_EMBEDDINGS_DEPLOYMENT_NAME'
-        //   value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_EMBEDDINGS_DEPLOYMENT_NAME.name})'
-        // }
         {
           name: 'ADMIN_EMAIL_ADDRESS'
           value: AdminEmailAddress
@@ -349,22 +329,6 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AZURE_OPENAI_ENDPOINT'
           value: azureopenai.properties.endpoint
         }
-        // {
-        //   name: 'AZURE_OPENAI_DALLE_API_KEY'
-        //   value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_DALLE_API_KEY.name})'
-        // }
-        // {
-        //   name: 'AZURE_OPENAI_DALLE_API_INSTANCE_NAME'
-        //   value: openai_dalle_name
-        // }
-        // {
-        //   name: 'AZURE_OPENAI_DALLE_API_DEPLOYMENT_NAME'
-        //   value: dalleDeploymentName
-        // }
-        // {
-        //   name: 'AZURE_OPENAI_DALLE_API_VERSION'
-        //   value: dalleApiVersion
-        // }
         {
           name: 'AZURE_COSMOSDB_URI'
           value: cosmosDbAccount.properties.documentEndpoint
@@ -385,22 +349,6 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AZURE_SEARCH_INDEX_NAME'
           value: searchServiceIndexName
         }
-        // {
-        //   name: 'AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT'
-        //   value: 'https://${form_recognizer_name}.cognitiveservices.azure.com/'
-        // }
-        // {
-        //   name: 'AZURE_DOCUMENT_INTELLIGENCE_KEY'
-        //   value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_DOCUMENT_INTELLIGENCE_KEY.name})'
-        // }
-        // {
-        //   name: 'AZURE_SPEECH_REGION'
-        //   value: location
-        // }
-        // {
-        //   name: 'AZURE_SPEECH_KEY'
-        //   value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_SPEECH_KEY.name})'
-        // }
         {
           name: 'AZURE_STORAGE_ACCOUNT_NAME'
           value: storage_name
@@ -489,14 +437,6 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     }
   }
 
-  // resource AZURE_OPENAI_DALLE_API_KEY 'secrets' = {
-  //   name: 'AZURE-OPENAI-DALLE-API-KEY'
-  //   properties: {
-  //     contentType: 'text/plain'
-  //     value: azureopenaidalle.listKeys().key1
-  //   }
-  // }
-
   resource AZURE_COSMOSDB_KEY 'secrets' = {
     name: 'AZURE-COSMOSDB-KEY'
     properties: {
@@ -504,22 +444,6 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
       value: cosmosDbAccount.listKeys().secondaryMasterKey
     }
   }
-
-  // resource AZURE_DOCUMENT_INTELLIGENCE_KEY 'secrets' = {
-  //   name: 'AZURE-DOCUMENT-INTELLIGENCE-KEY'
-  //   properties: {
-  //     contentType: 'text/plain'
-  //     value: formRecognizer.listKeys().key1
-  //   }
-  // }
-
-  // resource AZURE_SPEECH_KEY 'secrets' = {
-  //   name: 'AZURE-SPEECH-KEY'
-  //   properties: {
-  //     contentType: 'text/plain'
-  //     value: speechService.listKeys().key1
-  //   }
-  // }
 
   resource AZURE_SEARCH_API_KEY 'secrets' = {
     name: 'AZURE-SEARCH-API-KEY'
@@ -644,21 +568,6 @@ resource configContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/con
   }
 }
 
-//removed for now
-// resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-//   name: form_recognizer_name
-//   location: location
-//   tags: tags
-//   kind: 'FormRecognizer'
-//   properties: {
-//     customSubDomainName: form_recognizer_name
-//     publicNetworkAccess: 'Enabled'
-//   }
-//   sku: {
-//     name: formRecognizerSkuName
-//   }
-// }
-
 resource searchService 'Microsoft.Search/searchServices@2022-09-01' = {
   name: search_name
   location: location
@@ -688,21 +597,6 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   }
 }
 
-// throwing deployment errors
-// @batchSize(1)
-// resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [for deployment in llmDeployments: {
-//   parent: azureopenai
-//   name: deployment.name
-//   properties: {
-//     model: deployment.model
-//     raiPolicyName: contains(deployment, 'raiPolicyName') ? deployment.raiPolicyName : null
-//   }
-//   sku: contains(deployment, 'sku') ? deployment.sku : {
-//     name: 'Standard'
-//     capacity: deployment.capacity
-//   }
-// }]
-
 @batchSize(1)
 resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [
   for deployment in llmDeployments: {
@@ -723,85 +617,6 @@ resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05
   }
 ]
 
-// ChatGptDeployment
-// resource chatGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-//   name: chatGptDeploymentName
-//   sku: {
-//     name: 'GlobalStandard'
-//     capacity: chatGptDeploymentCapacity
-//   }
-//   parent: azureopenai
-//   properties: {
-//     model: {
-//       format: 'OpenAI'
-//       name: chatGptModelName
-//       version: chatGptModelVersion
-//     }
-//   }
-// }
-
-// embeddingDeployment
-// resource embeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-//   name: embeddingModelName
-//   parent: azureopenai
-//   sku: {
-//     name: 'Standard'
-//     capacity: embeddingDeploymentCapacity
-//   }
-//   properties: {
-//     model: {
-//       format: 'OpenAI'
-//       name: embeddingModelName
-//       version: '2'
-//     }
-//   }
-// }
-
-//removed for now
-// resource azureopenaidalle 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-//   name: openai_dalle_name
-//   location: dalleLocation
-//   tags: tags
-//   kind: 'OpenAI'
-//   properties: {
-//     customSubDomainName: openai_dalle_name
-//     publicNetworkAccess: 'Enabled'
-//   }
-//   sku: {
-//     name: openAiSkuName
-//   }
-
-//   resource dalleDeployment 'deployments' = {
-//     name: dalleDeploymentName
-//     properties: {
-//       model: {
-//         format: 'OpenAI'
-//         name: dalleModelName
-//       }
-//     }
-//     sku: {
-//       name: 'Standard'
-//       capacity: dalleDeploymentCapacity
-//     }
-//   }
-// }
-
-//removed for now
-// resource speechService 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-//   name: speech_service_name
-//   location: location
-//   tags: tags
-//   kind: 'SpeechServices'
-//   properties: {
-//     customSubDomainName: speech_service_name
-//     publicNetworkAccess: 'Enabled'
-//   }
-//   sku: {
-//     name: speechServiceSkuName
-//   }
-// }
-
-//REF: https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.storage/storage-multi-blob-container/main.bicep
 
 @description('Storage Account')
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
