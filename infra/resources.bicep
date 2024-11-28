@@ -150,7 +150,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
   location: location
   tags: tags
   properties: {
-    reserved: true  
+    reserved: true
   }
   sku: {
     name: 'P0v3'
@@ -169,14 +169,14 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
-    clientAffinityEnabled:false
+    clientAffinityEnabled: false
     siteConfig: {
       linuxFxVersion: 'node|18-lts'
       alwaysOn: true
       appCommandLine: 'npx serve -s dist'
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
-      
+
       appSettings: [
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
@@ -209,7 +209,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
-    clientAffinityEnabled:false
+    clientAffinityEnabled: false
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true
@@ -302,15 +302,15 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'AZURE_CLIENT_ID'
-          value: azureClientID
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_ID.name})'
         }
         {
           name: 'AZURE_CLIENT_SECRET'
-          value: azureClientSecret
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_SECRET.name})'
         }
         {
           name: 'AZURE_TENANT_ID'
-          value: azureTenantId
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_TENANT_ID.name})'
         }
         {
           name: 'AZURE_KEY_VAULT_NAME'
@@ -549,6 +549,30 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     properties: {
       contentType: 'text/plain'
       value: aiServices.listKeys().key1
+    }
+  }
+
+  resource AZURE_CLIENT_ID 'secrets' = {
+    name: 'AZURE-CLIENT-ID'
+    properties: {
+      contentType: 'text/plain'
+      value: azureClientID
+    }
+  }
+
+  resource AZURE_CLIENT_SECRET 'secrets' = {
+    name: 'AZURE-CLIENT-SECRET'
+    properties: {
+      contentType: 'text/plain'
+      value: azureClientSecret
+    }
+  }
+
+  resource AZURE_TENANT_ID 'secrets' = {
+    name: 'AZURE-TENANT-ID'
+    properties: {
+      contentType: 'text/plain'
+      value: azureTenantId
     }
   }
 }
