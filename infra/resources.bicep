@@ -39,13 +39,15 @@ param embeddingDeploymentName string
 param embeddingDeploymentCapacity int
 param embeddingModelName string
 
-param AdminEmailAddress string = 'adam-stephensen@agile-analytics.com.au'
+//param AdminEmailAddress string = 'adam-stephensen@agile-analytics.com.au'
 param AzureCosmosdbDbName string = 'chat'
 param AzureCosmosdbDatabaseName string = 'chat'
 param AzureCosmosdbContainerName string = 'history'
 param AzureCosmosdbConfigContainerName string = 'config'
 param AzureCosmosdbToolsContainerName string = 'tools'
 param AzureCosmosdbFilesContainerName string = 'fileUploads'
+param AzureCosmosdbAuditsContainerName string = 'audits'
+
 param AzureSearchIndexNameRag string = 'rag_index'
 param MaxUploadDocumentSize string = '20000000'
 param AzureStorageFoldersContainerName string = 'folders'
@@ -67,9 +69,15 @@ var search_name = toLower('${resourcePrefix}-search')
 
 var clean_name = replace(replace('${resourcePrefix}', '-', ''), '_', '')
 var storage_prefix = take(clean_name, 13)
-var storage_name = toLower('${storage_prefix}sto')
 
-var keyVaultName = toLower('${resourcePrefix}-kv')
+@description('The unique name of the Storage Account.')
+param storage_name string = toLower('stg${uniqueString(resourceGroup().id)}')
+
+//var keyVaultName = toLower('${resourcePrefix}-kv')
+
+@description('The unique name of the Key Vault.')
+param keyVaultName string = toLower('kv-${uniqueString(resourceGroup().id)}')
+
 var la_workspace_name = toLower('${resourcePrefix}-la')
 var diagnostic_setting_name = 'AppServiceConsoleLogs'
 
@@ -77,6 +85,9 @@ var keyVaultSecretsOfficerRole = subscriptionResourceId(
   'Microsoft.Authorization/roleDefinitions',
   'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
 )
+
+@description('Conditionally deploy key vault Api app permissions')
+param kvSetFunctionAppPermissions bool = false
 
 var validStorageServiceImageContainerName = toLower(replace(storageServiceImageContainerName, '-', ''))
 
@@ -93,6 +104,9 @@ var EventGridSystemTopicName = toLower('${resourcePrefix}-folders-listener')
 
 @description('Event Grid Subscription')
 var EventGridSystemTopicSubName = toLower('${resourcePrefix}-folders-blobs-listener')
+
+@description('Conditionally deploy event Grid')
+param deployEventGrid bool = false
 
 var databaseName = 'chat'
 var historyContainerName = 'history'
@@ -245,10 +259,10 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AZURE_SEARCH_INDEX_NAME_RAG'
           value: AzureSearchIndexNameRag
         }
-        {
-          name: 'ADMIN_EMAIL_ADDRESS'
-          value: AdminEmailAddress
-        }
+        // {
+        //   name: 'ADMIN_EMAIL_ADDRESS'
+        //   value: AdminEmailAddress
+        // }
         {
           name: 'AZURE_COSMOSDB_DB_NAME'
           value: AzureCosmosdbDbName
@@ -272,6 +286,10 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'AZURE_COSMOSDB_FILES_CONTAINER_NAME'
           value: AzureCosmosdbFilesContainerName
+        }
+        {
+          name: 'AZURE_COSMOSDB_AUDIT_CONTAINER_NAME'
+          value: AzureCosmosdbAuditsContainerName
         }
         {
           name: 'AZURE_AI_SERVICES_KEY'
@@ -408,7 +426,7 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 @description('The name of the Role Assignment - from Guid.')
 param roleAssignmentName string = newGuid()
 
-resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (kvSetFunctionAppPermissions) {
   name: roleAssignmentName
   scope: kv
   properties: {
@@ -653,7 +671,7 @@ resource indexContainer 'Microsoft.Storage/storageAccounts/blobServices/containe
   parent: blobServices
   name: storageServiceFoldersContainerName
   properties: {
-    publicAccess: 'Blob'
+    publicAccess: 'None' //'Blob'
   }
 }
 
@@ -672,7 +690,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 
 @description('Event Grid System Topic')
-resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = {
+resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = if (deployEventGrid) {
   name: EventGridSystemTopicName
   location: location
   tags: tags
@@ -687,7 +705,7 @@ resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-previ
 }
 
 @description('Event Grid Subscription')
-resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-01-preview' = {
+resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-01-preview' = if (deployEventGrid) {
   name: EventGridSystemTopicSubName
   parent: eventGridSystemTopic
   properties: {

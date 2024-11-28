@@ -82,6 +82,15 @@ param azureTenantId string = ''
 @description('The Azure Active Directory Application ID or URI to get the access token that will be included as the bearer token in delivery requests')
 param azureADAppIdOrUri string = ''
 
+
+@description('Conditionally deploy event Grid')
+param deployEventGrid bool = false
+
+
+@description('Conditionally deploy key vault Api app permissions')
+param kvSetFunctionAppPermissions bool = false
+
+
 //other
 //var tags = { 'azd-env-name': environmentName }
 
@@ -123,6 +132,8 @@ module resources 'resources.bicep' = {
     azureADAppIdOrUri: azureADAppIdOrUri
     UtsRoleApiEndpoint: UtsRoleApiEndpoint
     UtsXApiKey: UtsXApiKey
+    deployEventGrid:deployEventGrid
+    kvSetFunctionAppPermissions:kvSetFunctionAppPermissions
   }
 }
 
