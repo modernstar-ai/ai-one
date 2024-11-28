@@ -101,6 +101,10 @@ var configContainerName = 'config'
 @description('UTS Role Endpoint')
 param UtsRoleApiEndpoint string = ''
 
+@description('UTS Subject Query API Key')
+@secure()
+param UtsXApiKey string = ''
+
 @description('AI Services  Name')
 var aiServices_name = toLower('${projectName}${environmentName}-ai-services')
 
@@ -216,6 +220,10 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'UTS_ROLE_API_ENDPOINT'
           value: UtsRoleApiEndpoint
+        }
+        {
+          name: 'UTS_XAPI_KEY'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::UTS_XAPI_KEY.name})'
         }
         {
           name: 'AZURE_STORAGE_FOLDERS_CONTAINER_NAME'
@@ -398,18 +406,18 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 //**************************************************************************
 //Add Role Assignment for web app to Key vault
 
-@description('The name of the Role Assignment - from Guid.')
-param roleAssignmentName string = newGuid()
+// @description('The name of the Role Assignment - from Guid.')
+// param roleAssignmentName string = newGuid()
 
-resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: roleAssignmentName
-  scope: kv
-  properties: {
-    principalId: apiApp.identity.principalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: keyVaultSecretsOfficerRole
-  }
-}
+// resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+//   name: roleAssignmentName
+//   scope: kv
+//   properties: {
+//     principalId: apiApp.identity.principalId
+//     principalType: 'ServicePrincipal'
+//     roleDefinitionId: keyVaultSecretsOfficerRole
+//   }
+// }
 
 //**************************************************************************
 
@@ -501,11 +509,11 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     }
   }
 
-  resource AZURE_AD_APP_ID 'secrets' = {
-    name: 'AZURE-AD-APP-ID'
+  resource UTS_XAPI_KEY 'secrets' = {
+    name: 'UTS-XAPI-KEY'
     properties: {
       contentType: 'text/plain'
-      value: azureADAppIdOrUri
+      value: UtsXApiKey
     }
   }
 }
@@ -617,7 +625,6 @@ resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05
   }
 ]
 
-
 @description('Storage Account')
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storage_name
@@ -688,9 +695,7 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
     destination: {
       endpointType: 'WebHook'
       properties: {
-        //azureActiveDirectoryApplicationIdOrUri: azureADAppIdOrUri
-        azureActiveDirectoryApplicationIdOrUri: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_AD_APP_ID.name})'
-
+        azureActiveDirectoryApplicationIdOrUri: azureADAppIdOrUri
         azureActiveDirectoryTenantId: azureTenantId
         endpointUrl: 'https://${apiApp.properties.defaultHostName}/api/file/webhook'
         maxEventsPerBatch: 1

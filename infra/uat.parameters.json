@@ -14,9 +14,6 @@
       "openAILocation": {
         "value": "australiaeast"
       },
-      "dalleLocation": {
-        "value": "australiaeast"
-      },
       "azureClientID": {
         "value": ""
       },
@@ -35,6 +32,9 @@
       "UtsRoleApiEndpoint": {
           "value": ""
       } ,
+      "UtsXApiKey": {
+        "value": ""
+      },
       "aspCoreEnvironment": {
         "value": "UAT"
       }    

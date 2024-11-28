@@ -35,8 +35,10 @@
     "UtsRoleApiEndpoint": {
         "value": ""
     },
+    "UtsXApiKey": {
+      "value": ""
+  },
     "aspCoreEnvironment": {
-      "value": "Test" 
+      "value": "Development" //'Development', 'Test', 'UAT', 'Production'
     }   
   }
-}

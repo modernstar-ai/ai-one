@@ -14,7 +14,6 @@ param environmentName string
 @description('Primary location for all resources')
 param location string = resourceGroup().location
 
-
 // azure open ai -- regions currently support gpt-4o global-standard
 @description('Location for the OpenAI resource group')
 @allowed([
@@ -58,7 +57,6 @@ param embeddingDeploymentName string = 'embedding'
 param embeddingDeploymentCapacity int = 120
 param embeddingModelName string = 'text-embedding-ada-002'
 
-
 param searchServiceSkuName string = 'standard'
 
 // TODO: define good default Sku and settings for storage account
@@ -85,14 +83,18 @@ param azureTenantId string = ''
 param azureADAppIdOrUri string = ''
 
 //other
-var tags = { 'azd-env-name': environmentName }
+//var tags = { 'azd-env-name': environmentName }
 
 @description('UTS Role Endpoint')
 param UtsRoleApiEndpoint string = ''
 
-//Load tags from the file
-// var tagsFilePath = './uts.tags.json'
-// var tags = loadJsonContent(tagsFilePath)
+@description('UTS Subject Query API Key')
+@secure()
+param UtsXApiKey string = ''
+
+@description('Shared variables pattern for loading tags')
+var tagsFilePath = './uts.tags.json'
+var tags = loadJsonContent(tagsFilePath)
 
 module resources 'resources.bicep' = {
   name: 'all-resources'
@@ -120,6 +122,7 @@ module resources 'resources.bicep' = {
     azureTenantId: azureTenantId
     azureADAppIdOrUri: azureADAppIdOrUri
     UtsRoleApiEndpoint: UtsRoleApiEndpoint
+    UtsXApiKey: UtsXApiKey
   }
 }
 
