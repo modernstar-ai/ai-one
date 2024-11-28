@@ -1,13 +1,28 @@
-name: Azure Bicep Deployment
+name: Deployment Agile Chat Infrastructure
 on:
   workflow_dispatch:
     inputs:
       reason:
-        description: The reason for running the workflow
+        description: "The reason for running the workflow:"
         required: false
         default: Manual run
+      resource_group:
+        description: "Enter the Azure resource group Name:"
+        required: true
+      azure_env_name:
+        description: "Enter the Azure Environment Name:"
+        required: true
+        default: "agile-dev"
+      azure_location:
+        description: "Select the Azure deployment region:"
+        required: true
+        type: choice
+        default: "australiaeast"
+        options:
+          - "australiaeast"
+          - "australiasoutheast"
       environment:
-        description: "Select the Azure environment"
+        description: "Select the Azure environment:"
         required: true
         type: choice
         default: "Development"
@@ -15,7 +30,11 @@ on:
           - Development
           - Test
           - Production
-# on:
+      bicep_params_file:
+        description: "Enter the Azure Bicep Parameters filename (e.g., ./infra/dev.parameters.json):"
+        required: true
+        default: "agile-dev"
+
 #   push:
 #     branches:
 #       - main
@@ -35,26 +54,14 @@ jobs:
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-      AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
-      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AZURE_RESOURCE_GROUP: ${{ github.event.inputs.resource_group }}"
+      AZURE_ENV_NAME: ${{ github.event.inputs.azure_env_name }}"
+      AZURE_LOCATION: ${{ github.event.inputs.azure_location }}"
       AZURE_BICEP_MAIN: "./infra/main.bicep"
+      AZURE_BICEP_PARAMS: ${{ github.event.inputs.bicep_params_file }}"
       ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
 
     steps:
-      - name: Set Bicep Param file
-        run: |
-          if [ "${{ github.event.inputs.environment }}" == "Development" ]; then
-            echo "BICEP_PARAMS=./infra/dev.parameters.json" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.environment }}" == "Test" ]; then
-            echo "BICEP_PARAMS=./infra/tst.parameters.json" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.environment }}" == "Production" ]; then
-            echo "BICEP_PARAMS=./infra/prd.parameters.json" >> $GITHUB_ENV
-          fi
-
-      - name: Verify environment variable
-        run: echo "The selected bicep params file is ${{ env.BICEP_PARAMS }}"
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -102,4 +109,4 @@ jobs:
           resource-group-name: "${{ env.AZURE_RESOURCE_GROUP }}"
           subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
           template-file: "${{ env.AZURE_BICEP_MAIN }}"
-          parameters-file: "${{ env.BICEP_PARAMS }}"
+          parameters-file: "${{ env.AZURE_BICEP_PARAMS }}"
