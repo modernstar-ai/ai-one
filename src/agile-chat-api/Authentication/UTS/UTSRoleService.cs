@@ -9,7 +9,7 @@ namespace agile_chat_api.Authentication.UTS;
 public class UTSRoleService(IHttpContextAccessor httpContextAccessor) : IRoleService
 {
     private string endpoint = AppConfigs.UTSRoleApiEndpoint;
-    private const string xApiKey = "611632d4-5a8e-4b00-81c1-ea5cc76ac0ac";
+    private string xApiKey = AppConfigs.UTSXApiKey;
     
     public async Task<(List<string>, List<string>)> GetRolesAndGroupsByUserIdAsync(string userId)
     {
@@ -18,7 +18,7 @@ public class UTSRoleService(IHttpContextAccessor httpContextAccessor) : IRoleSer
         var client = new HttpClient();
 
         var message = new HttpRequestMessage(HttpMethod.Get, $"{endpoint}/rolelookup/getroles?userEmail={userId}");
-        message.Headers.Add("XApiKey", xApiKey);
+        message.Headers.Add("XAPI_KEY", xApiKey);
         
         var response = await client.SendAsync(message);
         if (!response.IsSuccessStatusCode) return (roles, groups);
