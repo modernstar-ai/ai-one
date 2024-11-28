@@ -47,7 +47,7 @@ jobs:
       AGILE_CHAT_WEB_SRC: "./src/agile-chat-web"
       AGILE_CHAT_WEB_PUB: "./publish/agile-chat-web"
       AGILE_CHAT_WEB_NAME: "${{ github.event.inputs.ui_web_app_name }}"
-      VITE_AGILECHAT_API_URL: ${{ github.event.inputs.vite_agile_chat_api_url }}"
+      VITE_AGILECHAT_API_URL: "${{ github.event.inputs.vite_agile_chat_api_url }}"
       VITE_AZURE_AD_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       VITE_AZURE_AD_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
