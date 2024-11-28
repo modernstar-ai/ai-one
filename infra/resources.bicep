@@ -39,7 +39,7 @@ param embeddingDeploymentName string
 param embeddingDeploymentCapacity int
 param embeddingModelName string
 
-param OpenaiApiEmbeddingsModelName string = 'text-embedding-ada-002'
+//param OpenaiApiEmbeddingsModelName string = 'text-embedding-ada-002'
 param AdminEmailAddress string = 'adam-stephensen@agile-analytics.com.au'
 param AzureCosmosdbDbName string = 'chat'
 param AzureCosmosdbDatabaseName string = 'chat'
@@ -51,15 +51,15 @@ param AzureSearchIndexNameRag string = 'rag_index'
 param MaxUploadDocumentSize string = '20000000'
 param AzureStorageFoldersContainerName string = 'folders'
 
-param dalleLocation string
-param dalleDeploymentCapacity int
-param dalleDeploymentName string
-param dalleModelName string
-param dalleApiVersion string
+// param dalleLocation string
+// param dalleDeploymentCapacity int
+// param dalleDeploymentName string
+// param dalleModelName string
+// param dalleApiVersion string
 
-param speechServiceSkuName string = 'S0'
+// param speechServiceSkuName string = 'S0'
 
-param formRecognizerSkuName string = 'S0'
+// param formRecognizerSkuName string = 'S0'
 
 param searchServiceSkuName string = 'standard'
 param searchServiceIndexName string = 'azure-chat'
@@ -68,13 +68,13 @@ param storageServiceSku object
 param storageServiceImageContainerName string
 
 var openai_name = toLower('${resourcePrefix}-aillm')
-var openai_dalle_name = toLower('${resourcePrefix}-aidalle')
+//var openai_dalle_name = toLower('${resourcePrefix}-aidalle')
 
 @description('Cosmos DB Chat threads container name')
 param azureCosmosDbChatThreadsName string = 'history'
 
-var form_recognizer_name = toLower('${resourcePrefix}-form')
-var speech_service_name = toLower('${resourcePrefix}-speech')
+// var form_recognizer_name = toLower('${resourcePrefix}-form')
+// var speech_service_name = toLower('${resourcePrefix}-speech')
 var cosmos_name = toLower('${resourcePrefix}-cosmos')
 var search_name = toLower('${resourcePrefix}-search')
 // storage name must be < 24 chars, alphanumeric only. 'sto' is 3 and resourceToken is 13
@@ -101,6 +101,7 @@ var validStorageServiceImageContainerName = toLower(replace(storageServiceImageC
 param storageServiceFoldersContainerName string = 'index-content'
 
 @description('The Azure Active Directory Application ID or URI to get the access token that will be included as the bearer token in delivery requests')
+@secure()
 param azureADAppIdOrUri string = ''
 
 @description('Event Grid System Topic Name')
@@ -575,6 +576,14 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
       value: azureTenantId
     }
   }
+
+  resource AZURE_AD_APP_ID 'secrets' = {
+    name: 'AZURE-AD-APP-ID'
+    properties: {
+      contentType: 'text/plain'
+      value: azureADAppIdOrUri
+    }
+  }
 }
 
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
@@ -864,7 +873,9 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
     destination: {
       endpointType: 'WebHook'
       properties: {
-        azureActiveDirectoryApplicationIdOrUri: azureADAppIdOrUri
+        //azureActiveDirectoryApplicationIdOrUri: azureADAppIdOrUri
+        azureActiveDirectoryApplicationIdOrUri: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_AD_APP_ID.name})'
+
         azureActiveDirectoryTenantId: azureTenantId
         endpointUrl: 'https://${apiApp.properties.defaultHostName}/api/file/webhook'
         maxEventsPerBatch: 1
