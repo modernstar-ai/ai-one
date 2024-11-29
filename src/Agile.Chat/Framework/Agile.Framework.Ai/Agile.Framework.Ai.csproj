@@ -17,4 +17,8 @@
       <ProjectReference Include="..\Agile.Framework.Common\Agile.Framework.Common.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Models\" />
+    </ItemGroup>
+
 </Project>

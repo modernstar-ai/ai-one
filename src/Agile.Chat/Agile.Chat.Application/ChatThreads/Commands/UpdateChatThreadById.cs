@@ -15,7 +15,8 @@ public static class UpdateChatThreadById
         Guid Id,
         string Name,
         bool IsBookmarked,
-        ChatThreadOptions Options) : IRequest<IResult>;
+        ChatThreadFilterOptions FilterOptions,
+        ChatThreadPromptOptions PromptOptions) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> logger, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService) : IRequestHandler<Command, IResult>
     {
@@ -32,7 +33,7 @@ public static class UpdateChatThreadById
                 return Results.Forbid();
             
             logger.LogInformation("Updating ChatThread old values: {@ChatThread}", chatThread);
-            chatThread.Update(request.Name, request.IsBookmarked, request.Options);
+            chatThread.Update(request.Name, request.IsBookmarked, request.PromptOptions, request.FilterOptions);
             await chatThreadService.UpdateItemByIdAsync(chatThread.Id, chatThread);
             logger.LogInformation("Updated Assistant Successfully: {@Assistant}", chatThread);
             

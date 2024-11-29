@@ -7,7 +7,7 @@ namespace Agile.Framework.AzureAiSearch.Models;
 public class AiSearchOptions(string userPrompt, ReadOnlyMemory<float> vector)
 {
     public int DocumentLimit { get; init; } = 6;
-    public double? Strictness { get; init; } = null;
+    public double? Strictness { get; init; }
     public SearchOptions ParseSearchOptions()
     {
         VectorSearchOptions vectorSearchOptions = new VectorSearchOptions();

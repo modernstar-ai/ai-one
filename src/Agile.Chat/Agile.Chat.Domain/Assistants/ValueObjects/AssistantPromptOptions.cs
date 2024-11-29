@@ -1,4 +1,4 @@
-﻿using Agile.Framework.Ai.Models;
+﻿using Agile.Chat.Domain.ChatThreads.ValueObjects;
 
 namespace Agile.Chat.Domain.Assistants.ValueObjects;
 
@@ -8,16 +8,16 @@ public class AssistantPromptOptions
     public float Temperature { get; set; }
     public float TopP { get; set; }
     public int MaxTokens { get; set; }
-    public int Strictness { get; set; }
-
-    public ChatSettings ParseChatSettings()
+    
+    public ChatThreadPromptOptions ParseChatThreadPromptOptions()
     {
-        return new ChatSettings()
+        var options = new ChatThreadPromptOptions()
         {
             SystemPrompt = SystemPrompt,
-            MaxTokens = MaxTokens,
-            TopP = TopP,
             Temperature = Temperature,
+            TopP = TopP,
+            MaxTokens = MaxTokens
         };
+        return options;
     }
 }

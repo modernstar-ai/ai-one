@@ -8,5 +8,6 @@ public class CreateChatThreadDto
     public string Name { get; private set; }
     public bool IsBookmarked { get; private set; }
     public string? AssistantId { get; private set; }
-    public ChatThreadOptions Options { get; private set; }
+    public ChatThreadPromptOptions PromptOptions { get; private set; }
+    public ChatThreadFilterOptions FilterOptions { get; private set; }
 }

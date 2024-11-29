@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.ChatThreads.Services;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
@@ -15,9 +16,10 @@ public static class CreateChatThread
         string Name,
         bool IsBookmarked,
         string? AssistantId,
-        ChatThreadOptions Options) : IRequest<IResult>;
+        ChatThreadPromptOptions PromptOptions,
+        ChatThreadFilterOptions FilterOptions) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IAssistantsService assistantsService, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -25,12 +27,14 @@ public static class CreateChatThread
             if(string.IsNullOrWhiteSpace(username)) return Results.Forbid();
             
             logger.LogInformation("Handler executed {Handler}", typeof(Handler).Namespace);
-            
+
+            var assistant = request.AssistantId != null ? await assistantsService.GetItemByIdAsync(request.AssistantId) : null;
             var chatThread = ChatThread.Create(
                 username,
                 request.Name,
                 request.IsBookmarked,
-                request.Options,
+                assistant is null ? request.PromptOptions : assistant.PromptOptions.ParseChatThreadPromptOptions(),
+                assistant is null ? request.FilterOptions : assistant.FilterOptions.ParseChatThreadFilterOptions(),
                 request.AssistantId);
 
             await chatThreadService.AddItemAsync(chatThread);

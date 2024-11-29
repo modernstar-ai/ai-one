@@ -1,14 +1,14 @@
 ﻿using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 
-namespace Agile.Framework.Ai.Models;
+namespace Agile.Chat.Domain.ChatThreads.ValueObjects;
 
-public class ChatSettings
+public class ChatThreadPromptOptions
 {
-    public string? SystemPrompt { get; set; }
-    public double? Temperature { get; set; }
-    public double? TopP { get; set; }
-    public int? MaxTokens { get; set; }
-
+    public string SystemPrompt { get; set; }
+    public float Temperature { get; set; }
+    public float TopP { get; set; }
+    public int MaxTokens { get; set; }
+    
     public AzureOpenAIPromptExecutionSettings ParseAzureOpenAiPromptExecutionSettings()
     {
         var options = new AzureOpenAIPromptExecutionSettings()

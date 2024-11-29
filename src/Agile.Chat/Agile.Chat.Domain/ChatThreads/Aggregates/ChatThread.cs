@@ -12,12 +12,14 @@ public class ChatThread : AuditableAggregateRoot
     public ChatType Type { get; private set; }
     public bool IsBookmarked { get; private set; }
     public string? AssistantId { get; private set; }
-    public ChatThreadOptions Options { get; private set; }
+    public ChatThreadPromptOptions PromptOptions { get; private set; }
+    public ChatThreadFilterOptions FilterOptions { get; private set; }
 
     public static ChatThread Create(string userId,
         string name, 
         bool isBookmarked,
-        ChatThreadOptions options,
+        ChatThreadPromptOptions promptOptions,
+        ChatThreadFilterOptions filterOptions,
         string? assistantId = null)
     {
         //Do validation logic and throw domain level exceptions if fails
@@ -27,19 +29,22 @@ public class ChatThread : AuditableAggregateRoot
             UserId = userId,
             Type = ChatType.Thread,
             IsBookmarked = isBookmarked,
-            Options = options,
+            PromptOptions = promptOptions,
+            FilterOptions = filterOptions,
             AssistantId = assistantId
         };
     }
     
     public void Update(string name,
         bool isBookmarked,
-        ChatThreadOptions options)
+        ChatThreadPromptOptions promptOptions,
+        ChatThreadFilterOptions filterOptions)
     {
         //Do validation logic and throw domain level exceptions if fails
         Name = name;
         IsBookmarked = isBookmarked;
-        Options = options;
+        PromptOptions = promptOptions;
+        FilterOptions = filterOptions;
         LastModified = DateTime.UtcNow;
     }
 }

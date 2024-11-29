@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Agile.Framework.Ai.Models;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.Enums;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,8 +13,8 @@ public interface IAppKernel
 {
     Task<ReadOnlyMemory<float>> GenerateEmbeddingAsync(string text);
     Task<IList<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(IList<string> texts);
-    IAsyncEnumerable<Dictionary<ResponseType, string>> GetChatStream(ChatHistory chatHistory, ChatSettings settings);
-    IAsyncEnumerable<Dictionary<ResponseType, string>> GetPromptFileChatStream(ChatSettings settings, 
+    IAsyncEnumerable<Dictionary<ResponseType, string>> GetChatStream(ChatHistory chatHistory, AzureOpenAIPromptExecutionSettings settings);
+    IAsyncEnumerable<Dictionary<ResponseType, string>> GetPromptFileChatStream(AzureOpenAIPromptExecutionSettings settings, 
         string promptRelativePath, 
         Dictionary<string, object?>? kernelArguments = null!);
 }
@@ -36,9 +35,9 @@ public class AppKernel(Kernel kernel) : IAppKernel
      public async Task<IList<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(IList<string> texts) =>
          await _textEmbedding.GenerateEmbeddingsAsync(texts);
 
-     public async IAsyncEnumerable<Dictionary<ResponseType, string>> GetChatStream(ChatHistory chatHistory, ChatSettings settings)
+     public async IAsyncEnumerable<Dictionary<ResponseType, string>> GetChatStream(ChatHistory chatHistory, AzureOpenAIPromptExecutionSettings settings)
      {
-         var responses = _chatCompletion.GetStreamingChatMessageContentsAsync(chatHistory, settings.ParseAzureOpenAiPromptExecutionSettings(), kernel);
+         var responses = _chatCompletion.GetStreamingChatMessageContentsAsync(chatHistory, settings, kernel);
          await foreach (var tokens in responses)
          {
              yield return new Dictionary<ResponseType, string>()
@@ -49,7 +48,7 @@ public class AppKernel(Kernel kernel) : IAppKernel
      }
      
      public async IAsyncEnumerable<Dictionary<ResponseType, string>> GetPromptFileChatStream(
-         ChatSettings settings,
+         AzureOpenAIPromptExecutionSettings settings,
          string promptRelativePath,
          Dictionary<string, object?>? kernelArguments = null!)
      {
@@ -57,7 +56,7 @@ public class AppKernel(Kernel kernel) : IAppKernel
          if(string.IsNullOrWhiteSpace(prompt)) throw new Exception("Prompt file path is empty");
          var kernelFunction = kernel.CreateFunctionFromPromptYaml(prompt);
          //Create arguments
-         var arguments = new KernelArguments(settings.ParseAzureOpenAiPromptExecutionSettings());
+         var arguments = new KernelArguments(settings);
          // Manually add dictionary items to arguments
          foreach (var kvp in kernelArguments ?? new Dictionary<string, object?>())
              arguments[kvp.Key] = kvp.Value;

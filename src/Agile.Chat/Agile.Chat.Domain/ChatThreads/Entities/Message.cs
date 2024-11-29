@@ -1,4 +1,5 @@
-﻿using Agile.Chat.Domain.ChatThreads.ValueObjects;
+﻿using System.Text;
+using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Common.DomainAbstractions;
 using Microsoft.SemanticKernel.ChatCompletion;
 
@@ -46,14 +47,34 @@ public class Message : AuditableAggregateRoot
         Options = options;
         LastModified = DateTime.UtcNow;
     }
+}
 
-    public static ChatHistory ParseSemanticKernelChatHistory(List<Message> messages, string? systemPrompt = null)
+public static class MessageExtensions
+{
+    public static ChatHistory ParseSemanticKernelChatHistory(this List<Message> messages)
     {
-        
+        ChatHistory chatHistory = new ChatHistory();
+        foreach (var message in messages)
+        {
+            switch (message.Type)
+            {
+                case MessageType.User:
+                    chatHistory.AddUserMessage(message.Content);
+                    break;
+                case MessageType.Assistant:
+                    chatHistory.AddAssistantMessage(message.Content);
+                    break;
+            }
+        }
+        return chatHistory;
     }
     
-    public static string ParseSemanticKernelChatHistoryString(List<Message> messages, string? systemPrompt = null)
+    public static string ParseSemanticKernelChatHistoryString(this List<Message> messages)
     {
+        var chatHistorySb = new StringBuilder();
+        foreach (var message in messages)
+            chatHistorySb.AppendLine($"""<message role="{message.Type.ToString().ToLower()}">{message.Content}</message>""");
         
+        return chatHistorySb.ToString();
     }
 }

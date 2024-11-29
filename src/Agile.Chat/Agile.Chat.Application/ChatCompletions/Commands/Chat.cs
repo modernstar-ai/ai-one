@@ -8,7 +8,6 @@ using Agile.Chat.Domain.Assistants.ValueObjects;
 using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Ai;
-using Agile.Framework.Ai.Models;
 using Agile.Framework.AzureAiSearch.Interfaces;
 using Agile.Framework.AzureAiSearch.Models;
 using Agile.Framework.Common.Enums;
@@ -34,6 +33,7 @@ public static class Chat
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
+            //Fetch what's needed to do chatting
             var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId);
             var messages = await chatMessageService.GetAllAsync(thread!.Id);
             var assistant = !string.IsNullOrWhiteSpace(thread.AssistantId)
@@ -41,25 +41,25 @@ public static class Chat
                 : null;
             
             //Perform RAG if needed
-            var hasIndex = !string.IsNullOrWhiteSpace(assistant?.FilterOptions.Index);
+            var hasIndex = !string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName);
             var documents = hasIndex
-                ? await GetCitationDocumentsAsync(request.UserPrompt, assistant!.FilterOptions)
+                ? await GetCitationDocumentsAsync(request.UserPrompt, assistant!.FilterOptions.IndexName, thread.FilterOptions)
                 : [];
             
             //Execute Chat Stream
-            var chatSettings = assistant?.PromptOptions.
+            var chatSettings = thread.PromptOptions.ParseAzureOpenAiPromptExecutionSettings();
             var aiStreamChats = hasIndex
                 ? appKernel.GetPromptFileChatStream(chatSettings, 
                     Constants.ChatCompletionsPromptsPath + Constants.Prompts.ChatWithRag, 
-                    new Dictionary<string, object?>()
+                    new Dictionary<string, object?>
                 {
                     {"documents", string.Join(string.Empty, documents.Select(x => x.ToString()))},
                     {"userPrompt", request.UserPrompt},
-                    {"chatHistory", Message.ParseSemanticKernelChatHistoryString(messages, assistant?.PromptOptions.SystemPrompt)}
+                    {"chatHistory", messages.ParseSemanticKernelChatHistoryString()}
                 })
                 : 
                 appKernel.GetChatStream(
-                    Message.ParseSemanticKernelChatHistory(messages, assistant?.PromptOptions.SystemPrompt), chatSettings);
+                    messages.ParseSemanticKernelChatHistory(), chatSettings);
 
             var assistantFullResponse = new StringBuilder();
             await foreach (var chatStream in aiStreamChats.WithCancellation(cancellationToken))
@@ -80,13 +80,14 @@ public static class Chat
             return Results.Ok();
         }
 
-        private async Task<List<Citation>> GetCitationDocumentsAsync(string userPrompt, AssistantFilterOptions filterOptions)
+        private async Task<List<Citation>> GetCitationDocumentsAsync(string userPrompt, string indexName, ChatThreadFilterOptions filterOptions)
         {
             var embedding = await appKernel.GenerateEmbeddingAsync(userPrompt);
-            var documents = await azureAiSearch.SearchAsync(filterOptions.Index, 
+            var documents = await azureAiSearch.SearchAsync(indexName, 
                 new AiSearchOptions(userPrompt, embedding)
                 {
-                    DocumentLimit = filterOptions.DocumentLimit
+                    DocumentLimit = filterOptions.DocumentLimit,
+                    Strictness = filterOptions.Strictness
                 });
             return documents.Select(x => new Citation
             {
