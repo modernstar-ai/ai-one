@@ -180,24 +180,53 @@ const AssistantsComponent: React.FC = () => {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={() => handleEditAssistant(assistant.id)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                                <span className="sr-only">Edit {assistant.name}</span>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Edit {assistant.name}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        {assistant.group && assistant.group !== "" && (
+                        <PermissionHandler role={UserRole.ContentManager} 
+                        group={assistant.group && assistant.group !== "" ? assistant.group : "" }> 
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => handleEditAssistant(assistant.id)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                  <span className="sr-only">Edit {assistant.name}</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Edit {assistant.name}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </PermissionHandler>
+                        )}
+
+                        {assistant.group == "" && (
+                         <PermissionHandler role={UserRole.SystemAdmin}>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => handleEditAssistant(assistant.id)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                  <span className="sr-only">Edit {assistant.name}</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Edit {assistant.name}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </PermissionHandler>
+                        )}
+
                         <PermissionHandler role={UserRole.SystemAdmin}>
                           <AlertDialog>
                             <TooltipProvider>

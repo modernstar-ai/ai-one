@@ -12,6 +12,7 @@
         /// The assistant container partition key path
         /// </summary>
         public const string AssistantContainerPartitionKeyPath = "/CreatedBy";
+        public const string AssistantContainerName = "assistants";
 
         /// <summary>
         /// The index container partition key path
