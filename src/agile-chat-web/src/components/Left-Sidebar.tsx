@@ -37,7 +37,7 @@ import {
   User,
   VenetianMask,
   LogOut,
-  Wrench,
+  // Wrench,
   Plus,
   Trash2,
   Sun,
@@ -247,16 +247,16 @@ export function LeftSidebar() {
           {/* Navigation Items */}
           <div className="flex flex-col space-y-2 mt-4 h-screen justify-center items-center  dark:text-white">
             <SideNavButton path="/chat" label="Chat" Icon={MessageCircleMore} accessKey="c" />
+            <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey="a" />
             <PermissionHandler role={UserRole.ContentManager}>
-              <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey="a" />
               <SideNavButton path="/files" label="Files" Icon={FileBox} accessKey="U" />
             </PermissionHandler>
             <PermissionHandler role={UserRole.ContentManager}>
               <SideNavButton path="/containers" label="Database" Icon={Database} accessKey="i" />
             </PermissionHandler>
-            <PermissionHandler role={UserRole.SystemAdmin}>
-              <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey="t" />
-            </PermissionHandler>
+            {/*<PermissionHandler role={UserRole.SystemAdmin}>*/}
+            {/*  <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey="t" />*/}
+            {/*</PermissionHandler>*/}
           </div>
 
           {/* User Menu */}
