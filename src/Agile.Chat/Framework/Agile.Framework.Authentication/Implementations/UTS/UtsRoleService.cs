@@ -26,9 +26,8 @@ public class UtsRoleSerivce(IHttpContextAccessor httpContextAccessor) : IRoleSer
         var response = await client.SendAsync(message);
         if (!response.IsSuccessStatusCode) return (roles, groups);
         
-        var userRolesstr = await response.Content.ReadAsStringAsync();
         var userRoles = await response.Content.ReadFromJsonAsync<List<UtsUserRole>>();
-        foreach (var userRole in userRoles)
+        foreach (var userRole in userRoles ?? [])
         {
             //System Admin role
             if (userRole.Role == UserRole.SystemAdmin)
@@ -47,7 +46,9 @@ public class UtsRoleSerivce(IHttpContextAccessor httpContextAccessor) : IRoleSer
     public bool IsSystemAdmin() =>
         (httpContextAccessor.HttpContext?.User.IsInRole(UserRole.SystemAdmin.ToString()) ?? false);
     
-    public bool IsContentManager() => GetRoleClaims().Any(role => role.Contains(UserRole.ContentManager.ToString()));
+    public bool IsContentManager() =>
+        (httpContextAccessor.HttpContext?.User.IsInRole(UserRole.SystemAdmin.ToString()) ?? false) ||
+        GetRoleClaims().Any(role => role.Contains(UserRole.ContentManager.ToString()));
     
     public bool IsUserInRole(UserRole userRole, string group) => 
         (httpContextAccessor.HttpContext?.User.IsInRole(UserRole.SystemAdmin.ToString()) ?? false) ||
