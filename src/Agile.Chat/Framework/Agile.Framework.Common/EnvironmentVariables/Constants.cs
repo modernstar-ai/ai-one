@@ -15,4 +15,13 @@ public static class Constants
     #region BlobStorageConstants
     public const string BlobContainerName = "index-content";
     #endregion
+    
+    #region PromptPaths
+    public const string ChatCompletionsPromptsPath = "/Agile.Chat.Application/ChatCompletions/Prompts";
+    public static class Prompts
+    {
+        public const string ChatWithRag = "chatWithRag.prompt.yaml";
+    }
+
+    #endregion
 }

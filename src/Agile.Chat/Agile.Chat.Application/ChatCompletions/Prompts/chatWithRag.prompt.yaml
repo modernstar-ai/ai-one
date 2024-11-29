@@ -1,0 +1,19 @@
+name: chatWithRag
+description: Chats with loaded documents from an external datasource
+template: |
+  {{$chatHistory}}
+  <message role="system">You can only respond based on knowledge from previous chat history and the document chunks fetched below. If you dont know the answer. Respond with I don't know
+  Document Chunks:
+  {{$documents}}</message>
+  <message role="user">{{$userPrompt}}</message>
+template_format: semantic-kernel
+input_variables:
+  - name: chatHistory
+  - description: The chats history
+  - is_required: true
+  - name:          userPrompt
+    description:   The message from the user
+    is_required:   true
+  - name:          documents
+    description:   The documents fetched from Azure AI Search
+    is_required:   true

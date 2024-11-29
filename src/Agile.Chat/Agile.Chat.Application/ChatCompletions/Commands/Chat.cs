@@ -1,8 +1,18 @@
 ﻿using System.Security.Claims;
+using System.Text;
 using Agile.Chat.Application.Assistants.Services;
+using Agile.Chat.Application.ChatCompletions.Models;
+using Agile.Chat.Application.ChatCompletions.Utils;
 using Agile.Chat.Application.ChatThreads.Services;
-using Agile.Chat.Domain.ChatThreads.Aggregates;
+using Agile.Chat.Domain.Assistants.ValueObjects;
+using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
+using Agile.Framework.Ai;
+using Agile.Framework.Ai.Models;
+using Agile.Framework.AzureAiSearch.Interfaces;
+using Agile.Framework.AzureAiSearch.Models;
+using Agile.Framework.Common.Enums;
+using Agile.Framework.Common.EnvironmentVariables;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -14,7 +24,13 @@ public static class Chat
 {
     public record Command(string UserPrompt, string ThreadId) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IHttpContextAccessor contextAccessor, IAssistantsService assistantsService, IChatThreadService chatThreadService, IChatMessageService chatMessageService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, 
+        IAppKernel appKernel, 
+        IHttpContextAccessor contextAccessor, 
+        IAssistantsService assistantsService, 
+        IChatThreadService chatThreadService, 
+        IChatMessageService chatMessageService,
+        IAzureAiSearch azureAiSearch) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -23,6 +39,68 @@ public static class Chat
             var assistant = !string.IsNullOrWhiteSpace(thread.AssistantId)
                 ? await assistantsService.GetItemByIdAsync(thread.AssistantId)
                 : null;
+            
+            //Perform RAG if needed
+            var hasIndex = !string.IsNullOrWhiteSpace(assistant?.FilterOptions.Index);
+            var documents = hasIndex
+                ? await GetCitationDocumentsAsync(request.UserPrompt, assistant!.FilterOptions)
+                : [];
+            
+            //Execute Chat Stream
+            var chatSettings = assistant?.PromptOptions.
+            var aiStreamChats = hasIndex
+                ? appKernel.GetPromptFileChatStream(chatSettings, 
+                    Constants.ChatCompletionsPromptsPath + Constants.Prompts.ChatWithRag, 
+                    new Dictionary<string, object?>()
+                {
+                    {"documents", string.Join(string.Empty, documents.Select(x => x.ToString()))},
+                    {"userPrompt", request.UserPrompt},
+                    {"chatHistory", Message.ParseSemanticKernelChatHistoryString(messages, assistant?.PromptOptions.SystemPrompt)}
+                })
+                : 
+                appKernel.GetChatStream(
+                    Message.ParseSemanticKernelChatHistory(messages, assistant?.PromptOptions.SystemPrompt), chatSettings);
+
+            var assistantFullResponse = new StringBuilder();
+            await foreach (var chatStream in aiStreamChats.WithCancellation(cancellationToken))
+            {
+                assistantFullResponse.Append(chatStream[ResponseType.Chat]);
+                await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, chatStream);
+            }
+            
+            //Write citations object to stream
+            if (documents.Count > 0)
+                await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!,
+                    new Dictionary<ResponseType, object>()
+                    {
+                        {ResponseType.Citations, documents}
+                    });
+                    
+            await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, assistantFullResponse.ToString());
+            return Results.Ok();
+        }
+
+        private async Task<List<Citation>> GetCitationDocumentsAsync(string userPrompt, AssistantFilterOptions filterOptions)
+        {
+            var embedding = await appKernel.GenerateEmbeddingAsync(userPrompt);
+            var documents = await azureAiSearch.SearchAsync(filterOptions.Index, 
+                new AiSearchOptions(userPrompt, embedding)
+                {
+                    DocumentLimit = filterOptions.DocumentLimit
+                });
+            return documents.Select(x => new Citation
+            {
+                Chunk = x.Chunk,
+                Link = x.Url
+            }).ToList();
+        }
+
+        private async Task SaveUserAndAssistantMessagesAsync(string threadId, string userPrompt, string assistantResponse)
+        {
+            var userMessage = Message.CreateUser(threadId, userPrompt, new MessageOptions());
+            await chatMessageService.AddItemAsync(userMessage);
+            var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
+            await chatMessageService.AddItemAsync(assistantMessage);
         }
     }
 

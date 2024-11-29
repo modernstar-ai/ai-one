@@ -1,5 +1,6 @@
 ﻿using Agile.Framework.AzureAiSearch.AiSearchConstants;
 using Agile.Framework.AzureAiSearch.Interfaces;
+using Agile.Framework.AzureAiSearch.Models;
 using Agile.Framework.Common.Attributes;
 using Azure;
 using Azure.Search.Documents.Indexes;
@@ -12,6 +13,21 @@ namespace Agile.Framework.AzureAiSearch;
 [Export(typeof(IAzureAiSearch), ServiceLifetime.Singleton)]
 public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient indexClient, ILogger<AzureAiSearch> logger) : IAzureAiSearch
 {
+    public async Task<List<AzureSearchDocument>> SearchAsync(string indexName, AiSearchOptions aiSearchOptions)
+    {
+        var searchClient = indexClient.GetSearchClient(indexName);
+
+        var searchResults = await searchClient.SearchAsync<AzureSearchDocument>(aiSearchOptions.ParseSearchOptions());
+
+        if (!searchResults.HasValue) return [];
+
+        var results = searchResults.Value.GetResultsAsync();
+        return results
+            .ToBlockingEnumerable()
+            .Select(x => x.Document)
+            .ToList();
+    }
+    
     #region Indexers
     public async Task DeleteIndexerAsync(string indexName)
     {
@@ -27,7 +43,7 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
         if (respSkillset.IsError || respDatasource.IsError || respIndexer.IsError || respIndex.IsError)
             logger.LogCritical($"Ran into error deleting. skillset resp: {respSkillset.ReasonPhrase} datasource resp: {respDatasource.ReasonPhrase} Indexer resp: {respIndexer.ReasonPhrase} index resp: {respIndex.ReasonPhrase}");
     }
-    
+
     public async Task<bool> IndexerExistsAsync(string indexName)
     {
         try

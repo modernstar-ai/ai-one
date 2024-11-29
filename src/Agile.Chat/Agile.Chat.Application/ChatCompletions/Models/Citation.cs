@@ -4,4 +4,5 @@ public class Citation
 {
     public string Name { get; set; }
     public string Link { get; set; }
+    public string Chunk { get; set; }
 }
