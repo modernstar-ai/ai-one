@@ -17,7 +17,7 @@ public interface IChatMessageService  : ICosmosRepository<Message>
 
 [Export(typeof(IChatMessageService), ServiceLifetime.Singleton)]
 public class ChatMessageService(CosmosClient cosmosClient) : 
-    CosmosRepository<Message>(Constants.CosmosChatsContainerName, cosmosClient, nameof(ChatThread.UserId)), IChatMessageService
+    CosmosRepository<Message>(Constants.CosmosChatsContainerName, cosmosClient, nameof(Message.Type)), IChatMessageService
 {
     public async Task<List<Message>> GetAllAsync(string threadId)
     {

@@ -8,21 +8,19 @@ namespace Agile.Framework.Ai;
 [Experimental("SKEXP0010")]
 public static class DependencyInjection
 {
-    public static IServiceCollection AddAgileAi(this IServiceCollection services) =>
+    public static IServiceCollection AddSemanticKernel(this IServiceCollection services) =>
         services.AddAppKernel();
     
     private static IServiceCollection AddAppKernel(this IServiceCollection services) =>
-        services.AddTransient<AppKernel>(_ =>
+        services.AddTransient<Kernel>(_ =>
         {
             var configs = Configs.AzureOpenAi;
 
-            var kernel = Kernel.CreateBuilder()
+            return Kernel.CreateBuilder()
                 .AddAzureOpenAIChatCompletion(configs.DeploymentName, configs.Endpoint, configs.ApiKey,
                     apiVersion: configs.ApiVersion)
                 .AddAzureOpenAITextEmbeddingGeneration(configs.EmbeddingsDeploymentName, configs.Endpoint,
                     configs.ApiKey, apiVersion: configs.ApiVersion)
                 .Build();
-
-            return new AppKernel(kernel);
         });
 }

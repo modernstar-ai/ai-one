@@ -15,7 +15,7 @@ public static class DeleteIndexById
 {
     public record Command(Guid Id) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IIndexService indexService, IBlobStorage blobStorage, IFilesService filesService, IAzureAiSearch azureAiSearch) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IIndexService indexService, IBlobStorage blobStorage, IFileService fileService, IAzureAiSearch azureAiSearch) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -29,7 +29,7 @@ public static class DeleteIndexById
             //Delete all files on blob first
             await blobStorage.DeleteIndexFilesAsync(index.Name);
             //Delete all files in cosmos next
-            await filesService.DeleteAllByIndexAsync(index.Name);
+            await fileService.DeleteAllByIndexAsync(index.Name);
             //Delete index/indexer/skillset/datasource on ai search
             await azureAiSearch.DeleteIndexerAsync(index.Name);
             

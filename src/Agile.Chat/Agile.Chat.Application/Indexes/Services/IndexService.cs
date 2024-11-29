@@ -16,7 +16,7 @@ public interface IIndexService  : ICosmosRepository<CosmosIndex>
 }
 
 [Export(typeof(IIndexService), ServiceLifetime.Scoped)]
-public class IndexesService(CosmosClient cosmosClient, IRoleService roleService) : 
+public class IndexService(CosmosClient cosmosClient, IRoleService roleService) : 
     CosmosRepository<CosmosIndex>(Constants.CosmosIndexesContainerName, cosmosClient), IIndexService
 {
     public async Task<List<CosmosIndex>> GetAllAsync()

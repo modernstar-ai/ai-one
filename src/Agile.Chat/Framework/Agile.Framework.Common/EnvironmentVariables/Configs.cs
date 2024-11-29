@@ -17,6 +17,7 @@ public static class Configs
     public static AzureOpenAiConfig AzureOpenAi => config.GetSection("AzureOpenAi").Get<AzureOpenAiConfig>()!;
     public static AzureSearchConfig AzureSearch => config.GetSection("AzureSearch").Get<AzureSearchConfig>()!;
     public static CosmosDbConfig CosmosDb => config.GetSection("CosmosDb").Get<CosmosDbConfig>()!;
+    public static AuditConfig Audit => config.GetSection("Audit").Get<AuditConfig>()!;
     public static List<string> AdminEmailAddresses => config.GetSection("AdminEmailAddresses").Get<List<string>>()!;
     
     #region UTS

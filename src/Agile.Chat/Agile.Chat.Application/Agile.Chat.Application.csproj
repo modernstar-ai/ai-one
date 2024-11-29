@@ -24,6 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Audits\Commands\" />
       <Folder Include="ChatCompletions\Dtos\" />
       <Folder Include="Tools\" />
     </ItemGroup>

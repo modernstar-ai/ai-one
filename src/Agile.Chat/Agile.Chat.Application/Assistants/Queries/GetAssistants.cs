@@ -9,7 +9,7 @@ public static class GetAssistants
 {
     public record Query() : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IAssistantsService assistantService) : IRequestHandler<Query, IResult>
+    public class Handler(ILogger<Handler> logger, IAssistantService assistantService) : IRequestHandler<Query, IResult>
     {
 
         public async Task<IResult> Handle(Query request, CancellationToken cancellationToken)

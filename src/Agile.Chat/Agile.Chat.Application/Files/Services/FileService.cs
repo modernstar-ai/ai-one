@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Agile.Chat.Application.Files.Services;
 
-public interface IFilesService  : ICosmosRepository<CosmosFile>
+public interface IFileService  : ICosmosRepository<CosmosFile>
 {
     Task<List<CosmosFile>> GetAllAsync();
     Task<bool> ExistsAsync(string fileName, string indexName, string? folderName = null);
@@ -19,9 +19,9 @@ public interface IFilesService  : ICosmosRepository<CosmosFile>
     Task DeleteAllByIndexAsync(string indexName);
 }
 
-[Export(typeof(IFilesService), ServiceLifetime.Scoped)]
-public class FilesService(CosmosClient cosmosClient, IIndexService indexService, IRoleService roleService) : 
-    CosmosRepository<CosmosFile>(Constants.CosmosFilesContainerName, cosmosClient), IFilesService
+[Export(typeof(IFileService), ServiceLifetime.Scoped)]
+public class FileService(CosmosClient cosmosClient, IIndexService indexService, IRoleService roleService) : 
+    CosmosRepository<CosmosFile>(Constants.CosmosFilesContainerName, cosmosClient), IFileService
 {
     public async Task<List<CosmosFile>> GetAllAsync()
     {

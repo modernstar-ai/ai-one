@@ -1,6 +1,9 @@
 ﻿using System.Security.Claims;
 using Agile.Chat.Application.Assistants.Services;
+using Agile.Chat.Application.Audits.Services;
 using Agile.Chat.Application.ChatThreads.Services;
+using Agile.Chat.Domain.Audits.Aggregates;
+using Agile.Chat.Domain.Audits.ValueObjects;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using FluentValidation;
@@ -19,7 +22,7 @@ public static class CreateChatThread
         ChatThreadPromptOptions PromptOptions,
         ChatThreadFilterOptions FilterOptions) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IAssistantsService assistantsService, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IAuditService<ChatThread> chatThreadAuditService, IAssistantService assistantService, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -28,7 +31,7 @@ public static class CreateChatThread
             
             logger.LogInformation("Handler executed {Handler}", typeof(Handler).Namespace);
 
-            var assistant = request.AssistantId != null ? await assistantsService.GetItemByIdAsync(request.AssistantId) : null;
+            var assistant = request.AssistantId != null ? await assistantService.GetItemByIdAsync(request.AssistantId) : null;
             var chatThread = ChatThread.Create(
                 username,
                 request.Name,
@@ -38,6 +41,7 @@ public static class CreateChatThread
                 request.AssistantId);
 
             await chatThreadService.AddItemAsync(chatThread);
+            await chatThreadAuditService.AddItemAsync(Audit<ChatThread>.Create(chatThread));
             logger.LogInformation("Inserted ChatThread {@ChatThread} successfully", chatThread);
             return Results.Created(chatThread.Id, chatThread);
         }

@@ -15,7 +15,7 @@ public static class UploadFile
         string IndexName, 
         string? FolderName) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IBlobStorage blobStorage, IFilesService filesService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IBlobStorage blobStorage, IFileService fileService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -29,7 +29,7 @@ public static class UploadFile
                 request.IndexName, 
                 request.FolderName);
             
-            await filesService.UpdateItemByIdAsync(cosmosFile.Id, cosmosFile);
+            await fileService.UpdateItemByIdAsync(cosmosFile.Id, cosmosFile);
             return Results.Created(cosmosFile.Id, cosmosFile);
         }
     }

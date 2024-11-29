@@ -18,7 +18,7 @@ public static class CreateAssistant
         AssistantFilterOptions FilterOptions, 
         AssistantPromptOptions PromptOptions) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IAssistantsService assistantsService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IAssistantService assistantService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -32,7 +32,7 @@ public static class CreateAssistant
                 request.FilterOptions,
                 request.PromptOptions);
 
-            await assistantsService.AddItemAsync(assistant);
+            await assistantService.AddItemAsync(assistant);
             return Results.Created(assistant.Id, assistant);
         }
     }

@@ -8,14 +8,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Agile.Chat.Application.Assistants.Services;
 
-public interface IAssistantsService  : ICosmosRepository<Assistant>
+public interface IAssistantService  : ICosmosRepository<Assistant>
 {
     public Task<List<Assistant>> GetAllAsync();
 }
 
-[Export(typeof(IAssistantsService), ServiceLifetime.Singleton)]
-public class AssistantsService(CosmosClient cosmosClient) : 
-    CosmosRepository<Assistant>(Constants.CosmosAssistantsContainerName, cosmosClient), IAssistantsService
+[Export(typeof(IAssistantService), ServiceLifetime.Singleton)]
+public class AssistantService(CosmosClient cosmosClient) : 
+    CosmosRepository<Assistant>(Constants.CosmosAssistantsContainerName, cosmosClient), IAssistantService
 {
     public async Task<List<Assistant>> GetAllAsync()
     {

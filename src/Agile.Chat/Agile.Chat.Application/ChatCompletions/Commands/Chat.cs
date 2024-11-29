@@ -1,10 +1,13 @@
 ﻿using System.Security.Claims;
 using System.Text;
 using Agile.Chat.Application.Assistants.Services;
+using Agile.Chat.Application.Audits.Services;
 using Agile.Chat.Application.ChatCompletions.Models;
 using Agile.Chat.Application.ChatCompletions.Utils;
 using Agile.Chat.Application.ChatThreads.Services;
 using Agile.Chat.Domain.Assistants.ValueObjects;
+using Agile.Chat.Domain.Audits.Aggregates;
+using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Ai;
@@ -26,10 +29,12 @@ public static class Chat
     public class Handler(ILogger<Handler> logger, 
         IAppKernel appKernel, 
         IHttpContextAccessor contextAccessor, 
-        IAssistantsService assistantsService, 
+        IAssistantService assistantService, 
         IChatThreadService chatThreadService, 
         IChatMessageService chatMessageService,
-        IAzureAiSearch azureAiSearch) : IRequestHandler<Command, IResult>
+        IAzureAiSearch azureAiSearch,
+        IAuditService<Message> chatMessageAuditService,
+        IAuditService<ChatThread> chatThreadAuditService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -37,7 +42,7 @@ public static class Chat
             var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId);
             var messages = await chatMessageService.GetAllAsync(thread!.Id);
             var assistant = !string.IsNullOrWhiteSpace(thread.AssistantId)
-                ? await assistantsService.GetItemByIdAsync(thread.AssistantId)
+                ? await assistantService.GetItemByIdAsync(thread.AssistantId)
                 : null;
             
             //Perform RAG if needed
@@ -100,8 +105,10 @@ public static class Chat
         {
             var userMessage = Message.CreateUser(threadId, userPrompt, new MessageOptions());
             await chatMessageService.AddItemAsync(userMessage);
+            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage));
             var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
             await chatMessageService.AddItemAsync(assistantMessage);
+            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage));
         }
     }
 

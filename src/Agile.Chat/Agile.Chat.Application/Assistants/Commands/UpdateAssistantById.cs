@@ -19,17 +19,17 @@ public static class UpdateAssistantById
         AssistantFilterOptions FilterOptions, 
         AssistantPromptOptions PromptOptions) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IAssistantsService assistantsService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IAssistantService assistantService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             logger.LogInformation("Handler executed {Handler}", typeof(Handler).Namespace);
-            var assistant = await assistantsService.GetItemByIdAsync(request.Id.ToString());
+            var assistant = await assistantService.GetItemByIdAsync(request.Id.ToString());
             if(assistant is null) return Results.NotFound();
             
             logger.LogInformation("Updating Assistant old values: {@Assistant}", assistant);
             assistant.Update(request.Name, request.Description, request.Greeting, request.Status, request.FilterOptions, request.PromptOptions);
-            await assistantsService.UpdateItemByIdAsync(assistant.Id, assistant);
+            await assistantService.UpdateItemByIdAsync(assistant.Id, assistant);
             logger.LogInformation("Updated Assistant Successfully: {@Assistant}", assistant);
             
             return Results.Ok();

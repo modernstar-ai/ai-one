@@ -12,12 +12,12 @@ public static class GetFiles
 {
     public record Query() : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IFilesService filesService) : IRequestHandler<Query, IResult>
+    public class Handler(ILogger<Handler> logger, IFileService fileService) : IRequestHandler<Query, IResult>
     {
 
         public async Task<IResult> Handle(Query request, CancellationToken cancellationToken)
         {
-            var files = await filesService.GetAllAsync();
+            var files = await fileService.GetAllAsync();
             return Results.Ok(files);
         }
     }

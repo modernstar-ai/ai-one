@@ -1,5 +1,6 @@
 ﻿using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
+using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.DomainAbstractions;
 
 namespace Agile.Chat.Domain.ChatThreads.Aggregates;
@@ -8,6 +9,7 @@ public class ChatThread : AuditableAggregateRoot
 {
     private ChatThread(){}
     public string Name { get; private set; }
+    [PII]
     public string UserId { get; private set; }
     public ChatType Type { get; private set; }
     public bool IsBookmarked { get; private set; }

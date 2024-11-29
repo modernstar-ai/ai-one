@@ -1,6 +1,9 @@
 ﻿using System.Security.Claims;
+using Agile.Chat.Application.Audits.Services;
 using Agile.Chat.Application.ChatThreads.Services;
 using Agile.Chat.Domain.Assistants.ValueObjects;
+using Agile.Chat.Domain.Audits.Aggregates;
+using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using FluentValidation;
 using MediatR;
@@ -18,7 +21,7 @@ public static class UpdateChatThreadById
         ChatThreadFilterOptions FilterOptions,
         ChatThreadPromptOptions PromptOptions) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IAuditService<ChatThread> chatThreadAuditService, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -35,6 +38,7 @@ public static class UpdateChatThreadById
             logger.LogInformation("Updating ChatThread old values: {@ChatThread}", chatThread);
             chatThread.Update(request.Name, request.IsBookmarked, request.PromptOptions, request.FilterOptions);
             await chatThreadService.UpdateItemByIdAsync(chatThread.Id, chatThread);
+            await chatThreadAuditService.UpdateItemByPayloadIdAsync(chatThread);
             logger.LogInformation("Updated Assistant Successfully: {@Assistant}", chatThread);
             
             return Results.Ok();

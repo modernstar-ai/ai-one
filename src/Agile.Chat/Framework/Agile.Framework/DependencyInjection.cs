@@ -18,7 +18,7 @@ public static class DependencyInjection
     public static IServiceCollection AddFramework(this IServiceCollection services, IConfiguration configuration) =>
         services
             .AddSeriLogLogging(configuration)
-            .AddAgileAi()
+            .AddSemanticKernel()
             .AddCosmosDb()
             .AddBlobStorage()
             .AddAzureAiSearch()

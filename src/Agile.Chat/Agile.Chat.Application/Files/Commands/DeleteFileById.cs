@@ -13,17 +13,17 @@ public static class DeleteFileById
 {
     public record Command(Guid Id) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IFilesService filesService, IBlobStorage blobStorage) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IFileService fileService, IBlobStorage blobStorage) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            var file = await filesService.GetItemByIdAsync(request.Id.ToString());
+            var file = await fileService.GetItemByIdAsync(request.Id.ToString());
             if (file == null) return Results.NotFound();
 
             logger.LogInformation("Beginning to delete cosmos file {@File}", file);
             await blobStorage.DeleteAsync(file.Name, file.IndexName, file.FolderName);
             logger.LogInformation("File from blob deleted. Beginning to delete cosmos record");
-            await filesService.DeleteItemByIdAsync(file.Id);
+            await fileService.DeleteItemByIdAsync(file.Id);
             
             return Results.Ok();
         }

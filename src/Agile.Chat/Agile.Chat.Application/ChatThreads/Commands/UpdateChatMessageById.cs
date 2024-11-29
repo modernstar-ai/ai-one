@@ -1,7 +1,8 @@
 ﻿using System.Security.Claims;
+using Agile.Chat.Application.Audits.Services;
 using Agile.Chat.Application.ChatThreads.Services;
-using Agile.Chat.Domain.Assistants.ValueObjects;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
+using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using FluentValidation;
 using MediatR;
@@ -14,7 +15,7 @@ public static class UpdateChatMessageById
 {
     public record Command(Guid Id, MessageOptions Options) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService, IChatMessageService chatMessageService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IAuditService<Message> chatMessageAuditService, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService, IChatMessageService chatMessageService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -29,6 +30,7 @@ public static class UpdateChatMessageById
             
             message.Update(request.Options);
             await chatMessageService.UpdateItemByIdAsync(message.Id, message);
+            await chatMessageAuditService.UpdateItemByPayloadIdAsync(message);
             logger.LogInformation("Updated Message: {@Message}", message);
             return Results.Ok();
         }
