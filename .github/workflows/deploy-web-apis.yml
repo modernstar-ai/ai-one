@@ -1,4 +1,4 @@
-name: Deploy Web Apis
+name: Deploy AgileChat - Web Api
 on:
   workflow_dispatch:
     inputs:
