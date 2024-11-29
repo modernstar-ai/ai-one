@@ -9,6 +9,8 @@ using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Graph;
 using Serilog;
 
 namespace Agile.Framework;
@@ -30,6 +32,9 @@ public static class DependencyInjection
         foreach (var initializer in initializers)
             await initializer.InitializeAsync();
     }
+    
+    public static bool IsLocal(this IHostEnvironment app) => app.IsEnvironment("Local");
+    
     
     
     private static IServiceCollection AddSeriLogLogging(this IServiceCollection services, IConfiguration configuration) =>

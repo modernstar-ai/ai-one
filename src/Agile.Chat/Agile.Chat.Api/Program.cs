@@ -17,7 +17,7 @@ builder.Services
 var app = builder.Build();
 await app.InitializeServicesAsync();
 
-if (app.Environment.IsEnvironment("Local"))
+if (app.Environment.IsLocal())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
