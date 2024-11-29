@@ -59,17 +59,17 @@ builder.Services.AddScoped<IAssistantService, AssistantService>();
 
 // Define the CORS policy with allowed origins
 // Load allowed origins from environment variables or use default values
-//string[] allowedOrigins = Env.GetString("ALLOWED_ORIGINS")?.Split(';') ?? new[] { "http://localhost:3000", "http://localhost:5000", "https://agilechat-dev-webapp.azurewebsites.net" };
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("AllowSpecificOrigins", policy =>
-//    {
-//        policy.WithOrigins(allowedOrigins)
-//              .AllowAnyMethod()
-//              .AllowAnyHeader()
-//              .AllowCredentials();
-//    });
-//});
+string[] allowedOrigins = Env.GetString("ALLOWED_ORIGINS")?.Split(';') ?? new[] { "http://localhost:3000", "http://localhost:5000", "https://agilechat-dev-webapp.azurewebsites.net" };
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
 
 // Configure Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
@@ -85,14 +85,14 @@ if (app.Environment.IsDevelopment())
 }
 
 // Apply the CORS policy globally
-//app.UseCors("AllowSpecificOrigins");
+app.UseCors("AllowSpecificOrigins");
 
 // Set Referrer-Policy header to strict-origin-when-cross-origin
-//app.Use(async (context, next) =>
-//{
-//    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
-//    await next();
-//});
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    await next();
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
