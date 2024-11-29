@@ -348,6 +348,10 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           value: embeddingDeploymentName
         }
         {
+          name: 'AZURE_OPENAI_API_EMBEDDINGS_MODEL_NAME'
+          value: embeddingModelName
+        }
+        {
           name: 'AZURE_OPENAI_API_VERSION'
           value: openai_api_version
         }
