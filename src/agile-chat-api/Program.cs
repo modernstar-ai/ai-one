@@ -87,12 +87,12 @@ if (app.Environment.IsDevelopment())
 // Apply the CORS policy globally
 app.UseCors("AllowSpecificOrigins");
 
-// Set Referrer-Policy header to strict-origin-when-cross-origin
-app.Use(async (context, next) =>
-{
-    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
-    await next();
-});
+//// Set Referrer-Policy header to strict-origin-when-cross-origin
+//app.Use(async (context, next) =>
+//{
+//    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+//    await next();
+//});
 
 app.UseAuthentication();
 app.UseAuthorization();
