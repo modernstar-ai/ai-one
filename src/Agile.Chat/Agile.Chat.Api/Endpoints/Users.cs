@@ -10,14 +10,14 @@ public class Users(IMediator mediator) : CarterModule("/api")
 {
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
-        var threads = app
+        var users = app
             .MapGroup(nameof(Users))
             .RequireAuthorization()
             .IncludeInOpenApi()
             .WithTags(nameof(Users));
 
         //GET
-        threads.MapGet("/permissions", GetPermissions);
+        users.MapGet("/permissions", GetPermissions);
     }
 
     private async Task<IResult> GetPermissions()

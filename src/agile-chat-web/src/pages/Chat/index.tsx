@@ -100,7 +100,7 @@ const ChatPage = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !thread || !messagesDb) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
@@ -125,10 +125,12 @@ const ChatPage = () => {
                 //message.sender !== 'system' && (
                 <ChatMessageArea
                   key={index}
-                  messageId={messagesDb![index].id}
+                  messageId={messagesDb![index]?.id}
                   userId={thread!.userId || ''} // Ensure username is never undefined
-                  profileName={messagesDb![index].type === MessageType.User ? thread!.userId || 'User' : 'AI Assistant'}
-                  role={messagesDb![index].type === MessageType.User ? 'user' : 'assistant'}
+                  profileName={
+                    messagesDb![index]?.type === MessageType.User ? thread!.userId || 'User' : 'AI Assistant'
+                  }
+                  role={messagesDb![index]?.type === MessageType.User ? 'user' : 'assistant'}
                   onCopy={() => {
                     navigator.clipboard.writeText(message.content);
                   }}

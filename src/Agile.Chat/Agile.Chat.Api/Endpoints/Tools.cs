@@ -9,21 +9,21 @@ public class Tools(IMediator mediator) : CarterModule("/api")
 {
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
-        var threads = app
+        var tools = app
             .MapGroup(nameof(Tools))
             .RequireAuthorization()
             .IncludeInOpenApi()
             .WithTags(nameof(Tools));
 
         //GET
-        threads.MapGet("/", GetTools);
-        threads.MapGet("/{id:guid}", GetToolById);
+        tools.MapGet("/", GetTools);
+        tools.MapGet("/{id:guid}", GetToolById);
         //POST
-        threads.MapPost("/", CreateTool);
+        tools.MapPost("/", CreateTool);
         //PUT
-        threads.MapPut("/{id:guid}", UpdateToolById);
+        tools.MapPut("/{id:guid}", UpdateToolById);
         //DELETE
-        threads.MapDelete("/{id:guid}", DeleteToolById);
+        tools.MapDelete("/{id:guid}", DeleteToolById);
     }
 
     private async Task<IResult> GetTools()

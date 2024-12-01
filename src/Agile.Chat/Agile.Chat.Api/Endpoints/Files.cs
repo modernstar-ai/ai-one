@@ -12,18 +12,18 @@ public class Files(IMediator mediator) : CarterModule("/api")
 {
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
-        var threads = app
+        var files = app
             .MapGroup(nameof(Files))
             .RequireAuthorization()
             .IncludeInOpenApi()
             .WithTags(nameof(Files));
 
         //GET
-        threads.MapGet("/", GetFiles);
+        files.MapGet("/", GetFiles);
         //POST
-        threads.MapPost("/", UploadFile);
+        files.MapPost("/", UploadFile);
         //DELETE
-        threads.MapDelete("/{id:guid}", DeleteFileById);
+        files.MapDelete("/{id:guid}", DeleteFileById);
     }
 
     private async Task<IResult> GetFiles()

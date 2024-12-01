@@ -13,21 +13,21 @@ public class Indexes(IMediator mediator) : CarterModule("/api")
 {
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
-        var threads = app
+        var indexes = app
             .MapGroup(nameof(Indexes))
             .RequireAuthorization()
             .IncludeInOpenApi()
             .WithTags(nameof(Indexes));
 
         //GET
-        threads.MapGet("/", GetIndexes);
-        threads.MapGet("/{id:guid}", GetIndexById);
+        indexes.MapGet("/", GetIndexes);
+        indexes.MapGet("/{id:guid}", GetIndexById);
         //POST
-        threads.MapPost("/", CreateIndex);
+        indexes.MapPost("/", CreateIndex);
         //PUT
-        threads.MapPut("/{id:guid}", UpdateIndexById);
+        indexes.MapPut("/{id:guid}", UpdateIndexById);
         //DELETE
-        threads.MapDelete("/{id:guid}", DeleteIndexById);
+        indexes.MapDelete("/{id:guid}", DeleteIndexById);
     }
 
     private async Task<IResult> GetIndexes()
