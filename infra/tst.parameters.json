@@ -1,39 +1,50 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-      "projectName": {
-        "value": "agilechat"
-      },
-      "environmentName": {
-        "value": "tst"
-      },
-     "location": {
-        "value": "australiaeast"
-      },
-      "openAILocation": {
-        "value": "australiaeast"
-      },
-      "dalleLocation": {
-        "value": "australiaeast"
-      },
-      "azureClientID": {
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "projectName": {
+      "value": "agilechat"
+    },
+    "environmentName": {
+      "value": "tst"
+    },
+    "location": {
+      "value": "australiaeast"
+    },
+    "openAILocation": {
+      "value": "australiaeast"
+    },
+    "dalleLocation": {
+      "value": "australiaeast"
+    },
+    "azureClientID": {
+      "value": ""
+    },
+    "azureClientSecret": {
+      "value": ""
+    },
+    "azureTenantId": {
+      "value": ""
+    },
+    "aspCoreEnvironment": {
+      "value": "Development"
+    } ,
+    "azureADAppIdOrUri": {
         "value": ""
-      },
-      "azureClientSecret": {
+    },
+    "UtsRoleApiEndpoint": {
         "value": ""
-      },
-      "azureTenantId": {
-        "value": ""
-      },
-      "aspCoreEnvironment": {
-        "value": "Development"
-      },
-      "azureADAppIdOrUri": {
-          "value": ""
-      },
-      "UtsRoleApiEndpoint": {
-          "value": ""
-      } 
-    }
+    },
+    "UtsXApiKey": {
+      "value": ""
+  },
+    "aspCoreEnvironment": {
+      "value": "Development" //'Development', 'Test', 'UAT', 'Production'
+    },
+    "deployEventGrid": {
+      "value": false
+  },  
+  "kvSetFunctionAppPermissions": {
+      "value": false
+  }     
   }

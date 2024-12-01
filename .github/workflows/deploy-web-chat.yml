@@ -1,13 +1,21 @@
-name: Deploy Web Chat App
+name: Deploy AgileChat - Web App
 on:
   workflow_dispatch:
     inputs:
       reason:
-        description: The reason for running the workflow
+        description: "The reason for running the workflow:"
         required: false
         default: Manual run
+      ui_web_app_name:
+        description: "Enter the name of the Azure Web App:"
+        required: true
+        default: "agilechat-dev-webapp"
+      vite_agile_chat_api_url:
+        description: "Enter the name of the Azure UI Web App Target:"
+        required: true
+        default: "https://agilechat-dev-apiapp.azurewebsites.net"
       environment:
-        description: "Select the App environment"
+        description: "Select the Azure environment:"
         required: true
         type: choice
         default: "Development"
@@ -36,17 +44,16 @@ jobs:
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
       AGILE_CHAT_WEB_SRC: "./src/agile-chat-web"
       AGILE_CHAT_WEB_PUB: "./publish/agile-chat-web"
-      AGILE_CHAT_WEB_NAME: ${{ vars.AGILE_CHAT_WEB_NAME }}
-      AGILE_CHAT_API_NAME: ${{ vars.AGILE_CHAT_API_NAME }}
-      AGILE_RAGCHAT_API_NAME: ${{ vars.AGILE_RAGCHAT_API_NAME }}
-      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
-      VITE_AGILECHAT_API_URL: ${{ vars.VITE_AGILECHAT_API_URL }}
-      VITE_AZURE_AD_CLIENT_ID:  ${{ vars.AZURE_CLIENT_ID }}
+      AGILE_CHAT_WEB_NAME: ${{ github.event.inputs.ui_web_app_name }}
+      VITE_AGILECHAT_API_URL: ${{ github.event.inputs.vite_agile_chat_api_url }}
+      VITE_AZURE_AD_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       VITE_AZURE_AD_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
+
+      # AGILE_CHAT_API_NAME: ${{ vars.AGILE_CHAT_API_NAME }}
+      # AGILE_RAGCHAT_API_NAME: ${{ vars.AGILE_RAGCHAT_API_NAME }}
 
     steps:
       - name: Checkout code
@@ -60,15 +67,13 @@ jobs:
         with:
           node-version: "18.x"
 
-      - name: Agile-Chat-Web - Node build and publish 
-        run: |      
+      - name: Agile-Chat-Web - Node build and publish
+        run: |
           cd ${{ env.AGILE_CHAT_WEB_SRC }}
           npm install 
           npm run build --if-present
 
-      # - name: Agile-Chat-Web - Clean previous zip
-      #   run: |
-      #     rm -f ../../release.zip
+        #############################################################
 
       - name: Agile-Chat-Web - Zip artifact for deployment
         run: |

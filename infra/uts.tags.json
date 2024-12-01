@@ -1,0 +1,12 @@
+{
+    "uts_costcentre": "5000023.00000000",
+    "uts_primarycontact": "carl.young@uts.edu.au",
+	"uts_env": "test",
+    "uts_project": "2023-2035 Artificial Intelligence",
+    "uts_research": "Yes",
+    "uts_iac": "Yes",
+    "uts_repo": "https://github.com/uts-itd/agile-chat",
+    "uts_data_classification": "UTS Internal",
+    "uts_business_owner": "susan.gibson@uts.edu.au",
+    "azd-env-name": "uts-dev"
+}

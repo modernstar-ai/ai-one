@@ -23,15 +23,10 @@ export default function FileList() {
   // Sorting logic
   useEffect(() => {
     const sorted = [...files].sort((a, b) => {
-      const folderA = a.folder ?? ''; // Use empty string if folder is undefined
-      const folderB = b.folder ?? '';
-      const fileNameA = a.fileName ?? ''; // Use empty string if fileName is undefined
-      const fileNameB = b.fileName ?? '';
-
-      if (folderA === folderB) {
-        return fileNameA.localeCompare(fileNameB);
-      }
-      return folderA.localeCompare(folderB);
+      const indexNameA = a.indexName ?? ''; // Use empty string if indexName is undefined
+      const indexNameB = b.indexName ?? '';
+  
+      return indexNameA.localeCompare(indexNameB);
     });
     setSortedFiles(sorted);
   }, [files]);
@@ -87,6 +82,7 @@ export default function FileList() {
       console.error('Error deleting files:', error);
       alert('An error occurred while deleting files.');
     } finally {
+      handleRefresh();
       setIsProcessing(false);
     }
   };
@@ -177,7 +173,7 @@ export default function FileList() {
                   <TableCell>{simplifyContentType(file.contentType || 'unknown')}</TableCell>
                   <TableCell>{formatBytesToKB(file.size)}</TableCell>
                   <TableCell>{file.submittedOn}</TableCell>
-                  <TableCell>{file.folder}</TableCell>
+                  <TableCell>{file.indexName}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

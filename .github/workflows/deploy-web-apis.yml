@@ -1,13 +1,17 @@
-name: Deploy Web Apis
+name: Deploy AgileChat - Web Api
 on:
   workflow_dispatch:
     inputs:
       reason:
-        description: The reason for running the workflow
+        description: "The reason for running the workflow:"
         required: false
         default: Manual run
+      api_web_app_name:
+        description: "Enter the name of the Azure Web Api:"
+        required: true
+        default: "agilechat-dev-apiapp"
       environment:
-        description: "Select the App environment"
+        description: "Select the Azure environment:"
         required: true
         type: choice
         default: "Development"
@@ -36,15 +40,13 @@ jobs:
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
       AGILE_CHAT_API_SRC: "./src/agile-chat-api"
       AGILE_CHAT_API_PUB: "./publish/agile-chat-api"
-      AGILE_CHAT_API_NAME: ${{ vars.AGILE_CHAT_API_NAME }}
-      AGILE_RAGCHAT_API_SRC: "./src/agile-ragchat-api"
-      AGILE_RAGCHAT_API_PUB: "./publish/agile-ragchat-api"
-      AGILE_RAGCHAT_API_NAME: ${{ vars.AGILE_RAGCHAT_API_NAME }}
-      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
+      AGILE_CHAT_API_NAME: ${{ github.event.inputs.api_web_app_name }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input       
+        #AGILE_RAGCHAT_API_SRC: "./src/agile-ragchat-api"
+      #AGILE_RAGCHAT_API_PUB: "./publish/agile-ragchat-api"
+      #AGILE_RAGCHAT_API_NAME: ${{ vars.AGILE_RAGCHAT_API_NAME }}
 
     steps:
       - name: Checkout code
@@ -58,7 +60,7 @@ jobs:
         #############################################################
         ## Agile-Chat-Api- dotnet build and publish
       - name: Agile-Chat-Api- dotnet build and publish
-        run: |          
+        run: |
           dotnet restore ${{ env.AGILE_CHAT_API_SRC }}
           dotnet build ${{ env.AGILE_CHAT_API_SRC }} --no-restore --configuration Release
           dotnet publish ${{ env.AGILE_CHAT_API_SRC }} -c Release -o ${{ env.AGILE_CHAT_API_PUB }} 
@@ -71,9 +73,7 @@ jobs:
       #     dotnet restore ${{ env.AGILE_RAGCHAT_API_SRC }}
       #     dotnet build ${{ env.AGILE_RAGCHAT_API_SRC }} --no-restore --configuration Release
       #     dotnet publish ${{ env.AGILE_RAGCHAT_API_SRC }} -c Release -o ${{ env.AGILE_RAGCHAT_API_PUB }}
-
-        #############################################################
-
+      #############################################################
       - name: Login to Azure
         uses: azure/login@v2
         with:

@@ -34,6 +34,17 @@
       },
       "UtsRoleApiEndpoint": {
           "value": ""
-      }  
+      },
+      "UtsXApiKey": {
+        "value": ""
+    },
+      "aspCoreEnvironment": {
+        "value": "Development" //'Development', 'Test', 'UAT', 'Production'
+      },
+      "deployEventGrid": {
+        "value": false
+    },  
+    "kvSetFunctionAppPermissions": {
+        "value": false
+    }     
     }
-  }

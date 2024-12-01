@@ -1,13 +1,70 @@
-name: Azure Bicep Deployment
+name: Deployment Agile Chat Infrastructure
 on:
   workflow_dispatch:
     inputs:
       reason:
-        description: The reason for running the workflow
+        description: "The reason for running the workflow:"
         required: false
         default: Manual run
+
+      resource_group:
+        description: "Enter the Azure resource group Name:"
+        required: true
+
+      azure_env_name:
+        description: "Enter the Azure Environment Name:"
+        required: true
+        default: "agile-dev"
+
+      azure_location:
+        description: "Select the Azure deployment region:"
+        required: true
+        type: choice
+        default: "australiaeast"
+        options:
+          - "australiaeast"
+          - "australiasoutheast"
+
+      asp_core_env:
+        description: "Select the ASP Core deployment environment:"
+        required: true
+        type: choice
+        default: "Development"
+        options:
+          - "Development"
+          - "Test"
+          - "UAT"
+          - "Production"
+
+       deployment_env_name:
+            description: "Select the deployment environment name - used to name resources:"
+            required: true
+            type: choice
+            default: "dev"
+            options:
+              - "dev"
+              - "tst"
+              - "uat"
+              - "prod"
+
+      uts_role_api_endpoint:
+        description: "Enter the UTS Role API Endpoint (e.g., https://agilechat-ENV-subjapi.azurewebsites.net):"
+        required: true
+
+      deploy_event_grid:
+          description: "Deploy Event Grid?:"
+          required: true
+          type: boolean
+          default: false
+
+      set_kv_function_app_permissions:
+            description: "Deploy and Assign Keyvault Web App Permissions?:"
+            required: true
+            type: boolean
+            default: false
+
       environment:
-        description: "Select the Azure environment"
+        description: "Select the Azure environment:"
         required: true
         type: choice
         default: "Development"
@@ -15,7 +72,9 @@ on:
           - Development
           - Test
           - Production
-# on:
+
+##########################################################################################################################
+
 #   push:
 #     branches:
 #       - main
@@ -34,27 +93,24 @@ jobs:
     env:
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-      AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
-      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AZURE_APP_ID: ${{ secrets.AZURE_APP_ID }}
+      UTS_XAPI_KEY: ${{ secrets.UTS_XAPI_KEY }}
+      ASP_CORE_ENV: "${{ github.event.inputs.asp_core_env }}"
+      UTS_ROLE_API_ENDPOINT: "${{ github.event.inputs.uts_role_api_endpoint }}"
+      DEPLOYMENT_ENV_NAME: "${{ github.event.inputs.deployment_env_name }}"
+      DEPLOYMENT_EVENT_GRID: "${{ github.event.inputs.deploy_event_grid }}"
+      SET_KV_FUNCTION_APP_PERMISSIONS: "${{ github.event.inputs.set_kv_function_app_permissions }}"
+      AZURE_RESOURCE_GROUP: "${{ github.event.inputs.resource_group }}"
+      AZURE_ENV_NAME: "${{ github.event.inputs.azure_env_name }}"
+      AZURE_LOCATION: "${{ github.event.inputs.azure_location }}"
       AZURE_BICEP_MAIN: "./infra/main.bicep"
       ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
 
+##########################################################################################################################
+
     steps:
-      - name: Set Bicep Param file
-        run: |
-          if [ "${{ github.event.inputs.environment }}" == "Development" ]; then
-            echo "BICEP_PARAMS=./infra/dev.parameters.json" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.environment }}" == "Test" ]; then
-            echo "BICEP_PARAMS=./infra/tst.parameters.json" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.environment }}" == "Production" ]; then
-            echo "BICEP_PARAMS=./infra/prd.parameters.json" >> $GITHUB_ENV
-          fi
-
-      - name: Verify environment variable
-        run: echo "The selected bicep params file is ${{ env.BICEP_PARAMS }}"
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -102,4 +158,16 @@ jobs:
           resource-group-name: "${{ env.AZURE_RESOURCE_GROUP }}"
           subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
           template-file: "${{ env.AZURE_BICEP_MAIN }}"
-          parameters-file: "${{ env.BICEP_PARAMS }}"
+          parameters: |
+            azureClientID=${{ env.AZURE_CLIENT_ID }}
+            azureClientSecret=${{ env.AZURE_CLIENT_SECRET }}
+            azureTenantId=${{ env.AZURE_TENANT_ID }}
+            azureADAppIdOrUri=${{ env.AZURE_APP_ID }}
+            UtsXApiKey=${{ env.UTS_XAPI_KEY }}
+            environmentName=${{ env.DEPLOYMENT_ENV_NAME }}
+            location=${{ env.AZURE_LOCATION }}
+            openAILocation=${{ env.AZURE_LOCATION }}
+            aspCoreEnvironment=${{ env.ASP_CORE_ENV }}
+            UtsRoleApiEndpoint=${{ env.UTS_ROLE_API_ENDPOINT }}
+            deployEventGrid=${{ env.DEPLOYMENT_EVENT_GRID }}
+            kvSetFunctionAppPermissions=${{ env.SET_KV_FUNCTION_APP_PERMISSIONS }}

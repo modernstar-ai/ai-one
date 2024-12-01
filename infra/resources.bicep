@@ -12,7 +12,7 @@ var apiapp_name = toLower('${resourcePrefix}-apiapp')
 var applicationInsightsName = toLower('${resourcePrefix}-apiapp')
 
 @description('Deployment Environment')
-@allowed(['Development', 'Production'])
+@allowed(['Development', 'Test', 'UAT', 'Production'])
 param aspCoreEnvironment string = 'Development'
 
 @description('AZURE_CLIENT_ID')
@@ -39,27 +39,18 @@ param embeddingDeploymentName string
 param embeddingDeploymentCapacity int
 param embeddingModelName string
 
-param OpenaiApiEmbeddingsModelName string = 'text-embedding-ada-002'
-param AdminEmailAddress string = 'adam-stephensen@agile-analytics.com.au'
+//param AdminEmailAddress string = 'adam-stephensen@agile-analytics.com.au'
 param AzureCosmosdbDbName string = 'chat'
 param AzureCosmosdbDatabaseName string = 'chat'
 param AzureCosmosdbContainerName string = 'history'
 param AzureCosmosdbConfigContainerName string = 'config'
 param AzureCosmosdbToolsContainerName string = 'tools'
 param AzureCosmosdbFilesContainerName string = 'fileUploads'
+param AzureCosmosdbAuditsContainerName string = 'audits'
+
 param AzureSearchIndexNameRag string = 'rag_index'
 param MaxUploadDocumentSize string = '20000000'
 param AzureStorageFoldersContainerName string = 'folders'
-
-param dalleLocation string
-param dalleDeploymentCapacity int
-param dalleDeploymentName string
-param dalleModelName string
-param dalleApiVersion string
-
-param speechServiceSkuName string = 'S0'
-
-param formRecognizerSkuName string = 'S0'
 
 param searchServiceSkuName string = 'standard'
 param searchServiceIndexName string = 'azure-chat'
@@ -68,24 +59,25 @@ param storageServiceSku object
 param storageServiceImageContainerName string
 
 var openai_name = toLower('${resourcePrefix}-aillm')
-var openai_dalle_name = toLower('${resourcePrefix}-aidalle')
+//var openai_dalle_name = toLower('${resourcePrefix}-aidalle')
 
 @description('Cosmos DB Chat threads container name')
 param azureCosmosDbChatThreadsName string = 'history'
 
-var form_recognizer_name = toLower('${resourcePrefix}-form')
-var speech_service_name = toLower('${resourcePrefix}-speech')
 var cosmos_name = toLower('${resourcePrefix}-cosmos')
 var search_name = toLower('${resourcePrefix}-search')
-// storage name must be < 24 chars, alphanumeric only. 'sto' is 3 and resourceToken is 13
+
 var clean_name = replace(replace('${resourcePrefix}', '-', ''), '_', '')
 var storage_prefix = take(clean_name, 13)
-var storage_name = toLower('${storage_prefix}sto')
-// keyvault name must be less than 24 chars - token is 13
-//var kv_prefix = take(projectName, 7)
-//var keyVaultName = toLower('${kv_prefix}${environmentName}-kv')
-//todo: apply toLower to resourcePrefix and ensure it is small enough to fit all resources.
-var keyVaultName = toLower('${resourcePrefix}-kv')
+
+@description('The unique name of the Storage Account.')
+param storage_name string = toLower('stg${uniqueString(resourceGroup().id)}')
+
+//var keyVaultName = toLower('${resourcePrefix}-kv')
+
+@description('The unique name of the Key Vault.')
+param keyVaultName string = toLower('kv-${uniqueString(resourceGroup().id)}')
+
 var la_workspace_name = toLower('${resourcePrefix}-la')
 var diagnostic_setting_name = 'AppServiceConsoleLogs'
 
@@ -94,6 +86,9 @@ var keyVaultSecretsOfficerRole = subscriptionResourceId(
   'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
 )
 
+@description('Conditionally deploy key vault Api app permissions')
+param kvSetFunctionAppPermissions bool = false
+
 var validStorageServiceImageContainerName = toLower(replace(storageServiceImageContainerName, '-', ''))
 
 //Event Grid config
@@ -101,7 +96,17 @@ var validStorageServiceImageContainerName = toLower(replace(storageServiceImageC
 param storageServiceFoldersContainerName string = 'index-content'
 
 @description('The Azure Active Directory Application ID or URI to get the access token that will be included as the bearer token in delivery requests')
+@secure()
 param azureADAppIdOrUri string = ''
+
+@description('Event Grid System Topic Name')
+var EventGridSystemTopicName = toLower('${resourcePrefix}-folders-listener')
+
+@description('Event Grid Subscription')
+var EventGridSystemTopicSubName = toLower('${resourcePrefix}-folders-blobs-listener')
+
+@description('Conditionally deploy event Grid')
+param deployEventGrid bool = false
 
 var databaseName = 'chat'
 var historyContainerName = 'history'
@@ -110,29 +115,36 @@ var configContainerName = 'config'
 @description('UTS Role Endpoint')
 param UtsRoleApiEndpoint string = ''
 
-// var llmDeployments = [
-//   {
-//     name: chatGptDeploymentName
-//     model: {
-//       format: 'OpenAI'
-//       name: chatGptModelName
-//       version: chatGptModelVersion
-//     }
-//     sku: {
-//       name: 'GlobalStandard'
-//       capacity: chatGptDeploymentCapacity
-//     }
-//   }
-//   {
-//     name: embeddingDeploymentName
-//     model: {
-//       format: 'OpenAI'
-//       name: embeddingModelName
-//       version: '2'
-//     }
-//     capacity: embeddingDeploymentCapacity
-//   }
-// ]
+@description('UTS Subject Query API Key')
+@secure()
+param UtsXApiKey string = ''
+
+@description('AI Services  Name')
+var aiServices_name = toLower('${projectName}${environmentName}-ai-services')
+
+var llmDeployments = [
+  {
+    name: chatGptDeploymentName
+    model: {
+      format: 'OpenAI'
+      name: chatGptModelName
+      version: chatGptModelVersion
+    }
+    sku: {
+      name: 'GlobalStandard'
+      capacity: chatGptDeploymentCapacity
+    }
+  }
+  {
+    name: embeddingDeploymentName
+    model: {
+      format: 'OpenAI'
+      name: embeddingModelName
+      version: '2'
+    }
+    capacity: embeddingDeploymentCapacity
+  }
+]
 
 /* **************************************************** */
 
@@ -160,12 +172,14 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
+    clientAffinityEnabled: false
     siteConfig: {
       linuxFxVersion: 'node|18-lts'
       alwaysOn: true
       appCommandLine: 'npx serve -s dist'
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
+
       appSettings: [
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
@@ -198,6 +212,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
+    clientAffinityEnabled: false
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true
@@ -219,7 +234,11 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'UTS_ROLE_API_ENDPOINT'
           value: UtsRoleApiEndpoint
-        }        
+        }
+        {
+          name: 'UTS_XAPI_KEY'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::UTS_XAPI_KEY.name})'
+        }
         {
           name: 'AZURE_STORAGE_FOLDERS_CONTAINER_NAME'
           value: AzureStorageFoldersContainerName
@@ -240,15 +259,10 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AZURE_SEARCH_INDEX_NAME_RAG'
           value: AzureSearchIndexNameRag
         }
-
-        {
-          name: 'AZURE_OPENAI_API_EMBEDDINGS_MODEL_NAME'
-          value: OpenaiApiEmbeddingsModelName
-        }
-        {
-          name: 'ADMIN_EMAIL_ADDRESS'
-          value: AdminEmailAddress
-        }
+        // {
+        //   name: 'ADMIN_EMAIL_ADDRESS'
+        //   value: AdminEmailAddress
+        // }
         {
           name: 'AZURE_COSMOSDB_DB_NAME'
           value: AzureCosmosdbDbName
@@ -274,8 +288,12 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           value: AzureCosmosdbFilesContainerName
         }
         {
+          name: 'AZURE_COSMOSDB_AUDIT_CONTAINER_NAME'
+          value: AzureCosmosdbAuditsContainerName
+        }
+        {
           name: 'AZURE_AI_SERVICES_KEY'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_KEY.name})'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_AI_SERVICES_KEY.name})'
         }
         {
           name: 'ALLOWED_ORIGINS'
@@ -291,15 +309,15 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'AZURE_CLIENT_ID'
-          value: azureClientID
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_ID.name})'
         }
         {
           name: 'AZURE_CLIENT_SECRET'
-          value: azureClientSecret
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_SECRET.name})'
         }
         {
           name: 'AZURE_TENANT_ID'
-          value: azureTenantId
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_TENANT_ID.name})'
         }
         {
           name: 'AZURE_KEY_VAULT_NAME'
@@ -330,6 +348,10 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           value: embeddingDeploymentName
         }
         {
+          name: 'AZURE_OPENAI_API_EMBEDDINGS_MODEL_NAME'
+          value: embeddingModelName
+        }
+        {
           name: 'AZURE_OPENAI_API_VERSION'
           value: openai_api_version
         }
@@ -337,22 +359,6 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AZURE_OPENAI_ENDPOINT'
           value: azureopenai.properties.endpoint
         }
-        // {
-        //   name: 'AZURE_OPENAI_DALLE_API_KEY'
-        //   value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_DALLE_API_KEY.name})'
-        // }
-        // {
-        //   name: 'AZURE_OPENAI_DALLE_API_INSTANCE_NAME'
-        //   value: openai_dalle_name
-        // }
-        // {
-        //   name: 'AZURE_OPENAI_DALLE_API_DEPLOYMENT_NAME'
-        //   value: dalleDeploymentName
-        // }
-        // {
-        //   name: 'AZURE_OPENAI_DALLE_API_VERSION'
-        //   value: dalleApiVersion
-        // }
         {
           name: 'AZURE_COSMOSDB_URI'
           value: cosmosDbAccount.properties.documentEndpoint
@@ -373,22 +379,6 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AZURE_SEARCH_INDEX_NAME'
           value: searchServiceIndexName
         }
-        // {
-        //   name: 'AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT'
-        //   value: 'https://${form_recognizer_name}.cognitiveservices.azure.com/'
-        // }
-        // {
-        //   name: 'AZURE_DOCUMENT_INTELLIGENCE_KEY'
-        //   value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_DOCUMENT_INTELLIGENCE_KEY.name})'
-        // }
-        // {
-        //   name: 'AZURE_SPEECH_REGION'
-        //   value: location
-        // }
-        // {
-        //   name: 'AZURE_SPEECH_KEY'
-        //   value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_SPEECH_KEY.name})'
-        // }
         {
           name: 'AZURE_STORAGE_ACCOUNT_NAME'
           value: storage_name
@@ -436,12 +426,11 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 }
 
 //**************************************************************************
-//Add Role Assignment for web app to Key vault
 
 @description('The name of the Role Assignment - from Guid.')
 param roleAssignmentName string = newGuid()
 
-resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (kvSetFunctionAppPermissions) {
   name: roleAssignmentName
   scope: kv
   properties: {
@@ -477,14 +466,6 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     }
   }
 
-  // resource AZURE_OPENAI_DALLE_API_KEY 'secrets' = {
-  //   name: 'AZURE-OPENAI-DALLE-API-KEY'
-  //   properties: {
-  //     contentType: 'text/plain'
-  //     value: azureopenaidalle.listKeys().key1
-  //   }
-  // }
-
   resource AZURE_COSMOSDB_KEY 'secrets' = {
     name: 'AZURE-COSMOSDB-KEY'
     properties: {
@@ -492,22 +473,6 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
       value: cosmosDbAccount.listKeys().secondaryMasterKey
     }
   }
-
-  // resource AZURE_DOCUMENT_INTELLIGENCE_KEY 'secrets' = {
-  //   name: 'AZURE-DOCUMENT-INTELLIGENCE-KEY'
-  //   properties: {
-  //     contentType: 'text/plain'
-  //     value: formRecognizer.listKeys().key1
-  //   }
-  // }
-
-  // resource AZURE_SPEECH_KEY 'secrets' = {
-  //   name: 'AZURE-SPEECH-KEY'
-  //   properties: {
-  //     contentType: 'text/plain'
-  //     value: speechService.listKeys().key1
-  //   }
-  // }
 
   resource AZURE_SEARCH_API_KEY 'secrets' = {
     name: 'AZURE-SEARCH-API-KEY'
@@ -532,6 +497,46 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
       value: 'DefaultEndpointsProtocol=https;AccountName=${storage.name};AccountKey=${listKeys(storage.id, '2023-01-01').keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
     }
   }
+
+  resource AZURE_AI_SERVICES_KEY 'secrets' = {
+    name: 'AZURE-AI-SERVICES-KEY'
+    properties: {
+      contentType: 'text/plain'
+      value: aiServices.listKeys().key1
+    }
+  }
+
+  resource AZURE_CLIENT_ID 'secrets' = {
+    name: 'AZURE-CLIENT-ID'
+    properties: {
+      contentType: 'text/plain'
+      value: azureClientID
+    }
+  }
+
+  resource AZURE_CLIENT_SECRET 'secrets' = {
+    name: 'AZURE-CLIENT-SECRET'
+    properties: {
+      contentType: 'text/plain'
+      value: azureClientSecret
+    }
+  }
+
+  resource AZURE_TENANT_ID 'secrets' = {
+    name: 'AZURE-TENANT-ID'
+    properties: {
+      contentType: 'text/plain'
+      value: azureTenantId
+    }
+  }
+
+  resource UTS_XAPI_KEY 'secrets' = {
+    name: 'UTS-XAPI-KEY'
+    properties: {
+      contentType: 'text/plain'
+      value: UtsXApiKey
+    }
+  }
 }
 
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
@@ -547,7 +552,6 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
         failoverPriority: 0
       }
     ]
-    disableKeyBasedMetadataWriteAccess: true
   }
 }
 
@@ -593,21 +597,6 @@ resource configContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/con
   }
 }
 
-//removed for now
-// resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-//   name: form_recognizer_name
-//   location: location
-//   tags: tags
-//   kind: 'FormRecognizer'
-//   properties: {
-//     customSubDomainName: form_recognizer_name
-//     publicNetworkAccess: 'Enabled'
-//   }
-//   sku: {
-//     name: formRecognizerSkuName
-//   }
-// }
-
 resource searchService 'Microsoft.Search/searchServices@2022-09-01' = {
   name: search_name
   location: location
@@ -620,6 +609,7 @@ resource searchService 'Microsoft.Search/searchServices@2022-09-01' = {
   sku: {
     name: searchServiceSkuName
   }
+  identity: { type: 'SystemAssigned' }
 }
 
 resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
@@ -636,101 +626,27 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   }
 }
 
-// throwing depployment errors
-// @batchSize(1)
-// resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [for deployment in llmDeployments: {
-//   parent: azureopenai
-//   name: deployment.name
-//   properties: {
-//     model: deployment.model
-//     raiPolicyName: contains(deployment, 'raiPolicyName') ? deployment.raiPolicyName : null
-//   }
-//   sku: contains(deployment, 'sku') ? deployment.sku : {
-//     name: 'Standard'
-//     capacity: deployment.capacity
-//   }
-// }]
-
-// ChatGptDeployment
-resource chatGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-  name: chatGptDeploymentName
-  sku: {
-    name: 'GlobalStandard'
-    capacity: chatGptDeploymentCapacity
-  }
-  parent: azureopenai
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: chatGptModelName
-      version: chatGptModelVersion
+@batchSize(1)
+resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [
+  for deployment in llmDeployments: {
+    parent: azureopenai
+    name: deployment.name
+    properties: {
+      model: deployment.model
+      #disable-next-line use-safe-access BCP053
+      raiPolicyName: contains(deployment, 'raiPolicyName') ? deployment.?raiPolicyName : null
     }
+    #disable-next-line use-safe-access
+    sku: contains(deployment, 'sku')
+      ? deployment.sku
+      : {
+          name: 'Standard'
+          capacity: deployment.capacity
+        }
   }
-}
+]
 
-// embeddingDeployment
-// resource embeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-//   name: embeddingModelName
-//   parent: azureopenai
-//   sku: {
-//     name: 'Standard'
-//     capacity: embeddingDeploymentCapacity
-//   }
-//   properties: {
-//     model: {
-//       format: 'OpenAI'
-//       name: embeddingModelName
-//       version: '2'
-//     }
-//   }
-// }
-
-//removed for now
-// resource azureopenaidalle 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-//   name: openai_dalle_name
-//   location: dalleLocation
-//   tags: tags
-//   kind: 'OpenAI'
-//   properties: {
-//     customSubDomainName: openai_dalle_name
-//     publicNetworkAccess: 'Enabled'
-//   }
-//   sku: {
-//     name: openAiSkuName
-//   }
-
-//   resource dalleDeployment 'deployments' = {
-//     name: dalleDeploymentName
-//     properties: {
-//       model: {
-//         format: 'OpenAI'
-//         name: dalleModelName
-//       }
-//     }
-//     sku: {
-//       name: 'Standard'
-//       capacity: dalleDeploymentCapacity
-//     }
-//   }
-// }
-
-//removed for now
-// resource speechService 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-//   name: speech_service_name
-//   location: location
-//   tags: tags
-//   kind: 'SpeechServices'
-//   properties: {
-//     customSubDomainName: speech_service_name
-//     publicNetworkAccess: 'Enabled'
-//   }
-//   sku: {
-//     name: speechServiceSkuName
-//   }
-// }
-
-//REF: https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.storage/storage-multi-blob-container/main.bicep
-
+@description('Storage Account')
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storage_name
   location: location
@@ -742,6 +658,12 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
 resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
   parent: storage
   name: 'default'
+  properties: {
+    deleteRetentionPolicy: {
+      enabled: true
+      days: 7
+    }
+  }
 }
 
 resource imagesContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
@@ -753,24 +675,42 @@ resource indexContainer 'Microsoft.Storage/storageAccounts/blobServices/containe
   parent: blobServices
   name: storageServiceFoldersContainerName
   properties: {
-    publicAccess: 'Blob'
+    publicAccess: 'None' //'Blob'
+  }
+}
+
+@description('Role Assignment for search to access blob storage')
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(storage.id, searchService.id, 'blob-reader')
+  scope: storage
+  properties: {
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
+    )
+    principalId: searchService.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
 @description('Event Grid System Topic')
-resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = {
-  name: '${storage_name}-blobs-updated'
+resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = if (deployEventGrid) {
+  name: EventGridSystemTopicName
   location: location
   tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
-    source: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Storage/storageAccounts/${storage_name}'
+    source: storage.id
+    //source: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Storage/storageAccounts/${storage_name}'
     topicType: 'Microsoft.Storage.StorageAccounts'
   }
 }
 
 @description('Event Grid Subscription')
-resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-01-preview' = {
-  name: '${storage_name}-blobs-updated'
+resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-01-preview' = if (deployEventGrid) {
+  name: EventGridSystemTopicSubName
   parent: eventGridSystemTopic
   properties: {
     destination: {
@@ -779,6 +719,8 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
         azureActiveDirectoryApplicationIdOrUri: azureADAppIdOrUri
         azureActiveDirectoryTenantId: azureTenantId
         endpointUrl: 'https://${apiApp.properties.defaultHostName}/api/file/webhook'
+        maxEventsPerBatch: 1
+        preferredBatchSizeInKilobytes: 64
       }
     }
     filter: {
@@ -790,10 +732,35 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
       enableAdvancedFilteringOnArrays: true
       subjectBeginsWith: '/blobServices/default/containers/${storageServiceFoldersContainerName}/'
     }
+    eventDeliverySchema: 'EventGridSchema'
+    retryPolicy: {
+      maxDeliveryAttempts: 30
+      eventTimeToLiveInMinutes: 1440
+    }
   }
   dependsOn: [
     apiApp
   ]
+}
+
+@description('AI Cognitive Services')
+resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
+  name: aiServices_name
+  location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
+  sku: {
+    name: 'S0'
+  }
+  kind: 'CognitiveServices'
+  properties: {
+    disableLocalAuth: false
+    publicNetworkAccess: 'Enabled'
+    networkAcls: {
+      defaultAction: 'Allow'
+    }
+  }
 }
 
 output url string = 'https://${webApp.properties.defaultHostName}'

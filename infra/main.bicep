@@ -12,7 +12,6 @@ param environmentName string
 
 @minLength(1)
 @description('Primary location for all resources')
-//param location string
 param location string = resourceGroup().location
 
 // azure open ai -- regions currently support gpt-4o global-standard
@@ -46,11 +45,10 @@ param location string = resourceGroup().location
     type: 'location'
   }
 })
-param openAILocation string
+param openAILocation string 
 
 param openAISku string = 'S0'
 param openAIApiVersion string = '2024-08-01-preview'
-
 param chatGptDeploymentCapacity int = 8 //30
 param chatGptDeploymentName string = 'gpt-4o'
 param chatGptModelName string = 'gpt-4o'
@@ -59,18 +57,6 @@ param embeddingDeploymentName string = 'embedding'
 param embeddingDeploymentCapacity int = 120
 param embeddingModelName string = 'text-embedding-ada-002'
 
-// DALL-E v3 only supported in limited regions for now
-@description('Location for the OpenAI DALL-E 3 instance resource group')
-@allowed(['swedencentral', 'eastus', 'australiaeast'])
-param dalleLocation string
-
-param dalleDeploymentCapacity int = 1
-param dalleDeploymentName string = 'dall-e-3'
-param dalleModelName string = 'dall-e-3'
-param dalleApiVersion string = '2023-12-01-preview'
-
-param formRecognizerSkuName string = 'S0'
-param searchServiceIndexName string = 'azure-chat'
 param searchServiceSkuName string = 'standard'
 
 // TODO: define good default Sku and settings for storage account
@@ -78,7 +64,7 @@ param storageServiceSku object = { name: 'Standard_LRS' }
 param storageServiceImageContainerName string = 'images'
 
 @description('Deployment Environment')
-@allowed(['Development', 'Production'])
+@allowed(['Development', 'Test', 'UAT', 'Production'])
 param aspCoreEnvironment string = 'Development'
 
 @description('AZURE_CLIENT_ID')
@@ -96,15 +82,27 @@ param azureTenantId string = ''
 @description('The Azure Active Directory Application ID or URI to get the access token that will be included as the bearer token in delivery requests')
 param azureADAppIdOrUri string = ''
 
-//other
-var tags = { 'azd-env-name': environmentName }
+
+@description('Conditionally deploy event Grid')
+param deployEventGrid bool = false
+
+
+@description('Conditionally deploy key vault Api app permissions')
+param kvSetFunctionAppPermissions bool = false
 
 @description('UTS Role Endpoint')
 param UtsRoleApiEndpoint string = ''
 
-//Load tags from the file
-// var tagsFilePath = './uts.tags.json'
-// var tags = loadJsonContent(tagsFilePath)
+@description('UTS Subject Query API Key')
+@secure()
+param UtsXApiKey string = ''
+
+@description('Shared variables pattern for loading tags')
+var tagsFilePath = './uts.tags.json'
+var tags = loadJsonContent(tagsFilePath)
+
+//other
+//var tags = { 'azd-env-name': environmentName }
 
 module resources 'resources.bicep' = {
   name: 'all-resources'
@@ -122,13 +120,6 @@ module resources 'resources.bicep' = {
     embeddingDeploymentName: embeddingDeploymentName
     embeddingDeploymentCapacity: embeddingDeploymentCapacity
     embeddingModelName: embeddingModelName
-    dalleLocation: dalleLocation
-    dalleDeploymentCapacity: dalleDeploymentCapacity
-    dalleDeploymentName: dalleDeploymentName
-    dalleModelName: dalleModelName
-    dalleApiVersion: dalleApiVersion
-    formRecognizerSkuName: formRecognizerSkuName
-    searchServiceIndexName: searchServiceIndexName
     searchServiceSkuName: searchServiceSkuName
     storageServiceSku: storageServiceSku
     storageServiceImageContainerName: storageServiceImageContainerName
@@ -139,6 +130,9 @@ module resources 'resources.bicep' = {
     azureTenantId: azureTenantId
     azureADAppIdOrUri: azureADAppIdOrUri
     UtsRoleApiEndpoint: UtsRoleApiEndpoint
+    UtsXApiKey: UtsXApiKey
+    deployEventGrid:deployEventGrid
+    kvSetFunctionAppPermissions:kvSetFunctionAppPermissions
   }
 }
 

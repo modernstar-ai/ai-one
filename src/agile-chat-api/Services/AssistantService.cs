@@ -6,6 +6,7 @@ using agile_chat_api.Authentication.UTS;
 using agile_chat_api.Enums;
 using Microsoft.Azure.Cosmos.Linq;
 using Config = agile_chat_api.Configurations.AppConfigs;
+using agile_chat_api.Configurations;
 
 public interface IAssistantService
 {
@@ -21,15 +22,48 @@ public class AssistantService : IAssistantService
     private readonly Container _container;
     private readonly ILogger<AssistantService> _logger;
     private readonly IRoleService _roleService;
+    private readonly CosmosClient _cosmosClient;
 
     public AssistantService(ILogger<AssistantService> logger, IRoleService roleService)
     {
         _roleService = roleService;
         _logger = logger;
-        const string containerName = "assistants";
+        _cosmosClient = new CosmosClient(Config.CosmosEndpoint, Config.CosmosKey);
+        _container = _cosmosClient.GetContainer(Config.CosmosDBName, Constants.AssistantContainerName);
+        _container = EnsureCosmosContainerExists().GetAwaiter().GetResult();
+    }
 
-        var cosmosClient = new CosmosClient(Config.CosmosEndpoint, Config.CosmosKey);
-        _container = cosmosClient.GetContainer(Config.CosmosDBName, containerName);
+    /// <summary>
+    /// Ensures the cosmos container exists.
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="System.NotImplementedException"></exception>
+    private async Task<Container> EnsureCosmosContainerExists()
+    {
+        try
+        {
+            var dbName = AppConfigs.CosmosDBName;
+            var database = await _cosmosClient.CreateDatabaseIfNotExistsAsync(dbName);
+           
+            ContainerResponse containerResponse = await database.Database.CreateContainerIfNotExistsAsync(new ContainerProperties
+            {
+                Id = Constants.AssistantContainerName,
+                PartitionKeyPath = Constants.AssistantContainerPartitionKeyPath
+            });
+
+            if (containerResponse == null)
+            {
+                _logger.LogError("ContainerResponse is null");
+                throw new InvalidOperationException("Failed to create or retrieve the container.");
+            }
+
+            return containerResponse.Container;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error ensuring Cosmos container exists: {Message}, StackTrace: {StackTrace}", ex.Message, ex.StackTrace);
+            throw;
+        }
     }
 
     public async Task<IEnumerable<Assistant>> GetAllAsync()
@@ -39,11 +73,6 @@ public class AssistantService : IAssistantService
         try
         {
             var query = _container.GetItemLinqQueryable<Assistant>().AsQueryable();
-            if (!_roleService.IsSystemAdmin())
-            {
-                var groupClaims = _roleService.GetGroupClaims();
-                query = query.Where(x => x.Group == null || x.Group == "" || groupClaims.Contains(x.Group.ToLower()));
-            }
 
             var iterator = query.ToFeedIterator();
 
@@ -59,13 +88,43 @@ public class AssistantService : IAssistantService
                            _roleService.IsUserInRole(UserRole.ContentManager, assistant.Group.ToLower());
                 }));
             }
+
+            if (!_roleService.IsSystemAdmin())
+            {
+                var groupClaims = _roleService.GetGroupClaims();
+                results = results.Where(assistant =>
+                {
+                    // For EndUser: Only include assistants that are published and belong to groups the user has access to
+                    if (_roleService.IsUserInRole(UserRole.EndUser, assistant.Group?.ToLower() ?? string.Empty))
+                    {
+                        return groupClaims.Contains(assistant.Group?.ToLower()) && assistant.Status == AssistantStatus.Published;
+                    }
+
+                    // For ContentManager: Include any assistants in the accessible group (ignoring status)
+                    if (_roleService.IsUserInRole(UserRole.ContentManager, assistant.Group?.ToLower() ?? string.Empty))
+                    {
+                        return groupClaims.Contains(assistant.Group?.ToLower());
+                    }
+
+                    // For null/empty groups: Only include assistants that are published
+                    if (string.IsNullOrWhiteSpace(assistant.Group))
+                    {
+                        return assistant.Status == AssistantStatus.Published;
+                    }
+
+                    // Default: Exclude any assistants not matching the above criteria
+                    return false;
+                }).ToList();
+            }
+
+
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred while retrieving all assistants.");
             throw;
         }
-
+        
         return results;
     }
 
