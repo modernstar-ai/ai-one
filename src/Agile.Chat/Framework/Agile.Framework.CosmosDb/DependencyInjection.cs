@@ -1,5 +1,6 @@
-﻿using Agile.Framework.Common.EnvironmentVariables;
-using Agile.Framework.CosmosDb.Interfaces;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using Agile.Framework.Common.EnvironmentVariables;
 using Azure;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +13,15 @@ public static class DependencyInjection
         services.AddSingleton<CosmosClient>(_ =>
         {
             var cosmosConfigs = Configs.CosmosDb;
-            var client = new CosmosClient(cosmosConfigs.Endpoint, new AzureKeyCredential(cosmosConfigs.Key));
+            var cosmosClientOptions = new CosmosClientOptions();
+            cosmosClientOptions.UseSystemTextJsonSerializerWithOptions = new()
+            {
+                WriteIndented = true,
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            
+            var client = new CosmosClient(cosmosConfigs.Endpoint, new AzureKeyCredential(cosmosConfigs.Key), cosmosClientOptions);
             return client;
         });
 }

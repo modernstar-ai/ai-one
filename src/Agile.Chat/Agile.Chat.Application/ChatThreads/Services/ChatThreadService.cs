@@ -1,5 +1,6 @@
 ﻿using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
+using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.EnvironmentVariables;
 using Agile.Framework.CosmosDb;
@@ -16,12 +17,12 @@ public interface IChatThreadService  : ICosmosRepository<ChatThread>
 
 [Export(typeof(IChatThreadService), ServiceLifetime.Singleton)]
 public class ChatThreadService(CosmosClient cosmosClient) : 
-    CosmosRepository<ChatThread>(Constants.CosmosChatsContainerName, cosmosClient, nameof(ChatThread.Type)), IChatThreadService
+    CosmosRepository<ChatThread>(Constants.CosmosChatsContainerName, cosmosClient), IChatThreadService
 {
     public async Task<List<ChatThread>> GetAllAsync(string username)
     {
         var query = LinqQuery()
-            .Where(c => c.UserId == username)
+            .Where(c => c.UserId == username && c.Type == ChatType.Thread)
             .OrderBy(c => c.LastModified);
         
         var results = await CollectResultsAsync(query);

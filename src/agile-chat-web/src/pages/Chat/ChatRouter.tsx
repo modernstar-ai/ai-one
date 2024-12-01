@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import ChatPage from '../Chat/index';
-import RagChatPage from '../RagChat/index-using-post';
 import { fetchAssistantById } from '@/services/assistantservice';
+import { createChatThread } from '@/services/chatthreadservice';
+import { ChatThreadFilterOptions, ChatThreadPromptOptions } from '@/types/ChatThread';
 
 const ChatRouter: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { state } = useLocation();
   const navigate = useNavigate();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_searchParams, setSearchParams] = useSearchParams();
@@ -15,26 +16,14 @@ const ChatRouter: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const assistant = await fetchAssistantById(id!);
-        if (assistant) {
-          if (assistant.type === 'Chat') {
-            // Add assistantId to query parameters
-            setSearchParams((prev) => {
-              const newParams = new URLSearchParams(prev);
-              newParams.set('assistantId', id!);
-              return newParams;
-            });
-            setPage(<ChatPage />);
-          } else if (assistant.type === 'Search') {
-            setPage(<RagChatPage id={id} />);
-          } else {
-            console.log('ChatRouter unknown assistant type:', assistant.type);
-            navigate('/not-found');
-          }
-        } else {
-          console.log('ChatRouter assistant not found:', id);
-          navigate('/not-found');
-        }
+        const assistant = state.assistantId ? await fetchAssistantById(state.assistantId) : undefined;
+        const thread = await createChatThread({
+          name: assistant ? `New Chat - ${assistant.name}` : undefined,
+          assistantId: assistant?.id,
+        });
+
+        if (thread) setPage(<ChatPage thread={thread} />);
+        else navigate('/error');
       } catch (error) {
         console.error('Error fetching assistant:', error);
         navigate('/error');
@@ -43,12 +32,8 @@ const ChatRouter: React.FC = () => {
       }
     };
 
-    if (id) {
-      fetchData();
-    } else {
-      setPage(<ChatPage />);
-    }
-  }, [id, navigate, setSearchParams]);
+    fetchData();
+  }, [navigate, setSearchParams]);
 
   if (loading) {
     return <div>Loading...</div>;

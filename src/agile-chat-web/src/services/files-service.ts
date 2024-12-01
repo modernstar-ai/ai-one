@@ -4,7 +4,7 @@ import { FileMetadata } from '@/models/filemetadata';
 
 function getApiUrl(endpoint: string = ''): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
-  return `${rootApiUrl}/api/file/${endpoint}`;
+  return `${rootApiUrl}/api/files/${endpoint}`;
 }
 
 export async function getFolders(): Promise<string[]> {

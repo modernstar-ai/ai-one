@@ -17,7 +17,7 @@ public interface IAuditService<T> : ICosmosRepository<Audit<T>> where T : Audita
 
 [Export(typeof(IAuditService<>), ServiceLifetime.Singleton)]
 public class AuditService<T>(CosmosClient cosmosClient) : 
-    CosmosRepository<Audit<T>>(Constants.CosmosAuditsContainerName, cosmosClient, nameof(Audit<T>.Type)), IAuditService<T> where T : AuditableAggregateRoot
+    CosmosRepository<Audit<T>>(Constants.CosmosAuditsContainerName, cosmosClient), IAuditService<T> where T : AuditableAggregateRoot
 {
     public async Task UpdateItemByPayloadIdAsync(T item)
     {

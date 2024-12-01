@@ -15,7 +15,7 @@ public static class DeleteAssistantById
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             logger.LogInformation("Handler executed {Handler} with Id {Id}", typeof(Handler).Namespace, request.Id);
-            
+            await assistantService.DeleteItemByIdAsync(request.Id.ToString());
             return Results.Ok();
         }
     }

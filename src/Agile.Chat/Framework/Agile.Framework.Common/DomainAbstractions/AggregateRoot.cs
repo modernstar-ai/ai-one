@@ -1,6 +1,10 @@
-﻿namespace Agile.Framework.Common.DomainAbstractions;
+﻿
+using System.Text.Json.Serialization;
+
+namespace Agile.Framework.Common.DomainAbstractions;
 
 public abstract class AggregateRoot
 {
-    public string Id { get; protected set; } = Guid.NewGuid().ToString();
+    [JsonInclude]
+    public string Id { get; private set; } = Guid.NewGuid().ToString();
 }

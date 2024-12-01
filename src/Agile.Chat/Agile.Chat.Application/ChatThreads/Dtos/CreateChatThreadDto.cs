@@ -5,9 +5,8 @@ namespace Agile.Chat.Application.ChatThreads.Dtos;
 
 public class CreateChatThreadDto
 {
-    public string Name { get; private set; }
-    public bool IsBookmarked { get; private set; }
-    public string? AssistantId { get; private set; }
-    public ChatThreadPromptOptions PromptOptions { get; private set; }
-    public ChatThreadFilterOptions FilterOptions { get; private set; }
+    public string Name { get; set; } = "New Chat";
+    public string? AssistantId { get; set; }
+    public ChatThreadPromptOptions PromptOptions { get; set; } = new();
+    public ChatThreadFilterOptions FilterOptions { get; set; } = new();
 }

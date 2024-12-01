@@ -1,6 +1,9 @@
-﻿using Carter;
+﻿using Agile.Chat.Application.ChatCompletions.Dtos;
+using Carter;
 using Carter.OpenApi;
+using Mapster;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Agile.Chat.Api.Endpoints;
 
@@ -15,11 +18,12 @@ public class ChatCompletions(IMediator mediator) : CarterModule("/api")
             .WithTags(nameof(ChatCompletions));
 
         //POST
-        completions.MapPost("/", Chat);
+        completions.MapPost("/", ChatStream);
     }
 
-    private async Task<IResult> Chat()
+    private async Task<IResult> ChatStream([FromBody] ChatDto dto)
     {
-        throw new NotImplementedException();
+        var command = dto.Adapt<Application.ChatCompletions.Commands.Chat.Command>();
+        return await mediator.Send(command);
     }
 }

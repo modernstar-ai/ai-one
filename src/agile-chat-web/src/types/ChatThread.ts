@@ -1,65 +1,56 @@
 export interface ChatThread {
   id: string;
   name: string;
-  userName: string;
   userId: string;
-  type: string;
-  createdAt: Date;
-  lastMessageAt: Date;
-  updatedAt: Date;
-  bookmarked: boolean;
-  isDeleted: boolean;
-  assistantMessage: string;
-  assistantTitle: string;
-  assistantId: string;
-  extension: string[];
-  temperature: number | null;
-  topP: number | null;
-  maxResponseToken: number | null;
-  strictness: number | null;
-  documentLimit: number;
+  type: ChatType;
+  isBookmarked: boolean;
+  assistantId?: string;
+  promptOptions: ChatThreadPromptOptions;
+  filterOptions: ChatThreadFilterOptions;
+  createdDate: Date;
+  lastModified: Date;
 }
-  
- 
-  export interface Message {
-      id: string;
-      createdAt: Date;
-      type: string;
-      isDeleted: boolean;
-      content: string;
-      name: string;
-      role: string;
-      threadId: string;
-      userId: string;
-      multiModalImage: string;
-      sender: 'function' | 'user' | 'assistant' | 'system' | 'tool' ;
-      like: boolean;
-      disLike: boolean;
-      citations?: { fileName: string; fileUrl: string }[];
-  }
-  
-  export interface MessageReactionsProps {
-    messageId: string;
-    userId: string;
-    initialLikes?: boolean;
-    initialDislikes?: boolean;
-    disabled?: boolean;
-  }
 
-  export interface NewChatThread {
-    name: string;
-    personaMessage?: string;
-    personaMessageTitle?: string;
-    userId: string;
-    extension?: string[];
-  }
-  
-  export interface UpdateChatThreadTitle {
-    id: string;
-    title: string;
-  }
-  
-  export interface ExtensionUpdate {
-    chatThreadId: string;
-    extensionId: string;
-  }
+export interface CreateChatThread {
+  name?: string;
+  assistantId?: string;
+  promptOptions?: ChatThreadPromptOptions;
+  filterOptions?: ChatThreadFilterOptions;
+}
+
+export interface ChatThreadPromptOptions {
+  systemPrompt: string | undefined;
+  temperature: number | undefined;
+  topP: number | undefined;
+  maxTokens: number | undefined;
+}
+
+export interface ChatThreadFilterOptions {
+  documentLimit: number;
+  strictness: number;
+}
+
+export enum ChatType {
+  Message = 'Message',
+  Thread = 'Thread',
+}
+
+export enum MessageType {
+  User = 'User',
+  Assistant = 'Assistant',
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  type: MessageType;
+  threadId: string;
+  options: MessageOptions;
+  createdDate: Date;
+  lastModified: Date;
+}
+
+export interface MessageOptions {
+  isLiked: boolean;
+  isDisliked: boolean;
+}

@@ -1,6 +1,7 @@
 ﻿using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Entities;
+using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.EnvironmentVariables;
 using Agile.Framework.CosmosDb;
@@ -17,7 +18,7 @@ public interface IChatMessageService  : ICosmosRepository<Message>
 
 [Export(typeof(IChatMessageService), ServiceLifetime.Singleton)]
 public class ChatMessageService(CosmosClient cosmosClient) : 
-    CosmosRepository<Message>(Constants.CosmosChatsContainerName, cosmosClient, nameof(Message.Type)), IChatMessageService
+    CosmosRepository<Message>(Constants.CosmosChatsContainerName, cosmosClient), IChatMessageService
 {
     public async Task<List<Message>> GetAllAsync(string threadId)
     {

@@ -16,7 +16,7 @@ public static class GetIndexes
     {
         public async Task<IResult> Handle(Query request, CancellationToken cancellationToken)
         {
-            var indexes = indexService.GetAllAsync();
+            var indexes = await indexService.GetAllAsync();
             return Results.Ok(indexes);
         }
     }

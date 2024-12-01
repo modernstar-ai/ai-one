@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import HomePage from '../pages/Home';
 import ChatRouter from '../pages/Chat/ChatRouter';
-import ChatPage from '../pages/Chat';
 import RagChatPage from '../pages/RagChat/index-using-post';
 import AssistantsPage from '../pages/Assistant';
 import AssistantForm from '../pages/Assistant/AssistantForm';
@@ -29,18 +28,10 @@ const AppRoutes = () => (
     />
     <Route path="/login" element={<LoginPage />} />
     <Route
-      path="/chatrouter/:id"
+      path="/chat"
       element={
         <ProtectedRoute>
           <ChatRouter />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/chat/*"
-      element={
-        <ProtectedRoute>
-          <ChatPage />
         </ProtectedRoute>
       }
     />

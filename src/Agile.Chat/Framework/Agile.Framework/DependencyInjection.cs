@@ -35,8 +35,6 @@ public static class DependencyInjection
     
     public static bool IsLocal(this IHostEnvironment app) => app.IsEnvironment("Local");
     
-    
-    
     private static IServiceCollection AddSeriLogLogging(this IServiceCollection services, IConfiguration configuration) =>
         services.AddSerilog(opt => opt.ReadFrom.Configuration(configuration));
-    }
+}

@@ -11,7 +11,6 @@ public static class GetAssistants
 
     public class Handler(ILogger<Handler> logger, IAssistantService assistantService) : IRequestHandler<Query, IResult>
     {
-
         public async Task<IResult> Handle(Query request, CancellationToken cancellationToken)
         {
             logger.LogInformation("Executed handler {Handler}", typeof(Handler).Namespace);

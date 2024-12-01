@@ -15,12 +15,20 @@ public static class DependencyInjection
     {
         services.AddMapster();
         return services
+            .AddCorsRules()
             .AddHttpContextAccessor()
             .AddGlobalExceptionHandling()
             .AddExportedServices()
             .AddEndpoints()
             .AddSwagger();
     }
+
+    private static IServiceCollection AddCorsRules(this IServiceCollection services) =>
+        services.AddCors(x => x.AddDefaultPolicy(options => 
+            options
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowAnyOrigin()));
     
     private static IServiceCollection AddGlobalExceptionHandling(this IServiceCollection services) =>
         services.AddExceptionHandler<GlobalExceptionHandler>()

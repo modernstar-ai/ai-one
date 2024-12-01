@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using Agile.Chat.Domain.Audits.ValueObjects;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Entities;
@@ -10,7 +11,12 @@ namespace Agile.Chat.Domain.Audits.Aggregates;
 
 public class Audit<T> : AuditableAggregateRoot where T: AuditableAggregateRoot
 {
-    private Audit() { }
+    [JsonConstructor]
+    private Audit(AuditType type, T payload)
+    {
+        Type = type;
+        Payload = payload;
+    }
     
     public AuditType Type { get; private set; }
     public T Payload { get; private set; }
@@ -25,11 +31,7 @@ public class Audit<T> : AuditableAggregateRoot where T: AuditableAggregateRoot
         };
 
         var filtered = FilterPII(payload, Configs.Audit.IncludePII);
-        return new Audit<T>()
-        {
-            Type = auditType,
-            Payload = filtered,
-        };
+        return new Audit<T>(auditType, filtered);
     }
     
     public void Update(T payload)

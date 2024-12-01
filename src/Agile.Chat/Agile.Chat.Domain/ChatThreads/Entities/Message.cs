@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.Json.Serialization;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Common.DomainAbstractions;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -7,7 +8,14 @@ namespace Agile.Chat.Domain.ChatThreads.Entities;
 
 public class Message : AuditableAggregateRoot
 {
-    private Message(){}
+    [JsonConstructor]
+    private Message(string content, MessageType type, string threadId, MessageOptions options)
+    {
+        Content = content;
+        Type = type;
+        ThreadId = threadId;
+        Options = options;
+    }
     public string Content { get; private set; }
     public MessageType Type { get; private set; }
     public string ThreadId { get; private set; }
@@ -18,13 +26,7 @@ public class Message : AuditableAggregateRoot
         MessageOptions options)
     {
         //Do validation logic and throw domain level exceptions if fails
-        return new Message
-        {
-            ThreadId = threadId,
-            Content = content,
-            Type = MessageType.User,
-            Options = options,
-        };
+        return new Message(content, MessageType.User, threadId, options);
     }
     
     public static Message CreateAssistant(string threadId,
@@ -32,13 +34,7 @@ public class Message : AuditableAggregateRoot
         MessageOptions options)
     {
         //Do validation logic and throw domain level exceptions if fails
-        return new Message
-        {
-            ThreadId = threadId,
-            Content = content,
-            Type = MessageType.Assistant,
-            Options = options,
-        };
+        return new Message(content, MessageType.Assistant, threadId, options);
     }
     
     public void Update(MessageOptions options)

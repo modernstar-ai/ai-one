@@ -1,4 +1,5 @@
-﻿using Agile.Chat.Domain.Assistants.Aggregates;
+﻿using System.Text.Json.Serialization;
+using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.DomainAbstractions;
@@ -7,7 +8,17 @@ namespace Agile.Chat.Domain.ChatThreads.Aggregates;
 
 public class ChatThread : AuditableAggregateRoot
 {
-    private ChatThread(){}
+    [JsonConstructor]
+    private ChatThread(string name, string userId, ChatType type, bool isBookmarked, ChatThreadPromptOptions promptOptions, ChatThreadFilterOptions filterOptions, string? assistantId = null)
+    {
+        Name = name;
+        UserId = userId;
+        Type = type;
+        IsBookmarked = isBookmarked;
+        PromptOptions = promptOptions;
+        FilterOptions = filterOptions;
+        AssistantId = assistantId;
+    }
     public string Name { get; private set; }
     [PII]
     public string UserId { get; private set; }
@@ -18,23 +29,13 @@ public class ChatThread : AuditableAggregateRoot
     public ChatThreadFilterOptions FilterOptions { get; private set; }
 
     public static ChatThread Create(string userId,
-        string name, 
-        bool isBookmarked,
+        string name,
         ChatThreadPromptOptions promptOptions,
         ChatThreadFilterOptions filterOptions,
         string? assistantId = null)
     {
         //Do validation logic and throw domain level exceptions if fails
-        return new ChatThread
-        {
-            Name = name,
-            UserId = userId,
-            Type = ChatType.Thread,
-            IsBookmarked = isBookmarked,
-            PromptOptions = promptOptions,
-            FilterOptions = filterOptions,
-            AssistantId = assistantId
-        };
+        return new ChatThread(name, userId, ChatType.Thread, false, promptOptions, filterOptions, assistantId);
     }
     
     public void Update(string name,

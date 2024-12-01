@@ -17,39 +17,41 @@ import { useToast } from '@/components/ui/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice';
-import { Assistant, AssistantStatus, AssistantType } from '@/types/Assistant';
+import { Assistant, AssistantStatus } from '@/types/Assistant';
 //import { MultiSelectInput } from '@/components/ui-extended/multi-select';
 //import { useFolders } from '@/hooks/use-folders';
 
-import { MultiToolSettingsDropdownInput } from '@/components/MultiToolSelector';
+//import { MultiToolSettingsDropdownInput } from '@/components/MultiToolSelector';
 import { fetchTools } from '@/services/toolservice';
-import { Tool } from '@/types/Tool';
+//import { Tool } from '@/types/Tool';
 import { useIndexes } from '@/hooks/use-indexes';
 import { Loader2 } from 'lucide-react';
-import { enablePreviewFeatures } from '@/globals';
+//import { enablePreviewFeatures } from '@/globals';
 
+// Define the AssistantPromptOptions schema
+const AssistantPromptOptionsSchema = z.object({
+  systemPrompt: z.string(),
+  temperature: z.number(),
+  topP: z.number().min(0).max(1).optional(),
+  maxTokens: z.number().int().optional(),
+});
+
+// Define the AssistantFilterOptions schema
+const AssistantFilterOptionsSchema = z.object({
+  group: z.string().optional(),
+  indexName: z.string(),
+  documentLimit: z.number().int(),
+  strictness: z.number().optional(),
+});
+
+// Define the main schema
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
   description: z.string(),
-  type: z.nativeEnum(AssistantType),
   greeting: z.string(),
-  systemMessage: z.string(),
-  group: z.string().optional(),
-  index: z.string(),
-  folder: z.array(z.string()),
-  temperature: z.number(),
-  topP: z.number().min(0).max(1).optional(), // <-- Added topP validation
-  maxResponseToken: z.number().optional(),
-  pastMessages: z.number().optional(),
-  strictness: z.number().optional(),
-  documentLimit: z.number(),
   status: z.nativeEnum(AssistantStatus),
-  tools: z.array(
-    z.object({
-      toolId: z.string(),
-      toolName: z.string(),
-    })
-  ),
+  promptOptions: AssistantPromptOptionsSchema,
+  filterOptions: AssistantFilterOptionsSchema,
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -63,25 +65,28 @@ export default function AssistantForm() {
   const navigate = useNavigate();
   //const { folders } = useFolders();
   const { indexes } = useIndexes();
-  const [selectedToolIds, setSelectedToolIds] = useState<Set<string>>(new Set());
-  const [tools, setTools] = useState<Tool[]>([]);
+  //const [selectedToolIds, setSelectedToolIds] = useState<Set<string>>(new Set());
+  //const [tools, setTools] = useState<Tool[]>([]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
       description: '',
-      type: AssistantType.Chat,
       greeting: '',
-      systemMessage: '',
-      group: '',
-      index: '',
-      folder: [],
-      documentLimit: 5,
-      temperature: 0.7,
-      topP: 0.95,
       status: AssistantStatus.Draft,
-      tools: [],
+      promptOptions: {
+        systemPrompt: '',
+        temperature: 0.7,
+        topP: 0.95,
+        maxTokens: undefined,
+      },
+      filterOptions: {
+        indexName: '',
+        group: undefined,
+        documentLimit: 5,
+        strictness: undefined,
+      },
     },
   });
 
@@ -89,7 +94,7 @@ export default function AssistantForm() {
     try {
       const response = await fetchTools();
       if (response) {
-        setTools(response.sort((a, b) => a.name.localeCompare(b.name)));
+        //setTools(response.sort((a, b) => a.name.localeCompare(b.name)));
       }
     } catch (error) {
       console.error('Failed to fetch tools:', error);
@@ -104,23 +109,21 @@ export default function AssistantForm() {
         form.reset({
           name: file.name,
           description: file.description,
-          type: file.type,
-          greeting: file.greeting || '',
-          systemMessage: file.systemMessage || '',
-          group: file.group || '',
-          index: file.index,
-          //todo: tools
-          // folder: file.folder || [], //todo: Yassir's version
-          folder: file.folder,
-          temperature: file.temperature,
-          documentLimit: file.documentLimit,
+          greeting: file.greeting,
           status: file.status,
-          topP: file.topP,
-          maxResponseToken: file.maxResponseToken,
-          pastMessages: file.pastMessages,
-          strictness: file.strictness,
+          promptOptions: {
+            systemPrompt: file.promptOptions.systemPrompt,
+            temperature: file.promptOptions.temperature,
+            topP: file.promptOptions.topP,
+            maxTokens: file.promptOptions.maxTokens ?? undefined,
+          },
+          filterOptions: {
+            indexName: file.filterOptions.indexName,
+            documentLimit: file.filterOptions.documentLimit,
+            group: file.filterOptions.group ?? undefined,
+            strictness: file.filterOptions.strictness ?? undefined,
+          },
         });
-        setSelectedToolIds(new Set(file.tools.map((tool) => tool.toolId)));
       } else {
         toast({
           variant: 'destructive',
@@ -142,40 +145,29 @@ export default function AssistantForm() {
     load();
   }, []);
 
-  useEffect(() => {
-    form.setValue(
-      'tools',
-      Array.from(selectedToolIds).map((toolId) => {
-        const tool = tools.find((t) => t.id === toolId);
-        return tool ? { toolId: tool.id, toolName: tool.name } : { toolId: '', toolName: '' };
-      })
-    );
-  }, [selectedToolIds, tools, form]);
+  // useEffect(() => {
+  //   form.setValue(
+  //     'tools',
+  //     Array.from(selectedToolIds).map((toolId) => {
+  //       const tool = tools.find((t) => t.id === toolId);
+  //       return tool ? { toolId: tool.id, toolName: tool.name } : { toolId: '', toolName: '' };
+  //     })
+  //   );
+  // }, [selectedToolIds, tools, form]);
 
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      const now = new Date().toISOString();
-      const fileData: Assistant = {
-        ...values, //todo: Yassir doesn't have this - he lists each value
-        id: fileId || generateGuid(),
-        createdAt: fileId ? now : now,
-        createdBy: 'adam@stephensen.me', //todo: set from user
-        updatedAt: now,
-        updatedBy: 'adam@stephensen.me', //todo: set from user
-        folder: values.folder ? values.folder : [], // Convert `folder` to an array
-      };
+      const fileData = values as Assistant;
 
-      const result = fileId ? await updateAssistant(fileData) : await createAssistant(fileData);
-      if (result) {
-        toast({
-          title: 'Success',
-          description: fileId ? 'Assistant updated successfully' : 'Assistant created successfully',
-        });
-        navigate('/assistants');
-      } else {
-        throw new Error('Operation failed');
-      }
+      if (fileId) await updateAssistant(fileData, fileId);
+      else await createAssistant(fileData);
+
+      toast({
+        title: 'Success',
+        description: fileId ? 'Assistant updated successfully' : 'Assistant created successfully',
+      });
+      navigate('/assistants');
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -239,7 +231,7 @@ export default function AssistantForm() {
                   )}
                 />
 
-                {enablePreviewFeatures == true && (
+                {/* {enablePreviewFeatures == true && (
                   <FormField
                     control={form.control}
                     name="type"
@@ -261,7 +253,7 @@ export default function AssistantForm() {
                       </FormItem>
                     )}
                   />
-                )}
+                )} */}
                 <FormField
                   control={form.control}
                   name="greeting"
@@ -277,7 +269,7 @@ export default function AssistantForm() {
                 />
                 <FormField
                   control={form.control}
-                  name="systemMessage"
+                  name="promptOptions.systemPrompt"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>System Message</FormLabel>
@@ -295,12 +287,12 @@ export default function AssistantForm() {
 
                 <FormField
                   control={form.control}
-                  name="group"
+                  name="filterOptions.group"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Security Group</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="" />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -309,7 +301,7 @@ export default function AssistantForm() {
 
                 <FormField
                   control={form.control}
-                  name="index"
+                  name="filterOptions.indexName"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Container</FormLabel>
@@ -362,7 +354,7 @@ export default function AssistantForm() {
 
                 <FormField
                   control={form.control}
-                  name="documentLimit"
+                  name="filterOptions.documentLimit"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Document Limit</FormLabel>
@@ -381,7 +373,7 @@ export default function AssistantForm() {
                   )}
                 />
 
-                {enablePreviewFeatures == true && (
+                {/* {enablePreviewFeatures == true && (
                   <FormField
                     control={form.control}
                     name="tools"
@@ -397,11 +389,11 @@ export default function AssistantForm() {
                       </FormItem>
                     )}
                   />
-                )}
+                )} */}
 
                 <FormField
                   control={form.control}
-                  name="temperature"
+                  name="promptOptions.temperature"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Temperature</FormLabel>
@@ -424,7 +416,7 @@ export default function AssistantForm() {
 
                 <FormField
                   control={form.control}
-                  name="topP"
+                  name="promptOptions.topP"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Top P</FormLabel>
@@ -445,7 +437,7 @@ export default function AssistantForm() {
 
                 <FormField
                   control={form.control}
-                  name="maxResponseToken"
+                  name="promptOptions.maxTokens"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Max Response (tokens)</FormLabel>
@@ -461,7 +453,7 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-                {enablePreviewFeatures == true && (
+                {/* {enablePreviewFeatures == true && (
                   <FormField
                     control={form.control}
                     name="pastMessages"
@@ -479,10 +471,10 @@ export default function AssistantForm() {
                       </FormItem>
                     )}
                   />
-                )}
+                )} */}
                 <FormField
                   control={form.control}
-                  name="strictness"
+                  name="filterOptions.strictness"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Strictness</FormLabel>
@@ -535,11 +527,3 @@ export default function AssistantForm() {
     </div>
   );
 }
-
-const generateGuid = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};

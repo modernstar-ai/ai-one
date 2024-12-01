@@ -32,7 +32,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 import {
   Home,
-  MessageCircleMore,
   FileBox,
   User,
   VenetianMask,
@@ -52,7 +51,6 @@ import { PermissionHandler } from '@/authentication/permission-handler/permissio
 import { UserRole } from '@/authentication/user-roles';
 
 import Logo from '@/assets/logo.png';
-
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -137,7 +135,7 @@ export function LeftSidebar() {
     setError(null);
 
     try {
-      const response = await fetchChatThreads(username);
+      const response = await fetchChatThreads();
       if (response) {
         setThreads(response);
       } else {
@@ -246,7 +244,6 @@ export function LeftSidebar() {
 
           {/* Navigation Items */}
           <div className="flex flex-col space-y-2 mt-4 h-screen justify-center items-center  dark:text-white">
-            <SideNavButton path="/chat" label="Chat" Icon={MessageCircleMore} accessKey="c" />
             <PermissionHandler role={UserRole.ContentManager}>
               <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey="a" />
               <SideNavButton path="/files" label="Files" Icon={FileBox} accessKey="U" />
@@ -315,11 +312,11 @@ export function LeftSidebar() {
           <div className="h-full flex flex-col dark:text-white ">
             {/* Panel Header */}
             <div className="p-4 space-y-2">
-            <img src={Logo} alt="UTS Logo" className="w-1/2" />
+              <img src={Logo} alt="UTS Logo" className="w-1/2" />
             </div>
-             
+
             <div className="p-4 border-b flex justify-between">
-                <h2 className="font-semibold">Recent Chats</h2>
+              <h2 className="font-semibold">Recent Chats</h2>
 
               <Button variant="ghost" size="icon" onClick={handleCreateChat} disabled={loading} aria-label="New Chat">
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}

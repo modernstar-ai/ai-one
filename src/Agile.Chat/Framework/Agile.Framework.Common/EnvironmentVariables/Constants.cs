@@ -6,22 +6,22 @@ public static class Constants
     public const string CosmosDatabaseName = "AgileChat";
     
     public const string CosmosAssistantsContainerName = "Assistants";
-    public const string CosmosAssistantsPartitionKeyPath = "/Id";
+    public const string CosmosAssistantsPartitionKeyPath = "/id";
     
     public const string CosmosAuditsContainerName = "Audits";
-    public const string CosmosAuditsPartitionKeyPath = "/Type";
+    public const string CosmosAuditsPartitionKeyPath = "/type";
     
     public const string CosmosChatsContainerName = "Chats";
-    public const string CosmosChatsPartitionKeyPath = "/Type";
+    public const string CosmosChatsPartitionKeyPath = "/type";
     
     public const string CosmosToolsContainerName = "Tools";
-    public const string CosmosToolsPartitionKeyPath = "/Id";
+    public const string CosmosToolsPartitionKeyPath = "/id";
     
     public const string CosmosFilesContainerName = "Files";
-    public const string CosmosFilesPartitionKeyPath = "/Id";
+    public const string CosmosFilesPartitionKeyPath = "/id";
     
     public const string CosmosIndexesContainerName = "Indexes";
-    public const string CosmosIndexesPartitionKeyPath = "/Id";
+    public const string CosmosIndexesPartitionKeyPath = "/id";
     #endregion
     
     #region BlobStorageConstants

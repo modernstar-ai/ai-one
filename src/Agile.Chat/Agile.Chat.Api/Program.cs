@@ -16,6 +16,7 @@ builder.Services
 
 var app = builder.Build();
 await app.InitializeServicesAsync();
+app.UseCors();
 
 if (app.Environment.IsLocal())
 {

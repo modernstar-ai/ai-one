@@ -1,23 +1,14 @@
-import axios from "axios";
-import {
-  ChatThread,
-  NewChatThread,
-  Message,
-  UpdateChatThreadTitle,
-  ExtensionUpdate,
-} from "@/types/ChatThread";
-import { Assistant } from "@/types/Assistant";
+import axios from '@/error-handling/axiosSetup';
+import { ChatThread, CreateChatThread, Message, UpdateChatThreadTitle } from '@/types/ChatThread';
+import { Assistant } from '@/types/Assistant';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
-  return `${rootApiUrl}/chat-threads${endpoint}`;
+  return `${rootApiUrl}/api/ChatThreads${endpoint}`;
 }
 
 // Add like to a message
-export async function addLikeReaction(
-  messageId: string,
-  userId: string
-): Promise<boolean> {
+export async function addLikeReaction(messageId: string, userId: string): Promise<boolean> {
   const apiUrl = getApiUrl(`/messagereaction/like/${messageId}`);
   try {
     await axios.post(apiUrl, null, {
@@ -30,10 +21,7 @@ export async function addLikeReaction(
 }
 
 // Remove like from a message
-export async function removeLikeReaction(
-  messageId: string,
-  userId: string
-): Promise<boolean> {
+export async function removeLikeReaction(messageId: string, userId: string): Promise<boolean> {
   const apiUrl = getApiUrl(`/messagereaction/removelike/${messageId}`);
   try {
     await axios.post(apiUrl, null, {
@@ -46,10 +34,7 @@ export async function removeLikeReaction(
 }
 
 // Add dislike to a message
-export async function addDislikeReaction(
-  messageId: string,
-  userId: string
-): Promise<boolean> {
+export async function addDislikeReaction(messageId: string, userId: string): Promise<boolean> {
   const apiUrl = getApiUrl(`/messagereaction/dislike/${messageId}`);
   try {
     await axios.post(apiUrl, null, {
@@ -62,10 +47,7 @@ export async function addDislikeReaction(
 }
 
 // Remove dislike from a message
-export async function removeDislikeReaction(
-  messageId: string,
-  userId: string
-): Promise<boolean> {
+export async function removeDislikeReaction(messageId: string, userId: string): Promise<boolean> {
   const apiUrl = getApiUrl(`/messagereaction/removedislike/${messageId}`);
   try {
     await axios.post(apiUrl, null, {
@@ -78,10 +60,8 @@ export async function removeDislikeReaction(
 }
 
 // Fetch chat threads by user ID
-export async function fetchChatThreads(
-  userId: string
-): Promise<ChatThread[] | null> {
-  const apiUrl = getApiUrl(`/user/${userId}`);
+export async function fetchChatThreads(): Promise<ChatThread[] | null> {
+  const apiUrl = getApiUrl('');
   try {
     const response = await axios.get<ChatThread[]>(apiUrl);
     return response.data.map((thread) => ({
@@ -95,9 +75,7 @@ export async function fetchChatThreads(
 }
 
 // Fetch chat messages by threadid
-export async function fetchChatsbythreadid(
-  threadId: string
-): Promise<Message[] | null> {
+export async function fetchChatsbythreadid(threadId: string): Promise<Message[] | null> {
   const apiUrl = getApiUrl(`/threads/${threadId}`);
   try {
     const response = await axios.get<Message[]>(apiUrl);
@@ -117,13 +95,13 @@ export async function fetchChatThread(id: string): Promise<ChatThread | null> {
       ...response.data,
       // Handle strings
       id: response.data.id,
-      name: response.data.name || "Untitled Chat",
-      userName: response.data.userName || "Anonymous",
+      name: response.data.name || 'Untitled Chat',
+      userName: response.data.userName || 'Anonymous',
       userId: response.data.userId,
-      type: response.data.type || "CHAT_THREAD",
-      assistantMessage: response.data.assistantMessage || "",
-      assistantTitle: response.data.assistantTitle || "Assistant",
-      assistantId: response.data.assistantId || "",
+      type: response.data.type || 'CHAT_THREAD',
+      assistantMessage: response.data.assistantMessage || '',
+      assistantTitle: response.data.assistantTitle || 'Assistant',
+      assistantId: response.data.assistantId || '',
       // Handle dates
       createdAt: new Date(response.data.createdAt),
       lastMessageAt: new Date(response.data.lastMessageAt),
@@ -146,29 +124,18 @@ export async function fetchChatThread(id: string): Promise<ChatThread | null> {
   }
 }
 
-export async function createChatThread(
-  data?: NewChatThread
-): Promise<ChatThread | null> {
-  const apiUrl = getApiUrl("");
-
-  // Get assistantId from query string if it exists
-  const urlParams = new URLSearchParams(window.location.search);
-  const assistantId = urlParams.get("assistantId");
+export async function createChatThread(data: CreateChatThread): Promise<ChatThread | null> {
+  const apiUrl = getApiUrl('');
 
   try {
-    // Add assistantId to data if it exists in query string
-    const threadData = assistantId ? { ...data, assistantId } : data;
-
-    const response = await axios.post<ChatThread>(apiUrl, threadData);
+    const response = await axios.post<ChatThread>(apiUrl, data);
     return { ...response.data };
   } catch {
     return null;
   }
 }
 
-export async function updateChatThread(
-  chatThread: ChatThread
-): Promise<ChatThread | null> {
+export async function updateChatThread(chatThread: ChatThread): Promise<ChatThread | null> {
   const apiUrl = getApiUrl(`/${chatThread.id}`);
   try {
     const response = await axios.put<ChatThread>(apiUrl, chatThread);
@@ -182,10 +149,7 @@ export async function updateChatThread(
   }
 }
 
-export async function updateChatTitle({
-  id,
-  title,
-}: UpdateChatThreadTitle): Promise<ChatThread | null> {
+export async function updateChatTitle({ id, title }: UpdateChatThreadTitle): Promise<ChatThread | null> {
   const apiUrl = getApiUrl(`/${id}/title`);
   try {
     const response = await axios.patch<ChatThread>(apiUrl, {
@@ -201,15 +165,12 @@ export async function updateChatTitle({
   }
 }
 
-export async function deleteChatThread(
-  id: string,
-  userid: string
-): Promise<boolean> {
+export async function deleteChatThread(id: string, userid: string): Promise<boolean> {
   const apiUrl = getApiUrl(`/${id}`);
   try {
     await axios.delete(apiUrl, {
       params: { userid },
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
     return true;
   } catch {
@@ -217,94 +178,12 @@ export async function deleteChatThread(
   }
 }
 
-export async function createChatAndRedirect(): Promise<void> {
+export async function GetChatThreadMessages(chatThreadId: string): Promise<Message[]> {
+  const apiUrl = getApiUrl(`/Messages/${chatThreadId}`);
   try {
-    const newThread = await createChatThread({
-      name: "",
-      userId: "",
-      personaMessage: "",
-      personaMessageTitle: "",
-    });
-    if (newThread) {
-      window.location.href = `/chat/${newThread.id}`;
-    }
+    const messages = await axios.get<Message[]>(apiUrl);
+    return messages.data;
   } catch {
-    return;
+    return [];
   }
 }
-
-export async function GetChatThreadMessages(
-  username: string,
-  chatThreadId: string,
-  currentAssistant: Assistant | null
-): Promise<Message[]> {
-  console.log("Chat - chatThreadId:", chatThreadId, currentAssistant, username);
-  let mergedMessages: Message[] = [];
-  let initialMessages: Message[] = [];
-  let existingMessages: Message[] | null;
-
-  // if there is an assistant get the system and welcome messages
-  if (currentAssistant) {
-    const welcomeMessage: Message = {
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      type: "text",
-      isDeleted: false,
-      content:
-        currentAssistant?.greeting || "Hello! How can I assist you today?",
-      name: currentAssistant?.name || "",
-      role: "assistant",
-      threadId: chatThreadId,
-      userId: username,
-      multiModalImage: "",
-      sender: "assistant",
-      like: false,
-      disLike: false,
-    };
-    initialMessages = [welcomeMessage];
-  } else {
-    const systemMessage: Message = {
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      type: "text",
-      isDeleted: false,
-      content: "Hello! How can I assist you today?",
-      name: "System",
-      role: "system",
-      threadId: chatThreadId,
-      userId: username,
-      multiModalImage: "",
-      sender: "system",
-      like: false,
-      disLike: false,
-    };
-    initialMessages = [systemMessage];
-  }
-
-  console.log(
-    "Chat - set initialMessages from current assistant:",
-    initialMessages
-  );
-  //}
-
-  if (chatThreadId) {
-    // Load existing chat thread messages
-    existingMessages = await fetchChatsbythreadid(chatThreadId);
-
-    console.log("Chat - existingMessages:", existingMessages);
-
-    if (existingMessages && existingMessages.length > 0) {
-      mergedMessages = [...initialMessages, ...existingMessages];
-    } else {
-      mergedMessages = initialMessages;
-    }
-  }
-  return mergedMessages;
-}
-
-export type {
-  ChatThread,
-  NewChatThread,
-  UpdateChatThreadTitle,
-  ExtensionUpdate,
-};
