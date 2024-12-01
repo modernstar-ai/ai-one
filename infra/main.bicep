@@ -90,10 +90,6 @@ param deployEventGrid bool = false
 @description('Conditionally deploy key vault Api app permissions')
 param kvSetFunctionAppPermissions bool = false
 
-
-//other
-//var tags = { 'azd-env-name': environmentName }
-
 @description('UTS Role Endpoint')
 param UtsRoleApiEndpoint string = ''
 
@@ -104,6 +100,9 @@ param UtsXApiKey string = ''
 @description('Shared variables pattern for loading tags')
 var tagsFilePath = './uts.tags.json'
 var tags = loadJsonContent(tagsFilePath)
+
+//other
+//var tags = { 'azd-env-name': environmentName }
 
 module resources 'resources.bicep' = {
   name: 'all-resources'
