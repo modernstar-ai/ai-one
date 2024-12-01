@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Agile.Chat.Application.ChatThreads.Services;
+using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -37,7 +38,7 @@ public static class GetMessagesByThreadId
             var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;
             if (string.IsNullOrWhiteSpace(username)) return false;
             
-            var thread = await chatThreadService.GetItemByIdAsync(threadId);
+            var thread = await chatThreadService.GetItemByIdAsync(threadId, ChatType.Thread.ToString());
             return thread?.UserId.Equals(username, StringComparison.InvariantCultureIgnoreCase) ?? false;
         }
     }

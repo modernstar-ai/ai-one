@@ -15,6 +15,7 @@ import IndexesPage from '@/pages/Indexes/indexesPage';
 import IndexForm from '@/pages/Indexes/indexForm';
 import { ProtectedRoute } from './protected-route';
 import { UserRole } from '@/authentication/user-roles';
+import ChatPage from '@/pages/Chat';
 
 const AppRoutes = () => (
   <Routes>
@@ -32,6 +33,14 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <ChatRouter />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/chat/:threadId"
+      element={
+        <ProtectedRoute>
+          <ChatPage />
         </ProtectedRoute>
       }
     />

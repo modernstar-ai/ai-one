@@ -1,6 +1,5 @@
 import axios from '@/error-handling/axiosSetup';
-import { ChatThread, CreateChatThread, Message, UpdateChatThreadTitle } from '@/types/ChatThread';
-import { Assistant } from '@/types/Assistant';
+import { ChatThread, CreateChatThread, Message } from '@/types/ChatThread';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -90,35 +89,7 @@ export async function fetchChatThread(id: string): Promise<ChatThread | null> {
 
   try {
     const response = await axios.get<ChatThread>(apiUrl);
-
-    return {
-      ...response.data,
-      // Handle strings
-      id: response.data.id,
-      name: response.data.name || 'Untitled Chat',
-      userName: response.data.userName || 'Anonymous',
-      userId: response.data.userId,
-      type: response.data.type || 'CHAT_THREAD',
-      assistantMessage: response.data.assistantMessage || '',
-      assistantTitle: response.data.assistantTitle || 'Assistant',
-      assistantId: response.data.assistantId || '',
-      // Handle dates
-      createdAt: new Date(response.data.createdAt),
-      lastMessageAt: new Date(response.data.lastMessageAt),
-      updatedAt: new Date(response.data.updatedAt),
-      // Handle booleans
-      bookmarked: response.data.bookmarked ?? false,
-      isDeleted: response.data.isDeleted ?? false,
-      // Handle arrays
-      extension: response.data.extension || [],
-      // Handle nullable numbers
-      temperature: response.data.temperature ?? null,
-      topP: response.data.topP ?? null,
-      maxResponseToken: response.data.maxResponseToken ?? null,
-      strictness: response.data.strictness ?? null,
-      // Handle non-nullable number
-      documentLimit: response.data.documentLimit ?? 0,
-    };
+    return response.data;
   } catch {
     return null;
   }

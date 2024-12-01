@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Agile.Chat.Application.ChatThreads.Services;
+using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -18,7 +19,7 @@ public static class GetChatThreadById
             if(string.IsNullOrWhiteSpace(username)) return Results.Forbid();
             
             logger.LogInformation("Attempting to fetch Chat Thread Id {Id}", request.Id);
-            var chatThread = await chatThreadService.GetItemByIdAsync(request.Id.ToString());
+            var chatThread = await chatThreadService.GetItemByIdAsync(request.Id.ToString(), ChatType.Thread.ToString());
             if (chatThread is null) return Results.NotFound();
             
             if(!chatThread.UserId.Equals(username, StringComparison.InvariantCultureIgnoreCase))

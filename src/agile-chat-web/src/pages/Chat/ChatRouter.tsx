@@ -10,8 +10,6 @@ const ChatRouter: React.FC = () => {
   const navigate = useNavigate();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_searchParams, setSearchParams] = useSearchParams();
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState<React.ReactNode | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -22,24 +20,19 @@ const ChatRouter: React.FC = () => {
           assistantId: assistant?.id,
         });
 
-        if (thread) setPage(<ChatPage thread={thread} />);
-        else navigate('/error');
+        if (thread) {
+          navigate(`/chat/${thread.id}`);
+        } else navigate('/error');
       } catch (error) {
         console.error('Error fetching assistant:', error);
         navigate('/error');
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchData();
   }, [navigate, setSearchParams]);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  return <>{page}</>;
+  return <div>Loading...</div>;
 };
 
 export default ChatRouter;

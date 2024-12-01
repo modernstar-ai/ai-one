@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SimpleHeading from '@/components/Heading-Simple';
 import MessageContent from '@/components/chat-page/message-content';
 import { ChatMessageArea } from '@/components/chat-page/chat-message-area';
-import { GetChatThreadMessages } from '@/services/chatthreadservice';
+import { fetchChatThread, GetChatThreadMessages } from '@/services/chatthreadservice';
 import { ChatThread, Message, MessageType } from '@/types/ChatThread';
 import { AxiosError } from 'axios';
 import { chat } from '@/services/chat-completions-service';
@@ -17,21 +17,21 @@ interface MiniMessage {
   content: string;
   type: MessageType;
 }
-interface IChatPageProps {
-  thread: ChatThread;
-}
-const ChatPage = (props: IChatPageProps) => {
-  const { thread } = props;
+
+const ChatPage = () => {
+  const { threadId } = useParams();
   const navigate = useNavigate();
 
-  if (!thread) navigate('/');
+  if (!threadId) navigate('/');
+  const [thread, setThread] = useState<ChatThread | undefined>(undefined);
 
   const [inputValue, setInputValue] = useState('');
   const [messagesDb, setMessagesDb] = useState<Message[] | undefined>(undefined);
-  const miniMessages = useMemo(
-    () => messages?.map<MiniMessage>((message) => ({ content: message.content, type: message.type } as MiniMessage)),
-    [messagesDb]
-  );
+  const miniMessages = useMemo(() => {
+    return (
+      messagesDb?.map<MiniMessage>((message) => ({ content: message.content, type: message.type } as MiniMessage)) ?? []
+    );
+  }, [messagesDb]);
   const [messages, setMessages] = useState<MiniMessage[]>([]);
   useEffect(() => {
     setMessages(miniMessages);
@@ -42,8 +42,15 @@ const ChatPage = (props: IChatPageProps) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    GetChatThreadMessages(thread.id).then((messages) => {
-      setMessagesDb(messages);
+    setIsLoading(true);
+    fetchChatThread(threadId!).then((thread) => {
+      if (!thread) navigate('/error');
+      setThread(thread!);
+      GetChatThreadMessages(thread!.id)
+        .then((messages) => {
+          setMessagesDb(messages);
+        })
+        .finally(() => setIsLoading(false));
     });
   }, []);
 
@@ -101,9 +108,9 @@ const ChatPage = (props: IChatPageProps) => {
     <div className="flex h-screen bg-background text-foreground">
       <div className="flex-1 flex flex-col">
         <SimpleHeading
-          Title={thread.name ?? 'Chat'}
+          Title={thread!.name ?? 'Chat'}
           Subtitle={'Why not have a chat'}
-          threadId={thread.id}
+          threadId={thread!.id}
           DocumentCount={0}
         />
 
@@ -113,27 +120,27 @@ const ChatPage = (props: IChatPageProps) => {
           {isLoading ? (
             <div className="flex justify-center items-center h-full">Loading messages...</div>
           ) : (
-            messagesDb?.map(
+            messages?.map(
               (message, index) => (
                 //message.sender !== 'system' && (
                 <ChatMessageArea
                   key={index}
-                  messageId={message.id}
-                  userId={thread.userId || ''} // Ensure username is never undefined
-                  profileName={message.type === MessageType.User ? thread.userId || 'User' : 'AI Assistant'}
-                  role={message.type === MessageType.User ? 'user' : 'assistant'}
+                  messageId={messagesDb![index].id}
+                  userId={thread!.userId || ''} // Ensure username is never undefined
+                  profileName={messagesDb![index].type === MessageType.User ? thread!.userId || 'User' : 'AI Assistant'}
+                  role={messagesDb![index].type === MessageType.User ? 'user' : 'assistant'}
                   onCopy={() => {
                     navigator.clipboard.writeText(message.content);
                   }}
-                  profilePicture={message.type === MessageType.User ? '' : '/agile.png'}
-                  initialLikes={message.options.isLiked}
-                  initialDislikes={message.options.isDisliked}
+                  profilePicture={messagesDb![index].type === MessageType.User ? '' : '/agile.png'}
+                  initialLikes={messagesDb![index].options.isLiked}
+                  initialDislikes={messagesDb![index].options.isDisliked}
                 >
                   <MessageContent
                     message={{
                       role: message.type,
                       content: message.content,
-                      name: message.type === MessageType.User ? thread.userId || 'User' : 'AI Assistant',
+                      name: message.type === MessageType.User ? thread!.userId || 'User' : 'AI Assistant',
                       citations: undefined,
                     }}
                   />
