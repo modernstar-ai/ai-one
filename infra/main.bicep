@@ -45,7 +45,7 @@ param location string = resourceGroup().location
     type: 'location'
   }
 })
-param openAILocation string
+param openAILocation string 
 
 param openAISku string = 'S0'
 param openAIApiVersion string = '2024-08-01-preview'
@@ -82,8 +82,13 @@ param azureTenantId string = ''
 @description('The Azure Active Directory Application ID or URI to get the access token that will be included as the bearer token in delivery requests')
 param azureADAppIdOrUri string = ''
 
-//other
-//var tags = { 'azd-env-name': environmentName }
+
+@description('Conditionally deploy event Grid')
+param deployEventGrid bool = false
+
+
+@description('Conditionally deploy key vault Api app permissions')
+param kvSetFunctionAppPermissions bool = false
 
 @description('UTS Role Endpoint')
 param UtsRoleApiEndpoint string = ''
@@ -95,6 +100,9 @@ param UtsXApiKey string = ''
 @description('Shared variables pattern for loading tags')
 var tagsFilePath = './uts.tags.json'
 var tags = loadJsonContent(tagsFilePath)
+
+//other
+//var tags = { 'azd-env-name': environmentName }
 
 module resources 'resources.bicep' = {
   name: 'all-resources'
@@ -123,6 +131,8 @@ module resources 'resources.bicep' = {
     azureADAppIdOrUri: azureADAppIdOrUri
     UtsRoleApiEndpoint: UtsRoleApiEndpoint
     UtsXApiKey: UtsXApiKey
+    deployEventGrid:deployEventGrid
+    kvSetFunctionAppPermissions:kvSetFunctionAppPermissions
   }
 }
 

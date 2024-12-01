@@ -37,6 +37,12 @@
       },
       "aspCoreEnvironment": {
         "value": "Development"
-      }    
+      },
+      "deployEventGrid": {
+        "value": false
+    },  
+    "kvSetFunctionAppPermissions": {
+        "value": false
+    }      
     }
   }
