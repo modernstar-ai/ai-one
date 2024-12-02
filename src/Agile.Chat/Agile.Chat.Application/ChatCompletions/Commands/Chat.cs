@@ -39,7 +39,7 @@ public static class Chat
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             //Fetch what's needed to do chatting
-            var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId);
+            var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId, ChatType.Thread.ToString());
             var messages = await chatMessageService.GetAllAsync(thread!.Id);
             var assistant = !string.IsNullOrWhiteSpace(thread.AssistantId)
                 ? await assistantService.GetItemByIdAsync(thread.AssistantId)
@@ -64,10 +64,10 @@ public static class Chat
                 })
                 : 
                 appKernel.GetChatStream(
-                    messages.ParseSemanticKernelChatHistory(), chatSettings);
+                    messages.ParseSemanticKernelChatHistory(request.UserPrompt), chatSettings);
 
             var assistantFullResponse = new StringBuilder();
-            await foreach (var chatStream in aiStreamChats.WithCancellation(cancellationToken))
+            await foreach (var chatStream in aiStreamChats)
             {
                 assistantFullResponse.Append(chatStream[ResponseType.Chat]);
                 await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, chatStream);
@@ -82,7 +82,7 @@ public static class Chat
                     });
                     
             await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, assistantFullResponse.ToString());
-            return Results.Ok();
+            return Results.Empty;
         }
 
         private async Task<List<Citation>> GetCitationDocumentsAsync(string userPrompt, string indexName, ChatThreadFilterOptions filterOptions)
@@ -109,6 +109,11 @@ public static class Chat
             var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
             await chatMessageService.AddItemAsync(assistantMessage);
             await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage));
+
+            await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, new Dictionary<ResponseType, List<Message>>
+            {
+                { ResponseType.DbMessages, [userMessage, assistantMessage] }
+            });
         }
     }
 
@@ -128,7 +133,7 @@ public static class Chat
 
         private async Task<bool> ValidateUserThreadAsync(IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService, string threadId)
         {
-            var thread = await chatThreadService.GetItemByIdAsync(threadId);
+            var thread = await chatThreadService.GetItemByIdAsync(threadId, ChatType.Thread.ToString());
             if (thread is null) return false;
             
             var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;

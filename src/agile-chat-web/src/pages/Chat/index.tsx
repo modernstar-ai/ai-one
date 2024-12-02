@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,16 +7,11 @@ import SimpleHeading from '@/components/Heading-Simple';
 import MessageContent from '@/components/chat-page/message-content';
 import { ChatMessageArea } from '@/components/chat-page/chat-message-area';
 import { fetchChatThread, GetChatThreadMessages } from '@/services/chatthreadservice';
-import { ChatThread, Message, MessageType } from '@/types/ChatThread';
+import { ChatThread, ChatType, Message } from '@/types/ChatThread';
 import { AxiosError } from 'axios';
 import { chat } from '@/services/chat-completions-service';
 import { ChatDto } from '@/types/ChatCompletions';
-import { consumeChunks } from './utils';
-
-interface MiniMessage {
-  content: string;
-  type: MessageType;
-}
+import { consumeChunks, createTempMessage, ResponseType, updateMessages } from './utils';
 
 const ChatPage = () => {
   const { threadId } = useParams();
@@ -25,18 +20,9 @@ const ChatPage = () => {
   if (!threadId) navigate('/');
   const [thread, setThread] = useState<ChatThread | undefined>(undefined);
 
-  const [inputValue, setInputValue] = useState('');
+  const [userInput, setUserInput] = useState<string>('');
+  const userInputRef = useRef<HTMLTextAreaElement>(null);
   const [messagesDb, setMessagesDb] = useState<Message[] | undefined>(undefined);
-  const miniMessages = useMemo(() => {
-    return (
-      messagesDb?.map<MiniMessage>((message) => ({ content: message.content, type: message.type } as MiniMessage)) ?? []
-    );
-  }, [messagesDb]);
-  const [messages, setMessages] = useState<MiniMessage[]>([]);
-  useEffect(() => {
-    setMessages(miniMessages);
-  }, [miniMessages]);
-
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,17 +48,17 @@ const ChatPage = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || !thread) return;
+    if (!userInput.trim() || !thread) return;
 
-    const userPrompt = inputValue.trim();
+    const userPrompt = userInput.trim();
+    userInputRef.current!.value = '';
+
+    const tempUserMessage: Message = createTempMessage(userPrompt, ChatType.User);
+    let newMessages = [...messagesDb!, tempUserMessage];
+    setMessagesDb(newMessages);
 
     try {
       setIsSending(true);
-      const messages = [...(miniMessages ?? []), { content: userPrompt, type: MessageType.User } as MiniMessage];
-      setMessages(messages);
-
-      // Clear input after storing message
-      setInputValue('');
 
       const response = await chat({ threadId: thread.id, userPrompt: userPrompt } as ChatDto);
 
@@ -80,9 +66,23 @@ const ChatPage = () => {
       const stream = response.data as ReadableStream;
       const reader = stream.getReader();
       const decoder = new TextDecoder('utf-8');
+      let assistantResponse = '';
+      newMessages = [...newMessages, createTempMessage(assistantResponse, ChatType.Assistant)];
 
       for await (const value of consumeChunks(reader, decoder)) {
-        console.log(value);
+        if (value[ResponseType.Chat]) {
+          assistantResponse = assistantResponse + value[ResponseType.Chat];
+          const assistantMessage: Message = createTempMessage(assistantResponse, ChatType.Assistant);
+          newMessages = updateMessages(newMessages, assistantMessage);
+          setMessagesDb(newMessages);
+        } else if (value[ResponseType.DbMessages]) {
+          const dbMsgs = value[ResponseType.DbMessages] as Message[];
+          console.log(dbMsgs);
+          dbMsgs.forEach((msg) => {
+            newMessages = updateMessages(newMessages, msg);
+            setMessagesDb(newMessages);
+          });
+        }
       }
     } catch (err) {
       let message = 'failed to send message';
@@ -95,7 +95,6 @@ const ChatPage = () => {
       console.error('Error sending message:', err);
       setError(message);
     } finally {
-      setInputValue('');
       setIsSending(false);
     }
   };
@@ -120,46 +119,42 @@ const ChatPage = () => {
           {isLoading ? (
             <div className="flex justify-center items-center h-full">Loading messages...</div>
           ) : (
-            messages?.map(
-              (message, index) => (
-                //message.sender !== 'system' && (
+            <>
+              {messagesDb?.map((message, index) => (
                 <ChatMessageArea
                   key={index}
-                  messageId={messagesDb![index]?.id}
+                  messageId={message.id}
                   userId={thread!.userId || ''} // Ensure username is never undefined
-                  profileName={
-                    messagesDb![index]?.type === MessageType.User ? thread!.userId || 'User' : 'AI Assistant'
-                  }
-                  role={messagesDb![index]?.type === MessageType.User ? 'user' : 'assistant'}
+                  profileName={message.type === ChatType.User ? thread!.userId || 'User' : 'AI Assistant'}
+                  role={message.type === ChatType.User ? 'user' : 'assistant'}
                   onCopy={() => {
                     navigator.clipboard.writeText(message.content);
                   }}
-                  profilePicture={messagesDb![index].type === MessageType.User ? '' : '/agile.png'}
-                  initialLikes={messagesDb![index].options.isLiked}
-                  initialDislikes={messagesDb![index].options.isDisliked}
+                  profilePicture={message.type === ChatType.User ? '' : '/agile.png'}
+                  initialLikes={message.options.isLiked}
+                  initialDislikes={message.options.isDisliked}
                 >
                   <MessageContent
                     message={{
-                      role: message.type,
+                      role: message.type === ChatType.User ? 'user' : 'assistant',
                       content: message.content,
-                      name: message.type === MessageType.User ? thread!.userId || 'User' : 'AI Assistant',
+                      name: message.type === ChatType.User ? thread!.userId || 'User' : 'AI Assistant',
                       citations: undefined,
                     }}
                   />
                 </ChatMessageArea>
-              )
-              //)
-            )
+              ))}
+            </>
           )}
         </ScrollArea>
 
         <div className="p-4 border-t">
           <Textarea
+            ref={userInputRef}
             placeholder="Type your message here..."
             className="w-full mb-2"
             rows={4}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={(e) => setUserInput(e.target.value)}
             onKeyDown={handleKeyDown}
             autoFocus
             aria-label="Chat Input"

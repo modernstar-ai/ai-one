@@ -65,6 +65,13 @@ public static class MessageExtensions
         return chatHistory;
     }
     
+    public static ChatHistory ParseSemanticKernelChatHistory(this List<Message> messages, string userPrompt)
+    {
+        ChatHistory chatHistory = ParseSemanticKernelChatHistory(messages);
+        chatHistory.AddUserMessage(userPrompt);
+        return chatHistory;
+    }
+    
     public static string ParseSemanticKernelChatHistoryString(this List<Message> messages)
     {
         var chatHistorySb = new StringBuilder();

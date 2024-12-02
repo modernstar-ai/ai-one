@@ -1,3 +1,11 @@
+import { ChatType, Message } from '@/types/ChatThread';
+
+export enum ResponseType {
+  Chat = 'Chat',
+  Citations = 'Citations',
+  DbMessages = 'DbMessages',
+}
+
 export async function* consumeChunks(
   reader: ReadableStreamDefaultReader<Uint8Array | undefined>,
   decoder: TextDecoder
@@ -7,6 +15,7 @@ export async function* consumeChunks(
     const { done, value } = await reader.read();
 
     partialChunk += decoder.decode(value, { stream: true });
+
     let belIndex;
     while ((belIndex = partialChunk.indexOf('')) > -1) {
       const completeChunk = partialChunk.slice(0, belIndex);
@@ -26,3 +35,26 @@ export async function* consumeChunks(
     }
   }
 }
+
+export const updateMessages = (messages: Message[], newMessage: Message): Message[] => {
+  return messages.map((message) => {
+    if (message.id === '-1' && newMessage.type === ChatType.User) {
+      return { ...message, content: newMessage.content };
+    } else if (message.id === '-2' && newMessage.type === ChatType.Assistant) {
+      return { ...message, content: newMessage.content };
+    }
+    return message;
+  });
+};
+
+export const createTempMessage = (content: string, type: ChatType): Message => {
+  return {
+    type: type,
+    content: content,
+    id: type === ChatType.User ? '-1' : '-2',
+    threadId: '',
+    createdDate: new Date(Date.now()),
+    lastModified: new Date(Date.now()),
+    options: { isDisliked: false, isLiked: false },
+  };
+};

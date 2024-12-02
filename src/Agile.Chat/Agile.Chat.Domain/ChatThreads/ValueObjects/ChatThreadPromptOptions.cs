@@ -13,7 +13,7 @@ public class ChatThreadPromptOptions
     {
         var options = new AzureOpenAIPromptExecutionSettings()
         {
-            ChatSystemPrompt = SystemPrompt,
+            ChatSystemPrompt = string.IsNullOrWhiteSpace(SystemPrompt) ? null : SystemPrompt,
             Temperature = Temperature,
             TopP = TopP,
             MaxTokens = MaxTokens
