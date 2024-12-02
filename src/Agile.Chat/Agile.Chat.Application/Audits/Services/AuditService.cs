@@ -28,6 +28,6 @@ public class AuditService<T>(CosmosClient cosmosClient) :
         if (auditItem == null) return;
         
         auditItem.Update(item);
-        await UpdateItemByIdAsync(auditItem.Id, auditItem);
+        await UpdateItemByIdAsync(auditItem.Id, auditItem, auditItem.Type.ToString());
     }
 }

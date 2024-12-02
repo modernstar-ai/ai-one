@@ -32,6 +32,10 @@ export interface ChatThreadFilterOptions {
 
 export enum ChatType {
   Thread = 'Thread',
+  Message = 'Message',
+}
+
+export enum MessageType {
   User = 'User',
   Assistant = 'Assistant',
 }
@@ -40,6 +44,7 @@ export interface Message {
   id: string;
   content: string;
   type: ChatType;
+  messageType: MessageType;
   threadId: string;
   options: MessageOptions;
   createdDate: Date;

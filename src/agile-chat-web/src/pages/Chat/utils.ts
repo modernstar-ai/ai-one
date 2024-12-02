@@ -1,23 +1,28 @@
-import { ChatType, Message } from "@/types/ChatThread";
+import { ChatType, Message, MessageType } from '@/types/ChatThread';
 
 export enum ResponseType {
-  Chat = "Chat",
-  Citations = "Citations",
-  DbMessages = "DbMessages",
+  Chat = 'Chat',
+  Citations = 'Citations',
+  DbMessages = 'DbMessages',
+}
+
+export enum TempIdType {
+  User = '-1',
+  Assistant = '-2',
 }
 
 export async function* consumeChunks(
   reader: ReadableStreamDefaultReader<Uint8Array | undefined>,
   decoder: TextDecoder
 ) {
-  let partialChunk = "";
+  let partialChunk = '';
   while (true) {
     const { done, value } = await reader.read();
 
     partialChunk += decoder.decode(value, { stream: true });
 
     let belIndex;
-    while ((belIndex = partialChunk.indexOf("")) > -1) {
+    while ((belIndex = partialChunk.indexOf('')) > -1) {
       const completeChunk = partialChunk.slice(0, belIndex);
       partialChunk = partialChunk.slice(belIndex + 1);
       if (completeChunk) {
@@ -25,7 +30,7 @@ export async function* consumeChunks(
           const obj = JSON.parse(completeChunk);
           yield obj;
         } catch (e) {
-          console.log("Chunk parsing error: ", e);
+          console.log('Chunk parsing error: ', e);
         }
       }
     }
@@ -36,14 +41,11 @@ export async function* consumeChunks(
   }
 }
 
-export const updateMessages = (
-  messages: Message[],
-  newMessage: Message
-): Message[] => {
+export const updateMessages = (messages: Message[], newMessage: Message): Message[] => {
   return messages.map((message) => {
     if (
-      (message.id === "-1" && newMessage.type === ChatType.User) ||
-      (message.id === "-2" && newMessage.type === ChatType.Assistant)
+      (message.id === TempIdType.User && newMessage.messageType === MessageType.User) ||
+      (message.id === TempIdType.Assistant && newMessage.messageType === MessageType.Assistant)
     ) {
       return newMessage;
     }
@@ -52,12 +54,13 @@ export const updateMessages = (
   });
 };
 
-export const createTempMessage = (content: string, type: ChatType): Message => {
+export const createTempMessage = (content: string, messageType: MessageType): Message => {
   return {
-    type: type,
+    type: ChatType.Message,
+    messageType: messageType,
     content: content,
-    id: type === ChatType.User ? "-1" : "-2",
-    threadId: "",
+    id: messageType === MessageType.User ? TempIdType.User : TempIdType.Assistant,
+    threadId: '',
     createdDate: new Date(Date.now()),
     lastModified: new Date(Date.now()),
     options: { isDisliked: false, isLiked: false },

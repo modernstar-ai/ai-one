@@ -9,15 +9,17 @@ namespace Agile.Chat.Domain.ChatThreads.Entities;
 public class Message : AuditableAggregateRoot
 {
     [JsonConstructor]
-    private Message(string content, ChatType type, string threadId, MessageOptions options)
+    private Message(string content, ChatType type, MessageType messageType, string threadId, MessageOptions options)
     {
         Content = content;
         Type = type;
+        MessageType = messageType;
         ThreadId = threadId;
         Options = options;
     }
     public string Content { get; private set; }
     public ChatType Type { get; private set; }
+    public MessageType MessageType { get; private set; }
     public string ThreadId { get; private set; }
     public MessageOptions Options { get; private set; }
 
@@ -26,7 +28,7 @@ public class Message : AuditableAggregateRoot
         MessageOptions options)
     {
         //Do validation logic and throw domain level exceptions if fails
-        return new Message(content, ChatType.User, threadId, options);
+        return new Message(content, ChatType.Message, MessageType.User, threadId, options);
     }
     
     public static Message CreateAssistant(string threadId,
@@ -34,7 +36,7 @@ public class Message : AuditableAggregateRoot
         MessageOptions options)
     {
         //Do validation logic and throw domain level exceptions if fails
-        return new Message(content, ChatType.Assistant, threadId, options);
+        return new Message(content, ChatType.Message, MessageType.Assistant, threadId, options);
     }
     
     public void Update(MessageOptions options)
@@ -52,12 +54,12 @@ public static class MessageExtensions
         ChatHistory chatHistory = new ChatHistory();
         foreach (var message in messages)
         {
-            switch (message.Type)
+            switch (message.MessageType)
             {
-                case ChatType.User:
+                case MessageType.User:
                     chatHistory.AddUserMessage(message.Content);
                     break;
-                case ChatType.Assistant:
+                case MessageType.Assistant:
                     chatHistory.AddAssistantMessage(message.Content);
                     break;
             }

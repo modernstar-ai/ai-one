@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Agile.Chat.Application.Audits.Services;
+using Agile.Chat.Application.ChatThreads.Dtos;
 using Agile.Chat.Application.ChatThreads.Services;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Entities;
@@ -13,23 +14,23 @@ namespace Agile.Chat.Application.ChatThreads.Commands;
 
 public static class UpdateChatMessageById
 {
-    public record Command(Guid Id, MessageOptions Options) : IRequest<IResult>;
+    public record Command(Guid Id, bool IsLiked, bool IsDisliked) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> logger, IAuditService<Message> chatMessageAuditService, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService, IChatMessageService chatMessageService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            var message = await chatMessageService.GetItemByIdAsync(request.Id.ToString());
+            var message = await chatMessageService.GetItemByIdAsync(request.Id.ToString(), ChatType.Message.ToString());
             if(message is null) return Results.NotFound("Message not found");
 
-            var thread = await chatThreadService.GetItemByIdAsync(message.ThreadId);
+            var thread = await chatThreadService.GetItemByIdAsync(message.ThreadId, ChatType.Thread.ToString());
             if(thread is null) return Results.NotFound("Thread not found");
             
             if (!IsUserOwnerOfThread(contextAccessor, thread))
                 return Results.Forbid();
             
-            message.Update(request.Options);
-            await chatMessageService.UpdateItemByIdAsync(message.Id, message);
+            message.Update(new MessageOptions(){IsLiked = request.IsLiked, IsDisliked = request.IsDisliked});
+            await chatMessageService.UpdateItemByIdAsync(message.Id, message, ChatType.Message.ToString());
             await chatMessageAuditService.UpdateItemByPayloadIdAsync(message);
             logger.LogInformation("Updated Message: {@Message}", message);
             return Results.Ok();
@@ -49,10 +50,6 @@ public static class UpdateChatMessageById
             RuleFor(request => request.Id)
                 .NotNull()
                 .WithMessage("Id is required");
-            
-            RuleFor(request => request.Options)
-                .NotNull()
-                .WithMessage("Message Options is required");
         }
     }
 }

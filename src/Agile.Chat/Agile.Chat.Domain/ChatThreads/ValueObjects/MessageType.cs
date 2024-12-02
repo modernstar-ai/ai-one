@@ -3,8 +3,8 @@
 namespace Agile.Chat.Domain.ChatThreads.ValueObjects;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum ChatType
+public enum MessageType
 {
-    Thread,
-    Message
+    User,
+    Assistant
 }

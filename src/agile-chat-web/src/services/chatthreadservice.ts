@@ -1,5 +1,5 @@
 import axios from '@/error-handling/axiosSetup';
-import { ChatThread, CreateChatThread, Message } from '@/types/ChatThread';
+import { ChatThread, CreateChatThread, Message, MessageOptions } from '@/types/ChatThread';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -7,51 +7,10 @@ function getApiUrl(endpoint: string): string {
 }
 
 // Add like to a message
-export async function addLikeReaction(messageId: string, userId: string): Promise<boolean> {
-  const apiUrl = getApiUrl(`/messagereaction/like/${messageId}`);
+export async function updateReaction(messageId: string, options: MessageOptions): Promise<boolean> {
+  const apiUrl = getApiUrl(`/Messages/${messageId}`);
   try {
-    await axios.post(apiUrl, null, {
-      params: { userId },
-    });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// Remove like from a message
-export async function removeLikeReaction(messageId: string, userId: string): Promise<boolean> {
-  const apiUrl = getApiUrl(`/messagereaction/removelike/${messageId}`);
-  try {
-    await axios.post(apiUrl, null, {
-      params: { userId },
-    });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// Add dislike to a message
-export async function addDislikeReaction(messageId: string, userId: string): Promise<boolean> {
-  const apiUrl = getApiUrl(`/messagereaction/dislike/${messageId}`);
-  try {
-    await axios.post(apiUrl, null, {
-      params: { userId },
-    });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// Remove dislike from a message
-export async function removeDislikeReaction(messageId: string, userId: string): Promise<boolean> {
-  const apiUrl = getApiUrl(`/messagereaction/removedislike/${messageId}`);
-  try {
-    await axios.post(apiUrl, null, {
-      params: { userId },
-    });
+    await axios.put(apiUrl, options);
     return true;
   } catch {
     return false;
@@ -63,11 +22,7 @@ export async function fetchChatThreads(): Promise<ChatThread[] | null> {
   const apiUrl = getApiUrl('');
   try {
     const response = await axios.get<ChatThread[]>(apiUrl);
-    return response.data.map((thread) => ({
-      ...thread,
-      createdAt: new Date(thread.createdAt),
-      lastMessageAt: new Date(thread.lastMessageAt),
-    }));
+    return response.data;
   } catch {
     return null;
   }
@@ -110,27 +65,7 @@ export async function updateChatThread(chatThread: ChatThread): Promise<ChatThre
   const apiUrl = getApiUrl(`/${chatThread.id}`);
   try {
     const response = await axios.put<ChatThread>(apiUrl, chatThread);
-    return {
-      ...response.data,
-      createdAt: new Date(response.data.createdAt),
-      lastMessageAt: new Date(response.data.lastMessageAt),
-    };
-  } catch {
-    return null;
-  }
-}
-
-export async function updateChatTitle({ id, title }: UpdateChatThreadTitle): Promise<ChatThread | null> {
-  const apiUrl = getApiUrl(`/${id}/title`);
-  try {
-    const response = await axios.patch<ChatThread>(apiUrl, {
-      title: title.substring(0, 30),
-    });
-    return {
-      ...response.data,
-      createdAt: new Date(response.data.createdAt),
-      lastMessageAt: new Date(response.data.lastMessageAt),
-    };
+    return response.data;
   } catch {
     return null;
   }

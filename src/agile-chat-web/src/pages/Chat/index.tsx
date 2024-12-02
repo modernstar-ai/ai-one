@@ -1,38 +1,28 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import SimpleHeading from "@/components/Heading-Simple";
-import MessageContent from "@/components/chat-page/message-content";
-import { ChatMessageArea } from "@/components/chat-page/chat-message-area";
-import {
-  fetchChatThread,
-  GetChatThreadMessages,
-} from "@/services/chatthreadservice";
-import { ChatThread, ChatType, Message } from "@/types/ChatThread";
-import { AxiosError } from "axios";
-import { chat } from "@/services/chat-completions-service";
-import { ChatDto } from "@/types/ChatCompletions";
-import {
-  consumeChunks,
-  createTempMessage,
-  ResponseType,
-  updateMessages,
-} from "./utils";
-import { flushSync } from "react-dom";
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import SimpleHeading from '@/components/Heading-Simple';
+import MessageContent from '@/components/chat-page/message-content';
+import { ChatMessageArea } from '@/components/chat-page/chat-message-area';
+import { fetchChatThread, GetChatThreadMessages } from '@/services/chatthreadservice';
+import { ChatThread, Message, MessageType } from '@/types/ChatThread';
+import { AxiosError } from 'axios';
+import { chat } from '@/services/chat-completions-service';
+import { ChatDto } from '@/types/ChatCompletions';
+import { consumeChunks, createTempMessage, ResponseType, updateMessages } from './utils';
+import { flushSync } from 'react-dom';
 
 const ChatPage = () => {
   const { threadId } = useParams();
   const navigate = useNavigate();
 
-  if (!threadId) navigate("/");
+  if (!threadId) navigate('/');
   const [thread, setThread] = useState<ChatThread | undefined>(undefined);
 
-  const [userInput, setUserInput] = useState<string>("");
-  const [messagesDb, setMessagesDb] = useState<Message[] | undefined>(
-    undefined
-  );
+  const [userInput, setUserInput] = useState<string>('');
+  const [messagesDb, setMessagesDb] = useState<Message[] | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +38,7 @@ const ChatPage = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchChatThread(threadId!).then((thread) => {
-      if (!thread) navigate("/error");
+      if (!thread) navigate('/error');
       setThread(thread!);
       GetChatThreadMessages(thread!.id)
         .then((messages) => {
@@ -59,7 +49,7 @@ const ChatPage = () => {
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -69,12 +59,9 @@ const ChatPage = () => {
     if (!userInput.trim() || !thread) return;
 
     const userPrompt = userInput.trim();
-    userInputRef.current!.value = "";
+    userInputRef.current!.value = '';
 
-    const tempUserMessage: Message = createTempMessage(
-      userPrompt,
-      ChatType.User
-    );
+    const tempUserMessage: Message = createTempMessage(userPrompt, MessageType.User);
     let newMessages = [...messagesDb!, tempUserMessage];
     setMessagesDb(newMessages);
 
@@ -89,42 +76,33 @@ const ChatPage = () => {
       // // Handle streaming response
       const stream = response.data as ReadableStream;
       const reader = stream.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let assistantResponse = "";
-      newMessages = [
-        ...newMessages,
-        createTempMessage(assistantResponse, ChatType.Assistant),
-      ];
+      const decoder = new TextDecoder('utf-8');
+      let assistantResponse = '';
+      newMessages = [...newMessages, createTempMessage(assistantResponse, MessageType.Assistant)];
 
       for await (const value of consumeChunks(reader, decoder)) {
         if (value[ResponseType.Chat]) {
           assistantResponse = assistantResponse + value[ResponseType.Chat];
-          const assistantMessage: Message = createTempMessage(
-            assistantResponse,
-            ChatType.Assistant
-          );
+          const assistantMessage: Message = createTempMessage(assistantResponse, MessageType.Assistant);
           newMessages = updateMessages(newMessages, assistantMessage);
           flushSync(() => setMessagesDb(newMessages));
         } else if (value[ResponseType.DbMessages]) {
           const dbMsgs = value[ResponseType.DbMessages] as Message[];
           dbMsgs.forEach((msg) => {
             newMessages = updateMessages(newMessages, msg);
-            console.log(msg);
             flushSync(() => setMessagesDb(newMessages));
           });
         }
       }
     } catch (err) {
-      let message = "failed to send message";
+      let message = 'failed to send message';
       const axiosErr = err as AxiosError;
       const stream = axiosErr.response?.data as ReadableStream;
       if (stream) {
         const read = await stream.getReader().read();
-        message = new TextDecoder("utf-8")
-          .decode(read.value)
-          .replace(/^"(.*)"$/, "$1");
+        message = new TextDecoder('utf-8').decode(read.value).replace(/^"(.*)"$/, '$1');
       }
-      console.error("Error sending message:", err);
+      console.error('Error sending message:', err);
       setError(message);
     } finally {
       setIsSending(false);
@@ -132,66 +110,41 @@ const ChatPage = () => {
   };
 
   if (isLoading || !thread || !messagesDb) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        Loading...
-      </div>
-    );
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
   return (
     <div className="flex h-screen bg-background text-foreground">
       <div className="flex-1 flex flex-col">
         <SimpleHeading
-          Title={thread!.name ?? "Chat"}
-          Subtitle={"Why not have a chat"}
+          Title={thread!.name ?? 'Chat'}
+          Subtitle={'Why not have a chat'}
           threadId={thread!.id}
           DocumentCount={0}
         />
 
-        {error && (
-          <div className="p-4 bg-red-100 text-red-700 rounded-md m-4">
-            {error}
-          </div>
-        )}
+        {error && <div className="p-4 bg-red-100 text-red-700 rounded-md m-4">{error}</div>}
 
         <ScrollArea className="flex-1 p-4 space-y-4">
           {isLoading ? (
-            <div className="flex justify-center items-center h-full">
-              Loading messages...
-            </div>
+            <div className="flex justify-center items-center h-full">Loading messages...</div>
           ) : (
             <>
               {messagesDb?.map((message, index) => (
                 <ChatMessageArea
                   ref={scrollContainerRef}
+                  message={message}
                   key={index}
-                  messageId={message.id}
-                  userId={thread!.userId || ""} // Ensure username is never undefined
-                  profileName={
-                    message.type === ChatType.User
-                      ? thread!.userId || "User"
-                      : "AI Assistant"
-                  }
-                  role={message.type === ChatType.User ? "user" : "assistant"}
+                  userId={thread!.userId || ''} // Ensure username is never undefined
                   onCopy={() => {
                     navigator.clipboard.writeText(message.content);
                   }}
-                  profilePicture={
-                    message.type === ChatType.User ? "" : "/agile.png"
-                  }
-                  initialLikes={message.options.isLiked}
-                  initialDislikes={message.options.isDisliked}
                 >
                   <MessageContent
                     message={{
-                      role:
-                        message.type === ChatType.User ? "user" : "assistant",
+                      role: message.messageType === MessageType.User ? 'user' : 'assistant',
                       content: message.content,
-                      name:
-                        message.type === ChatType.User
-                          ? thread!.userId || "User"
-                          : "AI Assistant",
+                      name: message.messageType === MessageType.User ? thread!.userId || 'User' : 'AI Assistant',
                       citations: undefined,
                     }}
                   />
@@ -214,13 +167,8 @@ const ChatPage = () => {
             accessKey="i"
           />
 
-          <Button
-            onClick={handleSendMessage}
-            disabled={isSending}
-            aria-label="Send Chat"
-            accessKey="j"
-          >
-            {isSending ? "Sending..." : "Send"}
+          <Button onClick={handleSendMessage} disabled={isSending} aria-label="Send Chat" accessKey="j">
+            {isSending ? 'Sending...' : 'Send'}
           </Button>
         </div>
       </div>

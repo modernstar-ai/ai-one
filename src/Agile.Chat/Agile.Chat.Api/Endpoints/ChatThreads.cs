@@ -63,9 +63,9 @@ public class ChatThreads(IMediator mediator) : CarterModule("/api")
         return await mediator.Send(command with {Id = id});
     }
     
-    private async Task<IResult> UpdateMessageById([FromBody] MessageOptions chatThreadDto, [FromRoute] Guid id)
+    private async Task<IResult> UpdateMessageById([FromBody] MessageOptions dto, [FromRoute] Guid id)
     {
-        var command = chatThreadDto.Adapt<UpdateChatThreadById.Command>();
+        var command = dto.Adapt<UpdateChatMessageById.Command>();
         return await mediator.Send(command with {Id = id});
     }
     

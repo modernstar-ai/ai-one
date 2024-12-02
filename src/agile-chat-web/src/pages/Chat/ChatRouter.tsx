@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import ChatPage from '../Chat/index';
 import { fetchAssistantById } from '@/services/assistantservice';
 import { createChatThread } from '@/services/chatthreadservice';
-import { ChatThreadFilterOptions, ChatThreadPromptOptions } from '@/types/ChatThread';
 
 const ChatRouter: React.FC = () => {
   const { state } = useLocation();
