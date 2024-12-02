@@ -24,7 +24,7 @@ public class ChatMessageService(CosmosClient cosmosClient) :
     {
         var query = LinqQuery()
             .Where(c => c.ThreadId == threadId)
-            .OrderByDescending(c => c.CreatedDate);
+            .OrderBy(c => c.CreatedDate);
         
         var results = await CollectResultsAsync(query);
         return results;
