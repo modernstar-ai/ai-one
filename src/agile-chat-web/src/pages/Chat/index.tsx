@@ -46,7 +46,7 @@ const ChatPage = () => {
         })
         .finally(() => setIsLoading(false));
     });
-  }, []);
+  }, [threadId]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {

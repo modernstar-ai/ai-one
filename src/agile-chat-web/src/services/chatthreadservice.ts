@@ -71,11 +71,10 @@ export async function updateChatThread(chatThread: ChatThread): Promise<ChatThre
   }
 }
 
-export async function deleteChatThread(id: string, userid: string): Promise<boolean> {
+export async function deleteChatThread(id: string): Promise<boolean> {
   const apiUrl = getApiUrl(`/${id}`);
   try {
     await axios.delete(apiUrl, {
-      params: { userid },
       headers: { 'Content-Type': 'application/json' },
     });
     return true;

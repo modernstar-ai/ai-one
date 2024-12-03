@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/services/auth-helpers';
 import { cn } from '@/lib/utils';
-import { fetchChatThreads, createChatThread, deleteChatThread, ChatThread } from '@/services/chatthreadservice';
+import { fetchChatThreads, createChatThread, deleteChatThread } from '@/services/chatthreadservice';
 
 import { Button } from '@/components/ui/button';
 import SideNavButton from '@/components/navigation/left-sidebar-button';
@@ -51,6 +51,7 @@ import { PermissionHandler } from '@/authentication/permission-handler/permissio
 import { UserRole } from '@/authentication/user-roles';
 
 import Logo from '@/assets/logo.png';
+import { ChatThread } from '@/types/ChatThread';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -187,7 +188,7 @@ export function LeftSidebar() {
   const handleDeleteThread = async (threadId: string) => {
     setLoading(true);
     try {
-      const success = await deleteChatThread(threadId, name);
+      const success = await deleteChatThread(threadId);
       if (success) {
         await loadChatThreads(false);
       } else {
@@ -205,7 +206,7 @@ export function LeftSidebar() {
     if (confirmClear) {
       setLoading(true);
       try {
-        const deletePromises = threads.map((thread) => deleteChatThread(thread.id, name));
+        const deletePromises = threads.map((thread) => deleteChatThread(thread.id));
         await Promise.all(deletePromises);
         await loadChatThreads(false);
       } catch {

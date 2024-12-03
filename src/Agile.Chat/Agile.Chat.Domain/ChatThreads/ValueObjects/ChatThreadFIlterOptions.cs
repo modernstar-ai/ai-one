@@ -2,6 +2,6 @@
 
 public class ChatThreadFilterOptions
 {
-    public int DocumentLimit { get; set; }
+    public int DocumentLimit { get; set; } = 5;
     public double? Strictness { get; set; }
 }
