@@ -15,7 +15,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddAgileAuthentication(this IServiceCollection services) =>
         services.AddAzureAdAuth()
-            .AddDefaultPermissions()
+            .AddUtsPermissions()
             .AddClaimsTransformer();
     
     private static IServiceCollection AddAzureAdAuth(this IServiceCollection services)
