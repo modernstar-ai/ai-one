@@ -3,6 +3,7 @@ import { UserRole } from '@/authentication/user-roles';
 import { usePermissionsStore } from '@/stores/permission-store';
 import { InteractionStatus } from '@azure/msal-browser';
 import { useIsAuthenticated, useMsal } from '@azure/msal-react';
+import { Loader2Icon } from 'lucide-react';
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -15,6 +16,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }
   const { inProgress } = useMsal();
 
   const isAuthenticated = useIsAuthenticated();
+
+  if (!roles) {
+    return (
+      <div className="flex w-full h-full items-center justify-center">
+        <Loader2Icon className="animate-spin" />'
+      </div>
+    );
+  }
 
   if (isAuthenticated && role && !hasPermission(roles, [], role)) {
     return <Navigate to="/" />;
