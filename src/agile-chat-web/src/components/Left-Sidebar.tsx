@@ -347,11 +347,7 @@ export function LeftSidebar() {
                       <div
                         className="flex flex-col flex-grow min-w-0"
                         // onClick={() => navigate(`/chat/${thread.id}`)}
-                        onClick={() =>
-                          navigate(
-                            `/chat/${thread.id}${thread.assistantId ? `?assistantId=${thread.assistantId}` : ''}`
-                          )
-                        }
+                        onClick={() => navigate(`/chat/${thread.id}`)}
                       >
                         <span className="text-sm font-medium truncate">{thread.name}</span>
                         {/* <span className="text-xs text-muted-foreground">

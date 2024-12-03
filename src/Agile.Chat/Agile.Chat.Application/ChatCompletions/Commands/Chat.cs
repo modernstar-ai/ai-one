@@ -74,11 +74,21 @@ public static class Chat
                 assistantFullResponse.Append(chatStream[ResponseType.Chat]);
                 await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, chatStream);
             }
+            
+            //If its a new chat, update the threads name
+            if (messages.Count == 0)
+            {
+                thread.Update(TruncateUserPrompt(request.UserPrompt), thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions);
+                await chatThreadService.UpdateItemByIdAsync(thread.Id, thread, ChatType.Thread.ToString());
+            }
 
             await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, assistantFullResponse.ToString(), documents);
             return Results.Empty;
         }
-
+        private string TruncateUserPrompt(string userPrompt) => userPrompt.Substring(0, Math.Min(userPrompt.Length, 39)) +
+                                                                (userPrompt.Length <= 39
+                                                                    ? string.Empty
+                                                                    : "...");
         private async Task<List<AzureSearchDocument>> GetSearchDocumentsAsync(string userPrompt, string indexName, ChatThreadFilterOptions filterOptions)
         {
             var embedding = await appKernel.GenerateEmbeddingAsync(userPrompt);

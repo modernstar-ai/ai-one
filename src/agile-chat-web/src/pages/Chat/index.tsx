@@ -37,9 +37,7 @@ const ChatPage = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    fetchChatThread(threadId!).then((thread) => {
-      if (!thread) navigate('/error');
-      setThread(thread!);
+    refreshThread().then((thread) => {
       GetChatThreadMessages(thread!.id)
         .then((messages) => {
           setMessagesDb(messages);
@@ -47,6 +45,13 @@ const ChatPage = () => {
         .finally(() => setIsLoading(false));
     });
   }, [threadId]);
+
+  const refreshThread = async () => {
+    const thread = await fetchChatThread(threadId!);
+    if (!thread) navigate('/');
+    setThread(thread!);
+    return thread;
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -93,6 +98,10 @@ const ChatPage = () => {
             flushSync(() => setMessagesDb(newMessages));
           });
         }
+      }
+
+      if (messagesDb && messagesDb.length <= 2) {
+        await refreshThread();
       }
     } catch (err) {
       let message = 'failed to send message';

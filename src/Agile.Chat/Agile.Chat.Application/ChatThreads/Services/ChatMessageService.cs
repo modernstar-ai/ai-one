@@ -14,6 +14,7 @@ namespace Agile.Chat.Application.ChatThreads.Services;
 public interface IChatMessageService  : ICosmosRepository<Message>
 {
     public Task<List<Message>> GetAllAsync(string threadId);
+    public Task DeleteByThreadIdAsync(string threadId);
 }
 
 [Export(typeof(IChatMessageService), ServiceLifetime.Singleton)]
@@ -28,5 +29,16 @@ public class ChatMessageService(CosmosClient cosmosClient) :
         
         var results = await CollectResultsAsync(query);
         return results;
+    }
+    
+    public async Task DeleteByThreadIdAsync(string threadId)
+    {
+        var query = LinqQuery()
+            .Where(c => c.ThreadId == threadId)
+            .OrderBy(c => c.CreatedDate);
+        
+        var results = await CollectResultsAsync(query);
+        foreach (var message in results)
+            await DeleteItemByIdAsync(message.Id, ChatType.Message.ToString());
     }
 }

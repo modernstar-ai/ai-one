@@ -12,7 +12,7 @@ public static class DeleteChatThreadById
 {
     public record Command(Guid Id) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService, IChatMessageService chatMessageService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -27,6 +27,7 @@ public static class DeleteChatThreadById
                 return Results.Forbid();
             
             await chatThreadService.DeleteItemByIdAsync(chatThread.Id, ChatType.Thread.ToString());
+            await chatMessageService.DeleteByThreadIdAsync(chatThread.Id);
             logger.LogInformation("Deleted Chat Thread with Id {Id}", chatThread.Id);
             
             return Results.Ok();

@@ -20,10 +20,10 @@ const ChatRouter: React.FC = () => {
 
         if (thread) {
           navigate(`/chat/${thread.id}`);
-        } else navigate('/error');
+        } else navigate('/');
       } catch (error) {
         console.error('Error fetching assistant:', error);
-        navigate('/error');
+        navigate('/');
       }
     };
 
