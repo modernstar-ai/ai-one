@@ -1,5 +1,4 @@
 name: chatWithRag
-description: Chats with loaded documents from an external datasource
 template: |
   {{$chatHistory}}
   <message role="system">You can only respond based on knowledge from previous chat history and the document chunks fetched below. If you dont know the answer. Respond with I don't know
@@ -7,10 +6,11 @@ template: |
   {{$documents}}</message>
   <message role="user">{{$userPrompt}}</message>
 template_format: semantic-kernel
+description: Chats with loaded documents from an external datasource.
 input_variables:
   - name: chatHistory
-  - description: The chats history
-  - is_required: true
+    description: The chats history
+    is_required: false
   - name:          userPrompt
     description:   The message from the user
     is_required:   true

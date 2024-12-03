@@ -54,4 +54,15 @@ export interface Message {
 export interface MessageOptions {
   isLiked: boolean;
   isDisliked: boolean;
+  metadata: { [key in MetadataType]?: object };
+}
+
+export enum MetadataType {
+  Citations = 'Citations',
+}
+
+export interface Citation {
+  id: string;
+  name: string;
+  url: string;
 }

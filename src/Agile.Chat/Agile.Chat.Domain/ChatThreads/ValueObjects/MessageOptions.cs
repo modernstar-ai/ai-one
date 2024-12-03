@@ -1,7 +1,13 @@
-﻿namespace Agile.Chat.Domain.ChatThreads.ValueObjects;
+﻿using System.Text.Json.Serialization;
+
+namespace Agile.Chat.Domain.ChatThreads.ValueObjects;
 
 public class MessageOptions
 {
-    public bool IsLiked { get; set; } = false;
-    public bool IsDisliked { get; set; } = false;
+    [JsonInclude]
+    public bool IsLiked { get; internal set; } = false;
+    [JsonInclude]
+    public bool IsDisliked { get; internal set; } = false;
+    [JsonInclude]
+    public Dictionary<MetadataType, object> Metadata { get; internal set; } = new();
 }

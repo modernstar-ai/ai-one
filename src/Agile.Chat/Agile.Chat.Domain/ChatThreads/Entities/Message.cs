@@ -39,10 +39,18 @@ public class Message : AuditableAggregateRoot
         return new Message(content, ChatType.Message, MessageType.Assistant, threadId, options);
     }
     
-    public void Update(MessageOptions options)
+    public void Update(bool isLiked, bool isDisliked)
     {
         //Do validation logic and throw domain level exceptions if fails
-        Options = options;
+        Options.IsLiked = isLiked;
+        Options.IsDisliked = isDisliked;
+        LastModified = DateTime.UtcNow;
+    }
+    
+    public void AddMetadata(MetadataType key, object value)
+    {
+        //Do validation logic and throw domain level exceptions if fails
+        Options.Metadata.Add(key, value);
         LastModified = DateTime.UtcNow;
     }
 }

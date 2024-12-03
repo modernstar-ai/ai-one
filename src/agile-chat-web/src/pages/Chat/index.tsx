@@ -140,14 +140,7 @@ const ChatPage = () => {
                     navigator.clipboard.writeText(message.content);
                   }}
                 >
-                  <MessageContent
-                    message={{
-                      role: message.messageType === MessageType.User ? 'user' : 'assistant',
-                      content: message.content,
-                      name: message.messageType === MessageType.User ? thread!.userId || 'User' : 'AI Assistant',
-                      citations: undefined,
-                    }}
-                  />
+                  <MessageContent message={message} assistantId={thread.assistantId} />
                 </ChatMessageArea>
               ))}
             </>

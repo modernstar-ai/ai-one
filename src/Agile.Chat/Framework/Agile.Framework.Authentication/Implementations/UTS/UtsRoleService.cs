@@ -51,10 +51,12 @@ public class UtsRoleSerivce(IHttpContextAccessor httpContextAccessor) : IRoleSer
         GetRoleClaims().Any(role => role.Contains(UserRole.ContentManager.ToString()));
     
     public bool IsUserInRole(UserRole userRole, string group) => 
+        string.IsNullOrWhiteSpace(group) ||
         (httpContextAccessor.HttpContext?.User.IsInRole(UserRole.SystemAdmin.ToString()) ?? false) ||
         (httpContextAccessor.HttpContext?.User.IsInRole($"{userRole.ToString()}.{group.ToLower()}") ?? false);
     
     public bool IsUserInGroup(string group) => 
+        string.IsNullOrWhiteSpace(group) ||
         (httpContextAccessor.HttpContext?.User.IsInRole(UserRole.SystemAdmin.ToString()) ?? false) || 
         (httpContextAccessor.HttpContext?.User.IsInGroup(group.ToLower()) ?? false);
     

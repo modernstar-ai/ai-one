@@ -1,10 +1,9 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Agile.Framework.Common.Enums;
+namespace Agile.Chat.Domain.ChatThreads.ValueObjects;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum ResponseType
+public enum MetadataType
 {
-    Chat,
-    DbMessages
+    Citations
 }
