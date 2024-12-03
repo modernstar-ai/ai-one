@@ -109,6 +109,7 @@ const IndexerComponent: React.FC = () => {
                                   variant="outline"
                                   size="sm"
                                   className="h-8 w-8 p-0"
+                                  disabled={isDeleting}
                                   onClick={() => handleEditIndex(index)}
                                 >
                                   <Pencil className="h-4 w-4" />
@@ -130,6 +131,7 @@ const IndexerComponent: React.FC = () => {
                                       <Button
                                         variant="outline"
                                         size="sm"
+                                        disabled={isDeleting}
                                         className="h-8 w-8 p-0"
                                         onClick={() => handleDeleteIndex(index)}
                                       >

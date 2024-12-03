@@ -16,7 +16,8 @@ public class Files(IMediator mediator) : CarterModule("/api")
             .MapGroup(nameof(Files))
             .RequireAuthorization()
             .IncludeInOpenApi()
-            .WithTags(nameof(Files));
+            .WithTags(nameof(Files))
+            .DisableAntiforgery();
 
         //GET
         files.MapGet("/", GetFiles);

@@ -36,7 +36,6 @@ import {
   User,
   VenetianMask,
   LogOut,
-  Wrench,
   Plus,
   Trash2,
   Sun,

@@ -110,7 +110,7 @@ public static class DefaultSkillset
         });
         embeddingSkill.Name = "#4";
         embeddingSkill.Context = "/document/pages/*";
-        embeddingSkill.ResourceUri = new Uri(Configs.AzureSearch.Endpoint);
+        embeddingSkill.ResourceUri = new Uri(Configs.AzureOpenAi.Endpoint);
         embeddingSkill.DeploymentName = Configs.AzureOpenAi.EmbeddingsDeploymentName;
         embeddingSkill.ModelName = Configs.AzureOpenAi.EmbeddingsModelName;
         embeddingSkill.ApiKey = Configs.AzureOpenAi.ApiKey;

@@ -7,7 +7,7 @@ import { RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useFetchFiles } from '@/hooks/use-files';
-import { FileMetadata } from '@/models/filemetadata';
+import { CosmosFile } from '@/models/filemetadata';
 import { deleteFiles } from '@/services/files-service';
 import SimpleHeading from '@/components/Heading-Simple';
 
@@ -16,7 +16,7 @@ export default function FileList() {
   const { files, refetch, loading } = useFetchFiles();
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false); // Processing state for delete/refresh
-  const [sortedFiles, setSortedFiles] = useState<FileMetadata[]>([]);
+  const [sortedFiles, setSortedFiles] = useState<CosmosFile[]>([]);
   // const { folders } = useFolders();
   // const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
 
@@ -25,7 +25,7 @@ export default function FileList() {
     const sorted = [...files].sort((a, b) => {
       const indexNameA = a.indexName ?? ''; // Use empty string if indexName is undefined
       const indexNameB = b.indexName ?? '';
-  
+
       return indexNameA.localeCompare(indexNameB);
     });
     setSortedFiles(sorted);
@@ -70,8 +70,11 @@ export default function FileList() {
     }
     setIsProcessing(true);
     try {
+      const deletions: Promise<void>[] = [];
+
+      selectedFiles.forEach((fileId) => deletions.push(deleteFiles(fileId)));
       // Sending delete request to the server
-      await deleteFiles(selectedFiles);
+      await Promise.all(deletions);
       // Update the UI after successful deletion
       alert('Selected files deleted successfully.');
       // Clear selected files
@@ -103,10 +106,8 @@ export default function FileList() {
   return (
     <div className="flex h-screen bg-background text-foreground">
       <div className="flex-1  flex flex-col">
-
         <SimpleHeading Title="Your Files" Subtitle="Manage your uploaded files" DocumentCount={0} />
         <div className="flex-1 p-4 overflow-auto">
-
           {/* <div className="flex space-x-4 mb-4">
           <MultiSelectInput
             className="w-[30%] max-w-[500px]"
@@ -166,13 +167,13 @@ export default function FileList() {
                     <Checkbox
                       checked={selectedFiles.includes(file.id)}
                       onCheckedChange={() => toggleFileSelection(file.id)}
-                      aria-label={`Select file ${file.fileName}`}
+                      aria-label={`Select file ${file.name}`}
                     />
                   </TableCell>
-                  <TableCell>{removeFileExtension(file.fileName)}</TableCell>
+                  <TableCell>{removeFileExtension(file.name)}</TableCell>
                   <TableCell>{simplifyContentType(file.contentType || 'unknown')}</TableCell>
                   <TableCell>{formatBytesToKB(file.size)}</TableCell>
-                  <TableCell>{file.submittedOn}</TableCell>
+                  <TableCell>{file.createdDate}</TableCell>
                   <TableCell>{file.indexName}</TableCell>
                 </TableRow>
               ))}
