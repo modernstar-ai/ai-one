@@ -23,9 +23,6 @@
       "azureTenantId": {
         "value": ""
       },
-      "aspCoreEnvironment": {
-        "value": "Production"
-      } ,
       "azureADAppIdOrUri": {
           "value": ""
       },
