@@ -252,9 +252,9 @@ export function LeftSidebar() {
             <PermissionHandler role={UserRole.ContentManager}>
               <SideNavButton path="/containers" label="Database" Icon={Database} accessKey="i" />
             </PermissionHandler>
-            <PermissionHandler role={UserRole.SystemAdmin}>
+            {/* <PermissionHandler role={UserRole.SystemAdmin}>
               <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey="t" />
-            </PermissionHandler>
+            </PermissionHandler> */}
           </div>
 
           {/* User Menu */}
