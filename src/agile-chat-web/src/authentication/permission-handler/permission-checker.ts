@@ -4,7 +4,8 @@ export const hasPermission = (
   assignedRoles: string[] | undefined,
   assignedGroups: string[] | undefined,
   roleRequired?: UserRole,
-  groupRequired?: string
+  groupRequired?: string,
+  blockContentManagerIfNoGroup: boolean = false
 ): boolean => {
   if (assignedRoles === undefined || assignedGroups === undefined) return false;
 
@@ -23,17 +24,13 @@ export const hasPermission = (
 
   //If only a role is required, check if the user has ContentManager in any of their roles
   if (roleRequired) {
+    if (roleRequired === UserRole.SystemAdmin && !assignedRoles?.includes(UserRole.SystemAdmin)) return false;
     if (
-      roleRequired === UserRole.SystemAdmin &&
-      !assignedRoles?.includes(UserRole.SystemAdmin)
+      (roleRequired === UserRole.ContentManager &&
+        assignedRoles?.filter((role) => role.startsWith(UserRole.ContentManager)).length === 0) ||
+      (!groupRequired && blockContentManagerIfNoGroup)
     )
-      return false;
-    if (
-      roleRequired === UserRole.ContentManager &&
-      assignedRoles?.filter((role) => role.startsWith(UserRole.ContentManager))
-        .length === 0
-    )
-      return false;
+    return false;
   }
 
   //If only a group is required, check if the users groups contains that group

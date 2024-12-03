@@ -180,12 +180,7 @@ const AssistantsComponent: React.FC = () => {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                        {assistant.filterOptions.group && assistant.filterOptions.group !== "" ? (
-                          // Case 1: Group exists and is not an empty string
-                          <PermissionHandler
-                            role={UserRole.ContentManager}
-                            group={assistant.filterOptions.group}
-                          >
+                        <PermissionHandler role={UserRole.ContentManager} group={assistant.filterOptions.group} blockContentManagerIfNoGroup={true}>
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -205,52 +200,6 @@ const AssistantsComponent: React.FC = () => {
                               </Tooltip>
                             </TooltipProvider>
                           </PermissionHandler>
-                        ) : assistant.filterOptions.group === "" ? (
-                          // Case 2: Group is an empty string
-                          <PermissionHandler role={UserRole.SystemAdmin}>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => handleEditAssistant(assistant.id)}
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                    <span className="sr-only">Edit {assistant.name}</span>
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Edit {assistant.name}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </PermissionHandler>
-                        ) : (
-                          // Case 3: Default (Group is null or undefined)
-                          <PermissionHandler role={UserRole.SystemAdmin}>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => handleEditAssistant(assistant.id)}
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                    <span className="sr-only">Edit {assistant.name}</span>
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Edit {assistant.name}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </PermissionHandler>
-                        )}
-
                         <PermissionHandler role={UserRole.SystemAdmin}>
                           <AlertDialog>
                             <TooltipProvider>

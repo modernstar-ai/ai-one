@@ -7,14 +7,16 @@ interface PermissionHandlerProps {
   children: ReactNode;
   role?: UserRole;
   group?: string;
+  blockContentManagerIfNoGroup?: boolean;
 }
 
 export const PermissionHandler: React.FC<PermissionHandlerProps> = ({ children, ...props }) => {
   const { roles, groups } = usePermissionsStore();
   const roleRequired = props.role;
   const groupRequired = props.group;
-
-  if (!hasPermission(roles, groups, roleRequired, groupRequired)) return null;
+  const blockContentManagerIfNoGroup = props.blockContentManagerIfNoGroup ?? false;
+  
+  if (!hasPermission(roles, groups, roleRequired, groupRequired, blockContentManagerIfNoGroup)) return null;
 
   return children;
 };

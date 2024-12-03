@@ -22,44 +22,19 @@ public class AssistantService(CosmosClient cosmosClient, IRoleService roleServic
 {
     public async Task<List<Assistant>> GetAllAsync()
     {
-        var query = LinqQuery().OrderBy(a => a.Name);
-        var results = await CollectResultsAsync(query);
+        var query = LinqQuery().OrderBy(a => a.Name).AsQueryable();
 
-        if (!roleService.IsSystemAdmin())
-        {
-            var groupClaims = roleService.GetGroupClaims();
-            results = results.Where(assistant =>
-            {
-                var group = assistant.FilterOptions.Group?.ToLower() ?? string.Empty;
+        if (roleService.IsSystemAdmin())
+            return await CollectResultsAsync(query);
 
-                // For EndUser: Include assistants that are published and belong to accessible groups
-                if (roleService.IsUserInRole(UserRole.EndUser, group))
-                {
-                    if (!string.IsNullOrWhiteSpace(group))
-                    {
-                        return groupClaims.Contains(group) && assistant.Status == AssistantStatus.Published;
-                    }
-                }
+        var roleClaims = roleService.GetRoleClaims();
+        query = query.Where(x =>
+            (x.FilterOptions.Group == null || x.FilterOptions.Group == string.Empty)
+                ? x.Status == AssistantStatus.Published
+                : roleClaims.Contains(UserRole.ContentManager.ToString() + "." + x.FilterOptions.Group.ToLower()) ||
+                  (roleClaims.Contains(UserRole.EndUser.ToString() + "." + x.FilterOptions.Group.ToLower()) && x.Status == AssistantStatus.Published)
+        );
 
-                // For ContentManager: Include assistants in accessible groups, regardless of status
-                if (roleService.IsUserInRole(UserRole.ContentManager, group))
-                {
-                    if (!string.IsNullOrWhiteSpace(group))
-                    {
-                        return groupClaims.Contains(group);
-                    }
-                }
-
-                // For assistants with no group: Include only published ones (applies to all roles)
-                if (string.IsNullOrWhiteSpace(group))
-                {
-                    return assistant.Status == AssistantStatus.Published;
-                }
-
-                return false;
-            }).ToList();
-        }
-
-        return results;
+        return await CollectResultsAsync(query);
     }
 }
