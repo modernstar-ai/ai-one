@@ -154,7 +154,6 @@ const AssistantsComponent: React.FC = () => {
                   <TableHead className="w-[40px]">Status</TableHead>
                   <TableHead className="w-[200px]">Container</TableHead>
                   <TableHead className="w-[200px]">Group</TableHead>
-                  <TableHead className="w-[200px]">Type</TableHead>
                   <TableHead className="w-[500px]">Description</TableHead>
                 </TableRow>
               </TableHeader>
@@ -181,51 +180,75 @@ const AssistantsComponent: React.FC = () => {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                        {assistant.group && assistant.group !== "" && (
-                        <PermissionHandler role={UserRole.ContentManager} 
-                        group={assistant.group && assistant.group !== "" ? assistant.group : "" }> 
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                  onClick={() => handleEditAssistant(assistant.id)}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                  <span className="sr-only">Edit {assistant.name}</span>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Edit {assistant.name}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </PermissionHandler>
-                        )}
-
-                        {assistant.group == "" && (
-                         <PermissionHandler role={UserRole.SystemAdmin}>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                  onClick={() => handleEditAssistant(assistant.id)}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                  <span className="sr-only">Edit {assistant.name}</span>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Edit {assistant.name}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </PermissionHandler>
+                        {assistant.filterOptions.group && assistant.filterOptions.group !== "" ? (
+                          // Case 1: Group exists and is not an empty string
+                          <PermissionHandler
+                            role={UserRole.ContentManager}
+                            group={assistant.filterOptions.group}
+                          >
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => handleEditAssistant(assistant.id)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                    <span className="sr-only">Edit {assistant.name}</span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Edit {assistant.name}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </PermissionHandler>
+                        ) : assistant.filterOptions.group === "" ? (
+                          // Case 2: Group is an empty string
+                          <PermissionHandler role={UserRole.SystemAdmin}>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => handleEditAssistant(assistant.id)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                    <span className="sr-only">Edit {assistant.name}</span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Edit {assistant.name}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </PermissionHandler>
+                        ) : (
+                          // Case 3: Default (Group is null or undefined)
+                          <PermissionHandler role={UserRole.SystemAdmin}>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => handleEditAssistant(assistant.id)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                    <span className="sr-only">Edit {assistant.name}</span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Edit {assistant.name}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </PermissionHandler>
                         )}
 
                         <PermissionHandler role={UserRole.SystemAdmin}>
@@ -280,25 +303,6 @@ const AssistantsComponent: React.FC = () => {
                     <TableCell>{getStatusBadge(assistant.status)}</TableCell>
                     <TableCell>{assistant.filterOptions.indexName}</TableCell>
                     <TableCell>{assistant.filterOptions.group}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getTypeIcon()}
-                        <span>{/*AssistantType[assistant.type]*/}</span>
-                      </div>
-                    </TableCell>
-                    {/* <TableCell className="font-mono text-xs">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="cursor-help">{assistant.id}</span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Unique identifier for this assistant</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </TableCell> */}
-
                     <TableCell className="font-medium">{assistant.description}</TableCell>
                   </TableRow>
                 ))}
