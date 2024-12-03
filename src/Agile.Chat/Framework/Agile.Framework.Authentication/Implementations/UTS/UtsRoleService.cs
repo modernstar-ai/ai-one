@@ -21,7 +21,7 @@ public class UtsRoleSerivce(IHttpContextAccessor httpContextAccessor) : IRoleSer
         var client = new HttpClient();
 
         var message = new HttpRequestMessage(HttpMethod.Get, $"{endpoint}/rolelookup/getroles?userEmail={userId}");
-        message.Headers.Add("XApiKey", xApiKey);
+        message.Headers.Add("XAPI_KEY", xApiKey);
         
         var response = await client.SendAsync(message);
         if (!response.IsSuccessStatusCode) return (roles, groups);

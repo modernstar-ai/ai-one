@@ -33,7 +33,7 @@ const AssistantPromptOptionsSchema = z.object({
   systemPrompt: z.string(),
   temperature: z.number(),
   topP: z.number().min(0).max(1).optional(),
-  maxTokens: z.number().int().optional(),
+  maxTokens: z.number().int().max(16384).optional(),
 });
 
 // Define the AssistantFilterOptions schema

@@ -244,8 +244,8 @@ export function LeftSidebar() {
 
           {/* Navigation Items */}
           <div className="flex flex-col space-y-2 mt-4 h-screen justify-center items-center  dark:text-white">
+          <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey="a" />
             <PermissionHandler role={UserRole.ContentManager}>
-              <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey="a" />
               <SideNavButton path="/files" label="Files" Icon={FileBox} accessKey="U" />
             </PermissionHandler>
             <PermissionHandler role={UserRole.ContentManager}>
