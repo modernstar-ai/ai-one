@@ -3,6 +3,7 @@ using Agile.Framework.AzureAiSearch.Interfaces;
 using Agile.Framework.AzureAiSearch.Models;
 using Agile.Framework.Common.Attributes;
 using Azure;
+using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
 using Azure.Search.Documents.Indexes.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,13 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
             .ToBlockingEnumerable()
             .Select(x => x.Document)
             .ToList();
+    }
+
+    public async Task<string?> GetChunkByIdAsync(string indexName, string chunkId)
+    {
+        var searchClient = indexClient.GetSearchClient(indexName);
+        var searchResults = await searchClient.GetDocumentAsync<AzureSearchDocument>(chunkId);
+        return !searchResults.HasValue ? null : searchResults.Value.Chunk;
     }
     
     #region Indexers

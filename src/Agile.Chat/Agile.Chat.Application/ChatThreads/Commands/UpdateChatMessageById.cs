@@ -26,17 +26,17 @@ public static class UpdateChatMessageById
             var thread = await chatThreadService.GetItemByIdAsync(message.ThreadId, ChatType.Thread.ToString());
             if(thread is null) return Results.NotFound("Thread not found");
             
-            if (!IsUserOwnerOfThread(contextAccessor, thread))
+            if (!IsUserOwnerOfThread(thread))
                 return Results.Forbid();
             
-            message.Update(new MessageOptions(){IsLiked = request.IsLiked, IsDisliked = request.IsDisliked});
+            message.Update(request.IsLiked, request.IsDisliked);
             await chatMessageService.UpdateItemByIdAsync(message.Id, message, ChatType.Message.ToString());
             await chatMessageAuditService.UpdateItemByPayloadIdAsync(message);
             logger.LogInformation("Updated Message: {@Message}", message);
             return Results.Ok();
         }
         
-        private bool IsUserOwnerOfThread(IHttpContextAccessor contextAccessor, ChatThread thread)
+        private bool IsUserOwnerOfThread(ChatThread thread)
         {
             var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;
             if (string.IsNullOrWhiteSpace(username)) return false;

@@ -44,6 +44,10 @@ public static class CreateAssistant
             RuleFor(request => request.Name)
                 .MinimumLength(1)
                 .WithMessage("Name is required");
+            
+            RuleFor(request => request.FilterOptions.Strictness)
+                .InclusiveBetween(-1, 1)
+                .WithMessage("Strictness must be a range between -1 and 1 inclusive");
         }
     }
 }

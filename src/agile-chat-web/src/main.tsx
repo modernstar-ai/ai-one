@@ -4,6 +4,7 @@ import './global.css';
 import { MsalProvider } from '@azure/msal-react';
 import { pca } from './authentication/msal-configs.ts';
 
+await pca.initialize();
 createRoot(document.getElementById('root')!).render(
   <MsalProvider instance={pca}>
     <App />

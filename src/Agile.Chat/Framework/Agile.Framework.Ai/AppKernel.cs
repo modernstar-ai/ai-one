@@ -15,19 +15,25 @@ public interface IAppKernel
     Task<IList<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(IList<string> texts);
     IAsyncEnumerable<Dictionary<ResponseType, string>> GetChatStream(ChatHistory chatHistory, AzureOpenAIPromptExecutionSettings settings);
     IAsyncEnumerable<Dictionary<ResponseType, string>> GetPromptFileChatStream(AzureOpenAIPromptExecutionSettings settings, 
-        string promptRelativePath, 
+        string promptRelativeDirectory,
+        string promptFile,
         Dictionary<string, object?>? kernelArguments = null!);
 }
 
 [Experimental("SKEXP0001")]
 [Export(typeof(IAppKernel), ServiceLifetime.Transient)]
-public class AppKernel(Kernel kernel) : IAppKernel
+public class AppKernel : IAppKernel
 {
-     private readonly ITextEmbeddingGenerationService _textEmbedding =
-        kernel.GetRequiredService<ITextEmbeddingGenerationService>();
+    private readonly Kernel _kernel;
+    private readonly ITextEmbeddingGenerationService _textEmbedding;
+    private readonly IChatCompletionService _chatCompletion;
      
-     private readonly IChatCompletionService _chatCompletion =
-         kernel.GetRequiredService<IChatCompletionService>();
+     public AppKernel(Kernel kernel)
+     {
+         _kernel = kernel;
+         _textEmbedding = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
+         _chatCompletion = kernel.GetRequiredService<IChatCompletionService>();
+     }
      
      public async Task<ReadOnlyMemory<float>> GenerateEmbeddingAsync(string text) =>
          await _textEmbedding.GenerateEmbeddingAsync(text);
@@ -37,7 +43,7 @@ public class AppKernel(Kernel kernel) : IAppKernel
 
      public async IAsyncEnumerable<Dictionary<ResponseType, string>> GetChatStream(ChatHistory chatHistory, AzureOpenAIPromptExecutionSettings settings)
      {
-         var responses = _chatCompletion.GetStreamingChatMessageContentsAsync(chatHistory, settings, kernel);
+         var responses = _chatCompletion.GetStreamingChatMessageContentsAsync(chatHistory, settings, _kernel);
          await foreach (var tokens in responses)
          {
              yield return new Dictionary<ResponseType, string>()
@@ -49,19 +55,21 @@ public class AppKernel(Kernel kernel) : IAppKernel
      
      public async IAsyncEnumerable<Dictionary<ResponseType, string>> GetPromptFileChatStream(
          AzureOpenAIPromptExecutionSettings settings,
-         string promptRelativePath,
+         string promptRelativeDirectory,
+         string promptFile,
          Dictionary<string, object?>? kernelArguments = null!)
      {
-         var prompt = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, promptRelativePath));
+         var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, promptRelativeDirectory, promptFile);
+         var prompt = await File.ReadAllTextAsync(path);
          if(string.IsNullOrWhiteSpace(prompt)) throw new Exception("Prompt file path is empty");
-         var kernelFunction = kernel.CreateFunctionFromPromptYaml(prompt);
+         var kernelFunction = _kernel.CreateFunctionFromPromptYaml(prompt);
          //Create arguments
          var arguments = new KernelArguments(settings);
          // Manually add dictionary items to arguments
          foreach (var kvp in kernelArguments ?? new Dictionary<string, object?>())
              arguments[kvp.Key] = kvp.Value;
          
-         var responses = kernelFunction.InvokeStreamingAsync(kernel, arguments);
+         var responses = kernelFunction.InvokeStreamingAsync(_kernel, arguments);
          await foreach (var tokens in responses)
          {
              yield return new Dictionary<ResponseType, string>()

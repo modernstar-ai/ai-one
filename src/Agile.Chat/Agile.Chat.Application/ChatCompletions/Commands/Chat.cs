@@ -16,6 +16,7 @@ using Agile.Framework.AzureAiSearch.Models;
 using Agile.Framework.Common.Enums;
 using Agile.Framework.Common.EnvironmentVariables;
 using FluentValidation;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -48,17 +49,18 @@ public static class Chat
             //Perform RAG if needed
             var hasIndex = !string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName);
             var documents = hasIndex
-                ? await GetCitationDocumentsAsync(request.UserPrompt, assistant!.FilterOptions.IndexName, thread.FilterOptions)
+                ? await GetSearchDocumentsAsync(request.UserPrompt, assistant!.FilterOptions.IndexName, thread.FilterOptions)
                 : [];
             
             //Execute Chat Stream
             var chatSettings = thread.PromptOptions.ParseAzureOpenAiPromptExecutionSettings();
             var aiStreamChats = hasIndex
                 ? appKernel.GetPromptFileChatStream(chatSettings, 
-                    Constants.ChatCompletionsPromptsPath + Constants.Prompts.ChatWithRag, 
+                    Constants.ChatCompletionsPromptsPath,
+                    Constants.Prompts.ChatWithRag, 
                     new Dictionary<string, object?>
                 {
-                    {"documents", string.Join(string.Empty, documents.Select(x => x.ToString()))},
+                    {"documents", string.Join('\n', documents.Select(x => x.ToString()))},
                     {"userPrompt", request.UserPrompt},
                     {"chatHistory", messages.ParseSemanticKernelChatHistoryString()}
                 })
@@ -72,41 +74,32 @@ public static class Chat
                 assistantFullResponse.Append(chatStream[ResponseType.Chat]);
                 await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, chatStream);
             }
-            
-            //Write citations object to stream
-            if (documents.Count > 0)
-                await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!,
-                    new Dictionary<ResponseType, object>()
-                    {
-                        {ResponseType.Citations, documents}
-                    });
-                    
-            await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, assistantFullResponse.ToString());
+
+            await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, assistantFullResponse.ToString(), documents);
             return Results.Empty;
         }
 
-        private async Task<List<Citation>> GetCitationDocumentsAsync(string userPrompt, string indexName, ChatThreadFilterOptions filterOptions)
+        private async Task<List<AzureSearchDocument>> GetSearchDocumentsAsync(string userPrompt, string indexName, ChatThreadFilterOptions filterOptions)
         {
             var embedding = await appKernel.GenerateEmbeddingAsync(userPrompt);
-            var documents = await azureAiSearch.SearchAsync(indexName, 
+            return await azureAiSearch.SearchAsync(indexName, 
                 new AiSearchOptions(userPrompt, embedding)
                 {
                     DocumentLimit = filterOptions.DocumentLimit,
                     Strictness = filterOptions.Strictness
                 });
-            return documents.Select(x => new Citation
-            {
-                Chunk = x.Chunk,
-                Link = x.Url
-            }).ToList();
         }
 
-        private async Task SaveUserAndAssistantMessagesAsync(string threadId, string userPrompt, string assistantResponse)
+        private async Task SaveUserAndAssistantMessagesAsync(string threadId, string userPrompt, string assistantResponse, List<AzureSearchDocument>? documents = null)
         {
             var userMessage = Message.CreateUser(threadId, userPrompt, new MessageOptions());
             await chatMessageService.AddItemAsync(userMessage);
             await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage));
+            
             var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
+            if(documents?.Count > 0)
+                assistantMessage.AddMetadata(MetadataType.Citations, documents.Adapt<List<Citation>>());
+            
             await chatMessageService.AddItemAsync(assistantMessage);
             await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage));
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/services/auth-helpers';
 import { cn } from '@/lib/utils';
-import { fetchChatThreads, createChatThread, deleteChatThread, type ChatThread } from '@/services/chatthreadservice';
+import { fetchChatThreads, createChatThread, deleteChatThread, ChatThread } from '@/services/chatthreadservice';
 
 import { Button } from '@/components/ui/button';
 import SideNavButton from '@/components/navigation/left-sidebar-button';

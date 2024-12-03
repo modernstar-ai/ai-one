@@ -29,7 +29,7 @@ public static class Constants
     #endregion
     
     #region PromptPaths
-    public const string ChatCompletionsPromptsPath = "/ChatCompletions/Prompts";
+    public const string ChatCompletionsPromptsPath = @"ChatCompletions\Prompts\";
     public static class Prompts
     {
         public const string ChatWithRag = "chatWithRag.prompt.yaml";

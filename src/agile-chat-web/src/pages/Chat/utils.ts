@@ -2,7 +2,6 @@ import { ChatType, Message, MessageType } from '@/types/ChatThread';
 
 export enum ResponseType {
   Chat = 'Chat',
-  Citations = 'Citations',
   DbMessages = 'DbMessages',
 }
 
@@ -63,6 +62,6 @@ export const createTempMessage = (content: string, messageType: MessageType): Me
     threadId: '',
     createdDate: new Date(Date.now()),
     lastModified: new Date(Date.now()),
-    options: { isDisliked: false, isLiked: false },
+    options: { isDisliked: false, isLiked: false, metadata: {} },
   };
 };

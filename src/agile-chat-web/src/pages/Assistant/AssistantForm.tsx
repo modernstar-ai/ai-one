@@ -41,7 +41,7 @@ const AssistantFilterOptionsSchema = z.object({
   group: z.string().optional(),
   indexName: z.string(),
   documentLimit: z.number().int(),
-  strictness: z.number().optional(),
+  strictness: z.number().min(-1).max(1).optional(),
 });
 
 // Define the main schema
@@ -479,14 +479,18 @@ export default function AssistantForm() {
                     <FormItem>
                       <FormLabel>Strictness</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          placeholder="Enter a number, by default value will be set to 3"
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        <Slider
+                          value={[field.value ?? 0]}
+                          min={-1}
+                          max={1}
+                          step={0.1}
+                          onValueChange={(value) => {
+                            field.onChange(value[0]);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
+                      <div>Strictness: {field.value}</div>
                     </FormItem>
                   )}
                 />
