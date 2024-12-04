@@ -98,10 +98,10 @@ const IndexerComponent: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {indexes.map((index) => (
-                  <TableRow key={index.id} className="text-center border">
+                  <TableRow key={index.id}>
                     <PermissionHandler role={UserRole.ContentManager} group={index.group}>
-                      <TableCell className="py-2 px-4 border">
-                        <div className="flex items-center justify-center space-x-2">
+                      <TableCell>
+                        <div className="flex items-start space-x-2">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -172,11 +172,11 @@ const IndexerComponent: React.FC = () => {
                         </div>
                       </TableCell>
                     </PermissionHandler>
-                    <TableCell className="py-2 px-4 border font-medium">{index.name}</TableCell>
-                    <TableCell className="py-2 px-4 border text-left font-medium">
+                    <TableCell className="font-medium">{index.name}</TableCell>
+                    <TableCell className="font-medium">
                       {index.description ? index.description : 'N/A'}
                     </TableCell>
-                    <TableCell className="py-2 px-4 border font-medium">{index.group ? index.group : 'N/A'}</TableCell>
+                    <TableCell className="font-medium">{index.group ? index.group : 'N/A'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
