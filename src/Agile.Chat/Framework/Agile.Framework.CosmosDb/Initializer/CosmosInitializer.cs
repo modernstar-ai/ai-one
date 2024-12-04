@@ -2,10 +2,11 @@
 using Agile.Framework.Common.EnvironmentVariables;
 using Agile.Framework.Common.Interfaces;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Agile.Framework.CosmosDb.Initializer;
 
-[Export(typeof(IAsyncInitializer))]
+[Export(typeof(IAsyncInitializer), ServiceLifetime.Singleton)]
 public class CosmosInitializer(CosmosClient client) : IAsyncInitializer
 {
     public async Task InitializeAsync()
