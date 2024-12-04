@@ -7,6 +7,16 @@ on:
         required: false
         default: Manual run
 
+      environment:
+        description: "Select the Azure Deployment environment:"
+        required: true
+        type: choice
+        default: "Development"
+        options:
+          - Development
+          - Test
+          - Production
+
       resource_group:
         description: "Enter the Azure resource group Name:"
         required: true
@@ -37,7 +47,7 @@ on:
           - "Production"
 
       deployment_env_name:
-        description: "Select the deployment environment name - used to name resources:"
+        description: "Select the application environment name - used to name resources:"
         required: true
         type: choice
         default: "dev"
@@ -62,16 +72,6 @@ on:
         required: true
         type: boolean
         default: false
-
-      environment:
-        description: "Select the Azure environment:"
-        required: true
-        type: choice
-        default: "Development"
-        options:
-          - Development
-          - Test
-          - Production
 
 ##########################################################################################################################
 
@@ -106,7 +106,7 @@ jobs:
       AZURE_ENV_NAME: "${{ github.event.inputs.azure_env_name }}"
       AZURE_LOCATION: "${{ github.event.inputs.azure_location }}"
       AZURE_BICEP_MAIN: "./infra/main.bicep"
-      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
+      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets Azure deployment Environment
 
     ##########################################################################################################################
 
