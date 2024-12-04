@@ -1,4 +1,5 @@
 ﻿using Agile.Chat.Domain.Indexes.Aggregates;
+using Agile.Framework.Authentication.Enums;
 using Agile.Framework.Authentication.Interfaces;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.EnvironmentVariables;
@@ -24,8 +25,8 @@ public class IndexService(CosmosClient cosmosClient, IRoleService roleService) :
         var query = LinqQuery().AsQueryable();
         if (!roleService.IsSystemAdmin())
         {
-            var groupClaims = roleService.GetGroupClaims();
-            query = query.Where(x => x.Group == null || x.Group == "" || groupClaims.Contains(x.Group.ToLower()));
+            var roleClaims = roleService.GetRoleClaims();
+            query = query.Where(x => x.Group == null || x.Group == "" || roleClaims.Contains(UserRole.ContentManager.ToString() + "." + x.Group.ToLower()));
         }
         
         var results = await CollectResultsAsync(query);
