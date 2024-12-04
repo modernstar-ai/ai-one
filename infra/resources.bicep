@@ -327,68 +327,11 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'UtsXApiKey'
           value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::UTS_XAPI_KEY.name})'
-        }
-        // {
-        //   name: 'AZURE_COSMOSDB_URI'
-        //   value: cosmosDbAccount.properties.documentEndpoint
-        // }
-        // {
-        //   name: 'AZURE_COSMOSDB_KEY'
-        //   value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_COSMOSDB_KEY.name})'
-        // }
-
-        // {
-        //   name: 'AZURE_STORAGE_FOLDERS_CONTAINER_NAME'
-        //   value: AzureStorageFoldersContainerName
-        // }
-        // {
-        //   name: 'MAX_UPLOAD_DOCUMENT_SIZE'
-        //   value: MaxUploadDocumentSize
-        // }
-        // {
-        //   name: 'AZURE_SEARCH_INDEX_NAME_RAG'
-        //   value: AzureSearchIndexNameRag
-        // }
-        // {
-        //   name: 'AZURE_COSMOSDB_DB_NAME'
-        //   value: AzureCosmosdbDbName
-        // }
-        // {
-        //   name: 'AZURE_COSMOSDB_DATABASE_NAME'
-        //   value: AzureCosmosdbDatabaseName
-        // }
-        // {
-        //   name: 'AZURE_COSMOSDB_CONTAINER_NAME'
-        //   value: AzureCosmosdbContainerName
-        // }
-        // {
-        //   name: 'AZURE_COSMOSDB_CONFIG_CONTAINER_NAME'
-        //   value: AzureCosmosdbConfigContainerName
-        // }
-        // {
-        //   name: 'AZURE_COSMOSDB_TOOLS_CONTAINER_NAME'
-        //   value: AzureCosmosdbToolsContainerName
-        // }
-        // {
-        //   name: 'AZURE_COSMOSDB_FILES_CONTAINER_NAME'
-        //   value: AzureCosmosdbFilesContainerName
-        // }
-        // {
-        //   name: 'AZURE_COSMOSDB_AUDIT_CONTAINER_NAME'
-        //   value: AzureCosmosdbAuditsContainerName
-        // }        
+        }       
         {
           name: 'ALLOWED_ORIGINS'
           value: 'https://${webApp.properties.defaultHostName}'
-        }
-        // {
-        //   name: 'AZURE_COSMOSDB_CHAT_THREADS_CONTAINER_NAME'
-        //   value: azureCosmosDbChatThreadsName
-        // }       
-        // {
-        //   name: 'AZURE_KEY_VAULT_NAME'
-        //   value: keyVaultName
-        // }
+        }       
         {
           name: 'ASPNETCORE_ENVIRONMENT'
           value: aspCoreEnvironment
@@ -396,15 +339,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
           value: 'false'
-        }
-        // {
-        //   name: 'AZURE_SEARCH_NAME'
-        //   value: search_name
-        // }
-        // {
-        //   name: 'AZURE_SEARCH_INDEX_NAME'
-        //   value: searchServiceIndexName
-        // }        
+        }        
       ]
     }
   }
