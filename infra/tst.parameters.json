@@ -26,6 +26,9 @@
     "azureTenantId": {
       "value": ""
     },
+    "aspCoreEnvironment": {
+      "value": "Development"
+    } ,
     "azureADAppIdOrUri": {
         "value": ""
     },

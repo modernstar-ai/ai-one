@@ -27,6 +27,10 @@ param azureClientSecret string = ''
 @secure()
 param azureTenantId string = ''
 
+@description('Enable PII Auditing')
+@allowed(['true', 'false'])
+param auditIncludePII string = 'true'
+
 param openai_api_version string
 
 param openAiLocation string
@@ -39,21 +43,25 @@ param embeddingDeploymentName string
 param embeddingDeploymentCapacity int
 param embeddingModelName string
 
-//param AdminEmailAddress string = 'adam-stephensen@agile-analytics.com.au'
-param AzureCosmosdbDbName string = 'chat'
-param AzureCosmosdbDatabaseName string = 'chat'
-param AzureCosmosdbContainerName string = 'history'
-param AzureCosmosdbConfigContainerName string = 'config'
-param AzureCosmosdbToolsContainerName string = 'tools'
-param AzureCosmosdbFilesContainerName string = 'fileUploads'
-param AzureCosmosdbAuditsContainerName string = 'audits'
+@description('Admin email addresses array')
+param AdminEmailAddresses array = [
+  'adam-stephensen@agile-analytics.com.au'
+]
 
-param AzureSearchIndexNameRag string = 'rag_index'
-param MaxUploadDocumentSize string = '20000000'
-param AzureStorageFoldersContainerName string = 'folders'
+// param AzureCosmosdbDbName string = 'chat'
+// param AzureCosmosdbDatabaseName string = 'chat'
+// param AzureCosmosdbContainerName string = 'history'
+// param AzureCosmosdbConfigContainerName string = 'config'
+// param AzureCosmosdbToolsContainerName string = 'tools'
+// param AzureCosmosdbFilesContainerName string = 'fileUploads'
+// param AzureCosmosdbAuditsContainerName string = 'audits'
+
+// param AzureSearchIndexNameRag string = 'rag_index'
+// param MaxUploadDocumentSize string = '20000000'
+// param AzureStorageFoldersContainerName string = 'folders'
 
 param searchServiceSkuName string = 'standard'
-param searchServiceIndexName string = 'azure-chat'
+// param searchServiceIndexName string = 'azure-chat'
 
 param storageServiceSku object
 param storageServiceImageContainerName string
@@ -61,14 +69,14 @@ param storageServiceImageContainerName string
 var openai_name = toLower('${resourcePrefix}-aillm')
 //var openai_dalle_name = toLower('${resourcePrefix}-aidalle')
 
-@description('Cosmos DB Chat threads container name')
-param azureCosmosDbChatThreadsName string = 'history'
+// @description('Cosmos DB Chat threads container name')
+// param azureCosmosDbChatThreadsName string = 'history'
 
 var cosmos_name = toLower('${resourcePrefix}-cosmos')
 var search_name = toLower('${resourcePrefix}-search')
 
-var clean_name = replace(replace('${resourcePrefix}', '-', ''), '_', '')
-var storage_prefix = take(clean_name, 13)
+//var clean_name = replace(replace('${resourcePrefix}', '-', ''), '_', '')
+// var storage_prefix = take(clean_name, 13)
 
 @description('The unique name of the Storage Account.')
 param storage_name string = toLower('stg${uniqueString(resourceGroup().id)}')
@@ -216,9 +224,22 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true
-      //appCommandLine: 'dotnet agile-chat-api.dll'
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
+
+      connectionStrings: [
+        {
+          connectionString: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_CONNECTION.name})'
+          name: 'BlobStorage'
+          type: 'Custom'
+        }
+
+        {
+          connectionString: applicationInsights.properties.ConnectionString
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          type: 'Custom'
+        }
+      ]
 
       cors: {
         allowedOrigins: [
@@ -232,97 +253,142 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
 
       appSettings: [
         {
-          name: 'UTS_ROLE_API_ENDPOINT'
-          value: UtsRoleApiEndpoint
+          name: 'Audit__IncludePII'
+          value: auditIncludePII
         }
         {
-          name: 'UTS_XAPI_KEY'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::UTS_XAPI_KEY.name})'
+          name: 'AzureAd__ClientId'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_ID.name})'
         }
         {
-          name: 'AZURE_STORAGE_FOLDERS_CONTAINER_NAME'
-          value: AzureStorageFoldersContainerName
+          name: 'AzureAd__ClientSecret'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_SECRET.name})'
         }
         {
-          name: 'AZURE_STORAGE_ACCOUNT_CONNECTION'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_CONNECTION.name})'
+          name: 'AzureAd__TenantId'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_TENANT_ID.name})'
         }
         {
-          name: 'MAX_UPLOAD_DOCUMENT_SIZE'
-          value: MaxUploadDocumentSize
+          name: 'AzureAiServicesKey'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_AI_SERVICES_KEY.name})'
         }
         {
-          name: 'AZURE_SEARCH_ENDPOINT'
+          name: 'AzureOpenAi__Endpoint'
+          value: azureopenai.properties.endpoint
+        }
+        {
+          name: 'AzureOpenAi__ApiKey'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_KEY.name})'
+        }
+        {
+          name: 'AzureOpenAi__ApiVersion'
+          value: openai_api_version
+        }
+        {
+          name: 'AzureOpenAi__InstanceName'
+          value: openai_name
+        }
+        {
+          name: 'AzureOpenAi__DeploymentName'
+          value: chatGptDeploymentName
+        }
+        {
+          name: 'AzureOpenAi__EmbeddingsDeploymentName'
+          value: embeddingDeploymentName
+        }
+        {
+          name: 'AzureOpenAi__EmbeddingsModelName'
+          value: embeddingModelName
+        }
+        {
+          name: 'AzureSearch__Endpoint'
           value: 'https://${search_name}.search.windows.net'
         }
         {
-          name: 'AZURE_SEARCH_INDEX_NAME_RAG'
-          value: AzureSearchIndexNameRag
+          name: 'AzureSearch__ApiKey'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_SEARCH_API_KEY.name})'
+        }
+        {
+          name: 'CosmosDb__Endpoint'
+          value: cosmosDbAccount.properties.documentEndpoint
+        }
+        {
+          name: 'CosmosDb__Key'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_COSMOSDB_KEY.name})'
+        }
+        {
+          name: 'AdminEmailAddresses'
+          value: join(AdminEmailAddresses, ',')
+        }
+        {
+          name: 'UtsRoleApiEndpoint'
+          value: UtsRoleApiEndpoint
+        }
+        {
+          name: 'UtsXApiKey'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::UTS_XAPI_KEY.name})'
         }
         // {
-        //   name: 'ADMIN_EMAIL_ADDRESS'
-        //   value: AdminEmailAddress
+        //   name: 'AZURE_COSMOSDB_URI'
+        //   value: cosmosDbAccount.properties.documentEndpoint
         // }
-        {
-          name: 'AZURE_COSMOSDB_DB_NAME'
-          value: AzureCosmosdbDbName
-        }
-        {
-          name: 'AZURE_COSMOSDB_DATABASE_NAME'
-          value: AzureCosmosdbDatabaseName
-        }
-        {
-          name: 'AZURE_COSMOSDB_CONTAINER_NAME'
-          value: AzureCosmosdbContainerName
-        }
-        {
-          name: 'AZURE_COSMOSDB_CONFIG_CONTAINER_NAME'
-          value: AzureCosmosdbConfigContainerName
-        }
-        {
-          name: 'AZURE_COSMOSDB_TOOLS_CONTAINER_NAME'
-          value: AzureCosmosdbToolsContainerName
-        }
-        {
-          name: 'AZURE_COSMOSDB_FILES_CONTAINER_NAME'
-          value: AzureCosmosdbFilesContainerName
-        }
-        {
-          name: 'AZURE_COSMOSDB_AUDIT_CONTAINER_NAME'
-          value: AzureCosmosdbAuditsContainerName
-        }
-        {
-          name: 'AZURE_AI_SERVICES_KEY'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_AI_SERVICES_KEY.name})'
-        }
+        // {
+        //   name: 'AZURE_COSMOSDB_KEY'
+        //   value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_COSMOSDB_KEY.name})'
+        // }
+
+        // {
+        //   name: 'AZURE_STORAGE_FOLDERS_CONTAINER_NAME'
+        //   value: AzureStorageFoldersContainerName
+        // }
+        // {
+        //   name: 'MAX_UPLOAD_DOCUMENT_SIZE'
+        //   value: MaxUploadDocumentSize
+        // }
+        // {
+        //   name: 'AZURE_SEARCH_INDEX_NAME_RAG'
+        //   value: AzureSearchIndexNameRag
+        // }
+        // {
+        //   name: 'AZURE_COSMOSDB_DB_NAME'
+        //   value: AzureCosmosdbDbName
+        // }
+        // {
+        //   name: 'AZURE_COSMOSDB_DATABASE_NAME'
+        //   value: AzureCosmosdbDatabaseName
+        // }
+        // {
+        //   name: 'AZURE_COSMOSDB_CONTAINER_NAME'
+        //   value: AzureCosmosdbContainerName
+        // }
+        // {
+        //   name: 'AZURE_COSMOSDB_CONFIG_CONTAINER_NAME'
+        //   value: AzureCosmosdbConfigContainerName
+        // }
+        // {
+        //   name: 'AZURE_COSMOSDB_TOOLS_CONTAINER_NAME'
+        //   value: AzureCosmosdbToolsContainerName
+        // }
+        // {
+        //   name: 'AZURE_COSMOSDB_FILES_CONTAINER_NAME'
+        //   value: AzureCosmosdbFilesContainerName
+        // }
+        // {
+        //   name: 'AZURE_COSMOSDB_AUDIT_CONTAINER_NAME'
+        //   value: AzureCosmosdbAuditsContainerName
+        // }        
         {
           name: 'ALLOWED_ORIGINS'
           value: 'https://${webApp.properties.defaultHostName}'
         }
-        {
-          name: 'AZURE_COSMOSDB_CHAT_THREADS_CONTAINER_NAME'
-          value: azureCosmosDbChatThreadsName
-        }
-        {
-          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: applicationInsights.properties.InstrumentationKey
-        }
-        {
-          name: 'AZURE_CLIENT_ID'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_ID.name})'
-        }
-        {
-          name: 'AZURE_CLIENT_SECRET'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_SECRET.name})'
-        }
-        {
-          name: 'AZURE_TENANT_ID'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_TENANT_ID.name})'
-        }
-        {
-          name: 'AZURE_KEY_VAULT_NAME'
-          value: keyVaultName
-        }
+        // {
+        //   name: 'AZURE_COSMOSDB_CHAT_THREADS_CONTAINER_NAME'
+        //   value: azureCosmosDbChatThreadsName
+        // }       
+        // {
+        //   name: 'AZURE_KEY_VAULT_NAME'
+        //   value: keyVaultName
+        // }
         {
           name: 'ASPNETCORE_ENVIRONMENT'
           value: aspCoreEnvironment
@@ -331,62 +397,14 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
           value: 'false'
         }
-        {
-          name: 'AZURE_OPENAI_API_KEY'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_KEY.name})'
-        }
-        {
-          name: 'AZURE_OPENAI_API_INSTANCE_NAME'
-          value: openai_name
-        }
-        {
-          name: 'AZURE_OPENAI_API_DEPLOYMENT_NAME'
-          value: chatGptDeploymentName
-        }
-        {
-          name: 'AZURE_OPENAI_API_EMBEDDINGS_DEPLOYMENT_NAME'
-          value: embeddingDeploymentName
-        }
-        {
-          name: 'AZURE_OPENAI_API_EMBEDDINGS_MODEL_NAME'
-          value: embeddingModelName
-        }
-        {
-          name: 'AZURE_OPENAI_API_VERSION'
-          value: openai_api_version
-        }
-        {
-          name: 'AZURE_OPENAI_ENDPOINT'
-          value: azureopenai.properties.endpoint
-        }
-        {
-          name: 'AZURE_COSMOSDB_URI'
-          value: cosmosDbAccount.properties.documentEndpoint
-        }
-        {
-          name: 'AZURE_COSMOSDB_KEY'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_COSMOSDB_KEY.name})'
-        }
-        {
-          name: 'AZURE_SEARCH_API_KEY'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_SEARCH_API_KEY.name})'
-        }
-        {
-          name: 'AZURE_SEARCH_NAME'
-          value: search_name
-        }
-        {
-          name: 'AZURE_SEARCH_INDEX_NAME'
-          value: searchServiceIndexName
-        }
-        {
-          name: 'AZURE_STORAGE_ACCOUNT_NAME'
-          value: storage_name
-        }
-        {
-          name: 'AZURE_STORAGE_ACCOUNT_KEY'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_KEY.name})'
-        }
+        // {
+        //   name: 'AZURE_SEARCH_NAME'
+        //   value: search_name
+        // }
+        // {
+        //   name: 'AZURE_SEARCH_INDEX_NAME'
+        //   value: searchServiceIndexName
+        // }        
       ]
     }
   }
