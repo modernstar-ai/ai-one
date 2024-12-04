@@ -11,7 +11,7 @@ on:
         required: true
         default: "agilechat-dev-webapp"
       vite_agile_chat_api_url:
-        description: "Enter the name of the Azure UI Web App Target:"
+        description: "Enter the name of the Web Chat API App Target:"
         required: true
         default: "https://agilechat-dev-apiapp.azurewebsites.net"
       environment:
