@@ -1,10 +1,10 @@
 // src/services/personaservice.ts
 import axios from '@/error-handling/axiosSetup';
-import { FileMetadata } from '@/models/filemetadata';
+import { CosmosFile } from '@/models/filemetadata';
 
 function getApiUrl(endpoint: string = ''): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
-  return `${rootApiUrl}/api/file/${endpoint}`;
+  return `${rootApiUrl}/api/files/${endpoint}`;
 }
 
 export async function getFolders(): Promise<string[]> {
@@ -19,23 +19,23 @@ export async function getFolders(): Promise<string[]> {
   }
 }
 
-export async function uploadFiles(formData: FormData): Promise<string> {
-  const apiUrl = getApiUrl('upload');
+export async function uploadFiles(formData: FormData): Promise<CosmosFile | null> {
+  const apiUrl = getApiUrl('');
 
   try {
-    const response = await axios.post<string>(apiUrl, formData);
+    const response = await axios.post<CosmosFile>(apiUrl, formData);
     return response.data;
   } catch (error) {
     console.error('Error uploading files:', error);
-    return 'Error uploading files: ' + error;
+    return null;
   }
 }
 
 // Function to fetch all files
-export const getFiles = async (): Promise<FileMetadata[]> => {
+export const getFiles = async (): Promise<CosmosFile[]> => {
   try {
     const url = getApiUrl('');
-    const response = await axios.get<FileMetadata[]>(url);
+    const response = await axios.get<CosmosFile[]>(url);
     return response.data;
   } catch (error) {
     console.error('Error fetching files from API:', error);
@@ -44,14 +44,13 @@ export const getFiles = async (): Promise<FileMetadata[]> => {
 };
 
 // Function to delete selected files
-export const deleteFiles = async (fileIds: string[]): Promise<void> => {
+export const deleteFiles = async (fileId: string): Promise<void> => {
   try {
-    const url = getApiUrl('');
+    const url = getApiUrl(fileId);
 
     await axios.request({
       method: 'DELETE',
       url: url,
-      data: { fileIds: fileIds },
     });
   } catch (error) {
     console.error('Error deleting files from API:', error);

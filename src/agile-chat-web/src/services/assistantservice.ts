@@ -39,32 +39,7 @@ export async function fetchAssistantById(id: string): Promise<Assistant | null> 
 export async function createAssistant(newAssistant: Assistant): Promise<Assistant | null> {
   const apiUrl = getApiUrl('');
   try {
-    // Ensure all required fields are included in the request
-    const assistantData = {
-      id: newAssistant.id,
-      name: newAssistant.name,
-      description: newAssistant.description,
-      type: newAssistant.type,
-      greeting: newAssistant.greeting,
-      systemMessage: newAssistant.systemMessage,
-      group: newAssistant.group,
-      index: newAssistant.index,
-      folder: newAssistant.folder,
-      temperature: newAssistant.temperature,
-      topP: newAssistant.topP,
-      maxResponseToken: newAssistant.maxResponseToken,
-      pastMessages: newAssistant.pastMessages,
-      strictness: newAssistant.strictness,
-      documentLimit: newAssistant.documentLimit,
-      tools: newAssistant.tools, // Add the tools field here
-      status: newAssistant.status,
-      createdAt: new Date().toISOString(),
-      createdBy: 'adam@stephensen.me',
-      updatedAt: new Date().toISOString(),
-      updatedBy: 'adam@stephensen.me',
-    };
-
-    const response = await axios.post<Assistant>(apiUrl, assistantData);
+    const response = await axios.post<Assistant>(apiUrl, newAssistant);
     return response.data;
   } catch (error) {
     console.error('Error creating assistant:', error);
@@ -72,41 +47,18 @@ export async function createAssistant(newAssistant: Assistant): Promise<Assistan
   }
 }
 
-export async function updateAssistant(updatedAssistant: Assistant): Promise<Assistant | null> {
-  const apiUrl = getApiUrl(`${updatedAssistant.id}`);
+export async function updateAssistant(updatedAssistant: Assistant, id: string): Promise<Assistant | null> {
+  const apiUrl = getApiUrl(`${id}`);
   try {
     // Ensure all required fields are included in the request
-    const assistantData = {
-      id: updatedAssistant.id,
-      name: updatedAssistant.name,
-      type: updatedAssistant.type,
-      description: updatedAssistant.description,
-      greeting: updatedAssistant.greeting,
-      systemMessage: updatedAssistant.systemMessage,
-      group: updatedAssistant.group,
-      index: updatedAssistant.index,
-      folder: updatedAssistant.folder,
-      temperature: updatedAssistant.temperature,
-      topP: updatedAssistant.topP,
-      maxResponseToken: updatedAssistant.maxResponseToken,
-      pastMessages: updatedAssistant.pastMessages,
-      strictness: updatedAssistant.strictness,
-      documentLimit: updatedAssistant.documentLimit,
-      status: updatedAssistant.status,
-      tools: updatedAssistant.tools, // Add the tools field here
-      createdAt: updatedAssistant.createdAt,
-      createdBy: updatedAssistant.createdBy,
-      updatedAt: new Date().toISOString(),
-      updatedBy: 'adam@stephensen.me',
-    };
-    const response = await axios.put<Assistant>(apiUrl, assistantData, {
+    const response = await axios.put<Assistant>(apiUrl, updatedAssistant, {
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
     if (response.status == 204) {
-      return assistantData;
+      return updatedAssistant;
     } else {
       return response.data;
     }

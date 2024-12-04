@@ -16,6 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { uploadFiles } from '@/services/files-service';
 import { useIndexes } from '@/hooks/use-indexes';
+import { CosmosFile } from '@/models/filemetadata';
 
 const maxFileCount = 25; // Maximum number of files allowed
 
@@ -46,12 +47,18 @@ export default function FileUploadComponent() {
   const { indexes } = useIndexes();
 
   const onSubmit = async (values: FormValues) => {
-    const formData = new FormData();
-    formData.append('index', values.index);
-    formData.append('folder', values.folder ?? '');
-    values.files.forEach((file) => formData.append('files', file));
+    const uploads: Promise<CosmosFile | null>[] = [];
 
-    await uploadFiles(formData);
+    values.files.forEach((file) => {
+      const formData = new FormData();
+      formData.append('indexName', values.index);
+      formData.append('folderName', values.folder ?? '');
+      formData.append('file', file);
+
+      uploads.push(uploadFiles(formData));
+    });
+
+    await Promise.all(uploads);
     navigate('/files');
   };
 

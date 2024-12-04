@@ -13,6 +13,4 @@ const configuration: Configuration = {
 };
 
 export const pca = new PublicClientApplication(configuration);
-export const msalScopes = [
-  `api://${import.meta.env.VITE_AZURE_AD_CLIENT_ID}/User.Read openid profile email offline_access`,
-];
+export const msalScopes = [`api://${import.meta.env.VITE_AZURE_AD_CLIENT_ID}/User.Read`];

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createIndex } from '@/services/indexes-service';
-import { Index } from '@/models/indexmetadata';
+import { CreateIndexDto } from '@/models/indexmetadata';
 
 const formSchema = z.object({
   name: z
@@ -20,7 +20,7 @@ const formSchema = z.object({
       message: 'Name must be lowercase, start with a letter and contain only letters, numbers and hyphens',
     }),
   description: z.string(),
-  group: z.string(),
+  group: z.string().optional(),
 });
 type FormValues = z.infer<typeof formSchema>;
 
@@ -35,7 +35,7 @@ export default function IndexForm() {
     defaultValues: {
       name: '',
       description: '',
-      group: '',
+      group: undefined,
     },
   });
 
@@ -43,13 +43,7 @@ export default function IndexForm() {
     setIsSubmitting(true);
     try {
       // Construct the fileData object without id and createdAt
-      const indexData: Partial<Index> = {
-        ...values,
-        description: values.description ?? '',
-        group: values.group ?? '',
-        createdBy: 'adam@stephensen.me',
-      };
-      console.log('Sending index ...:', indexData);
+      const indexData = values as CreateIndexDto;
       const createdIndex = await createIndex(indexData);
       if (createdIndex) {
         toast({

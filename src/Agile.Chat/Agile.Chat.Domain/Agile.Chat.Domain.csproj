@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Framework\Agile.Framework.Ai\Agile.Framework.Ai.csproj" />
+      <ProjectReference Include="..\Framework\Agile.Framework.Common\Agile.Framework.Common.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.SemanticKernel.Abstractions" Version="1.31.0" />
+    </ItemGroup>
+
+</Project>

@@ -1,60 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import ChatPage from '../Chat/index';
-import RagChatPage from '../RagChat/index-using-post';
+import React, { useEffect } from 'react';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { fetchAssistantById } from '@/services/assistantservice';
+import { createChatThread } from '@/services/chatthreadservice';
 
 const ChatRouter: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { state } = useLocation();
   const navigate = useNavigate();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_searchParams, setSearchParams] = useSearchParams();
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState<React.ReactNode | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const assistant = await fetchAssistantById(id!);
-        if (assistant) {
-          if (assistant.type === 'Chat') {
-            // Add assistantId to query parameters
-            setSearchParams((prev) => {
-              const newParams = new URLSearchParams(prev);
-              newParams.set('assistantId', id!);
-              return newParams;
-            });
-            setPage(<ChatPage />);
-          } else if (assistant.type === 'Search') {
-            setPage(<RagChatPage id={id} />);
-          } else {
-            console.log('ChatRouter unknown assistant type:', assistant.type);
-            navigate('/not-found');
-          }
-        } else {
-          console.log('ChatRouter assistant not found:', id);
-          navigate('/not-found');
-        }
+        const assistant = state.assistantId ? await fetchAssistantById(state.assistantId) : undefined;
+        const thread = await createChatThread({
+          name: assistant ? `New Chat - ${assistant.name}` : undefined,
+          assistantId: assistant?.id,
+        });
+
+        if (thread) {
+          navigate(`/chat/${thread.id}`);
+        } else navigate('/');
       } catch (error) {
         console.error('Error fetching assistant:', error);
-        navigate('/error');
-      } finally {
-        setLoading(false);
+        navigate('/');
       }
     };
 
-    if (id) {
-      fetchData();
-    } else {
-      setPage(<ChatPage />);
-    }
-  }, [id, navigate, setSearchParams]);
+    fetchData();
+  }, [navigate, setSearchParams]);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  return <>{page}</>;
+  return <div>Loading...</div>;
 };
 
 export default ChatRouter;

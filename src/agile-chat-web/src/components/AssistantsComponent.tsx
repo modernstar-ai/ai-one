@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAssistants, deleteAssistant } from '../services/assistantservice';
-import { AssistantType, Assistant as BaseAssistant } from '../types/Assistant';
+import { Assistant as BaseAssistant } from '../types/Assistant';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,7 +17,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Trash2, Loader2, Info, FileSearch, MessageSquare } from 'lucide-react';
+import { Pencil, Trash2, Loader2, Info, MessageSquare } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
@@ -60,7 +60,7 @@ const AssistantsComponent: React.FC = () => {
   };
 
   const handleLaunchAssistant = (id: string) => {
-    navigate(`/chatrouter/${id}`);
+    navigate(`/chat`, { state: { assistantId: id } });
   };
 
   const handleDeleteAssistant = async (assistant: Assistant) => {
@@ -112,17 +112,18 @@ const AssistantsComponent: React.FC = () => {
     }
   };
 
-  const getTypeIcon = (type: Assistant['type']) => {
-    switch (type) {
-      case AssistantType.Chat:
-        return <MessageSquare className="h-4 w-4" aria-hidden="true" />;
-      case AssistantType.Search:
-        return <FileSearch className="h-4 w-4" aria-hidden="true" />;
-      // case 'ExternalAPI':
-      //   return <Globe className="h-4 w-4" aria-hidden="true" />;
-      default:
-        return null;
-    }
+  const getTypeIcon = () => {
+    return <MessageSquare className="h-4 w-4" aria-hidden="true" />;
+    // switch (type) {
+    //   case AssistantType.Chat:
+    //     return <MessageSquare className="h-4 w-4" aria-hidden="true" />;
+    //   case AssistantType.Search:
+    //     return <FileSearch className="h-4 w-4" aria-hidden="true" />;
+    //   // case 'ExternalAPI':
+    //   //   return <Globe className="h-4 w-4" aria-hidden="true" />;
+    //   default:
+    //     return null;
+    // }
   };
 
   if (isLoading) {
@@ -153,7 +154,6 @@ const AssistantsComponent: React.FC = () => {
                   <TableHead className="w-[40px]">Status</TableHead>
                   <TableHead className="w-[200px]">Container</TableHead>
                   <TableHead className="w-[200px]">Group</TableHead>
-                  <TableHead className="w-[200px]">Type</TableHead>
                   <TableHead className="w-[500px]">Description</TableHead>
                 </TableRow>
               </TableHeader>
@@ -171,7 +171,7 @@ const AssistantsComponent: React.FC = () => {
                                 className="h-8 w-8 p-0"
                                 onClick={() => handleLaunchAssistant(assistant.id)}
                               >
-                                {getTypeIcon(assistant.type)}
+                                {getTypeIcon()}
                                 <span className="sr-only">Chat with {assistant.name}</span>
                               </Button>
                             </TooltipTrigger>
@@ -180,53 +180,26 @@ const AssistantsComponent: React.FC = () => {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                        {assistant.group && assistant.group !== "" && (
-                        <PermissionHandler role={UserRole.ContentManager} 
-                        group={assistant.group && assistant.group !== "" ? assistant.group : "" }> 
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                  onClick={() => handleEditAssistant(assistant.id)}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                  <span className="sr-only">Edit {assistant.name}</span>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Edit {assistant.name}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </PermissionHandler>
-                        )}
-
-                        {assistant.group == "" && (
-                         <PermissionHandler role={UserRole.SystemAdmin}>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                  onClick={() => handleEditAssistant(assistant.id)}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                  <span className="sr-only">Edit {assistant.name}</span>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Edit {assistant.name}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </PermissionHandler>
-                        )}
-
+                        <PermissionHandler role={UserRole.ContentManager} group={assistant.filterOptions.group} blockContentManagerIfNoGroup={true}>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => handleEditAssistant(assistant.id)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                    <span className="sr-only">Edit {assistant.name}</span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Edit {assistant.name}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </PermissionHandler>
                         <PermissionHandler role={UserRole.SystemAdmin}>
                           <AlertDialog>
                             <TooltipProvider>
@@ -277,27 +250,8 @@ const AssistantsComponent: React.FC = () => {
                     </TableCell>
                     <TableCell className="font-medium">{assistant.name}</TableCell>
                     <TableCell>{getStatusBadge(assistant.status)}</TableCell>
-                    <TableCell>{assistant.index}</TableCell>
-                    <TableCell>{assistant.group}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getTypeIcon(assistant.type)}
-                        <span>{AssistantType[assistant.type]}</span>
-                      </div>
-                    </TableCell>
-                    {/* <TableCell className="font-mono text-xs">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="cursor-help">{assistant.id}</span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Unique identifier for this assistant</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </TableCell> */}
-
+                    <TableCell>{assistant.filterOptions.indexName}</TableCell>
+                    <TableCell>{assistant.filterOptions.group}</TableCell>
                     <TableCell className="font-medium">{assistant.description}</TableCell>
                   </TableRow>
                 ))}

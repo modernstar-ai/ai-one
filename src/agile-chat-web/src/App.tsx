@@ -7,12 +7,15 @@ import Layout from './Layout';
 import { useIsAuthenticated } from '@azure/msal-react';
 import { useEffect } from 'react';
 import { getUserPermissions } from './services/user-service';
+import { pca } from './authentication/msal-configs';
 
 function App() {
   const isAuthenticated = useIsAuthenticated();
   useEffect(() => {
     if (isAuthenticated) {
-      getUserPermissions();
+      pca.initialize().then(() => {
+        getUserPermissions();
+      });
     }
   }, [isAuthenticated]);
 

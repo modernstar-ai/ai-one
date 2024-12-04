@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/services/auth-helpers';
 import { cn } from '@/lib/utils';
-import { fetchChatThreads, createChatThread, deleteChatThread, type ChatThread } from '@/services/chatthreadservice';
+import { fetchChatThreads, createChatThread, deleteChatThread } from '@/services/chatthreadservice';
 
 import { Button } from '@/components/ui/button';
 import SideNavButton from '@/components/navigation/left-sidebar-button';
@@ -32,12 +32,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 import {
   Home,
-  MessageCircleMore,
   FileBox,
   User,
   VenetianMask,
   LogOut,
-  // Wrench,
   Plus,
   Trash2,
   Sun,
@@ -52,7 +50,7 @@ import { PermissionHandler } from '@/authentication/permission-handler/permissio
 import { UserRole } from '@/authentication/user-roles';
 
 import Logo from '@/assets/logo.png';
-
+import { ChatThread } from '@/types/ChatThread';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -137,7 +135,7 @@ export function LeftSidebar() {
     setError(null);
 
     try {
-      const response = await fetchChatThreads(username);
+      const response = await fetchChatThreads();
       if (response) {
         setThreads(response);
       } else {
@@ -189,7 +187,7 @@ export function LeftSidebar() {
   const handleDeleteThread = async (threadId: string) => {
     setLoading(true);
     try {
-      const success = await deleteChatThread(threadId, name);
+      const success = await deleteChatThread(threadId);
       if (success) {
         await loadChatThreads(false);
       } else {
@@ -207,7 +205,7 @@ export function LeftSidebar() {
     if (confirmClear) {
       setLoading(true);
       try {
-        const deletePromises = threads.map((thread) => deleteChatThread(thread.id, name));
+        const deletePromises = threads.map((thread) => deleteChatThread(thread.id));
         await Promise.all(deletePromises);
         await loadChatThreads(false);
       } catch {
@@ -246,17 +244,16 @@ export function LeftSidebar() {
 
           {/* Navigation Items */}
           <div className="flex flex-col space-y-2 mt-4 h-screen justify-center items-center  dark:text-white">
-            <SideNavButton path="/chat" label="Chat" Icon={MessageCircleMore} accessKey="c" />
-            <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey="a" />
+          <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey="a" />
             <PermissionHandler role={UserRole.ContentManager}>
               <SideNavButton path="/files" label="Files" Icon={FileBox} accessKey="U" />
             </PermissionHandler>
             <PermissionHandler role={UserRole.ContentManager}>
               <SideNavButton path="/containers" label="Database" Icon={Database} accessKey="i" />
             </PermissionHandler>
-            {/*<PermissionHandler role={UserRole.SystemAdmin}>*/}
-            {/*  <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey="t" />*/}
-            {/*</PermissionHandler>*/}
+            {/* <PermissionHandler role={UserRole.SystemAdmin}>
+              <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey="t" />
+            </PermissionHandler> */}
           </div>
 
           {/* User Menu */}
@@ -315,11 +312,11 @@ export function LeftSidebar() {
           <div className="h-full flex flex-col dark:text-white ">
             {/* Panel Header */}
             <div className="p-4 space-y-2">
-            <img src={Logo} alt="UTS Logo" className="w-1/2" />
+              <img src={Logo} alt="UTS Logo" className="w-1/2" />
             </div>
-             
+
             <div className="p-4 border-b flex justify-between">
-                <h2 className="font-semibold">Recent Chats</h2>
+              <h2 className="font-semibold">Recent Chats</h2>
 
               <Button variant="ghost" size="icon" onClick={handleCreateChat} disabled={loading} aria-label="New Chat">
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
@@ -349,11 +346,7 @@ export function LeftSidebar() {
                       <div
                         className="flex flex-col flex-grow min-w-0"
                         // onClick={() => navigate(`/chat/${thread.id}`)}
-                        onClick={() =>
-                          navigate(
-                            `/chat/${thread.id}${thread.assistantId ? `?assistantId=${thread.assistantId}` : ''}`
-                          )
-                        }
+                        onClick={() => navigate(`/chat/${thread.id}`)}
                       >
                         <span className="text-sm font-medium truncate">{thread.name}</span>
                         {/* <span className="text-xs text-muted-foreground">

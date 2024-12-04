@@ -1,16 +1,10 @@
-import React, { useState } from "react";
-import { Settings2 } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { fetchChatThread } from "@/services/chatthreadservice";
+import React, { useState } from 'react';
+import { Settings2 } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { fetchChatThread } from '@/services/chatthreadservice';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,8 +13,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useLocation } from "react-router-dom";
+} from '@/components/ui/alert-dialog';
+import { useLocation } from 'react-router-dom';
 
 interface ThreadConfig {
   temperature?: number | null;
@@ -48,19 +42,19 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
   const [error, setError] = useState<string | null>(null);
   const location = useLocation();
 
-  const isChatPage = location.pathname.startsWith("/chat/");
+  const isChatPage = location.pathname.startsWith('/chat/');
 
   const formatValue = (value: number | string | null | undefined): string => {
     if (value === null || value === undefined || value == 0) {
-      return "Not set";
+      return 'Not set';
     }
 
-    if (typeof value === "number") {
+    if (typeof value === 'number') {
       return value.toString();
     }
 
     const trimmedValue = value.trim();
-    return trimmedValue || "Not set";
+    return trimmedValue || 'Not set';
   };
 
   const handleSheetOpen = async (open: boolean) => {
@@ -70,23 +64,19 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
       try {
         const thread = await fetchChatThread(threadId);
         if (!thread) {
-          throw new Error("Failed to load thread configuration");
+          throw new Error('Failed to load thread configuration');
         }
 
         setThreadConfig({
-          temperature: thread.temperature,
-          topP: thread.topP,
-          maxResponseToken: thread.maxResponseToken,
-          strictness: thread.strictness,
-          documentLimit: thread.documentLimit,
+          temperature: thread.promptOptions.temperature,
+          topP: thread.promptOptions.topP,
+          maxResponseToken: thread.promptOptions.maxTokens,
+          strictness: thread.filterOptions.strictness,
+          documentLimit: thread.filterOptions.documentLimit,
         });
       } catch (err) {
-        console.error("Error fetching thread:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "An error occurred while loading configuration"
-        );
+        console.error('Error fetching thread:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred while loading configuration');
         setThreadConfig(null);
       } finally {
         setIsLoading(false);
@@ -99,34 +89,24 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
       key.charAt(0).toUpperCase() +
       key
         .slice(1)
-        .replace(/([A-Z])/g, " $1")
+        .replace(/([A-Z])/g, ' $1')
         .trim()
     );
   };
 
   const renderContent = () => {
     if (isLoading) {
-      return (
-        <div className="text-center py-4 text-sm text-muted-foreground">
-          Loading configuration...
-        </div>
-      );
+      return <div className="text-center py-4 text-sm text-muted-foreground">Loading configuration...</div>;
     }
 
     if (!threadConfig) {
-      return (
-        <div className="text-center py-4 text-sm text-muted-foreground">
-          No configuration available
-        </div>
-      );
+      return <div className="text-center py-4 text-sm text-muted-foreground">No configuration available</div>;
     }
 
     return Object.entries(threadConfig).map(([key, value]) => (
       <Card key={key} className="border-none">
         <CardContent className="p-3">
-          <Label className="text-sm font-medium text-muted-foreground">
-            {getConfigLabel(key)}
-          </Label>
+          <Label className="text-sm font-medium text-muted-foreground">{getConfigLabel(key)}</Label>
           <div className="mt-1 text-sm">{formatValue(value)}</div>
         </CardContent>
       </Card>
@@ -137,10 +117,8 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
     <>
       <div className="bg-muted p-4 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">{Title || "Untitled"}</h1>
-          <p className="text-sm text-muted-foreground">
-            {Subtitle || "No subtitle"}
-          </p>
+          <h1 className="text-2xl font-bold">{Title || 'Untitled'}</h1>
+          <p className="text-sm text-muted-foreground">{Subtitle || 'No subtitle'}</p>
         </div>
         {isChatPage && threadId && (
           <Sheet onOpenChange={handleSheetOpen}>
@@ -166,9 +144,7 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
             <AlertDialogDescription>{error}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setError(null)}>
-              OK
-            </AlertDialogAction>
+            <AlertDialogAction onClick={() => setError(null)}>OK</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

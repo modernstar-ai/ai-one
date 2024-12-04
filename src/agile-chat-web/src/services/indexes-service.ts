@@ -1,6 +1,6 @@
 // src/services/personaservice.ts
 import axios from '@/error-handling/axiosSetup';
-import { Index } from '@/models/indexmetadata';
+import { CreateIndexDto, Index } from '@/models/indexmetadata';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -20,16 +20,10 @@ export async function getIndexes(): Promise<Index[]> {
 }
 
 //Create new index in cosmos
-export async function createIndex(newIndex: Partial<Index>): Promise<Index | null> {
-  const apiUrl = getApiUrl('create');
+export async function createIndex(newIndex: CreateIndexDto): Promise<Index | null> {
+  const apiUrl = getApiUrl('');
   try {
-    const indexData = {
-      name: newIndex.name,
-      description: newIndex.description,
-      group: newIndex.group,
-      createdBy: newIndex.createdBy,
-    };
-    const response = await axios.post<Index>(apiUrl, indexData, {
+    const response = await axios.post<Index>(apiUrl, newIndex, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -58,7 +52,7 @@ export async function updateIndex(body: { id: string; group: string; description
 
 //Delete index in cosmos
 export async function deleteIndex(id: string): Promise<boolean> {
-  const apiUrl = getApiUrl(`delete/${id}`);
+  const apiUrl = getApiUrl(`${id}`);
   try {
     await axios.delete(apiUrl);
     return true;

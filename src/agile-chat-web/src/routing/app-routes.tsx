@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import HomePage from '../pages/Home';
 import ChatRouter from '../pages/Chat/ChatRouter';
-import ChatPage from '../pages/Chat';
 import RagChatPage from '../pages/RagChat/index-using-post';
 import AssistantsPage from '../pages/Assistant';
 import AssistantForm from '../pages/Assistant/AssistantForm';
@@ -16,6 +15,7 @@ import IndexesPage from '@/pages/Indexes/indexesPage';
 import IndexForm from '@/pages/Indexes/indexForm';
 import { ProtectedRoute } from './protected-route';
 import { UserRole } from '@/authentication/user-roles';
+import ChatPage from '@/pages/Chat';
 
 const AppRoutes = () => (
   <Routes>
@@ -29,7 +29,7 @@ const AppRoutes = () => (
     />
     <Route path="/login" element={<LoginPage />} />
     <Route
-      path="/chatrouter/:id"
+      path="/chat"
       element={
         <ProtectedRoute>
           <ChatRouter />
@@ -37,7 +37,7 @@ const AppRoutes = () => (
       }
     />
     <Route
-      path="/chat/*"
+      path="/chat/:threadId"
       element={
         <ProtectedRoute>
           <ChatPage />
