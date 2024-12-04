@@ -1,0 +1,175 @@
+name: Deployment Agile Chat Azure Infrastructure
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "The reason for running the workflow:"
+        required: false
+        default: Manual run
+
+      resource_group:
+        description: "Enter the Azure resource group Name:"
+        required: true
+
+      azure_env_name:
+        description: "Enter the Azure Environment Name:"
+        required: true
+        default: "agile-dev"
+
+      azure_location:
+        description: "Select the Azure deployment region:"
+        required: true
+        type: choice
+        default: "australiaeast"
+        options:
+          - "australiaeast"
+          - "australiasoutheast"
+
+      asp_core_env:
+        description: "Select the ASP Core deployment environment:"
+        required: true
+        type: choice
+        default: "Development"
+        options:
+          - "Development"
+          - "Test"
+          - "UAT"
+          - "Production"
+
+       deployment_env_name:
+            description: "Select the deployment environment name - used to name resources:"
+            required: true
+            type: choice
+            default: "dev"
+            options:
+              - "dev"
+              - "tst"
+              - "uat"
+              - "prod"
+
+      uts_role_api_endpoint:
+        description: "Enter the UTS Role API Endpoint (e.g., https://agilechat-ENV-subjapi.azurewebsites.net):"
+        required: true
+
+      deploy_event_grid:
+          description: "Deploy Event Grid?:"
+          required: true
+          type: boolean
+          default: false
+
+      set_kv_function_app_permissions:
+            description: "Deploy and Assign Keyvault Web App Permissions?:"
+            required: true
+            type: boolean
+            default: false
+
+      environment:
+        description: "Select the Azure environment:"
+        required: true
+        type: choice
+        default: "Development"
+        options:
+          - Development
+          - Test
+          - Production
+
+##########################################################################################################################
+
+#   push:
+#     branches:
+#       - main
+
+# Set up permissions for deploying with secretless Azure federated credentials
+# https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  infra-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_APP_ID: ${{ secrets.AZURE_APP_ID }}
+      UTS_XAPI_KEY: ${{ secrets.UTS_XAPI_KEY }}
+      ASP_CORE_ENV: "${{ github.event.inputs.asp_core_env }}"
+      UTS_ROLE_API_ENDPOINT: "${{ github.event.inputs.uts_role_api_endpoint }}"
+      DEPLOYMENT_ENV_NAME: "${{ github.event.inputs.deployment_env_name }}"
+      DEPLOYMENT_EVENT_GRID: "${{ github.event.inputs.deploy_event_grid }}"
+      SET_KV_FUNCTION_APP_PERMISSIONS: "${{ github.event.inputs.set_kv_function_app_permissions }}"
+      AZURE_RESOURCE_GROUP: "${{ github.event.inputs.resource_group }}"
+      AZURE_ENV_NAME: "${{ github.event.inputs.azure_env_name }}"
+      AZURE_LOCATION: "${{ github.event.inputs.azure_location }}"
+      AZURE_BICEP_MAIN: "./infra/main.bicep"
+      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
+
+##########################################################################################################################
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Lint and Prep Bicep
+        uses: azure/cli@v2
+        with:
+          azcliversion: 2.64.0
+          inlineScript: |
+            tdnf install -y icu
+            tdnf install -y jq
+            az bicep install
+            az config set bicep.use_binary_from_path=false && az bicep build -f ${{ env.AZURE_BICEP_MAIN }} --stdout
+
+      - name: Check if Resource Group Exist
+        id: check_rsg
+        uses: azure/cli@v2
+        with:
+          azcliversion: 2.64.0
+          inlineScript: |
+            az group show --name "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1 || echo "not found"
+
+      - name: Create Resource Group (if not exists)
+        if: steps.check_rsg.outputs.exit_code == 'failure'
+        uses: azure/cli@v2
+        with:
+          azcliversion: 2.64.0
+          inlineScript: |
+            az group create --name "${{ env.AZURE_RESOURCE_GROUP }}" --location "${{ env.AZURE_LOCATION }}"
+
+        ##https://github.com/Azure/bicep-deploy
+      - name: Deploy Bicep to Azure
+        uses: azure/bicep-deploy@v1
+        with:
+          type: deployment
+          operation: create
+          name: "${{ env.AZURE_ENV_NAME }}"
+          scope: resourceGroup
+          resource-group-name: "${{ env.AZURE_RESOURCE_GROUP }}"
+          subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
+          template-file: "${{ env.AZURE_BICEP_MAIN }}"
+          parameters: |
+            azureClientID=${{ env.AZURE_CLIENT_ID }}
+            azureClientSecret=${{ env.AZURE_CLIENT_SECRET }}
+            azureTenantId=${{ env.AZURE_TENANT_ID }}
+            azureADAppIdOrUri=${{ env.AZURE_APP_ID }}
+            UtsXApiKey=${{ env.UTS_XAPI_KEY }}
+            environmentName=${{ env.DEPLOYMENT_ENV_NAME }}
+            location=${{ env.AZURE_LOCATION }}
+            openAILocation=${{ env.AZURE_LOCATION }}
+            aspCoreEnvironment=${{ env.ASP_CORE_ENV }}
+            UtsRoleApiEndpoint=${{ env.UTS_ROLE_API_ENDPOINT }}
+            deployEventGrid=${{ env.DEPLOYMENT_EVENT_GRID }}
+            kvSetFunctionAppPermissions=${{ env.SET_KV_FUNCTION_APP_PERMISSIONS }}
