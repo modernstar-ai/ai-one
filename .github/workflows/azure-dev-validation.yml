@@ -1,14 +1,14 @@
 name: Validate Bicep templates
 on:
   workflow_dispatch:
-#   push:
-#     branches: [ main ]
-#     paths:
-#       - "infra/**"
-#   pull_request:
-#     branches: [ main ]
-#     paths:
-#       - "infra/**"
+  # push:
+  #   branches: [ main ]
+  #   paths:
+  #     - "infra/**"
+  # pull_request:
+  #   branches: [ main ]
+  #   paths:
+  #     - "infra/**"
 
 permissions:
   contents: read
@@ -16,31 +16,32 @@ permissions:
   security-events: write
 
 jobs:
-  build:
+  validate-bicep:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build Bicep for linting
+      - name: Install and Build Bicep
         uses: azure/cli@v2
         with:
           azcliversion: 2.64.0
           inlineScript: |
-            tdnf install -y icu
-            tdnf install -y jq
+            # Install dependencies for Bicep
+            tdnf install -y icu jq
+            # Install and build Bicep templates
             az bicep install
-            az config set bicep.use_binary_from_path=false && az bicep build -f infra/main.bicep --stdout
+            az config set bicep.use_binary_from_path=false
+            az bicep build -f infra/main.bicep --stdout
 
-      - name: Run Microsoft Security DevOps Analysis
+      - name: Run Security Analysis
         uses: microsoft/security-devops-action@preview
         id: msdo
-        continue-on-error: true
         with:
           tools: templateanalyzer
 
-    #   - name: Upload alerts to Security tab
-    #     uses: github/codeql-action/upload-sarif@v3
-    #     if: github.repository == 'Azure-Samples/azure-search-openai-demo-csharp'
-    #     with:
-    #       sarif_file: ${{ steps.msdo.outputs.sarifFile }}
+      - name: Upload alerts to Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: ${{ steps.msdo.outputs.sarifFile }}
