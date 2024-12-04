@@ -36,32 +36,32 @@ on:
           - "UAT"
           - "Production"
 
-       deployment_env_name:
-            description: "Select the deployment environment name - used to name resources:"
-            required: true
-            type: choice
-            default: "dev"
-            options:
-              - "dev"
-              - "tst"
-              - "uat"
-              - "prod"
+      deployment_env_name:
+        description: "Select the deployment environment name - used to name resources:"
+        required: true
+        type: choice
+        default: "dev"
+        options:
+          - "dev"
+          - "tst"
+          - "uat"
+          - "prod"
 
       uts_role_api_endpoint:
         description: "Enter the UTS Role API Endpoint (e.g., https://agilechat-ENV-subjapi.azurewebsites.net):"
         required: true
 
       deploy_event_grid:
-          description: "Deploy Event Grid?:"
-          required: true
-          type: boolean
-          default: false
+        description: "Deploy Event Grid?:"
+        required: true
+        type: boolean
+        default: false
 
       set_kv_function_app_permissions:
-            description: "Deploy and Assign Keyvault Web App Permissions?:"
-            required: true
-            type: boolean
-            default: false
+        description: "Deploy and Assign Keyvault Web App Permissions?:"
+        required: true
+        type: boolean
+        default: false
 
       environment:
         description: "Select the Azure environment:"
@@ -108,7 +108,7 @@ jobs:
       AZURE_BICEP_MAIN: "./infra/main.bicep"
       ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
 
-##########################################################################################################################
+    ##########################################################################################################################
 
     steps:
       - name: Checkout code
