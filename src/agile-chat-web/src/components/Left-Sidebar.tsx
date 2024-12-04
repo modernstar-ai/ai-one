@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/services/auth-helpers';
 import { cn } from '@/lib/utils';
-import { fetchChatThreads, createChatThread, deleteChatThread } from '@/services/chatthreadservice';
+import { createChatThread, deleteChatThread } from '@/services/chatthreadservice';
 
 import { Button } from '@/components/ui/button';
 import SideNavButton from '@/components/navigation/left-sidebar-button';
@@ -50,13 +50,13 @@ import { PermissionHandler } from '@/authentication/permission-handler/permissio
 import { UserRole } from '@/authentication/user-roles';
 
 import Logo from '@/assets/logo.png';
-import { ChatThread } from '@/types/ChatThread';
+import { useThreadsStore } from '@/stores/threads-store';
 
 type Theme = 'light' | 'dark' | 'system';
 
 export function LeftSidebar() {
+  const { threads, refreshThreads } = useThreadsStore();
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [threads, setThreads] = useState<ChatThread[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -100,10 +100,10 @@ export function LeftSidebar() {
 
   // Initial load
   useEffect(() => {
-    if (isLoggedIn && username) {
+    if (isLoggedIn && username && isPanelOpen) {
       loadChatThreads(true);
     }
-  }, [isLoggedIn, username]);
+  }, [isPanelOpen]);
 
   // Load when panel is opened
   useEffect(() => {
@@ -134,21 +134,8 @@ export function LeftSidebar() {
     setLoading(true);
     setError(null);
 
-    try {
-      const response = await fetchChatThreads();
-      if (response) {
-        setThreads(response);
-      } else {
-        setError('Failed to load chat threads');
-      }
-    } catch {
-      setError('Failed to load chat threads');
-    } finally {
-      setLoading(false);
-      if (isInitial) {
-        setInitialLoad(false);
-      }
-    }
+    await refreshThreads();
+    setLoading(false);
   };
 
   const handleCreateChat = async () => {
@@ -205,8 +192,8 @@ export function LeftSidebar() {
     if (confirmClear) {
       setLoading(true);
       try {
-        const deletePromises = threads.map((thread) => deleteChatThread(thread.id));
-        await Promise.all(deletePromises);
+        const deletePromises = threads?.map((thread) => deleteChatThread(thread.id));
+        await Promise.all(deletePromises ?? []);
         await loadChatThreads(false);
       } catch {
         setError('Failed to clear chat history');
@@ -244,7 +231,7 @@ export function LeftSidebar() {
 
           {/* Navigation Items */}
           <div className="flex flex-col space-y-2 mt-4 h-screen justify-center items-center  dark:text-white">
-          <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey="a" />
+            <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey="a" />
             <PermissionHandler role={UserRole.ContentManager}>
               <SideNavButton path="/files" label="Files" Icon={FileBox} accessKey="U" />
             </PermissionHandler>
@@ -327,14 +314,14 @@ export function LeftSidebar() {
             {error && <div className="px-4 py-2 text-destructive text-sm">{error}</div>}
 
             {/* Chat Threads */}
-            {loading && threads.length === 0 ? (
+            {loading && threads?.length === 0 ? (
               <div className="flex-1 flex items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : (
               <ScrollArea className="flex-1">
                 <div className="p-4 space-y-2">
-                  {threads.map((thread) => (
+                  {threads?.map((thread) => (
                     <div
                       key={thread.id}
                       className={cn(
@@ -390,7 +377,7 @@ export function LeftSidebar() {
             )}
 
             {/* Clear History Button */}
-            {threads.length > 0 && (
+            {threads && threads.length > 0 && (
               <div className="p-4 border-t">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
