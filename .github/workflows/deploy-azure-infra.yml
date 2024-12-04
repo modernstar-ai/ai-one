@@ -160,6 +160,7 @@ jobs:
           resource-group-name: "${{ env.AZURE_RESOURCE_GROUP }}"
           subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
           template-file: "${{ env.AZURE_BICEP_MAIN }}"
+          # location: "australiaeast"
           parameters: |
             azureClientID=${{ env.AZURE_CLIENT_ID }}
             azureClientSecret=${{ env.AZURE_CLIENT_SECRET }}
