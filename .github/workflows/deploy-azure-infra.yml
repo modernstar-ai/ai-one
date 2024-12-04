@@ -1,4 +1,4 @@
-name: Deployment AgileChat Azure Infrastructure
+name: Deploy AgileChat Azure Infrastructure
 on:
   workflow_dispatch:
     inputs:
