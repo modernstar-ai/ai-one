@@ -154,7 +154,6 @@ const IndexerComponent: React.FC = () => {
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter className="flex-col items-stretch sm:flex-row sm:justify-start sm:space-x-2">
-                                  <AlertDialogCancel className="mb-2 sm:mb-0">Cancel</AlertDialogCancel>
                                   <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
                                     {isDeleting ? (
                                       <>
@@ -165,6 +164,7 @@ const IndexerComponent: React.FC = () => {
                                       'Yes, delete container'
                                     )}
                                   </AlertDialogAction>
+                                  <AlertDialogCancel className="mb-2 sm:mb-0">Cancel</AlertDialogCancel>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>

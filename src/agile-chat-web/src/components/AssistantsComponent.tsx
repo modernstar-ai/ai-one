@@ -100,15 +100,15 @@ const AssistantsComponent: React.FC = () => {
     switch (statusString) {
       case 'draft':
       case '0':
-        return <Badge className="bg-yellow-100 text-yellow-800">Draft</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Draft</Badge>;
       case 'published':
       case '1':
-        return <Badge className="bg-green-100 text-green-800">Published</Badge>;
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Published</Badge>;
       case 'archived':
       case '2':
-        return <Badge className="bg-gray-100 text-gray-800">Archived</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Archived</Badge>;
       default:
-        return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800 bg-gray-100">Unknown</Badge>;
     }
   };
 
@@ -231,7 +231,6 @@ const AssistantsComponent: React.FC = () => {
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter className="flex-col items-stretch sm:flex-row sm:justify-start sm:space-x-2">
-                                <AlertDialogCancel className="mb-2 sm:mb-0">Cancel</AlertDialogCancel>
                                 <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
                                   {isDeleting ? (
                                     <>
@@ -242,6 +241,7 @@ const AssistantsComponent: React.FC = () => {
                                     'Yes, delete assistant'
                                   )}
                                 </AlertDialogAction>
+                                <AlertDialogCancel className="mb-2 sm:mb-0">Cancel</AlertDialogCancel>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>

@@ -86,7 +86,7 @@ export default function FileUploadComponent() {
         <header className="mb-8 text-center" role="banner">
           <SparklesIcon className="mx-auto mb-4 h-12 w-12 text-primary" />
           <h1 className="text-3xl font-bold">Supported File Types</h1>
-          <p className="mt-2 text-gray-600">UTS AI Assistant currently supports the following file types</p>
+          <p className="mt-2 text-gray-600">Our AI Assistant currently supports the following file types</p>
         </header>
 
         {/* File Types */}
