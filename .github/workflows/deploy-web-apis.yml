@@ -51,6 +51,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up .NET 8 SDK
         uses: actions/setup-dotnet@v4
