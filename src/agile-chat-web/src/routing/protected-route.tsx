@@ -17,17 +17,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }
 
   const isAuthenticated = useIsAuthenticated();
 
-  if (!isAuthenticated) return <Navigate to="/login" />;
-
-  if (!roles) {
-    return (
-      <div className="flex w-full h-full items-center justify-center">
-        <Loader2Icon className="animate-spin" />'
-      </div>
-    );
-  }
-
-  if (isAuthenticated && role && !hasPermission(roles, [], role)) {
+  if (isAuthenticated && roles && role && !hasPermission(roles, [], role)) {
     return <Navigate to="/" />;
   }
 
@@ -37,5 +27,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }
     // user is not authenticated
     return <Navigate to="/login" />;
   }
+
+  if (!roles) {
+    return (
+      <div className="flex w-full h-full items-center justify-center">
+        <Loader2Icon className="animate-spin" />'
+      </div>
+    );
+  }
+
   return children;
 };
