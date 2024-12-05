@@ -62,19 +62,6 @@ export const ChatMessageArea = React.forwardRef<HTMLDivElement, ChatMessageAreaP
               {message.messageType === MessageType.User ? userId : 'AI Assistant'}
             </div>
           </div>
-          <div className=" h-7 flex items-center justify-between">
-            <div>
-              <Button
-                variant={'ghost'}
-                size={'sm'}
-                title="Copy text"
-                className="justify-right flex"
-                onClick={handleButtonClick}
-              >
-                {isIconChecked ? <CheckIcon size={16} /> : <Copy size={16} />}
-              </Button>
-            </div>
-          </div>
         </div>
         <div className="flex flex-col flex-1 px-10">
           <div className="prose prose-slate dark:prose-invert whitespace-break-spaces prose-p:leading-relaxed prose-pre:p-0 max-w-none">
@@ -94,7 +81,22 @@ export const ChatMessageArea = React.forwardRef<HTMLDivElement, ChatMessageAreaP
               <ClipboardIcon size={16} />
             )}
           </Button> */}
-            <MessageReactions message={message} />
+            {message.messageType === MessageType.Assistant && (
+              <>
+                <div>
+                  <Button
+                    variant={'ghost'}
+                    size={'sm'}
+                    title="Copy text"
+                    className="justify-right flex"
+                    onClick={handleButtonClick}
+                  >
+                    {isIconChecked ? <CheckIcon size={16} /> : <Copy size={16} />}
+                  </Button>
+                </div>
+                <MessageReactions message={message} />
+              </>
+            )}
           </div>
         </div>
       </div>

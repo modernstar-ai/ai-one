@@ -23,6 +23,8 @@ public class Files(IMediator mediator) : CarterModule("/api")
         files.MapGet("/", GetFiles);
         //POST
         files.MapPost("/", UploadFile);
+        files.MapPost("download", DownloadFile);
+        files.MapPost("share", GenerateSharedLinkByUrl);
         //DELETE
         files.MapDelete("/{id:guid}", DeleteFileById);
     }
@@ -36,6 +38,18 @@ public class Files(IMediator mediator) : CarterModule("/api")
     private async Task<IResult> UploadFile([FromForm] UploadFileDto dto)
     {
         var command = new UploadFile.Command(dto.File, dto.IndexName, dto.FolderName);
+        return await mediator.Send(command);
+    }
+    
+    private async Task<IResult> DownloadFile([FromBody] DownloadFileDto dto)
+    {
+        var command = new DownloadFileByUrl.Command(dto.Url);
+        return await mediator.Send(command);
+    }
+    
+    private async Task<IResult> GenerateSharedLinkByUrl([FromBody] DownloadFileDto dto)
+    {
+        var command = new GenerateSharedLinkByUrl.Command(dto.Url);
         return await mediator.Send(command);
     }
     

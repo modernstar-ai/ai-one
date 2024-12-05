@@ -10,7 +10,7 @@ public static class Configs
     public static void InitializeConfigs(IConfiguration configuration) => config = configuration;
     private static IConfiguration config;
     
-    public static string BlobStorageConnectionString => config.GetConnectionString("BlobStorage") ?? throw new NullReferenceException("BlobStorageConnectionString is null");
+    public static BlobConfig BlobStorage => config.GetSection("BlobStorage").Get<BlobConfig>() ?? throw new NullReferenceException("BlobStorage is null");
     public static string AppInsightsConnectionString => config.GetConnectionString("APPLICATIONINSIGHTS_CONNECTION_STRING") ?? throw new NullReferenceException("APPLICATIONINSIGHTS_CONNECTION_STRING is null");
     public static string AzureAiServicesKey => config["AzureAiServicesKey"] ?? throw new NullReferenceException("AzureAiServicesKey is null");
     public static AzureAdConfig AzureAd => config.GetSection("AzureAd").Get<AzureAdConfig>()!;

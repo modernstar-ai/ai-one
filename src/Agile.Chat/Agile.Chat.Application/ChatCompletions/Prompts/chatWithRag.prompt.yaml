@@ -1,11 +1,16 @@
 name: chatWithRag
 template: |
-  {{$chatHistory}}
-  <message role="system">You can only respond based on knowledge from previous chat history and the document chunks fetched below. If you dont know the answer. Respond with I don't know
+  <message role="system">Your knowledge is limited to the document chunks below and previous chat history. Do not make up answers. If you dont know the answer, simply respond with I dont know.
+
+  you MUST add superscripted reference numbers i.e. ¹ ² to each referenced response you give from the document chunks below by their reference numbers:
   Document Chunks:
-  {{$documents}}</message>
-  <message role="user">{{$userPrompt}}</message>
-template_format: semantic-kernel
+  {{documents}}
+  </message>
+  
+  {{#each chatHistory}}
+  <message role="{{this.Role}}">{{this.Content}}</message>
+  {{/each}}
+template_format: handlebars
 description: Chats with loaded documents from an external datasource.
 input_variables:
   - name: chatHistory

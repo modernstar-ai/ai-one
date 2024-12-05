@@ -6,6 +6,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Microsoft.SemanticKernel.Embeddings;
+using Microsoft.SemanticKernel.PromptTemplates.Handlebars;
 
 namespace Agile.Framework.Ai;
 
@@ -61,8 +62,9 @@ public class AppKernel : IAppKernel
      {
          var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, promptRelativeDirectory, promptFile);
          var prompt = await File.ReadAllTextAsync(path);
+         
          if(string.IsNullOrWhiteSpace(prompt)) throw new Exception("Prompt file path is empty");
-         var kernelFunction = _kernel.CreateFunctionFromPromptYaml(prompt);
+         var kernelFunction = _kernel.CreateFunctionFromPromptYaml(prompt, new HandlebarsPromptTemplateFactory());
          //Create arguments
          var arguments = new KernelArguments(settings);
          // Manually add dictionary items to arguments

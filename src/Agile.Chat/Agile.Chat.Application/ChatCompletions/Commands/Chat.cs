@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.ClientModel;
+using System.Security.Claims;
 using System.Text;
 using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.Audits.Services;
@@ -60,20 +61,33 @@ public static class Chat
                     Constants.Prompts.ChatWithRag, 
                     new Dictionary<string, object?>
                 {
-                    {"documents", string.Join('\n', documents.Select(x => x.ToString()))},
+                    {"documents", string.Join('\n', documents.Select((x, index) => x.ToString(index + 1)))},
                     {"userPrompt", request.UserPrompt},
-                    {"chatHistory", messages.ParseSemanticKernelChatHistoryString()}
+                    {"chatHistory", messages.ParseSemanticKernelChatHistory(request.UserPrompt)}
                 })
                 : 
                 appKernel.GetChatStream(
                     messages.ParseSemanticKernelChatHistory(request.UserPrompt), chatSettings);
 
             var assistantFullResponse = new StringBuilder();
-            await foreach (var chatStream in aiStreamChats)
+            try
             {
-                assistantFullResponse.Append(chatStream[ResponseType.Chat]);
-                await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, chatStream);
+                await foreach (var chatStream in aiStreamChats)
+                {
+                    assistantFullResponse.Append(chatStream[ResponseType.Chat]);
+                    await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, chatStream);
+                }
             }
+            catch (Exception ex) when (ex is ClientResultException exception && exception.Status == 429)
+            {
+                return Results.BadRequest("Rate limit exceeded");
+            }
+            catch (Exception ex) when (ex is ClientResultException exception && exception.Message.Contains("content_filter"))
+            {
+                return Results.BadRequest("High likelyhood of adult content. Response denied.");
+            }
+
+
             
             //If its a new chat, update the threads name
             if (messages.Count == 0)
@@ -89,6 +103,14 @@ public static class Chat
                                                                 (userPrompt.Length <= 39
                                                                     ? string.Empty
                                                                     : "...");
+
+        
+        private bool AssistantResponseHasCitations(string assistantResponse) => assistantResponse.Any(c =>
+        {
+            List<char> chars = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
+            return chars.Contains(c);
+        });
+        
         private async Task<List<AzureSearchDocument>> GetSearchDocumentsAsync(string userPrompt, string indexName, ChatThreadFilterOptions filterOptions)
         {
             var embedding = await appKernel.GenerateEmbeddingAsync(userPrompt);
@@ -107,7 +129,7 @@ public static class Chat
             await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage));
             
             var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
-            if(documents?.Count > 0)
+            if(documents?.Count > 0 && AssistantResponseHasCitations(assistantResponse))
                 assistantMessage.AddMetadata(MetadataType.Citations, documents.Adapt<List<Citation>>());
             
             await chatMessageService.AddItemAsync(assistantMessage);

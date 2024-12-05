@@ -31,7 +31,7 @@
 
     <ItemGroup>
       <None Update="ChatCompletions\Prompts\chatWithRag.prompt.yaml">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>
 
