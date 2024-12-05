@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "projectName": {
-      "value": "agilechat"
+     "value": "agilechat"
     },
     "environmentName": {
       "value": "tst"
@@ -12,9 +12,6 @@
       "value": "australiaeast"
     },
     "openAILocation": {
-      "value": "australiaeast"
-    },
-    "dalleLocation": {
       "value": "australiaeast"
     },
     "azureClientID": {
@@ -26,9 +23,6 @@
     "azureTenantId": {
       "value": ""
     },
-    "aspCoreEnvironment": {
-      "value": "Development"
-    } ,
     "azureADAppIdOrUri": {
         "value": ""
     },
@@ -37,14 +31,15 @@
     },
     "UtsXApiKey": {
       "value": ""
-  },
+    },
     "aspCoreEnvironment": {
-      "value": "Development" //'Development', 'Test', 'UAT', 'Production'
+      "value": "Development"
     },
     "deployEventGrid": {
       "value": false
   },  
   "kvSetFunctionAppPermissions": {
       "value": false
-  }     
+  }      
   }
+}
