@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Agile.Chat.Api.Endpoints;
 
-public class ChatThreads(IMediator mediator) : CarterModule("/api")
+public class ChatThreads() : CarterModule("/api")
 {
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -33,43 +33,43 @@ public class ChatThreads(IMediator mediator) : CarterModule("/api")
         threads.MapDelete("/{id:guid}", DeleteThreadById);
     }
 
-    private async Task<IResult> GetThreads()
+    private async Task<IResult> GetThreads([FromServices] IMediator mediator)
     {
         var query = new GetChatThreads.Query();
         return await mediator.Send(query);
     }
     
-    private async Task<IResult> GetThreadById(Guid id)
+    private async Task<IResult> GetThreadById([FromServices] IMediator mediator, Guid id)
     {
         var query = new GetChatThreadById.Query(id);
         return await mediator.Send(query);
     }
     
-    private async Task<IResult> GetMessagesByThreadId(Guid id)
+    private async Task<IResult> GetMessagesByThreadId([FromServices] IMediator mediator, Guid id)
     {
         var query = new GetMessagesByThreadId.Query(id);
         return await mediator.Send(query);
     }
     
-    private async Task<IResult> CreateThread([FromBody] CreateChatThreadDto chatThreadDto)
+    private async Task<IResult> CreateThread([FromServices] IMediator mediator, [FromBody] CreateChatThreadDto chatThreadDto)
     {
         var command = chatThreadDto.Adapt<CreateChatThread.Command>();
         return await mediator.Send(command);
     }
     
-    private async Task<IResult> UpdateThreadById([FromBody] UpdateChatThreadDto chatThreadDto, [FromRoute] Guid id)
+    private async Task<IResult> UpdateThreadById([FromServices] IMediator mediator, [FromBody] UpdateChatThreadDto chatThreadDto, [FromRoute] Guid id)
     {
         var command = chatThreadDto.Adapt<UpdateChatThreadById.Command>();
         return await mediator.Send(command with {Id = id});
     }
     
-    private async Task<IResult> UpdateMessageById([FromBody] MessageOptions dto, [FromRoute] Guid id)
+    private async Task<IResult> UpdateMessageById([FromServices] IMediator mediator, [FromBody] MessageOptions dto, [FromRoute] Guid id)
     {
         var command = dto.Adapt<UpdateChatMessageById.Command>();
         return await mediator.Send(command with {Id = id});
     }
     
-    private async Task<IResult> DeleteThreadById(Guid id)
+    private async Task<IResult> DeleteThreadById([FromServices] IMediator mediator, Guid id)
     {
         var command = new DeleteChatThreadById.Command(id);
         return await mediator.Send(command);

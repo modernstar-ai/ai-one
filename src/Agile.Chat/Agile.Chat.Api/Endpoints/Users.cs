@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Agile.Chat.Api.Endpoints;
 
-public class Users(IMediator mediator) : CarterModule("/api")
+public class Users() : CarterModule("/api")
 {
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -20,7 +20,7 @@ public class Users(IMediator mediator) : CarterModule("/api")
         users.MapGet("/permissions", GetPermissions);
     }
 
-    private async Task<IResult> GetPermissions()
+    private async Task<IResult> GetPermissions([FromServices] IMediator mediator)
     {
         var query = new GetUserPermissionsById.Query();
         return await mediator.Send(query);

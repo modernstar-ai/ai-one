@@ -10,8 +10,8 @@ builder.Host.UseSerilog();
 Configs.InitializeConfigs(builder.Configuration);
 
 builder.Services
-    .AddApplication()
     .AddFramework(builder.Configuration)
+    .AddApplication()
     .AddApi();
 
 var app = builder.Build();

@@ -2,10 +2,11 @@
 using Carter;
 using Carter.OpenApi;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Agile.Chat.Api.Endpoints;
 
-public class AiSearch(IMediator mediator) : CarterModule("/api")
+public class AiSearch() : CarterModule("/api")
 {
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -19,7 +20,7 @@ public class AiSearch(IMediator mediator) : CarterModule("/api")
         aiSearch.MapGet("/{assistantId:guid}/{chunkId}", GetChunkById);
     }
 
-    private async Task<IResult> GetChunkById(Guid assistantId, string chunkId)
+    private async Task<IResult> GetChunkById([FromServices] IMediator mediator, Guid assistantId, string chunkId)
     {
         var query = new GetChunkById.Query(assistantId, chunkId);
         var result = await mediator.Send(query);

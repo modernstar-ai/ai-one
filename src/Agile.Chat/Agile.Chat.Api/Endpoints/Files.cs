@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Agile.Chat.Api.Endpoints;
 
-public class Files(IMediator mediator) : CarterModule("/api")
+public class Files() : CarterModule("/api")
 {
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -29,31 +29,31 @@ public class Files(IMediator mediator) : CarterModule("/api")
         files.MapDelete("/{id:guid}", DeleteFileById);
     }
 
-    private async Task<IResult> GetFiles()
+    private async Task<IResult> GetFiles([FromServices] IMediator mediator)
     {
         var query = new GetFiles.Query();
         return await mediator.Send(query);
     }
     
-    private async Task<IResult> UploadFile([FromForm] UploadFileDto dto)
+    private async Task<IResult> UploadFile([FromServices] IMediator mediator, [FromForm] UploadFileDto dto)
     {
         var command = new UploadFile.Command(dto.File, dto.IndexName, dto.FolderName);
         return await mediator.Send(command);
     }
     
-    private async Task<IResult> DownloadFile([FromBody] DownloadFileDto dto)
+    private async Task<IResult> DownloadFile([FromServices] IMediator mediator, [FromBody] DownloadFileDto dto)
     {
         var command = new DownloadFileByUrl.Command(dto.Url);
         return await mediator.Send(command);
     }
     
-    private async Task<IResult> GenerateSharedLinkByUrl([FromBody] DownloadFileDto dto)
+    private async Task<IResult> GenerateSharedLinkByUrl([FromServices] IMediator mediator, [FromBody] DownloadFileDto dto)
     {
         var command = new GenerateSharedLinkByUrl.Command(dto.Url);
         return await mediator.Send(command);
     }
     
-    private async Task<IResult> DeleteFileById(Guid id)
+    private async Task<IResult> DeleteFileById([FromServices] IMediator mediator, Guid id)
     {
         var command = new DeleteFileById.Command(id);
         return await mediator.Send(command);

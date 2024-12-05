@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Agile.Chat.Api.Endpoints;
 
-public class Tools(IMediator mediator) : CarterModule("/api")
+public class Tools() : CarterModule("/api")
 {
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -26,27 +26,27 @@ public class Tools(IMediator mediator) : CarterModule("/api")
         tools.MapDelete("/{id:guid}", DeleteToolById);
     }
 
-    private async Task<IResult> GetTools()
+    private async Task<IResult> GetTools([FromServices] IMediator mediator)
     {
         throw new NotImplementedException();
     }
     
-    private async Task<IResult> GetToolById(Guid id)
+    private async Task<IResult> GetToolById([FromServices] IMediator mediator, Guid id)
     {
         throw new NotImplementedException();
     }
     
-    private async Task<IResult> CreateTool()
+    private async Task<IResult> CreateTool([FromServices] IMediator mediator)
     {
         throw new NotImplementedException();
     }
     
-    private async Task<IResult> UpdateToolById([FromRoute] string id)
+    private async Task<IResult> UpdateToolById([FromServices] IMediator mediator, [FromRoute] string id)
     {
         throw new NotImplementedException();
     }
     
-    private async Task<IResult> DeleteToolById(Guid id)
+    private async Task<IResult> DeleteToolById([FromServices] IMediator mediator, Guid id)
     {
         throw new NotImplementedException();
     }
