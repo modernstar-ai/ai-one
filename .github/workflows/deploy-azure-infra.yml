@@ -89,7 +89,6 @@ jobs:
   infra-deploy:
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
-
     env:
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
@@ -151,6 +150,8 @@ jobs:
 
         ##https://github.com/Azure/bicep-deploy
       - name: Deploy Bicep to Azure
+        # env:
+        #   ENVIRONMENT: ${{ github.event.inputs.environment }}
         uses: azure/bicep-deploy@v1
         with:
           type: deployment

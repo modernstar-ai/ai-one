@@ -61,6 +61,8 @@ jobs:
         #############################################################
         ## Agile-Chat-Api- dotnet build and publish
       - name: Agile-Chat-Api- dotnet build and publish
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
         run: |
           dotnet restore ${{ env.AGILE_CHAT_API_SRC }}
           dotnet build ${{ env.AGILE_CHAT_API_SRC }} --no-restore --configuration Release
@@ -85,6 +87,8 @@ jobs:
         #############################################################
 
       - name: Deploy - Agile-Chat-Api
+        # env:
+        #     ENVIRONMENT: ${{ github.event.inputs.environment }}
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AGILE_CHAT_API_NAME }}
