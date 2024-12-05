@@ -229,12 +229,6 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
 
       connectionStrings: [
         {
-          connectionString: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_CONNECTION.name})'
-          name: 'BlobStorage'
-          type: 'Custom'
-        }
-
-        {
           connectionString: applicationInsights.properties.ConnectionString
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
           type: 'Custom'
@@ -252,6 +246,14 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
       ]
 
       appSettings: [
+        {
+          name: 'BlobStorage__Name'
+          value: storage_name 
+        }
+        {
+          name: 'BlobStorage__Key'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_KEY.name})'
+        }
         {
           name: 'Audit__IncludePII'
           value: auditIncludePII
@@ -327,11 +329,11 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'UtsXApiKey'
           value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::UTS_XAPI_KEY.name})'
-        }       
+        }
         {
           name: 'ALLOWED_ORIGINS'
           value: 'https://${webApp.properties.defaultHostName}'
-        }       
+        }
         {
           name: 'ASPNETCORE_ENVIRONMENT'
           value: aspCoreEnvironment
@@ -339,7 +341,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
           value: 'false'
-        }        
+        }
       ]
     }
   }
