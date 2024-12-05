@@ -1,5 +1,5 @@
-import { Routes, Route } from 'react-router-dom';
-import HomePage from '../pages/Home';
+import { Routes, Route, redirect, Navigate } from 'react-router-dom';
+//import HomePage from '../pages/Home';
 import ChatRouter from '../pages/Chat/ChatRouter';
 import RagChatPage from '../pages/RagChat/index-using-post';
 import AssistantsPage from '../pages/Assistant';
@@ -23,7 +23,7 @@ const AppRoutes = () => (
       path="/"
       element={
         <ProtectedRoute>
-          <HomePage />
+          <Navigate to="/assistants" />
         </ProtectedRoute>
       }
     />
