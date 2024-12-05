@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Agile.Chat.Api.Endpoints;
 
-public class Indexes(IMediator mediator) : CarterModule("/api")
+public class Indexes() : CarterModule("/api")
 {
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -30,31 +30,31 @@ public class Indexes(IMediator mediator) : CarterModule("/api")
         indexes.MapDelete("/{id:guid}", DeleteIndexById);
     }
 
-    private async Task<IResult> GetIndexes()
+    private async Task<IResult> GetIndexes([FromServices] IMediator mediator)
     {
         var query = new GetIndexes.Query();
         return await mediator.Send(query);
     }
     
-    private async Task<IResult> GetIndexById(Guid id)
+    private async Task<IResult> GetIndexById([FromServices] IMediator mediator, Guid id)
     {
         var query = new GetIndexById.Query(id);
         return await mediator.Send(query);
     }
     
-    private async Task<IResult> CreateIndex([FromBody] CreateIndexDto dto)
+    private async Task<IResult> CreateIndex([FromServices] IMediator mediator, [FromBody] CreateIndexDto dto)
     {
         var command = dto.Adapt<CreateIndex.Command>();
         return await mediator.Send(command);
     }
     
-    private async Task<IResult> UpdateIndexById([FromRoute] Guid id, [FromBody] UpdateIndexDto dto)
+    private async Task<IResult> UpdateIndexById([FromServices] IMediator mediator, [FromRoute] Guid id, [FromBody] UpdateIndexDto dto)
     {
         var command = dto.Adapt<UpdateIndexById.Command>();
         return await mediator.Send(command with {Id = id});
     }
     
-    private async Task<IResult> DeleteIndexById(Guid id)
+    private async Task<IResult> DeleteIndexById([FromServices] IMediator mediator, Guid id)
     {
         var command = new DeleteIndexById.Command(id);
         return await mediator.Send(command);
