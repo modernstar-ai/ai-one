@@ -6,12 +6,9 @@ on:
         description: "The reason for running the workflow:"
         required: false
         default: Manual run
-      api_web_app_name:
-        description: "Enter the name of the Azure Web Api:"
-        required: true
-        default: "agilechat-dev-apiapp"
+
       environment:
-        description: "Select the Azure environment:"
+        description: "Select the Azure Deployment environment:"
         required: true
         type: choice
         default: "Development"
@@ -19,6 +16,11 @@ on:
           - Development
           - Test
           - Production
+
+      api_web_app_name:
+        description: "Enter the name of the Azure Web Api:"
+        required: true
+        default: "agilechat-dev-apiapp"
 
 #on:
 # push:
@@ -43,10 +45,7 @@ jobs:
       AGILE_CHAT_API_SRC: "./src/Agile.Chat/Agile.Chat.Api"
       AGILE_CHAT_API_PUB: "./publish/Agile.Chat/Agile.Chat.Api"
       AGILE_CHAT_API_NAME: ${{ github.event.inputs.api_web_app_name }}
-      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input       
-        #AGILE_RAGCHAT_API_SRC: "./src/agile-ragchat-api"
-      #AGILE_RAGCHAT_API_PUB: "./publish/agile-ragchat-api"
-      #AGILE_RAGCHAT_API_NAME: ${{ vars.AGILE_RAGCHAT_API_NAME }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets Azure deployment Environment
 
     steps:
       - name: Checkout code
@@ -62,6 +61,8 @@ jobs:
         #############################################################
         ## Agile-Chat-Api- dotnet build and publish
       - name: Agile-Chat-Api- dotnet build and publish
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
         run: |
           dotnet restore ${{ env.AGILE_CHAT_API_SRC }}
           dotnet build ${{ env.AGILE_CHAT_API_SRC }} --no-restore --configuration Release
@@ -86,6 +87,8 @@ jobs:
         #############################################################
 
       - name: Deploy - Agile-Chat-Api
+        # env:
+        #     ENVIRONMENT: ${{ github.event.inputs.environment }}
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AGILE_CHAT_API_NAME }}

@@ -6,6 +6,17 @@ on:
         description: "The reason for running the workflow:"
         required: false
         default: Manual run
+
+      environment:
+        description: "Select the Azure Deployment environment:"
+        required: true
+        type: choice
+        default: "Development"
+        options:
+          - Development
+          - Test
+          - Production
+
       ui_web_app_name:
         description: "Enter the name of the Azure Web App:"
         required: true
@@ -14,15 +25,6 @@ on:
         description: "Enter the name of the Web Chat API App Target:"
         required: true
         default: "https://agilechat-dev-apiapp.azurewebsites.net"
-      environment:
-        description: "Select the Azure environment:"
-        required: true
-        type: choice
-        default: "Development"
-        options:
-          - Development
-          - Test
-          - Production
 
 #on:
 # push:
@@ -50,10 +52,7 @@ jobs:
       VITE_AGILECHAT_API_URL: ${{ github.event.inputs.vite_agile_chat_api_url }}
       VITE_AZURE_AD_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       VITE_AZURE_AD_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets ENVIRONMENT based on input
-
-      # AGILE_CHAT_API_NAME: ${{ vars.AGILE_CHAT_API_NAME }}
-      # AGILE_RAGCHAT_API_NAME: ${{ vars.AGILE_RAGCHAT_API_NAME }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets Azure deployment Environment
 
     steps:
       - name: Checkout code
