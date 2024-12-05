@@ -99,9 +99,9 @@ jobs:
           inlineScript: |
             tdnf install -y icu
             tdnf install -y jq 
-            az webapp stop --name ${{ env.AGILE_CHAT_API_NAME }} --resource-group MyResourceGroup ${{ env.AZURE_RESOURCE_GROUP }}
+            az webapp stop --name ${{ env.AGILE_CHAT_API_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
             az webapp ssh --name ${{ env.AGILE_CHAT_API_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --command "rm -rf /home/site/wwwroot/*"
-            az webapp start --name ${{ env.AGILE_CHAT_API_NAME }} --resource-group MyResourceGroup ${{ env.AZURE_RESOURCE_GROUP }}
+            az webapp start --name ${{ env.AGILE_CHAT_API_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
 
         #############################################################
 
