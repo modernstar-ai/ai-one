@@ -10,9 +10,9 @@ builder.Host.UseSerilog();
 Configs.InitializeConfigs(builder.Configuration);
 
 builder.Services
-    .AddApi()
     .AddApplication()
-    .AddFramework(builder.Configuration);
+    .AddFramework(builder.Configuration)
+    .AddApi();
 
 var app = builder.Build();
 await app.InitializeServicesAsync();
