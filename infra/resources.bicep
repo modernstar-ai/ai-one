@@ -248,7 +248,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
       appSettings: [
         {
           name: 'BlobStorage__Name'
-          value: storage_name 
+          value: storage_name
         }
         {
           name: 'BlobStorage__Key'
@@ -329,10 +329,6 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'UtsXApiKey'
           value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::UTS_XAPI_KEY.name})'
-        }
-        {
-          name: 'ALLOWED_ORIGINS'
-          value: 'https://${webApp.properties.defaultHostName}'
         }
         {
           name: 'ASPNETCORE_ENVIRONMENT'
