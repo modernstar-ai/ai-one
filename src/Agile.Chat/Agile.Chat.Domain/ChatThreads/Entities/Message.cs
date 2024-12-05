@@ -81,13 +81,4 @@ public static class MessageExtensions
         chatHistory.AddUserMessage(userPrompt);
         return chatHistory;
     }
-    
-    public static string ParseSemanticKernelChatHistoryString(this List<Message> messages)
-    {
-        var chatHistorySb = new StringBuilder();
-        foreach (var message in messages)
-            chatHistorySb.AppendLine($"""<message role="{message.Type.ToString().ToLower()}">{message.Content}</message>""");
-        
-        return chatHistorySb.ToString();
-    }
 }

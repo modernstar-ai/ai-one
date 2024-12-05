@@ -17,6 +17,7 @@ import { Textarea } from '../ui/textarea';
 import { useState } from 'react';
 import { Loader2Icon } from 'lucide-react';
 import { getCitationChunkById } from '@/services/ai-search-service';
+import { FileViewingDialog } from './file-viewing-dialog';
 
 interface CitationSheetProps {
   index: number;
@@ -62,9 +63,7 @@ export function CitationSheet(props: CitationSheetProps) {
         </div>
         <div className="flex flex-col items-start">
           <Label htmlFor="link">Link</Label>
-          <Button variant="link" className="p-0 mt-2">
-            <a href={citation.url}>{citation.name}</a>
-          </Button>
+          <FileViewingDialog citation={citation} />
         </div>
         <div className="flex flex-col grow min-h-0">
           <Label htmlFor="content">Content</Label>

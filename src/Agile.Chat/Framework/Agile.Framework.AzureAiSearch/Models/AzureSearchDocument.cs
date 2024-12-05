@@ -14,9 +14,11 @@ public class AzureSearchDocument
     [JsonPropertyName("metadata_storage_path")]
     public string Url { get; set; }
     
-    public override string ToString()
+    public string ToString(int index)
     {
         return $"""
+                Reference Number:
+                {index}
                 Title:
                 {Name}
                 Chunk:

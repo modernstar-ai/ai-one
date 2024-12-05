@@ -14,7 +14,7 @@ public static class DefaultDatasource
 
         var newDataSource = new SearchIndexerDataSourceConnection(datasourceName, 
             SearchIndexerDataSourceType.AzureBlob,
-            Configs.BlobStorageConnectionString, 
+            Configs.BlobStorage.ConnectionString(), 
             containerSettings)
         {
             DataDeletionDetectionPolicy = new NativeBlobSoftDeleteDeletionDetectionPolicy()

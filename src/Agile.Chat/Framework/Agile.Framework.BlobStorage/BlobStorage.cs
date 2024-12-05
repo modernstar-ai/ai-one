@@ -1,8 +1,10 @@
 ﻿using Agile.Framework.BlobStorage.Interfaces;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.EnvironmentVariables;
+using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -13,6 +15,26 @@ public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) 
 {
     private readonly BlobContainerClient _container = client.GetBlobContainerClient(Constants.BlobContainerName);
 
+    public async Task<(Stream, BlobDownloadDetails)> DownloadAsync(string url)
+    {
+        var blob = new BlobClient(new Uri(url));
+        if(!await blob.ExistsAsync())
+            throw new Exception("File doesn't exist");
+        
+        var resp = await blob.DownloadStreamingAsync();
+        return (resp.Value.Content, resp.Value.Details);
+    }
+
+    public async Task<string> GetShareableLinkByUrlAsync(string url)
+    {
+        var blob = new BlobClient(new Uri(url), credential: new StorageSharedKeyCredential(Configs.BlobStorage.Name, Configs.BlobStorage.Key));
+        if(!await blob.ExistsAsync())
+            throw new Exception("File doesn't exist");
+
+        var uri = blob.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(1));
+        return uri.ToString();
+    }
+    
     public async Task<string> UploadAsync(Stream stream, string fileName, string indexName, string? folderName = null)
     {
         var folderPath = string.IsNullOrWhiteSpace(folderName) ? fileName : $"{folderName}/{fileName}";
