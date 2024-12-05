@@ -22,6 +22,10 @@ on:
         required: true
         default: "agilechat-dev-apiapp"
 
+      resource_group:
+        description: "Enter the Azure resource group Name:"
+        required: true
+
 #on:
 # push:
 #   branches:
@@ -45,6 +49,7 @@ jobs:
       AGILE_CHAT_API_SRC: "./src/Agile.Chat/Agile.Chat.Api"
       AGILE_CHAT_API_PUB: "./publish/Agile.Chat/Agile.Chat.Api"
       AGILE_CHAT_API_NAME: ${{ github.event.inputs.api_web_app_name }}
+      AZURE_RESOURCE_GROUP: "${{ github.event.inputs.resource_group }}"
       ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets Azure deployment Environment
 
     steps:
@@ -83,6 +88,18 @@ jobs:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+        #############################################################
+
+      # Delete all files in the app service (clean slate)
+      - name: Delete all files in Azure App Service
+        uses: azure/cli@v2
+        with:
+          azcliversion: 2.64.0
+          inlineScript: |
+            tdnf install -y icu
+            tdnf install -y jq           
+            az webapp ssh --name ${{ env.AGILE_CHAT_API_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --command "rm -rf /home/site/wwwroot/*"
 
         #############################################################
 
