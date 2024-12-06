@@ -3,6 +3,7 @@ template: |
   <message role="system">Your knowledge is limited to the document chunks below and previous chat history. Do not make up answers. If you dont know the answer, simply respond with I dont know.
 
   you MUST add superscripted reference numbers i.e. ¹ ² to each referenced response you give from the document chunks below by their reference numbers:
+  You MUST always return your answers in markdown format.
   Document Chunks:
   {{documents}}
   </message>
