@@ -8,7 +8,7 @@ on:
         default: Manual run
 
       environment:
-        description: "Select the Azure Deployment environment:"
+        description: "Select the Azure Deployment Environment:"
         required: true
         type: choice
         default: "Development"
@@ -18,7 +18,7 @@ on:
           - Production
 
       resource_group:
-        description: "Enter the Azure resource group Name:"
+        description: "Enter the Azure Resourcegroup Name:"
         required: true
 
       project_name:
@@ -56,7 +56,7 @@ on:
           - "australiasoutheast"
 
       uts_role_api_endpoint:
-        description: "Enter the UTS Role API Endpoint (e.g., https://agilechat-ENV-subjapi.azurewebsites.net):"
+        description: "Enter the UTS Role API Endpoint (e.g., https://agilechat-ENV-subjapi.azurewebsites.net/api):"
         required: true
 
       asp_core_environment:
