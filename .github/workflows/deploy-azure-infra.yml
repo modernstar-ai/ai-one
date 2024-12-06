@@ -21,32 +21,12 @@ on:
         description: "Enter the Azure resource group Name:"
         required: true
 
-      azure_env_name:
-        description: "Enter the Azure Environment Name:"
+      project_name:
+        description: "Enter the Name of the project:"
+        default: "agilechat"
         required: true
-        default: "agile-dev"
 
-      azure_location:
-        description: "Select the Azure deployment region:"
-        required: true
-        type: choice
-        default: "australiaeast"
-        options:
-          - "australiaeast"
-          - "australiasoutheast"
-
-      asp_core_env:
-        description: "Select the ASP Core deployment environment:"
-        required: true
-        type: choice
-        default: "Development"
-        options:
-          - "Development"
-          - "Test"
-          - "UAT"
-          - "Production"
-
-      deployment_env_name:
+      environment_name:
         description: "Select the application environment name - used to name resources:"
         required: true
         type: choice
@@ -57,9 +37,38 @@ on:
           - "uat"
           - "prod"
 
+      azure_location:
+        description: "Select the Azure deployment location:"
+        required: true
+        type: choice
+        default: "australiaeast"
+        options:
+          - "australiaeast"
+          - "australiasoutheast"
+
+      openai_location:
+        description: "Select the Azure OpenAI deployment location:"
+        required: true
+        type: choice
+        default: "australiaeast"
+        options:
+          - "australiaeast"
+          - "australiasoutheast"
+
       uts_role_api_endpoint:
         description: "Enter the UTS Role API Endpoint (e.g., https://agilechat-ENV-subjapi.azurewebsites.net):"
         required: true
+
+      asp_core_environment:
+        description: "Select the ASP Core deployment environment:"
+        required: true
+        type: choice
+        default: "Development"
+        options:
+          - "Development"
+          - "Test"
+          - "UAT"
+          - "Production"
 
       deploy_event_grid:
         description: "Deploy Event Grid?:"
@@ -72,6 +81,16 @@ on:
         required: true
         type: boolean
         default: false
+
+      semantic_search_sku:
+        description: "Select the Azure Search AI Semantic Search Sku:"
+        required: true
+        type: choice
+        default: "free"
+        options:
+          - "disabled"
+          - "free"
+          - "standard"
 
 ##########################################################################################################################
 
@@ -90,21 +109,23 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
     env:
-      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       AZURE_APP_ID: ${{ secrets.AZURE_APP_ID }}
-      UTS_XAPI_KEY: ${{ secrets.UTS_XAPI_KEY }}
-      ASP_CORE_ENV: "${{ github.event.inputs.asp_core_env }}"
+      AZURE_BICEP_MAIN: "./infra/main.bicep"
+      AZURE_RESOURCE_GROUP: "${{ github.event.inputs.resource_group }}"
+      AZURE_PROJECT_NAME: "${{ github.event.inputs.project_name }}"
+      AZURE_ENVIRONMENT_NAME: "${{ github.event.inputs.environment_name }}"
+      AZURE_LOCATION: "${{ github.event.inputs.azure_location }}"
+      AZURE_OPENAI_LOCATION: "${{ github.event.inputs.openai_location }}"
       UTS_ROLE_API_ENDPOINT: "${{ github.event.inputs.uts_role_api_endpoint }}"
-      DEPLOYMENT_ENV_NAME: "${{ github.event.inputs.deployment_env_name }}"
+      UTS_XAPI_KEY: ${{ secrets.UTS_XAPI_KEY }}
+      ASP_CORE_ENVIRONMENT: "${{ github.event.inputs.asp_core_environment }}"
       DEPLOYMENT_EVENT_GRID: "${{ github.event.inputs.deploy_event_grid }}"
       SET_KV_FUNCTION_APP_PERMISSIONS: "${{ github.event.inputs.set_kv_function_app_permissions }}"
-      AZURE_RESOURCE_GROUP: "${{ github.event.inputs.resource_group }}"
-      AZURE_ENV_NAME: "${{ github.event.inputs.azure_env_name }}"
-      AZURE_LOCATION: "${{ github.event.inputs.azure_location }}"
-      AZURE_BICEP_MAIN: "./infra/main.bicep"
+      SEMANTIC_SEARCH_SKU: "${{ github.event.inputs.semantic_search_sku }}"
       ENVIRONMENT: ${{ github.event.inputs.environment }} # Sets Azure deployment Environment
 
     ##########################################################################################################################
@@ -162,16 +183,20 @@ jobs:
           subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
           template-file: "${{ env.AZURE_BICEP_MAIN }}"
           # location: "australiaeast"
-          parameters: |
-            azureClientID=${{ env.AZURE_CLIENT_ID }}
-            azureClientSecret=${{ env.AZURE_CLIENT_SECRET }}
-            azureTenantId=${{ env.AZURE_TENANT_ID }}
-            azureADAppIdOrUri=${{ env.AZURE_APP_ID }}
-            UtsXApiKey=${{ env.UTS_XAPI_KEY }}
-            environmentName=${{ env.DEPLOYMENT_ENV_NAME }}
-            location=${{ env.AZURE_LOCATION }}
-            openAILocation=${{ env.AZURE_LOCATION }}
-            aspCoreEnvironment=${{ env.ASP_CORE_ENV }}
-            UtsRoleApiEndpoint=${{ env.UTS_ROLE_API_ENDPOINT }}
-            deployEventGrid=${{ env.DEPLOYMENT_EVENT_GRID }}
-            kvSetFunctionAppPermissions=${{ env.SET_KV_FUNCTION_APP_PERMISSIONS }}
+          parameters: >
+            {
+              "projectName": "${{ env.AZURE_PROJECT_NAME }}",
+              "environmentName": "${{ env.AZURE_ENVIRONMENT_NAME }}",
+              "location": "${{ env.AZURE_LOCATION }}",
+              "openAILocation": "${{ env.AZURE_OPENAI_LOCATION }}",
+              "azureClientID": "${{ env.AZURE_CLIENT_ID }}",
+              "azureClientSecret": "${{ env.AZURE_CLIENT_SECRET }}",
+              "azureTenantId": "${{ env.AZURE_TENANT_ID }}",
+              "azureADAppIdOrUri": "${{ env.AZURE_APP_ID }}",
+              "UtsRoleApiEndpoint": "${{ env.UTS_ROLE_API_ENDPOINT }}",
+              "UtsXApiKey": "${{ env.UTS_XAPI_KEY }}",
+              "aspCoreEnvironment": "${{ env.ASP_CORE_ENVIRONMENT }}",
+              "deployEventGrid": "${{ env.DEPLOYMENT_EVENT_GRID }}",
+              "kvSetFunctionAppPermissions": "${{ env.SET_KV_FUNCTION_APP_PERMISSIONS }}",
+              "semanticSearchSku": "${{ env.SEMANTIC_SEARCH_SKU }}"
+            }
