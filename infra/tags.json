@@ -1,0 +1,6 @@
+{
+    "costcentre": "123456",
+    "primarycontact": "someadmin@somecompany.com",
+	"env": "test",
+    "azd-env-name": "agile-dev"
+}
