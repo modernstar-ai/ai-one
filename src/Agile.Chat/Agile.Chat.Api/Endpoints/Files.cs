@@ -1,4 +1,5 @@
-﻿using Agile.Chat.Application.Files.Commands;
+﻿using System.Text.Json.Nodes;
+using Agile.Chat.Application.Files.Commands;
 using Agile.Chat.Application.Files.Dtos;
 using Agile.Chat.Application.Files.Queries;
 using Carter;
@@ -23,6 +24,7 @@ public class Files() : CarterModule("/api")
         files.MapGet("/", GetFiles);
         //POST
         files.MapPost("/", UploadFile);
+        files.MapPost("webhook", Webhook);
         files.MapPost("download", DownloadFile);
         files.MapPost("share", GenerateSharedLinkByUrl);
         //DELETE
@@ -33,6 +35,12 @@ public class Files() : CarterModule("/api")
     {
         var query = new GetFiles.Query();
         return await mediator.Send(query);
+    }
+    
+    private async Task<IResult> Webhook([FromServices] IMediator mediator, [FromBody] JsonNode dto)
+    {
+        var command = new FileWebhook.Command(dto);
+        return await mediator.Send(command);
     }
     
     private async Task<IResult> UploadFile([FromServices] IMediator mediator, [FromForm] UploadFileDto dto)
