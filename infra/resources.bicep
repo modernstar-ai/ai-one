@@ -75,6 +75,10 @@ var openai_name = toLower('${resourcePrefix}-aillm')
 var cosmos_name = toLower('${resourcePrefix}-cosmos')
 var search_name = toLower('${resourcePrefix}-search')
 
+@description('ets options that control the availability of semantic search')
+@allowed(['disabled', 'free', 'standard'])
+param semanticSearchSku string = 'free'
+
 //var clean_name = replace(replace('${resourcePrefix}', '-', ''), '_', '')
 // var storage_prefix = take(clean_name, 13)
 
@@ -548,7 +552,8 @@ resource configContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/con
   }
 }
 
-resource searchService 'Microsoft.Search/searchServices@2022-09-01' = {
+//old api Microsoft.Search/searchServices@2022-09-01
+resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   name: search_name
   location: location
   tags: tags
@@ -556,6 +561,7 @@ resource searchService 'Microsoft.Search/searchServices@2022-09-01' = {
     partitionCount: 1
     publicNetworkAccess: 'enabled'
     replicaCount: 1
+    semanticSearch: semanticSearchSku
   }
   sku: {
     name: searchServiceSkuName

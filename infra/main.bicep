@@ -95,12 +95,15 @@ param UtsRoleApiEndpoint string = ''
 @secure()
 param UtsXApiKey string = ''
 
+
+@description('ets options that control the availability of semantic search')
+@allowed(['disabled', 'free', 'standard'])
+param semanticSearchSku string = 'free'
+
 @description('Shared variables pattern for loading tags')
-var tagsFilePath = './uts.tags.json'
+var tagsFilePath = './tags.json'
 var tags = loadJsonContent(tagsFilePath)
 
-//other
-//var tags = { 'azd-env-name': environmentName }
 
 module resources 'resources.bicep' = {
   name: 'all-resources'
@@ -131,6 +134,7 @@ module resources 'resources.bicep' = {
     UtsXApiKey: UtsXApiKey
     deployEventGrid: deployEventGrid
     kvSetFunctionAppPermissions: kvSetFunctionAppPermissions
+    semanticSearchSku:semanticSearchSku
   }
 }
 
