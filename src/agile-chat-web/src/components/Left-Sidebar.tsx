@@ -49,7 +49,7 @@ import {
 import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
 import { UserRole } from '@/authentication/user-roles';
 
-import Logo from '@/assets/logo.png';
+import Logo from '@/assets/agile-logo.png';
 import { useThreadsStore } from '@/stores/threads-store';
 
 type Theme = 'light' | 'dark' | 'system';
@@ -299,7 +299,7 @@ export function LeftSidebar() {
           <div className="h-full flex flex-col dark:text-white ">
             {/* Panel Header */}
             <div className="p-4 space-y-2">
-              <img src={Logo} alt="UTS Logo" className="w-1/2" />
+              <img src={Logo} alt="Agile Logo" className="w-1/2" />
             </div>
 
             <div className="p-4 border-b flex justify-between">
