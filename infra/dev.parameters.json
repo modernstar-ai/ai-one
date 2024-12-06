@@ -40,6 +40,9 @@
     },  
     "kvSetFunctionAppPermissions": {
         "value": false
-    }      
-    }
+    } ,
+    "semanticSearchSku": {
+        "value": "free"
+    }       
+    }    
   }
