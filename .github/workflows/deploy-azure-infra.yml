@@ -182,7 +182,7 @@ jobs:
           resource-group-name: "${{ env.AZURE_RESOURCE_GROUP }}"
           subscription-id: "${{ env.AZURE_SUBSCRIPTION_ID }}"
           template-file: "${{ env.AZURE_BICEP_MAIN }}"
-          # location: "australiaeast"
+          ### location: "${{ env.AZURE_LOCATION }}"
           parameters: >
             {
               "projectName": "${{ env.AZURE_PROJECT_NAME }}",

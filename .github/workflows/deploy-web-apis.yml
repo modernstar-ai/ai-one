@@ -66,23 +66,15 @@ jobs:
         run: |
           dotnet restore ${{ env.AGILE_CHAT_API_SRC }}
           dotnet build ${{ env.AGILE_CHAT_API_SRC }} --no-restore --configuration Release
-          dotnet publish ${{ env.AGILE_CHAT_API_SRC }} -c Release -o ${{ env.AGILE_CHAT_API_PUB }} 
+          dotnet publish ${{ env.AGILE_CHAT_API_SRC }} -c Release -o ${{ env.AGILE_CHAT_API_PUB }}
 
-          #############################################################
-
-      #   ## Agile-RagChat-Web- dotnet build and publish
-      # - name: Agile-RagChat-Web- dotnet build and publish
-      #   run: |
-      #     dotnet restore ${{ env.AGILE_RAGCHAT_API_SRC }}
-      #     dotnet build ${{ env.AGILE_RAGCHAT_API_SRC }} --no-restore --configuration Release
-      #     dotnet publish ${{ env.AGILE_RAGCHAT_API_SRC }} -c Release -o ${{ env.AGILE_RAGCHAT_API_PUB }}
-      #############################################################
+        #############################################################
       - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}      
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
         #############################################################
 
@@ -94,12 +86,4 @@ jobs:
           app-name: ${{ env.AGILE_CHAT_API_NAME }}
           package: ${{ env.AGILE_CHAT_API_PUB }}
 
-      #############################################################
-
-      # - name: Deploy - Agile-RagChat-Api
-      #   uses: azure/webapps-deploy@v2
-      #   with:
-      #     app-name: ${{ env.AGILE_RAGCHAT_API_NAME }}
-      #     package: ${{ env.AGILE_RAGCHAT_API_PUB }}
-
-      #############################################################
+        #############################################################
