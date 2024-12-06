@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using Agile.Framework.Authentication.Implementations.Default;
-using Agile.Framework.Authentication.Implementations.UTS;
+﻿using Agile.Framework.Authentication.Implementations.Default;
 using Agile.Framework.Authentication.Interfaces;
 using Agile.Framework.Common.EnvironmentVariables;
 using Microsoft.AspNetCore.Authentication;
@@ -15,7 +13,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddAgileAuthentication(this IServiceCollection services) =>
         services.AddAzureAdAuth()
-            .AddUtsPermissions()
+            .AddDefaultPermissions()
             .AddClaimsTransformer();
     
     private static IServiceCollection AddAzureAdAuth(this IServiceCollection services)
@@ -44,7 +42,6 @@ public static class DependencyInjection
     }
     
     private static IServiceCollection AddDefaultPermissions(this IServiceCollection services) => services.AddScoped<IRoleService, DefaultRoleService>();
-    private static IServiceCollection AddUtsPermissions(this IServiceCollection services) => services.AddScoped<IRoleService, UtsRoleSerivce>();
 
     private static IServiceCollection AddClaimsTransformer(this IServiceCollection services) =>
         // Register the claims transformation
