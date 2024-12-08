@@ -190,7 +190,7 @@ jobs:
               "azureTenantId": "${{ env.AZURE_TENANT_ID }}",
               "azureADAppIdOrUri": "${{ env.AZURE_APP_ID }}",
               "aspCoreEnvironment": "${{ env.ASP_CORE_ENVIRONMENT }}",
-              "deployEventGrid": "${{ env.DEPLOYMENT_EVENT_GRID }}",
-              "kvSetFunctionAppPermissions": "${{ env.SET_KV_FUNCTION_APP_PERMISSIONS }}",
+              "deployEventGrid": ${{ env.DEPLOYMENT_EVENT_GRID }},
+              "kvSetFunctionAppPermissions": ${{ env.SET_KV_FUNCTION_APP_PERMISSIONS }},
               "semanticSearchSku": "${{ env.SEMANTIC_SEARCH_SKU }}"
             }
