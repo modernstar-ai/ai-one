@@ -17,10 +17,6 @@ on:
           - Test
           - Production
 
-      resource_group:
-        description: "Enter the Azure Resourcegroup Name:"
-        required: true
-
       project_name:
         description: "Enter the Name of the project:"
         default: "agilechat"
@@ -46,14 +42,14 @@ on:
           - "australiaeast"
           - "australiasoutheast"
 
-      openai_location:
-        description: "Select the Azure OpenAI deployment location:"
-        required: true
-        type: choice
-        default: "australiaeast"
-        options:
-          - "australiaeast"
-          - "australiasoutheast"
+      # openai_location:
+      #   description: "Select the Azure OpenAI deployment location:"
+      #   required: true
+      #   type: choice
+      #   default: "australiaeast"
+      #   options:
+      #     - "australiaeast"
+      #     - "australiasoutheast"
 
       # uts_role_api_endpoint:
       #   description: "Enter the UTS Role API Endpoint (e.g., https://agilechat-ENV-subjapi.azurewebsites.net/api):"
@@ -115,11 +111,11 @@ jobs:
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       AZURE_APP_ID: ${{ secrets.AZURE_APP_ID }}
       AZURE_BICEP_MAIN: "./infra/main.bicep"
-      AZURE_RESOURCE_GROUP: "${{ github.event.inputs.resource_group }}"
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
       AZURE_PROJECT_NAME: "${{ github.event.inputs.project_name }}"
       AZURE_ENVIRONMENT_NAME: "${{ github.event.inputs.environment_name }}"
       AZURE_LOCATION: "${{ github.event.inputs.azure_location }}"
-      AZURE_OPENAI_LOCATION: "${{ github.event.inputs.openai_location }}"
+      AZURE_OPENAI_LOCATION: "${{ github.event.inputs.azure_location }}"
       # UTS_ROLE_API_ENDPOINT: "${{ github.event.inputs.uts_role_api_endpoint }}"
       # UTS_XAPI_KEY: ${{ secrets.UTS_XAPI_KEY }}
       ASP_CORE_ENVIRONMENT: "${{ github.event.inputs.asp_core_environment }}"
