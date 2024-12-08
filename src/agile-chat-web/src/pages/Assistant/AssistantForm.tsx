@@ -17,7 +17,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice';
-import { Assistant, AssistantStatus } from '@/types/Assistant';
+import { Assistant, AssistantStatus, AssistantType } from '@/types/Assistant';
 //import { MultiSelectInput } from '@/components/ui-extended/multi-select';
 //import { useFolders } from '@/hooks/use-folders';
 
@@ -49,6 +49,7 @@ const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
   description: z.string(),
   greeting: z.string(),
+  type: z.nativeEnum(AssistantType),
   status: z.nativeEnum(AssistantStatus),
   promptOptions: AssistantPromptOptionsSchema,
   filterOptions: AssistantFilterOptionsSchema,
@@ -74,6 +75,7 @@ export default function AssistantForm() {
       name: '',
       description: '',
       greeting: '',
+      type: AssistantType.Chat,
       status: AssistantStatus.Draft,
       promptOptions: {
         systemPrompt: '',
@@ -231,29 +233,27 @@ export default function AssistantForm() {
                   )}
                 />
 
-                {/* {enablePreviewFeatures == true && (
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Type</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(value as AssistantType)} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select Type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value={AssistantType.Chat}>Chat</SelectItem>
-                            <SelectItem value={AssistantType.Search}>Search</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )} */}
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value as AssistantType)} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={AssistantType.Chat}>Chat</SelectItem>
+                          <SelectItem value={AssistantType.Search}>Search</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="greeting"
