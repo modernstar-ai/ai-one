@@ -120,7 +120,15 @@ const ChatPage = () => {
         message = new TextDecoder('utf-8').decode(read.value).replace(/^"(.*)"$/, '$1');
       }
       console.error('Error sending message:', err);
-      setError(message);
+      let errorMsg;
+      try {
+        errorMsg = JSON.parse(message).detail;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (err) {
+        errorMsg = message;
+      }
+
+      setError(errorMsg);
     } finally {
       setIsSending(false);
     }
