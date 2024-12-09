@@ -3,6 +3,7 @@ import { ChatType, Message, MessageType } from '@/types/ChatThread';
 export enum ResponseType {
   Chat = 'Chat',
   DbMessages = 'DbMessages',
+  SearchProcess = 'SearchProcess',
 }
 
 export enum TempIdType {

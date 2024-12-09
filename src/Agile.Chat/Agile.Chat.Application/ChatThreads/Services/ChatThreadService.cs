@@ -23,7 +23,7 @@ public class ChatThreadService(CosmosClient cosmosClient) :
     {
         var query = LinqQuery()
             .Where(c => c.UserId == username && c.Type == ChatType.Thread)
-            .OrderBy(c => c.LastModified);
+            .OrderByDescending(c => c.LastModified);
         
         var results = await CollectResultsAsync(query);
         return results;

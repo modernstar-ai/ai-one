@@ -112,6 +112,7 @@ export default function AssistantForm() {
           name: file.name,
           description: file.description,
           greeting: file.greeting,
+          type: file.type,
           status: file.status,
           promptOptions: {
             systemPrompt: file.promptOptions.systemPrompt,

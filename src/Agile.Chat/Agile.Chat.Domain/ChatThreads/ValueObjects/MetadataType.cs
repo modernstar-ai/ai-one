@@ -5,5 +5,6 @@ namespace Agile.Chat.Domain.ChatThreads.ValueObjects;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum MetadataType
 {
-    Citations
+    Citations,
+    SearchProcess
 }
