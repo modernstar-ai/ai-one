@@ -118,7 +118,16 @@ public static class Chat
         
         private async Task<List<AzureSearchDocument>> GetSearchDocumentsAsync(string userPrompt, string indexName, ChatThreadFilterOptions filterOptions)
         {
-            var embedding = await appKernel.GenerateEmbeddingAsync(userPrompt);
+            ReadOnlyMemory<float> embedding;
+            try
+            {
+                embedding = await appKernel.GenerateEmbeddingAsync(userPrompt);
+            }
+            catch (Exception ex) when (ex is ClientResultException exception && exception.Status == 429)
+            { 
+                throw new Exception("Rate limit exceeded");
+            }
+            
             return await azureAiSearch.SearchAsync(indexName, 
                 new AiSearchOptions(userPrompt, embedding)
                 {
