@@ -3,7 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Tabs } from '@radix-ui/react-tabs';
 import { TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { CitationSheet } from './citation-sheet';
-import { Book, Lightbulb, MessageCircleMore } from 'lucide-react';
+import { Book, Lightbulb, MessageCircleMore, View } from 'lucide-react';
+import { useState } from 'react';
+import { getCitationChunkById } from '@/services/ai-search-service';
+import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
+import { Separator } from '../ui/separator';
+import { FileViewingDialog } from './file-viewing-dialog';
 
 interface ChatSearchResponseProps {
   message: Message;
@@ -14,6 +20,23 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
   const { message, assistantId } = props;
   const searchProcess = message.options.metadata.SearchProcess as SearchProcess;
   searchProcess.Citations = (message.options.metadata.Citations as Citation[]) ?? [];
+  const [chunks, setChunks] = useState<string[] | undefined>(undefined);
+
+  const onOpenSupportingContent = async () => {
+    if (chunks === undefined) {
+      if (searchProcess.Citations.length === 0) {
+        setChunks([]);
+      }
+
+      const chunkReqs: Promise<string>[] = [];
+      searchProcess.Citations.forEach((citation) => {
+        chunkReqs.push(getCitationChunkById(assistantId, citation.id));
+      });
+
+      const chunks = await Promise.all(chunkReqs);
+      setChunks(chunks);
+    }
+  };
 
   return (
     <Tabs defaultValue="answer">
@@ -28,7 +51,7 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
             <Lightbulb size={18} /> Thought Process
           </span>
         </TabsTrigger>
-        <TabsTrigger value="supporting content">
+        <TabsTrigger value="supporting content" onClick={onOpenSupportingContent}>
           <span className="flex items-center justify-center gap-2">
             <Book size={18} /> Supporting Content
           </span>
@@ -66,15 +89,19 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
             <CardTitle>Supporting Content</CardTitle>
             <CardDescription>Citations and references here.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-2 max-h-[20rem] overflow-auto">
             {((message.options.metadata.Citations as Citation[]) ?? []).map((citation, index) =>
-              citation.name && citation.url ? (
-                <CitationSheet
-                  index={index + 1}
-                  citation={citation}
-                  key={message.id + index}
-                  assistantId={assistantId}
-                />
+              citation.name && citation.url && chunks ? (
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold mt-2">{index + 1})&nbsp;&nbsp;</span>
+                    <FileViewingDialog citation={citation} />
+                    <View className="mt-2" />
+                  </div>
+
+                  <p>{chunks[index]}</p>
+                  <Separator className="my-2" />
+                </div>
               ) : (
                 <li key={index}>Invalid citation data</li>
               )
