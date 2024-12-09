@@ -675,7 +675,7 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
       properties: {
         azureActiveDirectoryApplicationIdOrUri: azureADAppIdOrUri
         azureActiveDirectoryTenantId: azureTenantId
-        endpointUrl: 'https://${apiApp.properties.defaultHostName}/api/file/webhook'
+        endpointUrl: 'https://${apiApp.properties.defaultHostName}/api/files/webhook'
         maxEventsPerBatch: 1
         preferredBatchSizeInKilobytes: 64
       }
