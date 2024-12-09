@@ -15,6 +15,7 @@ public static class UpdateAssistantById
         string Name, 
         string Description, 
         string Greeting, 
+        AssistantType Type,
         AssistantStatus Status, 
         AssistantFilterOptions FilterOptions, 
         AssistantPromptOptions PromptOptions) : IRequest<IResult>;
@@ -28,7 +29,7 @@ public static class UpdateAssistantById
             if(assistant is null) return Results.NotFound();
             
             logger.LogInformation("Updating Assistant old values: {@Assistant}", assistant);
-            assistant.Update(request.Name, request.Description, request.Greeting, request.Status, request.FilterOptions, request.PromptOptions);
+            assistant.Update(request.Name, request.Description, request.Greeting, request.Type, request.Status, request.FilterOptions, request.PromptOptions);
             await assistantService.UpdateItemByIdAsync(assistant.Id, assistant);
             logger.LogInformation("Updated Assistant Successfully: {@Assistant}", assistant);
             
@@ -43,6 +44,21 @@ public static class UpdateAssistantById
             RuleFor(request => request.Name)
                 .MinimumLength(1)
                 .WithMessage("Name is required");
+            
+            RuleFor(request => request.FilterOptions.Strictness)
+                .InclusiveBetween(-1, 1)
+                .WithMessage("Strictness must be a range between -1 and 1 inclusive");
+            
+            RuleFor(request => request)
+                .Must(command =>
+                {
+                    if (command.Type == AssistantType.Search &&
+                        string.IsNullOrWhiteSpace(command.FilterOptions.IndexName))
+                        return false;
+                    
+                    return true;
+                })
+                .WithMessage("Container is required for chat type: Search");
         }
     }
 }

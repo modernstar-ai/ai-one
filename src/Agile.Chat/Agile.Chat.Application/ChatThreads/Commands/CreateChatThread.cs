@@ -2,9 +2,11 @@
 using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.Audits.Services;
 using Agile.Chat.Application.ChatThreads.Services;
+using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Audits.Aggregates;
 using Agile.Chat.Domain.Audits.ValueObjects;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
+using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using FluentValidation;
 using MediatR;
@@ -21,7 +23,13 @@ public static class CreateChatThread
         ChatThreadPromptOptions PromptOptions,
         ChatThreadFilterOptions FilterOptions) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IAuditService<ChatThread> chatThreadAuditService, IAssistantService assistantService, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, 
+        IAuditService<ChatThread> chatThreadAuditService, 
+        IAssistantService assistantService, 
+        IHttpContextAccessor contextAccessor, 
+        IChatThreadService chatThreadService,
+        IChatMessageService chatMessageService,
+        IAuditService<Message> chatMessageAuditService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -41,7 +49,19 @@ public static class CreateChatThread
             await chatThreadService.AddItemAsync(chatThread);
             await chatThreadAuditService.AddItemAsync(Audit<ChatThread>.Create(chatThread));
             logger.LogInformation("Inserted ChatThread {@ChatThread} successfully", chatThread);
+
+            await CreateGreetingMessage(assistant, chatThread.Id);
             return Results.Created(chatThread.Id, chatThread);
+        }
+
+        private async Task CreateGreetingMessage(Assistant? assistant, string threadId)
+        {
+            if (assistant is not null && !string.IsNullOrWhiteSpace(assistant.Greeting))
+            {
+                var greetingMessage = Message.CreateAssistant(threadId, assistant.Greeting, new MessageOptions());
+                await chatMessageService.AddItemAsync(greetingMessage);
+                await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(greetingMessage));
+            }
         }
     }
 

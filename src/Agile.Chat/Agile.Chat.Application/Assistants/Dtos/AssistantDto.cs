@@ -10,6 +10,7 @@ public class AssistantDto
 
     public string Greeting { get; set; }
     
+    public AssistantType Type { get; set; }
     public AssistantStatus Status { get; set; }
 
     public AssistantFilterOptions FilterOptions { get; set; } = new();

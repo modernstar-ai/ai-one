@@ -1,6 +1,7 @@
 import { Markdown } from '@/components/markdown/markdown';
 import { Citation, Message } from '@/types/ChatThread';
 import { CitationSheet } from './citation-sheet';
+import { ChatSearchResponse } from './chat-search-response';
 
 interface MessageContentProps {
   message: Message;
@@ -24,6 +25,10 @@ const MessageContent = (props: MessageContentProps) => {
       return <></>;
     }
   };
+
+  if (message.options.metadata.SearchProcess) {
+    return <ChatSearchResponse message={message} assistantId={assistantId!} />;
+  }
 
   return (
     <>

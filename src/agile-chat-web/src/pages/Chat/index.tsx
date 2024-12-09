@@ -13,6 +13,8 @@ import { chat } from '@/services/chat-completions-service';
 import { ChatDto } from '@/types/ChatCompletions';
 import { consumeChunks, createTempMessage, ResponseType, updateMessages } from './utils';
 import { flushSync } from 'react-dom';
+import { Assistant } from '@/types/Assistant';
+import { fetchAssistantById } from '@/services/assistantservice';
 
 const ChatPage = () => {
   const { threadId } = useParams();
@@ -20,6 +22,7 @@ const ChatPage = () => {
 
   if (!threadId) navigate('/');
   const [thread, setThread] = useState<ChatThread | undefined>(undefined);
+  const [assistant, setAssistant] = useState<Assistant | undefined>(undefined);
 
   const [userInput, setUserInput] = useState<string>('');
   const [messagesDb, setMessagesDb] = useState<Message[] | undefined>(undefined);
@@ -38,6 +41,11 @@ const ChatPage = () => {
   useEffect(() => {
     setIsLoading(true);
     refreshThread().then((thread) => {
+      if (thread?.assistantId) {
+        fetchAssistantById(thread.assistantId).then((assistant) => {
+          setAssistant(assistant ?? undefined);
+        });
+      }
       GetChatThreadMessages(thread!.id)
         .then((messages) => {
           setMessagesDb(messages);
@@ -112,7 +120,15 @@ const ChatPage = () => {
         message = new TextDecoder('utf-8').decode(read.value).replace(/^"(.*)"$/, '$1');
       }
       console.error('Error sending message:', err);
-      setError(message);
+      let errorMsg;
+      try {
+        errorMsg = JSON.parse(message).detail;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (err) {
+        errorMsg = message;
+      }
+
+      setError(errorMsg);
     } finally {
       setIsSending(false);
     }
@@ -127,7 +143,7 @@ const ChatPage = () => {
       <div className="flex-1 flex flex-col">
         <SimpleHeading
           Title={thread!.name ?? 'Chat'}
-          Subtitle={'Why not have a chat'}
+          Subtitle={assistant ? assistant.name : 'Why not have a chat'}
           threadId={thread!.id}
           DocumentCount={0}
         />

@@ -3,12 +3,18 @@ export type Assistant = {
   name: string;
   description: string;
   greeting: string;
+  type: AssistantType;
   status: AssistantStatus;
   promptOptions: AssistantPromptOptions;
   filterOptions: AssistantFilterOptions;
   createdDate: Date;
   lastModified: Date;
 };
+
+export enum AssistantType {
+  Chat = 'Chat',
+  Search = 'Search',
+}
 
 export enum AssistantStatus {
   Draft = 'Draft',

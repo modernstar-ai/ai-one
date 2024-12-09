@@ -29,6 +29,7 @@ if (app.Environment.IsLocal())
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.MapCarter();
 

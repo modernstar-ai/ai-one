@@ -1,8 +1,10 @@
 ﻿using System.ClientModel;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.Audits.Services;
+using Agile.Chat.Application.ChatCompletions.Dtos;
 using Agile.Chat.Application.ChatCompletions.Models;
 using Agile.Chat.Application.ChatCompletions.Utils;
 using Agile.Chat.Application.ChatThreads.Services;
@@ -14,13 +16,20 @@ using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Ai;
 using Agile.Framework.AzureAiSearch.Interfaces;
 using Agile.Framework.AzureAiSearch.Models;
-using Agile.Framework.Common.Enums;
-using Agile.Framework.Common.EnvironmentVariables;
 using FluentValidation;
 using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
+using Microsoft.Graph;
+using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using ChatType = Agile.Chat.Domain.ChatThreads.ValueObjects.ChatType;
+using Constants = Agile.Framework.Common.EnvironmentVariables.Constants;
+using Message = Agile.Chat.Domain.ChatThreads.Entities.Message;
+using ResponseType = Agile.Framework.Common.Enums.ResponseType;
 
 namespace Agile.Chat.Application.ChatCompletions.Commands;
 
@@ -42,7 +51,7 @@ public static class Chat
         {
             //Fetch what's needed to do chatting
             var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId, ChatType.Thread.ToString());
-            var messages = await chatMessageService.GetAllAsync(thread!.Id);
+            var chatHistory = (await chatMessageService.GetAllAsync(thread!.Id)).ParseSemanticKernelChatHistory(request.UserPrompt);
             var assistant = !string.IsNullOrWhiteSpace(thread.AssistantId)
                 ? await assistantService.GetItemByIdAsync(thread.AssistantId)
                 : null;
@@ -55,48 +64,22 @@ public static class Chat
             
             //Execute Chat Stream
             var chatSettings = thread.PromptOptions.ParseAzureOpenAiPromptExecutionSettings();
-            var aiStreamChats = hasIndex
-                ? appKernel.GetPromptFileChatStream(chatSettings, 
-                    Constants.ChatCompletionsPromptsPath,
-                    Constants.Prompts.ChatWithRag, 
-                    new Dictionary<string, object?>
-                {
-                    {"documents", string.Join('\n', documents.Select((x, index) => x.ToString(index + 1)))},
-                    {"userPrompt", request.UserPrompt},
-                    {"chatHistory", messages.ParseSemanticKernelChatHistory(request.UserPrompt)}
-                })
-                : 
-                appKernel.GetChatStream(
-                    messages.ParseSemanticKernelChatHistory(request.UserPrompt), chatSettings);
-
-            var assistantFullResponse = new StringBuilder();
-            try
+            IResult assistantResult = assistant?.Type switch
             {
-                await foreach (var chatStream in aiStreamChats)
-                {
-                    assistantFullResponse.Append(chatStream[ResponseType.Chat]);
-                    await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, chatStream);
-                }
-            }
-            catch (Exception ex) when (ex is ClientResultException exception && exception.Status == 429)
-            {
-                return Results.BadRequest("Rate limit exceeded");
-            }
-            catch (Exception ex) when (ex is ClientResultException exception && exception.Message.Contains("content_filter"))
-            {
-                return Results.BadRequest("High likelyhood of adult content. Response denied.");
-            }
-
-
+                AssistantType.Chat or null => await GetChatResultAsync(request.UserPrompt, assistant?.PromptOptions?.SystemPrompt, hasIndex, chatSettings, chatHistory, documents),
+                AssistantType.Search => await GetSearchResultAsync(request.UserPrompt, assistant?.PromptOptions?.SystemPrompt, chatSettings, documents),
+                _ => Results.BadRequest("Unknown chat type")
+            };
+            if(assistantResult is BadRequest<string> badRequest)
+                return badRequest;
             
-            //If its a new chat, update the threads name
-            if (messages.Count == 0)
-            {
-                thread.Update(TruncateUserPrompt(request.UserPrompt), thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions);
-                await chatThreadService.UpdateItemByIdAsync(thread.Id, thread, ChatType.Thread.ToString());
-            }
-
-            await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, assistantFullResponse.ToString(), documents);
+            //Get the full response and metadata
+            var (assistantResponse, assistantMetadata) = GetAssistantResponseAndMetadata(assistant?.Type, assistantResult, documents);
+            await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, assistantResponse, assistantMetadata);
+            
+            //If its a new chat, update the threads name, otherwise just update the last modified date
+            thread.Update(chatHistory.Count == 0 ? TruncateUserPrompt(request.UserPrompt) : thread.Name, thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions);
+            await chatThreadService.UpdateItemByIdAsync(thread.Id, thread, ChatType.Thread.ToString());
             return Results.Empty;
         }
         private string TruncateUserPrompt(string userPrompt) => userPrompt.Substring(0, Math.Min(userPrompt.Length, 39)) +
@@ -104,6 +87,28 @@ public static class Chat
                                                                     ? string.Empty
                                                                     : "...");
 
+        private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(AssistantType? assistantType, IResult result, List<AzureSearchDocument> documents)
+        {
+            var assistantResponse = string.Empty;
+            var metadata = new Dictionary<MetadataType, object>();
+            
+            switch (assistantType)
+            {
+                case AssistantType.Chat or null:
+                    assistantResponse = (result as Ok<string>)!.Value;
+                    break;
+                case AssistantType.Search:
+                    var searchResponse = (result as Ok<SearchResponseDto>)!.Value;
+                    assistantResponse = searchResponse!.AssistantResponse;
+                    metadata.Add(MetadataType.SearchProcess, searchResponse.SearchProcess);
+                    break;
+            }
+            
+            if(documents.Count > 0 && AssistantResponseHasCitations(assistantResponse!))
+                metadata.Add(MetadataType.Citations, documents.Adapt<List<Citation>>());
+            
+            return (assistantResponse!, metadata);
+        }
         
         private bool AssistantResponseHasCitations(string assistantResponse) => assistantResponse.Any(c =>
         {
@@ -113,7 +118,16 @@ public static class Chat
         
         private async Task<List<AzureSearchDocument>> GetSearchDocumentsAsync(string userPrompt, string indexName, ChatThreadFilterOptions filterOptions)
         {
-            var embedding = await appKernel.GenerateEmbeddingAsync(userPrompt);
+            ReadOnlyMemory<float> embedding;
+            try
+            {
+                embedding = await appKernel.GenerateEmbeddingAsync(userPrompt);
+            }
+            catch (Exception ex) when (ex is ClientResultException exception && exception.Status == 429)
+            { 
+                throw new Exception("Rate limit exceeded");
+            }
+            
             return await azureAiSearch.SearchAsync(indexName, 
                 new AiSearchOptions(userPrompt, embedding)
                 {
@@ -122,15 +136,65 @@ public static class Chat
                 });
         }
 
-        private async Task SaveUserAndAssistantMessagesAsync(string threadId, string userPrompt, string assistantResponse, List<AzureSearchDocument>? documents = null)
+        private async Task<IResult> GetChatResultAsync(string userPrompt, string? assistantSystemPrompt, bool hasIndex, AzureOpenAIPromptExecutionSettings chatSettings, ChatHistory chatHistory, List<AzureSearchDocument> documents)
+        {
+            var aiStreamChats = hasIndex
+                ? appKernel.GetPromptFileChatStream(chatSettings, 
+                    Constants.ChatCompletionsPromptsPath,
+                    Constants.Prompts.ChatWithRag, 
+                    new Dictionary<string, object?>
+                    {
+                        {"assistantSystemPrompt", assistantSystemPrompt},
+                        {"documents", string.Join('\n', documents.Select((x, index) => x.ToString(index + 1)))},
+                        {"userPrompt", userPrompt},
+                        {"chatHistory", chatHistory}
+                    })
+                : 
+                appKernel.GetChatStream(
+                    chatHistory, chatSettings);
+
+            var assistantFullResponse = await ChatUtils.StreamAndGetAssistantResponseAsync(contextAccessor.HttpContext!, aiStreamChats);
+            return assistantFullResponse;
+        }
+        
+        private async Task<IResult> GetSearchResultAsync(string userPrompt, string? assistantSystemPrompt, AzureOpenAIPromptExecutionSettings chatSettings, List<AzureSearchDocument> documents)
+        {
+            try
+            {
+#pragma warning disable SKEXP0010
+                chatSettings.ResponseFormat = "json_object";
+                
+                var aiResponse = await appKernel.GetPromptFileChat(chatSettings,
+                    Constants.ChatCompletionsPromptsPath,
+                    Constants.Prompts.ChatWithSearch,
+                    new Dictionary<string, object?>
+                    {
+                        {"assistantSystemPrompt", assistantSystemPrompt},
+                        { "documents", string.Join('\n', documents.Select((x, index) => x.ToString(index + 1))) },
+                        { "userPrompt", userPrompt }
+                    });
+                var searchResponse = JsonSerializer.Deserialize<SearchResponseDto>(aiResponse);
+                return TypedResults.Ok(searchResponse);
+            }
+            catch (Exception ex) when (ex is ClientResultException exception && exception.Status == 429)
+            {
+                return TypedResults.BadRequest("Rate limit exceeded");
+            }
+            catch (Exception ex) when (ex is ClientResultException exception && exception.Message.Contains("content_filter"))
+            {
+                return TypedResults.BadRequest("High likelyhood of adult content. Response denied.");
+            }
+        }
+
+        private async Task SaveUserAndAssistantMessagesAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object> assistantMetadata)
         {
             var userMessage = Message.CreateUser(threadId, userPrompt, new MessageOptions());
             await chatMessageService.AddItemAsync(userMessage);
             await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage));
             
             var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
-            if(documents?.Count > 0 && AssistantResponseHasCitations(assistantResponse))
-                assistantMessage.AddMetadata(MetadataType.Citations, documents.Adapt<List<Citation>>());
+            foreach(var (key, value) in assistantMetadata)
+                assistantMessage.AddMetadata(key, value);
             
             await chatMessageService.AddItemAsync(assistantMessage);
             await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage));
