@@ -59,10 +59,17 @@ export interface MessageOptions {
 
 export enum MetadataType {
   Citations = 'Citations',
+  SearchProcess = 'SearchProcess',
 }
 
 export interface Citation {
   id: string;
   name: string;
   url: string;
+}
+
+export interface SearchProcess {
+  assistantResponse: string;
+  thoughtProcess: string;
+  Citations: Citation[];
 }

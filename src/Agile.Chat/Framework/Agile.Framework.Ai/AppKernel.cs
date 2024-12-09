@@ -19,6 +19,10 @@ public interface IAppKernel
         string promptRelativeDirectory,
         string promptFile,
         Dictionary<string, object?>? kernelArguments = null!);
+    Task<string> GetPromptFileChat(AzureOpenAIPromptExecutionSettings settings,
+        string promptRelativeDirectory,
+        string promptFile,
+        Dictionary<string, object?>? kernelArguments = null!);
 }
 
 [Experimental("SKEXP0001")]
@@ -79,5 +83,26 @@ public class AppKernel : IAppKernel
                  { ResponseType.Chat, tokens.ToString()}
              };
          }
+     }
+     
+     public async Task<string> GetPromptFileChat(
+         AzureOpenAIPromptExecutionSettings settings,
+         string promptRelativeDirectory,
+         string promptFile,
+         Dictionary<string, object?>? kernelArguments = null!)
+     {
+         var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, promptRelativeDirectory, promptFile);
+         var prompt = await File.ReadAllTextAsync(path);
+         
+         if(string.IsNullOrWhiteSpace(prompt)) throw new Exception("Prompt file path is empty");
+         var kernelFunction = _kernel.CreateFunctionFromPromptYaml(prompt, new HandlebarsPromptTemplateFactory());
+         //Create arguments
+         var arguments = new KernelArguments(settings);
+         // Manually add dictionary items to arguments
+         foreach (var kvp in kernelArguments ?? new Dictionary<string, object?>())
+             arguments[kvp.Key] = kvp.Value;
+         
+         var response = await kernelFunction.InvokeAsync<string>(_kernel, arguments);
+         return response!;
      }
 }

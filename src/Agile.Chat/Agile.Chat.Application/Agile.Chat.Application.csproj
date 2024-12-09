@@ -33,6 +33,9 @@
       <None Update="ChatCompletions\Prompts\chatWithRag.prompt.yaml">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="ChatCompletions\Prompts\chatWithSearch.prompt.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>
