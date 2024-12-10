@@ -11,10 +11,11 @@ import { ChatThread, Message, MessageType } from '@/types/ChatThread';
 import { AxiosError } from 'axios';
 import { chat } from '@/services/chat-completions-service';
 import { ChatDto } from '@/types/ChatCompletions';
-import { consumeChunks, createTempMessage, ResponseType, updateMessages } from './utils';
-import { flushSync } from 'react-dom';
+import { createTempMessage, ResponseType, updateMessages } from './utils';
 import { Assistant } from '@/types/Assistant';
 import { fetchAssistantById } from '@/services/assistantservice';
+import useStreamStore from '@/stores/stream-store';
+import { createParser, EventSourceMessage } from 'eventsource-parser';
 
 const ChatPage = () => {
   const { threadId } = useParams();
@@ -25,18 +26,15 @@ const ChatPage = () => {
   const [assistant, setAssistant] = useState<Assistant | undefined>(undefined);
 
   const [userInput, setUserInput] = useState<string>('');
-  const [messagesDb, setMessagesDb] = useState<Message[] | undefined>(undefined);
+  const prevMessagesRef = useRef<Message[] | undefined>(undefined);
+
+  const { clearStream, setStream } = useStreamStore();
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const userInputRef = useRef<HTMLTextAreaElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Scroll to the bottom of the container
-    scrollContainerRef.current?.scrollIntoView();
-  }, [messagesDb]); // This effect runs whenever 'items' changes
 
   useEffect(() => {
     setIsLoading(true);
@@ -48,7 +46,8 @@ const ChatPage = () => {
       }
       GetChatThreadMessages(thread!.id)
         .then((messages) => {
-          setMessagesDb(messages);
+          //setMessagesDb(messages);
+          prevMessagesRef.current = messages;
         })
         .finally(() => setIsLoading(false));
     });
@@ -68,6 +67,26 @@ const ChatPage = () => {
     }
   };
 
+  const onEvent = (event: EventSourceMessage) => {
+    const responseType = event.event;
+    console.log(event);
+
+    if (responseType === ResponseType.Chat) {
+      console.log(event.data);
+      const chat = JSON.parse(event.data) as { content: string };
+      setStream(chat.content);
+    } else if (responseType === ResponseType.DbMessages) {
+      const dbMsgs = JSON.parse(event.data) as Message[];
+      let newMessages = [...prevMessagesRef.current!];
+      dbMsgs.forEach((msg) => {
+        newMessages = updateMessages(prevMessagesRef.current!, msg);
+      });
+      prevMessagesRef.current = newMessages;
+      //setMessagesDb(newMessages);
+      clearStream();
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!userInput.trim() || !thread) return;
 
@@ -75,8 +94,11 @@ const ChatPage = () => {
     userInputRef.current!.value = '';
 
     const tempUserMessage: Message = createTempMessage(userPrompt, MessageType.User);
-    let newMessages = [...messagesDb!, tempUserMessage];
-    setMessagesDb(newMessages);
+    const tempAssistantMessage: Message = createTempMessage('', MessageType.Assistant);
+
+    const newMessages = [...prevMessagesRef.current!, tempUserMessage, tempAssistantMessage];
+    // Save the previous messagesDb before the update
+    prevMessagesRef.current = newMessages;
 
     try {
       setIsSending(true);
@@ -86,29 +108,20 @@ const ChatPage = () => {
         userPrompt: userPrompt,
       } as ChatDto);
 
-      // // Handle streaming response
-      const stream = response.data as ReadableStream;
-      const reader = stream.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let assistantResponse = '';
-      newMessages = [...newMessages, createTempMessage(assistantResponse, MessageType.Assistant)];
+      const parser = createParser({ onEvent });
 
-      for await (const value of consumeChunks(reader, decoder)) {
-        if (value[ResponseType.Chat]) {
-          assistantResponse = assistantResponse + value[ResponseType.Chat];
-          const assistantMessage: Message = createTempMessage(assistantResponse, MessageType.Assistant);
-          newMessages = updateMessages(newMessages, assistantMessage);
-          flushSync(() => setMessagesDb(newMessages));
-        } else if (value[ResponseType.DbMessages]) {
-          const dbMsgs = value[ResponseType.DbMessages] as Message[];
-          dbMsgs.forEach((msg) => {
-            newMessages = updateMessages(newMessages, msg);
-            flushSync(() => setMessagesDb(newMessages));
-          });
-        }
+      const reader = response.data.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+
+        const chunkValue = decoder.decode(value);
+        parser.feed(chunkValue);
       }
 
-      if (messagesDb && messagesDb.length <= 2) {
+      if (prevMessagesRef.current && prevMessagesRef.current!.length <= 2) {
         await refreshThread();
       }
     } catch (err) {
@@ -134,7 +147,7 @@ const ChatPage = () => {
     }
   };
 
-  if (isLoading || !thread || !messagesDb) {
+  if (isLoading || !thread || !prevMessagesRef.current) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
@@ -155,9 +168,8 @@ const ChatPage = () => {
             <div className="flex justify-center items-center h-full">Loading messages...</div>
           ) : (
             <>
-              {messagesDb?.map((message, index) => (
+              {prevMessagesRef.current?.map((message, index) => (
                 <ChatMessageArea
-                  ref={scrollContainerRef}
                   message={message}
                   key={index}
                   userId={thread!.userId || ''} // Ensure username is never undefined

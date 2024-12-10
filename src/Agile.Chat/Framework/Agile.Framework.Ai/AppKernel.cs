@@ -14,8 +14,8 @@ public interface IAppKernel
 {
     Task<ReadOnlyMemory<float>> GenerateEmbeddingAsync(string text);
     Task<IList<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(IList<string> texts);
-    IAsyncEnumerable<Dictionary<ResponseType, string>> GetChatStream(ChatHistory chatHistory, AzureOpenAIPromptExecutionSettings settings);
-    IAsyncEnumerable<Dictionary<ResponseType, string>> GetPromptFileChatStream(AzureOpenAIPromptExecutionSettings settings, 
+    IAsyncEnumerable<string> GetChatStream(ChatHistory chatHistory, AzureOpenAIPromptExecutionSettings settings);
+    IAsyncEnumerable<string> GetPromptFileChatStream(AzureOpenAIPromptExecutionSettings settings, 
         string promptRelativeDirectory,
         string promptFile,
         Dictionary<string, object?>? kernelArguments = null!);
@@ -46,19 +46,17 @@ public class AppKernel : IAppKernel
      public async Task<IList<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(IList<string> texts) =>
          await _textEmbedding.GenerateEmbeddingsAsync(texts);
 
-     public async IAsyncEnumerable<Dictionary<ResponseType, string>> GetChatStream(ChatHistory chatHistory, AzureOpenAIPromptExecutionSettings settings)
+     public async IAsyncEnumerable<string> GetChatStream(ChatHistory chatHistory, AzureOpenAIPromptExecutionSettings settings)
      {
          var responses = _chatCompletion.GetStreamingChatMessageContentsAsync(chatHistory, settings, _kernel);
          await foreach (var tokens in responses)
          {
-             yield return new Dictionary<ResponseType, string>()
-             {
-                 { ResponseType.Chat, tokens?.Content ?? string.Empty}
-             };
+             if(!string.IsNullOrWhiteSpace(tokens.Content))
+                 yield return tokens.Content;
          }
      }
      
-     public async IAsyncEnumerable<Dictionary<ResponseType, string>> GetPromptFileChatStream(
+     public async IAsyncEnumerable<string> GetPromptFileChatStream(
          AzureOpenAIPromptExecutionSettings settings,
          string promptRelativeDirectory,
          string promptFile,
@@ -78,10 +76,8 @@ public class AppKernel : IAppKernel
          var responses = kernelFunction.InvokeStreamingAsync(_kernel, arguments);
          await foreach (var tokens in responses)
          {
-             yield return new Dictionary<ResponseType, string>()
-             {
-                 { ResponseType.Chat, tokens.ToString()}
-             };
+             if (!string.IsNullOrWhiteSpace(tokens.ToString()))
+                 yield return tokens.ToString();
          }
      }
      
