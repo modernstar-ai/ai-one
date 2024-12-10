@@ -9,7 +9,7 @@ function getApiUrl(endpoint: string): string {
 // Add like to a message
 export async function chat(chatDto: ChatDto) {
   const apiUrl = getApiUrl('');
-  return axios.post(apiUrl, chatDto, {
+  return axios.post<ReadableStream<Uint8Array>>(apiUrl, chatDto, {
     headers: {
       Accept: 'text/plain',
       'Content-Type': 'application/json',

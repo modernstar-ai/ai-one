@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
+using Agile.Chat.Domain.DomainEvents.ChatThreads;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.DomainAbstractions;
 
@@ -18,6 +19,7 @@ public class ChatThread : AuditableAggregateRoot
         PromptOptions = promptOptions;
         FilterOptions = filterOptions;
         AssistantId = assistantId;
+        AddEvent(new ChatThreadUpdatedEvent(this));
     }
     public string Name { get; private set; }
     [PII]
@@ -49,5 +51,6 @@ public class ChatThread : AuditableAggregateRoot
         PromptOptions = promptOptions;
         FilterOptions = filterOptions;
         LastModified = DateTime.UtcNow;
+        AddEvent(new ChatThreadUpdatedEvent(this));
     }
 }

@@ -2,12 +2,9 @@ import { Citation, Message, SearchProcess } from '@/types/ChatThread';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Tabs } from '@radix-ui/react-tabs';
 import { TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { CitationSheet } from './citation-sheet';
 import { Book, Lightbulb, MessageCircleMore, View } from 'lucide-react';
 import { useState } from 'react';
 import { getCitationChunkById } from '@/services/ai-search-service';
-import { Button } from '../ui/button';
-import { Textarea } from '../ui/textarea';
 import { Separator } from '../ui/separator';
 import { FileViewingDialog } from './file-viewing-dialog';
 

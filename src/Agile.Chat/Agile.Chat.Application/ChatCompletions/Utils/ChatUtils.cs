@@ -9,28 +9,27 @@ namespace Agile.Chat.Application.ChatCompletions.Utils;
 
 public static class ChatUtils
 {
-    private const byte Delimiter = (byte)'\a';
-    
-    public static async Task WriteToResponseStreamAsync<T>(HttpContext context, Dictionary<ResponseType, T> response)
+    public static async Task WriteToResponseStreamAsync(HttpContext context, ResponseType responseType, object payload)
     {
-        var bytes = JsonSerializer.SerializeToUtf8Bytes(response, new JsonSerializerOptions()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        }).ToList();
-        bytes.Add(Delimiter);
-        await context.Response.Body.WriteAsync(bytes.ToArray());
+        var bytesEvent = Encoding.UTF8.GetBytes($"event: {responseType.ToString()}\n");
+        var data = responseType == ResponseType.Chat ? 
+            JsonSerializer.Serialize(new {content = payload}) : 
+            JsonSerializer.Serialize(payload, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase});
+        var bytesData = Encoding.UTF8.GetBytes($"data: {data}\n\n");
+        await context.Response.Body.WriteAsync(bytesEvent);
+        await context.Response.Body.WriteAsync(bytesData);
         await context.Response.Body.FlushAsync();
     }
     
-    public static async Task<IResult> StreamAndGetAssistantResponseAsync<T>(HttpContext context, IAsyncEnumerable<Dictionary<ResponseType, T>> aiStreamChats)
+    public static async Task<IResult> StreamAndGetAssistantResponseAsync(HttpContext context, IAsyncEnumerable<string> aiStreamChats)
     {
         var assistantFullResponse = new StringBuilder();
         try
         {
-            await foreach (var chatStream in aiStreamChats)
+            await foreach (var tokens in aiStreamChats)
             {
-                assistantFullResponse.Append(chatStream[ResponseType.Chat]);
-                await WriteToResponseStreamAsync(context, chatStream);
+                await WriteToResponseStreamAsync(context, ResponseType.Chat, tokens);
+                assistantFullResponse.Append(tokens);
             }
         }
         catch (Exception ex) when (ex is ClientResultException exception && exception.Status == 429)

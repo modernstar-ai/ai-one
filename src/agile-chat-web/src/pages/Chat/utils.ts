@@ -3,42 +3,11 @@ import { ChatType, Message, MessageType } from '@/types/ChatThread';
 export enum ResponseType {
   Chat = 'Chat',
   DbMessages = 'DbMessages',
-  SearchProcess = 'SearchProcess',
 }
 
 export enum TempIdType {
   User = '-1',
   Assistant = '-2',
-}
-
-export async function* consumeChunks(
-  reader: ReadableStreamDefaultReader<Uint8Array | undefined>,
-  decoder: TextDecoder
-) {
-  let partialChunk = '';
-  while (true) {
-    const { done, value } = await reader.read();
-
-    partialChunk += decoder.decode(value, { stream: true });
-
-    let belIndex;
-    while ((belIndex = partialChunk.indexOf('')) > -1) {
-      const completeChunk = partialChunk.slice(0, belIndex);
-      partialChunk = partialChunk.slice(belIndex + 1);
-      if (completeChunk) {
-        try {
-          const obj = JSON.parse(completeChunk);
-          yield obj;
-        } catch (e) {
-          console.log('Chunk parsing error: ', e);
-        }
-      }
-    }
-
-    if (done) {
-      break;
-    }
-  }
 }
 
 export const updateMessages = (messages: Message[], newMessage: Message): Message[] => {

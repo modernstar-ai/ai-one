@@ -199,10 +199,7 @@ public static class Chat
             await chatMessageService.AddItemAsync(assistantMessage);
             await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage));
 
-            await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, new Dictionary<ResponseType, List<Message>>
-            {
-                { ResponseType.DbMessages, [userMessage, assistantMessage] }
-            });
+            await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, ResponseType.DbMessages, new List<Message>([userMessage, assistantMessage]));
         }
     }
 
