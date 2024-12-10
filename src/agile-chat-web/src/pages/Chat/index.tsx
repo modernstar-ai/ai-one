@@ -69,10 +69,8 @@ const ChatPage = () => {
 
   const onEvent = (event: EventSourceMessage) => {
     const responseType = event.event;
-    console.log(event);
 
     if (responseType === ResponseType.Chat) {
-      console.log(event.data);
       const chat = JSON.parse(event.data) as { content: string };
       setStream(chat.content);
     } else if (responseType === ResponseType.DbMessages) {
