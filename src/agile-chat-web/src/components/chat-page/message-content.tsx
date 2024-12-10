@@ -2,6 +2,9 @@ import { Markdown } from '@/components/markdown/markdown';
 import { Citation, Message } from '@/types/ChatThread';
 import { CitationSheet } from './citation-sheet';
 import { ChatSearchResponse } from './chat-search-response';
+import { useEffect, useRef } from 'react';
+import { TempIdType } from '@/pages/Chat/utils';
+import useStreamStore from '@/stores/stream-store';
 
 interface MessageContentProps {
   message: Message;
@@ -10,12 +13,30 @@ interface MessageContentProps {
 
 const MessageContent = (props: MessageContentProps) => {
   const { message, assistantId } = props;
+  const contentOverride = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (message.id === TempIdType.Assistant) {
+      useStreamStore.setState({ callback: onStreamCallback });
+    }
+  }, [message.id]);
+
+  const onStreamCallback = (content: string) => {
+    contentOverride.current = (contentOverride.current ?? '') + content;
+  };
 
   //  // Validate content
   // if (!content || typeof content !== "string") {
   //   console.error("Invalid message content:", content);
   //   return <></>;
   // }
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Scroll to the bottom of the container
+    scrollContainerRef.current?.scrollIntoView();
+  }, [message, contentOverride.current]); // This effect runs whenever 'items' changes
 
   const handleCitationClick = async () => {
     try {
@@ -32,7 +53,10 @@ const MessageContent = (props: MessageContentProps) => {
 
   return (
     <>
-      <Markdown content={message.content} onCitationClick={handleCitationClick}></Markdown>
+      <Markdown
+        content={contentOverride.current ? contentOverride.current : message.content}
+        onCitationClick={handleCitationClick}
+      ></Markdown>
 
       {/* Handle citations */}
       {message.options.metadata.Citations && (
@@ -47,6 +71,7 @@ const MessageContent = (props: MessageContentProps) => {
           )}
         </div>
       )}
+      <div ref={scrollContainerRef}></div>
     </>
   );
 };
