@@ -14,7 +14,7 @@ const ChatRouter: React.FC = () => {
       try {
         const assistant = state.assistantId ? await fetchAssistantById(state.assistantId) : undefined;
         const thread = await createChatThread({
-          name: assistant ? `New Chat - ${assistant.name}` : undefined,
+          name: assistant ? `${assistant.name}` : 'New Chat',
           assistantId: assistant?.id,
         });
 
