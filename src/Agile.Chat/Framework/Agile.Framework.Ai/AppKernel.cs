@@ -51,8 +51,7 @@ public class AppKernel : IAppKernel
          var responses = _chatCompletion.GetStreamingChatMessageContentsAsync(chatHistory, settings, _kernel);
          await foreach (var tokens in responses)
          {
-             if(!string.IsNullOrWhiteSpace(tokens.Content))
-                 yield return tokens.Content;
+             yield return tokens.ToString();
          }
      }
      
@@ -76,8 +75,7 @@ public class AppKernel : IAppKernel
          var responses = kernelFunction.InvokeStreamingAsync(_kernel, arguments);
          await foreach (var tokens in responses)
          {
-             if (!string.IsNullOrWhiteSpace(tokens.ToString()))
-                 yield return tokens.ToString();
+             yield return tokens.ToString();
          }
      }
      

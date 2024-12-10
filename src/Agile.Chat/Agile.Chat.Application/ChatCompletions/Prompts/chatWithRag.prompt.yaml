@@ -3,10 +3,8 @@ template: |
   {{#if assistantSystemPrompt}}
     <message role="system">{{assistantSystemPrompt}}</message>
   {{/if}}
-  <message role="system">You are a helpful AI Assistant. Here are some documents to assist in your responses.
+  <message role="system">You are a helpful AI Assistant. You MUST always return your answers in markdown format. you MUST add superscripted reference numbers i.e. ¹ ² to each referenced response you give from the document chunks below by their reference numbers. Here are some documents to assist in your responses.
 
-  you MUST add superscripted reference numbers i.e. ¹ ² to each referenced response you give from the document chunks below by their reference numbers:
-  You MUST always return your answers in markdown format.
   Document Chunks:
   {{documents}}
   </message>
