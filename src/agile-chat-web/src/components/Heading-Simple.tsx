@@ -123,7 +123,7 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
         {isChatPage && threadId && (
           <Sheet onOpenChange={handleSheetOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="h-8 w-8">
+              <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Open settings">
                 <Settings2 className="h-4 w-4" />
               </Button>
             </SheetTrigger>
