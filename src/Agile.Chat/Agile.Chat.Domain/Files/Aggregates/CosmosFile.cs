@@ -32,4 +32,11 @@ public class CosmosFile : AuditableAggregateRoot
         //Do validation logic and throw domain level exceptions if fails
         return new CosmosFile(name, url, contentType, size, indexName, folderName);
     }
+    
+    public void Update(string? contentType, long size)
+    {
+        ContentType = contentType;
+        Size = size;
+        LastModified = DateTime.UtcNow;
+    }
 }
