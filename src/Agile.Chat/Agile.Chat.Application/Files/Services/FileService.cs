@@ -17,6 +17,7 @@ public interface IFileService  : ICosmosRepository<CosmosFile>
     Task<bool> ExistsAsync(string fileName, string indexName, string? folderName = null);
     Task DeleteByMetadataAsync(string fileName, string indexName, string? folderName = null);
     Task DeleteAllByIndexAsync(string indexName);
+    Task<CosmosFile?> GetFileByFolderAsync(string fileName, string indexName, string? folderName = null);
 }
 
 [Export(typeof(IFileService), ServiceLifetime.Scoped)]
@@ -47,6 +48,15 @@ public class FileService(CosmosClient cosmosClient, IIndexService indexService, 
         
         var results = await CollectResultsAsync(query);
         return results.Count > 0;
+    }
+    
+    public async Task<CosmosFile?> GetFileByFolderAsync(string fileName, string indexName, string? folderName = null)
+    {
+        var file = LinqQuery()
+            .Where(file => file.Name == fileName && file.IndexName == indexName && file.FolderName == folderName)
+            .FirstOrDefault();
+        
+        return file;
     }
 
     public async Task DeleteByMetadataAsync(string fileName, string indexName, string? folderName = null)

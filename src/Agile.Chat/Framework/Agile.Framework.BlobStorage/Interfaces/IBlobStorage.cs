@@ -6,7 +6,7 @@ public interface IBlobStorage
 {
     Task<(Stream, BlobDownloadDetails)> DownloadAsync(string url);
     Task<string> GetShareableLinkByUrlAsync(string url);
-    Task<string> UploadAsync(Stream stream, string fileName, string indexName, string? folderName = null);
+    Task<string> UploadAsync(Stream stream, string contentType, string fileName, string indexName, string? folderName = null);
     Task DeleteAsync(string fileName, string indexName, string? folderName = null);
     Task DeleteIndexFilesAsync(string indexName);
 }

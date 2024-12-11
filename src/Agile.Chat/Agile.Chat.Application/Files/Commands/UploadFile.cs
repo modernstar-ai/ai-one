@@ -19,15 +19,25 @@ public static class UploadFile
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            var url = await blobStorage.UploadAsync(request.File.OpenReadStream(), request.File.FileName, request.IndexName, request.FolderName);
-            
-            var cosmosFile = CosmosFile.Create(
-                request.File.FileName, 
-                url, 
-                request.File.ContentType, 
-                request.File.Length, 
-                request.IndexName, 
+            var url = await blobStorage.UploadAsync(request.File.OpenReadStream(), request.File.ContentType, request.File.FileName, request.IndexName, request.FolderName);
+
+            var cosmosFile = await fileService.GetFileByFolderAsync(request.File.FileName, request.IndexName,
                 request.FolderName);
+
+            if (cosmosFile != null)
+            {
+                cosmosFile.Update(request.File.ContentType, request.File.Length);
+            }
+            else
+            {
+                cosmosFile = CosmosFile.Create(
+                    request.File.FileName, 
+                    url, 
+                    request.File.ContentType, 
+                    request.File.Length, 
+                    request.IndexName, 
+                    request.FolderName);
+            }
             
             await fileService.UpdateItemByIdAsync(cosmosFile.Id, cosmosFile);
             return Results.Created(cosmosFile.Id, cosmosFile);
