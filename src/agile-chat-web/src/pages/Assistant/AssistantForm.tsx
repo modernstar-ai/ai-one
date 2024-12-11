@@ -239,15 +239,15 @@ export default function AssistantForm() {
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Type</FormLabel>
+                      <FormLabel htmlFor="type-select">Type</FormLabel>
                       <Select onValueChange={(value) => field.onChange(value as AssistantType)} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger id="type-select" aria-labelledby="type-select-label">
                             <SelectValue placeholder="Select Type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value={AssistantType.Chat}>Chat</SelectItem>
+                          <SelectItem value={AssistantType.Chat} >Chat</SelectItem>
                           <SelectItem value={AssistantType.Search}>Search</SelectItem>
                         </SelectContent>
                       </Select>
@@ -305,11 +305,11 @@ export default function AssistantForm() {
                   name="filterOptions.indexName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Container</FormLabel>
+                      <FormLabel htmlFor="container-select">Container</FormLabel>
                       <FormControl>
                         <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger id="container-select" aria-labelledby="container-label">
                               <SelectValue placeholder="Select Container" />
                             </SelectTrigger>
                           </FormControl>
@@ -397,7 +397,7 @@ export default function AssistantForm() {
                   name="promptOptions.temperature"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Temperature</FormLabel>
+                      <FormLabel id="temperature-label">Temperature</FormLabel>
                       <FormControl>
                         <Slider
                           value={[field.value]}
@@ -407,10 +407,11 @@ export default function AssistantForm() {
                           onValueChange={(value) => {
                             field.onChange(value[0]);
                           }}
+                          aria-label="Temperature slider"
                         />
                       </FormControl>
                       <FormMessage />
-                      <div>Selected Temperature: {field.value}</div>
+                      <div id="temperature-value">Selected Temperature: {field.value}</div>
                     </FormItem>
                   )}
                 />
@@ -420,7 +421,7 @@ export default function AssistantForm() {
                   name="promptOptions.topP"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Top P</FormLabel>
+                      <FormLabel id="topP-label">Top P</FormLabel>
                       <FormControl>
                         <Slider
                           value={[field.value ?? 1]}
@@ -428,10 +429,11 @@ export default function AssistantForm() {
                           max={1}
                           step={0.01}
                           onValueChange={(value) => field.onChange(value[0])}
+                           aria-label="topP slider"
                         />
                       </FormControl>
                       <FormMessage />
-                      <div>Selected Top P: {field.value}</div>
+                      <div id="topP-value">Selected Top P: {field.value}</div>
                     </FormItem>
                   )}
                 />
@@ -478,7 +480,7 @@ export default function AssistantForm() {
                   name="filterOptions.strictness"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Strictness</FormLabel>
+                      <FormLabel id="strictness-label">Strictness</FormLabel>
                       <FormControl>
                         <Slider
                           value={[field.value ?? 0]}
@@ -488,10 +490,11 @@ export default function AssistantForm() {
                           onValueChange={(value) => {
                             field.onChange(value[0]);
                           }}
+                          aria-label="strictness slider"
                         />
                       </FormControl>
                       <FormMessage />
-                      <div>Strictness: {field.value}</div>
+                      <div id="strictness-value">Strictness: {field.value}</div>
                     </FormItem>
                   )}
                 />
@@ -520,7 +523,7 @@ export default function AssistantForm() {
                 />
 
                 <div className="flex justify-between mt-2">
-                  <Button type="submit" disabled={isSubmitting} onClick={form.handleSubmit(onSubmit)}>
+                  <Button type="submit" disabled={isSubmitting} onClick={form.handleSubmit(onSubmit)} aria-label="Save Assistant">
                     {isSubmitting ? 'Submitting...' : fileId ? 'Update' : 'Create'}
                   </Button>
                 </div>

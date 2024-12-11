@@ -34,7 +34,6 @@ import {
   Home,
   FileBox,
   User,
-  VenetianMask,
   LogOut,
   Plus,
   Trash2,
@@ -45,6 +44,7 @@ import {
   PanelLeftClose,
   Loader2,
   Database,
+  Bot,
 } from 'lucide-react';
 import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
 import { UserRole } from '@/authentication/user-roles';
@@ -231,12 +231,12 @@ export function LeftSidebar() {
 
           {/* Navigation Items */}
           <div className="flex flex-col space-y-2 mt-4 h-screen justify-center items-center  dark:text-white">
-            <SideNavButton path="/assistants" label="Assistants" Icon={VenetianMask} accessKey="a" />
+            <SideNavButton path="/assistants" label="Assistants" Icon={Bot} accessKey="a" />
             <PermissionHandler role={UserRole.ContentManager}>
               <SideNavButton path="/files" label="Files" Icon={FileBox} accessKey="U" />
             </PermissionHandler>
             <PermissionHandler role={UserRole.ContentManager}>
-              <SideNavButton path="/containers" label="Database" Icon={Database} accessKey="i" />
+              <SideNavButton path="/containers" label="Database" Icon={Database} accessKey="c" />
             </PermissionHandler>
             {/* <PermissionHandler role={UserRole.SystemAdmin}>
               <SideNavButton path="/tools" label="Tools" Icon={Wrench} accessKey="t" />
@@ -248,7 +248,7 @@ export function LeftSidebar() {
             <div className="mt-auto dark:text-white dark">
               <DropdownMenu data-theme="dark">
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" aria-label="User Profile">
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
