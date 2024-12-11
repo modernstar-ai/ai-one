@@ -26,7 +26,7 @@ const ChatConfigPanel: React.FC<ChatConfigProps> = ({ thread }) => {
         <Button 
           variant="outline" 
           size="icon"
-          className="ml-2"
+          className="ml-2" aria-label="Open settings"
         >
           <Settings2 className="h-4 w-4" />
         </Button>
