@@ -35,16 +35,15 @@ public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) 
         return uri.ToString();
     }
     
-    public async Task<string> UploadAsync(Stream stream, string fileName, string indexName, string? folderName = null)
+    public async Task<string> UploadAsync(Stream stream, string contentType, string fileName, string indexName, string? folderName = null)
     {
         var folderPath = string.IsNullOrWhiteSpace(folderName) ? fileName : $"{folderName}/{fileName}";
         var fullPath = $"{indexName}/{folderPath}";
         
         BlobClient blobClient = _container.GetBlobClient(fullPath);
-        if(await blobClient.ExistsAsync()) throw new Exception("Blob already exists");
         
         logger.LogInformation("Uploading {FileName} to Index {IndexName} with folder {FolderName}", fileName, indexName, folderName);
-        var resp = await blobClient.UploadAsync(stream);
+        var resp = await blobClient.UploadAsync(stream, new BlobHttpHeaders(){ContentType = contentType});
         logger.LogInformation("Finished upload with response {@Response}", resp.Value);
         return blobClient.Uri.ToString();
     }
