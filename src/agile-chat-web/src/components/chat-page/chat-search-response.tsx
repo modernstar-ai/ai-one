@@ -2,11 +2,12 @@ import { Citation, Message, SearchProcess } from '@/types/ChatThread';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Tabs } from '@radix-ui/react-tabs';
 import { TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Book, Lightbulb, MessageCircleMore, View } from 'lucide-react';
+import { Book, Lightbulb, Loader2Icon, MessageCircleMore, View } from 'lucide-react';
 import { useState } from 'react';
 import { getCitationChunkById } from '@/services/ai-search-service';
 import { Separator } from '../ui/separator';
 import { FileViewingDialog } from './file-viewing-dialog';
+import { Badge } from '../ui/badge';
 
 interface ChatSearchResponseProps {
   message: Message;
@@ -35,8 +36,21 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
     }
   };
 
+  const citationBadge = (citation: Citation, index: number): JSX.Element => {
+    return (
+      <Badge className={`cursor-pointer hover:underline mr-2`}>
+        {index + 1}. {citation.name}
+      </Badge>
+    );
+  };
+
   return (
-    <Tabs defaultValue="answer">
+    <Tabs
+      defaultValue="answer"
+      onValueChange={(val) => {
+        if (val === 'search results' && !chunks) onOpenSupportingContent();
+      }}
+    >
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="answer">
           <span className="flex items-center justify-center gap-2">
@@ -48,19 +62,29 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
             <Lightbulb size={18} /> Thought Process
           </span>
         </TabsTrigger>
-        <TabsTrigger value="supporting content" onClick={onOpenSupportingContent}>
+        <TabsTrigger value="search results">
           <span className="flex items-center justify-center gap-2">
-            <Book size={18} /> Supporting Content
+            <Book size={18} /> Search Results
           </span>
         </TabsTrigger>
       </TabsList>
       <TabsContent value="answer">
         <Card>
-          <CardHeader>
-            <CardTitle>AI Assistant</CardTitle>
-            <CardDescription>Response summary</CardDescription>
+          <CardHeader className="m-0 p-1">
+            <CardTitle className="m-2">AI Assistant</CardTitle>
+            <CardDescription className="m-2">Response summary</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
+            <div className="flex flex-wrap">
+              {(message.options.metadata.Citations as Citation[])?.map((citation, index) => {
+                const elemenet = citationBadge(citation, index);
+                return (
+                  <FileViewingDialog key={index} citation={citation}>
+                    {elemenet}
+                  </FileViewingDialog>
+                );
+              })}
+            </div>
             <div className="space-y-1">
               <p>{message.content}</p>
             </div>
@@ -69,9 +93,9 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
       </TabsContent>
       <TabsContent value="thought process">
         <Card>
-          <CardHeader>
-            <CardTitle>Thought Process</CardTitle>
-            <CardDescription>The thought process the assistant went through</CardDescription>
+          <CardHeader className="m-0 p-1">
+            <CardTitle className="m-2">Thought Process</CardTitle>
+            <CardDescription className="m-2">The thought process the assistant went through</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="space-y-1">
@@ -80,28 +104,30 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
           </CardContent>
         </Card>
       </TabsContent>
-      <TabsContent value="supporting content">
+      <TabsContent value="search results">
         <Card>
-          <CardHeader>
-            <CardTitle>Supporting Content</CardTitle>
-            <CardDescription>Citations and references here.</CardDescription>
+          <CardHeader className="m-0 p-1">
+            <CardTitle className="m-2">Search Results</CardTitle>
+            <CardDescription className="m-2">Citations and references here.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 max-h-[20rem] overflow-auto">
-            {((message.options.metadata.Citations as Citation[]) ?? []).map((citation, index) =>
-              citation.name && citation.url && chunks ? (
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold mt-2">{index + 1})&nbsp;&nbsp;</span>
-                    <FileViewingDialog citation={citation} />
-                    <View className="mt-2" />
-                  </div>
+            {!chunks && <Loader2Icon className="animate-spin" size={24} />}
+            {((message.options.metadata.Citations as Citation[]) ?? []).map(
+              (citation, index) =>
+                citation.name &&
+                citation.url &&
+                chunks && (
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold mt-2">{index + 1})&nbsp;&nbsp;</span>
+                      <FileViewingDialog citation={citation} />
+                      <View className="mt-2" />
+                    </div>
 
-                  <p>{chunks[index]}</p>
-                  <Separator className="my-2" />
-                </div>
-              ) : (
-                <li key={index}>Invalid citation data</li>
-              )
+                    <p>{chunks[index]}</p>
+                    <Separator className="my-2" />
+                  </div>
+                )
             )}
           </CardContent>
         </Card>
