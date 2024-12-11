@@ -31,7 +31,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }
   if (!roles) {
     return (
       <div className="flex w-full h-full items-center justify-center">
-        <Loader2Icon className="animate-spin" />'
+        <Loader2Icon className="animate-spin" />
       </div>
     );
   }
