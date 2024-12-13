@@ -37,6 +37,7 @@ const ChatPage = () => {
   const userInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    setError(null);
     setIsLoading(true);
     refreshThread().then((thread) => {
       if (thread?.assistantId) {
@@ -86,6 +87,7 @@ const ChatPage = () => {
   };
 
   const handleSendMessage = async () => {
+    setError(null);
     if (!userInput.trim() || !thread) return;
 
     const userPrompt = userInput.trim();
@@ -130,7 +132,9 @@ const ChatPage = () => {
         const read = await stream.getReader().read();
         message = new TextDecoder('utf-8').decode(read.value).replace(/^"(.*)"$/, '$1');
       }
-      console.error('Error sending message:', err);
+      prevMessagesRef.current = prevMessagesRef.current.filter(
+        (msg) => msg.id !== tempUserMessage.id && msg.id !== tempAssistantMessage.id
+      );
       let errorMsg;
       try {
         errorMsg = JSON.parse(message).detail;
@@ -195,9 +199,12 @@ const ChatPage = () => {
             accessKey="i"
           />
 
-          <Button onClick={handleSendMessage} disabled={isSending} aria-label="Send Chat" accessKey="j">
-            {isSending ? 'Sending...' : 'Send'}
-          </Button>
+          <div className="flex gap-2 items-center">
+            <Button onClick={handleSendMessage} disabled={isSending} aria-label="Send Chat" accessKey="j">
+              {isSending ? 'Sending...' : 'Send'}
+            </Button>
+            <p className="text-xs mx-auto">AI generated text can have mistakes. Check important info.</p>
+          </div>
         </div>
       </div>
     </div>

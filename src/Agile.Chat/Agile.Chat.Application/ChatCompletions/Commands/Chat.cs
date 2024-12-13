@@ -104,17 +104,11 @@ public static class Chat
                     break;
             }
             
-            if(documents.Count > 0 && AssistantResponseHasCitations(assistantResponse!))
+            if(documents.Count > 0)
                 metadata.Add(MetadataType.Citations, documents.Adapt<List<Citation>>());
             
             return (assistantResponse!, metadata);
         }
-        
-        private bool AssistantResponseHasCitations(string assistantResponse) => assistantResponse.Any(c =>
-        {
-            List<char> chars = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
-            return chars.Contains(c);
-        });
         
         private async Task<List<AzureSearchDocument>> GetSearchDocumentsAsync(string userPrompt, string indexName, ChatThreadFilterOptions filterOptions)
         {
