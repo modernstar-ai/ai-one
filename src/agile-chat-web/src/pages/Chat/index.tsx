@@ -37,6 +37,7 @@ const ChatPage = () => {
   const userInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    setError(null);
     setIsLoading(true);
     refreshThread().then((thread) => {
       if (thread?.assistantId) {
@@ -86,6 +87,7 @@ const ChatPage = () => {
   };
 
   const handleSendMessage = async () => {
+    setError(null);
     if (!userInput.trim() || !thread) return;
 
     const userPrompt = userInput.trim();
@@ -130,7 +132,9 @@ const ChatPage = () => {
         const read = await stream.getReader().read();
         message = new TextDecoder('utf-8').decode(read.value).replace(/^"(.*)"$/, '$1');
       }
-      console.error('Error sending message:', err);
+      prevMessagesRef.current = prevMessagesRef.current.filter(
+        (msg) => msg.id !== tempUserMessage.id && msg.id !== tempAssistantMessage.id
+      );
       let errorMsg;
       try {
         errorMsg = JSON.parse(message).detail;
