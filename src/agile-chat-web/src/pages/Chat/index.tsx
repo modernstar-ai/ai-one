@@ -199,9 +199,12 @@ const ChatPage = () => {
             accessKey="i"
           />
 
-          <Button onClick={handleSendMessage} disabled={isSending} aria-label="Send Chat" accessKey="j">
-            {isSending ? 'Sending...' : 'Send'}
-          </Button>
+          <div className="flex gap-2 items-center">
+            <Button onClick={handleSendMessage} disabled={isSending} aria-label="Send Chat" accessKey="j">
+              {isSending ? 'Sending...' : 'Send'}
+            </Button>
+            <p className="text-xs mx-auto">AI generated text can have mistakes. Check important info.</p>
+          </div>
         </div>
       </div>
     </div>
