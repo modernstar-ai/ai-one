@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { TempIdType } from '@/pages/Chat/utils';
 import useStreamStore from '@/stores/stream-store';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import { DotIcon } from 'lucide-react';
 
 interface MessageContentProps {
   message: Message;
@@ -75,6 +76,16 @@ const MessageContent = (props: MessageContentProps) => {
       .split('')
       .map((digit) => superscriptMap[digit] || digit)
       .join('');
+  }
+
+  if ((!message.content || message.content === '') && (!contentOverride.current || contentOverride.current === '')) {
+    return (
+      <div className="flex">
+        <DotIcon className="m-0 p-0 animate-bounce delay-200" />
+        <DotIcon className="m-0 p-0 animate-bounce delay-150" />
+        <DotIcon className="m-0 p-0 animate-bounce delay-75" />
+      </div>
+    );
   }
 
   if (message.options.metadata.SearchProcess) {

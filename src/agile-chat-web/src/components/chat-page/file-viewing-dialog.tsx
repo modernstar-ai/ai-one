@@ -28,6 +28,11 @@ export function FileViewingDialog(props: FileViewingDialogProps) {
     }
   };
 
+  const isHtmlFile = (): boolean => {
+    const extension = citation.url.split('.').pop();
+    return extension === 'html' || extension === 'htm';
+  };
+
   return (
     <Dialog onOpenChange={loadFile}>
       <DialogTrigger asChild>
@@ -45,14 +50,14 @@ export function FileViewingDialog(props: FileViewingDialogProps) {
           <DialogDescription>File preview.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col grow min-h-0 w-full h-full justify-center items-center">
-          {file ? (
+          {!file && <Loader2Icon className="animate-spin" />}
+          {file && !isHtmlFile() && (
             <iframe
               className="w-full h-full"
               src={`https://docs.google.com/gview?url=${encodeURIComponent(file)}&embedded=true`}
             />
-          ) : (
-            <Loader2Icon className="animate-spin" />
           )}
+          {file && isHtmlFile() && <iframe className="w-full h-full" src={file} />}
         </div>
         <DialogFooter>
           <Button type="submit">Close</Button>

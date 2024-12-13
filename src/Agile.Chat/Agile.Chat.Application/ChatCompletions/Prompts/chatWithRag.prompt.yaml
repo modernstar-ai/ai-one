@@ -12,7 +12,7 @@ template: |
   {{#each chatHistory}}
   <message role="{{this.Role}}">{{this.Content}}</message>
   {{/each}}
-  <message role="system">You MUST add superscripted reference numbers wrapped in superscripted parenthesis i.e. ⁽¹⁾ ⁽²⁾ ⁽¹³⁾ to ANY text you generate with the help of the document chunks provided to you in any way shape or form.
+  <message role="system">You MUST add superscripted reference numbers wrapped in superscripted parenthesis i.e. ⁽¹⁾ ⁽²⁾ ⁽¹³⁾ to ANY response you create with the help/assistance of the document chunks provided to you in any way shape or form.
   These reference numbers can be found from the Reference Number before every document chunk</message>
 template_format: handlebars
 description: Chats with loaded documents from an external datasource.
