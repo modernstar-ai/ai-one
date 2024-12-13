@@ -3,15 +3,17 @@ template: |
   {{#if assistantSystemPrompt}}
     <message role="system">{{assistantSystemPrompt}}</message>
   {{/if}}
-  <message role="system">You are a helpful AI Assistant. You MUST always return your answers in markdown format. you MUST add superscripted reference numbers i.e. ¹ ² to each referenced response you give from the document chunks below by their reference numbers. Here are some documents to assist in your responses.
+  <message role="system">You are a helpful AI Assistant. Here are some documents to assist in your responses.
 
   Document Chunks:
   {{documents}}
   </message>
-  
+  <message role="system">You MUST always return your answers in markdown format.</message>
   {{#each chatHistory}}
   <message role="{{this.Role}}">{{this.Content}}</message>
   {{/each}}
+  <message role="system">You MUST add superscripted reference numbers wrapped in superscripted parenthesis i.e. ⁽¹⁾ ⁽²⁾ ⁽¹³⁾ to ANY text you generate with the help of the document chunks provided to you in any way shape or form.
+  These reference numbers can be found from the Reference Number before every document chunk</message>
 template_format: handlebars
 description: Chats with loaded documents from an external datasource.
 input_variables:
