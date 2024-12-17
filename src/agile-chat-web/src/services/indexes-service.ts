@@ -1,6 +1,6 @@
 // src/services/personaservice.ts
 import axios from '@/error-handling/axiosSetup';
-import { CreateIndexDto, Index } from '@/models/indexmetadata';
+import { CreateIndexDto, Index, IndexReport } from '@/models/indexmetadata';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -59,5 +59,18 @@ export async function deleteIndex(id: string): Promise<boolean> {
   } catch (error) {
     console.error(`Error deleting index with ID ${id}:`, error);
     return false;
+  }
+}
+
+export async function getIndexReport(reportName?: string): Promise<IndexReport | null> {
+ 
+     const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
+     const apiUrl = `${rootApiUrl}/api/AiSearch/indexreport/${reportName}`;
+  try {
+    const response = await axios.get<IndexReport>(apiUrl);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching index report:', error);
+    return null;
   }
 }

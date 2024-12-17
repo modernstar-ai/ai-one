@@ -10,4 +10,7 @@ public interface IAzureAiSearch
     Task CreateIndexerAsync(string indexName);
     Task RunIndexerAsync(string indexName);
     Task DeleteIndexerAsync(string indexName);
+
+    Task<IndexReport> GetIndexReportAsync(string indexName);
+
 }

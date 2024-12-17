@@ -149,4 +149,92 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
         return skillset;
     }
     #endregion
+
+    #region IndexReport
+    public async Task<IndexReport> GetIndexReportAsync(string indexName)
+    {
+        try
+        {
+            // Get index details
+            var index = await indexClient.GetIndexAsync(indexName);
+            var stats = await indexClient.GetIndexStatisticsAsync(indexName);
+
+            // Get indexers and data sources
+            var indexers = await indexerClient.GetIndexersAsync();
+            var relevantIndexers = indexers.Value.Where(i => i.TargetIndexName == indexName).ToList();
+
+            var report = new IndexReport
+            {
+                Name = indexName,
+                DocumentCount = stats.Value.DocumentCount,
+                StorageSize = FormatSize(stats.Value.StorageSize),
+                VectorIndexSize = index.Value.VectorSearch != null ? FormatSize((long)(stats.Value.StorageSize * 0.2)) : "N/A",
+                ReplicasCount = 1,
+                LastRefreshTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                Status = "Active",
+                Indexers = new List<IndexerDetail>(),
+                DataSources = new List<DataSourceDetail>()
+            };
+
+            // Get indexer details
+            foreach (var indexer in relevantIndexers)
+            {
+                var indexerStatus = await indexerClient.GetIndexerStatusAsync(indexer.Name);
+
+                report.Indexers.Add(new IndexerDetail
+                {
+                    Name = indexer.Name,
+                    TargetIndex = indexer.TargetIndexName,
+                    DataSource = indexer.DataSourceName,
+                    Schedule = indexer.Schedule?.Interval.ToString() ?? "Manual",
+                    LastRunTime = indexerStatus.Value.LastResult.EndTime?.ToString("yyyy-MM-dd HH:mm:ss"),
+                    NextRunTime = CalculateNextRunTime(indexerStatus.Value.LastResult.EndTime, indexer.Schedule?.Interval),
+                    DocumentsProcessed = $"{indexerStatus.Value.LastResult?.ItemCount ?? 0} / {indexerStatus.Value.LastResult?.ItemCount ?? 0}",
+                    Status = indexerStatus.Value.Status.ToString()
+                });
+
+                // Get data source details if not already added
+                if (!report.DataSources.Any(ds => ds.Name == indexer.DataSourceName))
+                {
+                    var dataSource = await indexerClient.GetDataSourceConnectionAsync(indexer.DataSourceName);
+
+                    report.DataSources.Add(new DataSourceDetail
+                    {
+                        Name = dataSource.Value.Name,
+                        Type = dataSource.Value.Type.ToString(),
+                        Container = dataSource.Value.Container?.Name ?? "N/A",
+                        ConnectionStatus = indexerStatus.Value.Status.ToString()
+                    });
+                }
+            }
+
+            return report;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to get index report for {{IndexName}}: {indexName} error: {ex.Message}");
+        }
+    }
+
+    private string FormatSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        int order = 0;
+        double size = bytes;
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size /= 1024;
+        }
+        return $"{size:0.##} {sizes[order]}";
+    }
+
+    private string? CalculateNextRunTime(DateTimeOffset? lastRun, TimeSpan? interval)
+    {
+        if (lastRun == null || interval == null) return null;
+        return lastRun.Value.Add(interval.Value).ToString("yyyy-MM-dd HH:mm:ss");
+    }
+
+    #endregion
+
 }
