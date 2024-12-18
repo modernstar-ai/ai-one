@@ -1,6 +1,8 @@
-﻿using System.Net;
+﻿using System.Linq.Dynamic.Core;
+using System.Net;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.DomainAbstractions;
+using Agile.Framework.Common.Dtos;
 using Agile.Framework.Common.EnvironmentVariables;
 using Agile.Framework.CosmosDb.Interfaces;
 using Microsoft.Azure.Cosmos;
@@ -36,6 +38,34 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
         }
 
         return results;
+    }
+    
+    protected async Task<PagedResultsDto<T>> CollectResultsAsync(IQueryable<T> query, QueryDto queryDto)
+    {
+        //Ordering by
+        if (!string.IsNullOrWhiteSpace(queryDto.OrderBy) && queryDto.OrderType != null)
+            query = query.OrderBy(queryDto.OrderBy + " " + queryDto.OrderType);
+        
+        var countResponse = await query.Select(x => x.Id).CountAsync();
+        //paging
+        query = query.Skip(queryDto.Page * queryDto.PageSize).Take(queryDto.PageSize);
+        
+        var results = new List<T>();
+        var feed = query.ToFeedIterator();
+
+        while (feed.HasMoreResults)
+        {
+            foreach (var item in await feed.ReadNextAsync())
+                results.Add(item);
+        }
+
+        return new PagedResultsDto<T>
+        {
+            Page = queryDto.Page,
+            PageSize = queryDto.PageSize,
+            TotalCount = countResponse.Resource,
+            Items = results
+        };
     }
 
     public Task AddItemAsync(T item)

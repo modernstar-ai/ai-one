@@ -2,6 +2,7 @@
 using Agile.Chat.Application.Files.Commands;
 using Agile.Chat.Application.Files.Dtos;
 using Agile.Chat.Application.Files.Queries;
+using Agile.Framework.Common.Dtos;
 using Carter;
 using Carter.OpenApi;
 using MediatR;
@@ -31,9 +32,9 @@ public class Files() : CarterModule("/api")
         files.MapDelete("/{id:guid}", DeleteFileById);
     }
 
-    private async Task<IResult> GetFiles([FromServices] IMediator mediator)
+    private async Task<IResult> GetFiles([FromServices] IMediator mediator, [AsParameters] QueryDto dto)
     {
-        var query = new GetFiles.Query();
+        var query = new GetFiles.Query(dto);
         return await mediator.Send(query);
     }
     

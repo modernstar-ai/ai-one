@@ -9,6 +9,7 @@
     <ItemGroup>
       <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.45.2" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+      <PackageReference Include="System.Linq.Dynamic.Core" Version="1.5.1" />
     </ItemGroup>
 
     <ItemGroup>
