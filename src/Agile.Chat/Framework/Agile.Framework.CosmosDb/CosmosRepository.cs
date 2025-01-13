@@ -52,8 +52,7 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
         
         var countResponse = await query.Select(x => x.Id).CountAsync();
         //paging
-        query = query.Skip(queryDto.Page * queryDto.PageSize).Take(queryDto.PageSize);
-        
+        query = query.Skip((queryDto.Page ?? 0) * (queryDto.PageSize ?? 10)).Take(queryDto.PageSize ?? 10);
         var results = new List<T>();
         FeedIterator<T> feed;
         if (!isQuerying)
@@ -62,9 +61,16 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
         }
         else
         {
-            var fieldName = $"lower{queryDto.OrderBy}";
             var queryText = query.ToQueryDefinition().QueryText;
-            queryText = queryText.Replace($"\"{System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(queryDto.OrderBy!)}\"", $"\"{fieldName}\"");
+            
+            var isString = typeof(T).GetProperty(queryDto.OrderBy!)?.PropertyType == typeof(string);
+            if (isString)
+            {
+                var fieldName = $"lower{queryDto.OrderBy}";
+                queryText = queryText.Replace($"\"{System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(queryDto.OrderBy!)}\"",
+                    $"\"{fieldName}\"");
+            }
+            
             feed = Container.GetItemQueryIterator<T>(new QueryDefinition(queryText));
         }
 
@@ -76,8 +82,8 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
 
         return new PagedResultsDto<T>
         {
-            Page = queryDto.Page,
-            PageSize = queryDto.PageSize,
+            Page = queryDto.Page ?? 0,
+            PageSize = queryDto.PageSize ?? 10,
             TotalCount = countResponse.Resource,
             Items = results
         };

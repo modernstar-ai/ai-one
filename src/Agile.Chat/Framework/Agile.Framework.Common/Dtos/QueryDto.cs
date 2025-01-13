@@ -11,10 +11,11 @@ public class QueryDto
     public string? OrderBy { get; set; }
     [DefaultValue(null)]
     public OrderType? OrderType { get; set; }
-    [DefaultValue(0)] 
-    public int Page { get; set; } = 0;
-    [DefaultValue(10)]
-    public int PageSize { get; set; } = 10;
+    
+    [DefaultValue(null)] 
+    public int? Page { get; set; }
+    [DefaultValue(null)]
+    public int? PageSize { get; set; }
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
