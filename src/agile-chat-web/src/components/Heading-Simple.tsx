@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { fetchChatThread } from '@/services/chatthreadservice';
+import { fetchChatThread, updateChatThread } from '@/services/chatthreadservice';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,14 +20,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-
-interface ThreadConfig {
-  temperature?: number | null;
-  topP?: number | null;
-  maxResponseToken?: number | null;
-  strictness?: number | null;
-  documentLimit?: number;
-}
+import { ChatThread } from '@/types/ChatThread';
+import { toast } from './ui/use-toast';
 
 interface SimpleHeadingProps {
   Title: string;
@@ -46,7 +40,7 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
   //DocumentCount,
   threadId,
 }) => {
-  const [threadConfig, setThreadConfig] = useState<ThreadConfig | null>(null);
+  const [thread, setThread] = useState<ChatThread | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const location = useLocation();
@@ -70,12 +64,19 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      folders: [],
+      folders: thread?.filterOptions.folders ?? [],
     },
   });
 
   const onSave = async (form: FormValues) => {
-    console.log(form);
+    if (thread) {
+      const newThread: ChatThread = { ...thread };
+      newThread.filterOptions.folders = form.folders ?? [];
+      await updateChatThread(newThread);
+      toast({
+        title: 'Saved configuration',
+      });
+    }
   };
 
   const handleSheetOpen = async (open: boolean) => {
@@ -88,17 +89,12 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
           throw new Error('Failed to load thread configuration');
         }
 
-        setThreadConfig({
-          temperature: thread.promptOptions.temperature,
-          topP: thread.promptOptions.topP,
-          maxResponseToken: thread.promptOptions.maxTokens,
-          strictness: thread.filterOptions.strictness,
-          documentLimit: thread.filterOptions.documentLimit,
-        });
+        setThread(thread);
+        form.setValue('folders', thread.filterOptions.folders ?? []);
       } catch (err) {
         console.error('Error fetching thread:', err);
         setError(err instanceof Error ? err.message : 'An error occurred while loading configuration');
-        setThreadConfig(null);
+        setThread(null);
       } finally {
         setIsLoading(false);
       }
@@ -120,13 +116,19 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
       return <div className="text-center py-4 text-sm text-muted-foreground">Loading configuration...</div>;
     }
 
-    if (!threadConfig) {
+    if (!thread) {
       return <div className="text-center py-4 text-sm text-muted-foreground">No configuration available</div>;
     }
 
     return (
       <div className="flex flex-col h-full">
-        {Object.entries(threadConfig).map(([key, value]) => (
+        {Object.entries({
+          temperature: thread.promptOptions.temperature,
+          topP: thread.promptOptions.topP,
+          maxResponseToken: thread.promptOptions.maxTokens,
+          strictness: thread.filterOptions.strictness,
+          documentLimit: thread.filterOptions.documentLimit,
+        }).map(([key, value]) => (
           <Card key={key} className="border-none">
             <CardContent className="p-3">
               <Label className="text-sm font-medium text-muted-foreground">{getConfigLabel(key)}</Label>

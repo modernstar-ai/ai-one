@@ -126,7 +126,8 @@ public static class Chat
                 new AiSearchOptions(userPrompt, embedding)
                 {
                     DocumentLimit = filterOptions.DocumentLimit,
-                    Strictness = filterOptions.Strictness
+                    Strictness = filterOptions.Strictness,
+                    FolderFilters = filterOptions.Folders
                 });
         }
 

@@ -30,14 +30,14 @@ public static class UpdateChatThreadById
             if(string.IsNullOrWhiteSpace(username)) return Results.Forbid();
             
             logger.LogInformation("Getting Chat Thrread Id: {Id}", request.Id);
-            var chatThread = await chatThreadService.GetItemByIdAsync(request.Id.ToString());
+            var chatThread = await chatThreadService.GetItemByIdAsync(request.Id.ToString(), ChatType.Thread.ToString());
             if(chatThread is null) return Results.NotFound();
             if (!chatThread.UserId.Equals(username, StringComparison.InvariantCultureIgnoreCase))
                 return Results.Forbid();
             
             logger.LogInformation("Updating ChatThread old values: {@ChatThread}", chatThread);
             chatThread.Update(request.Name, request.IsBookmarked, request.PromptOptions, request.FilterOptions);
-            await chatThreadService.UpdateItemByIdAsync(chatThread.Id, chatThread);
+            await chatThreadService.UpdateItemByIdAsync(chatThread.Id, chatThread, ChatType.Thread.ToString());
             await chatThreadAuditService.UpdateItemByPayloadIdAsync(chatThread);
             logger.LogInformation("Updated Assistant Successfully: {@Assistant}", chatThread);
             
