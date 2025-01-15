@@ -17,6 +17,7 @@ import { useForm } from 'react-hook-form';
 import { uploadFiles } from '@/services/files-service';
 import { useIndexes } from '@/hooks/use-indexes';
 import { CosmosFile } from '@/models/filemetadata';
+import { Input } from '@/components/ui/input';
 
 const maxFileCount = 25; // Maximum number of files allowed
 
@@ -132,33 +133,20 @@ export default function FileUploadComponent() {
               </FormItem>
             )}
           />
-          {/* 
-                    <FormField
+
+          <FormField
             control={form.control}
             name="folder"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Folder</FormLabel>
                 <FormControl>
-                  <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
-                    <SelectTrigger aria-label="Select Folder">
-                      <SelectValue placeholder="Select Folder" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {folders &&
-                        folders.map((folder, index) => (
-                          <SelectItem key={folder + index} value={folder}>
-                            {folder}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                  <Input {...field} placeholder="Enter folder name (optional)" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          */}
 
           <FormField
             control={form.control}

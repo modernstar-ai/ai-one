@@ -123,7 +123,7 @@ public static class Chat
             }
             
             return await azureAiSearch.SearchAsync(indexName, 
-                new AiSearchOptions(userPrompt, embedding)
+                new AiSearchOptions(userPrompt, indexName, embedding)
                 {
                     DocumentLimit = filterOptions.DocumentLimit,
                     Strictness = filterOptions.Strictness,

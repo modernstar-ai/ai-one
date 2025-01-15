@@ -158,6 +158,7 @@ export default function FileList() {
                 <TableHead>Size</TableHead>
                 <TableHead>Submitted On</TableHead>
                 <TableHead>Container</TableHead>
+                <TableHead>Folder</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -175,6 +176,7 @@ export default function FileList() {
                   <TableCell>{formatBytesToKB(file.size)}</TableCell>
                   <TableCell>{file.createdDate}</TableCell>
                   <TableCell>{file.indexName}</TableCell>
+                  <TableCell>{file.folderName}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

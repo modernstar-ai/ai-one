@@ -7,7 +7,7 @@ using Azure.Search.Documents.Models;
 
 namespace Agile.Framework.AzureAiSearch.Models;
 
-public class AiSearchOptions(string userPrompt, ReadOnlyMemory<float> vector)
+public class AiSearchOptions(string userPrompt, string indexName, ReadOnlyMemory<float> vector)
 {
     public int DocumentLimit { get; init; } = 6;
     public double? Strictness { get; init; }
@@ -62,6 +62,6 @@ public class AiSearchOptions(string userPrompt, ReadOnlyMemory<float> vector)
         var property = typeof(AzureSearchDocument).GetProperty(nameof(AzureSearchDocument.Url))!
             .GetCustomAttribute<JsonPropertyNameAttribute>()!
             .Name;
-        return string.Join(" or ", cleanFilters.Select(folder => $"search.ismatch('\"/{Constants.BlobContainerName}/{folder}\"~', '{property}')"));
+        return string.Join(" or ", cleanFilters.Select(folder => $"search.ismatch('\"/{Constants.BlobContainerName}/{indexName}/{folder}\"~', '{property}', null, 'any')"));
     }
 }
