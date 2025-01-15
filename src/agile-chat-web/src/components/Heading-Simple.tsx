@@ -15,6 +15,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useLocation } from 'react-router-dom';
+import { FoldersFilterInput } from './ui-extended/folder-filter';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
 interface ThreadConfig {
   temperature?: number | null;
@@ -30,6 +35,10 @@ interface SimpleHeadingProps {
   DocumentCount: number;
   threadId?: string;
 }
+
+const formSchema = z.object({
+  folders: z.array(z.string()),
+});
 
 const SimpleHeading: React.FC<SimpleHeadingProps> = ({
   Title,
@@ -55,6 +64,18 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
 
     const trimmedValue = value.trim();
     return trimmedValue || 'Not set';
+  };
+
+  type FormValues = z.infer<typeof formSchema>;
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      folders: [],
+    },
+  });
+
+  const onSave = async (form: FormValues) => {
+    console.log(form);
   };
 
   const handleSheetOpen = async (open: boolean) => {
@@ -103,14 +124,47 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
       return <div className="text-center py-4 text-sm text-muted-foreground">No configuration available</div>;
     }
 
-    return Object.entries(threadConfig).map(([key, value]) => (
-      <Card key={key} className="border-none">
-        <CardContent className="p-3">
-          <Label className="text-sm font-medium text-muted-foreground">{getConfigLabel(key)}</Label>
-          <div className="mt-1 text-sm">{formatValue(value)}</div>
-        </CardContent>
-      </Card>
-    ));
+    return (
+      <div className="flex flex-col h-full">
+        {Object.entries(threadConfig).map(([key, value]) => (
+          <Card key={key} className="border-none">
+            <CardContent className="p-3">
+              <Label className="text-sm font-medium text-muted-foreground">{getConfigLabel(key)}</Label>
+              <div className="mt-1 text-sm">{formatValue(value)}</div>
+            </CardContent>
+          </Card>
+        ))}
+
+        <Form {...form}>
+          <div className="overflow-auto pb-2">
+            <FormField
+              control={form.control}
+              name="folders"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Folder Filters</FormLabel>
+                  <FormControl>
+                    <FoldersFilterInput {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="mt-auto justify-between">
+            <Button
+              type="submit"
+              disabled={form.formState.isSubmitting}
+              onClick={form.handleSubmit(onSave)}
+              aria-label="Save Assistant"
+            >
+              {form.formState.isSubmitting ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </Form>
+      </div>
+    );
   };
 
   return (
@@ -127,11 +181,11 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
                 <Settings2 className="h-4 w-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent>
+            <SheetContent className="flex flex-col h-full">
               <SheetHeader>
                 <SheetTitle>Chat Configuration</SheetTitle>
               </SheetHeader>
-              <div className="mt-6 space-y-4">{renderContent()}</div>
+              <div className="overflow-auto grow">{renderContent()}</div>
             </SheetContent>
           </Sheet>
         )}
