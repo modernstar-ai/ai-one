@@ -13,6 +13,7 @@ import ConnectToApi from '../pages/Tools/connecttoapi';
 import LoginPage from '../pages/Login/login';
 import IndexesPage from '@/pages/Indexes/indexesPage';
 import IndexForm from '@/pages/Indexes/indexForm';
+import IndexReport from '@/pages/Indexes/indexReport';
 import { ProtectedRoute } from './protected-route';
 import { UserRole } from '@/authentication/user-roles';
 import ChatPage from '@/pages/Chat';
@@ -106,6 +107,14 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute role={UserRole.ContentManager}>
           <IndexesPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/index-report"
+      element={
+        <ProtectedRoute role={UserRole.ContentManager}>
+          <IndexReport />
         </ProtectedRoute>
       }
     />
