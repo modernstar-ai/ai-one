@@ -26,6 +26,7 @@ import { fetchTools } from '@/services/toolservice';
 //import { Tool } from '@/types/Tool';
 import { useIndexes } from '@/hooks/use-indexes';
 import { Loader2 } from 'lucide-react';
+import { FoldersFilterInput } from '@/components/ui-extended/folder-filter';
 //import { enablePreviewFeatures } from '@/globals';
 
 // Define the AssistantPromptOptions schema
@@ -42,6 +43,7 @@ const AssistantFilterOptionsSchema = z.object({
   indexName: z.string(),
   documentLimit: z.number().int(),
   strictness: z.number().min(-1).max(1).optional(),
+  folders: z.array(z.string()),
 });
 
 // Define the main schema
@@ -88,6 +90,7 @@ export default function AssistantForm() {
         group: undefined,
         documentLimit: 5,
         strictness: undefined,
+        folders: [],
       },
     },
   });
@@ -125,6 +128,7 @@ export default function AssistantForm() {
             documentLimit: file.filterOptions.documentLimit,
             group: file.filterOptions.group ?? undefined,
             strictness: file.filterOptions.strictness ?? undefined,
+            folders: file.filterOptions.folders ?? [],
           },
         });
       } else {
@@ -247,7 +251,7 @@ export default function AssistantForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value={AssistantType.Chat} >Chat</SelectItem>
+                          <SelectItem value={AssistantType.Chat}>Chat</SelectItem>
                           <SelectItem value={AssistantType.Search}>Search</SelectItem>
                         </SelectContent>
                       </Select>
@@ -328,31 +332,19 @@ export default function AssistantForm() {
                   )}
                 />
 
-                {/* 
-                    
-                    <FormField
-                      control={form.control}
-                      name="folder"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Folders</FormLabel>
-                          <FormControl>
-                            <div>
-                              <MultiSelectInput
-                                className="w-full"
-                                items={folders}
-                                selectedItems={field.value}
-                                {...field}
-                                onChange={(values: string[]) => field.onChange(values)}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    */}
-
+                <FormField
+                  control={form.control}
+                  name="filterOptions.folders"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Folder Filters</FormLabel>
+                      <FormControl>
+                        <FoldersFilterInput {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="filterOptions.documentLimit"
@@ -429,7 +421,7 @@ export default function AssistantForm() {
                           max={1}
                           step={0.01}
                           onValueChange={(value) => field.onChange(value[0])}
-                           aria-label="topP slider"
+                          aria-label="topP slider"
                         />
                       </FormControl>
                       <FormMessage />
@@ -523,7 +515,12 @@ export default function AssistantForm() {
                 />
 
                 <div className="flex justify-between mt-2">
-                  <Button type="submit" disabled={isSubmitting} onClick={form.handleSubmit(onSubmit)} aria-label="Save Assistant">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    onClick={form.handleSubmit(onSubmit)}
+                    aria-label="Save Assistant"
+                  >
                     {isSubmitting ? 'Submitting...' : fileId ? 'Update' : 'Create'}
                   </Button>
                 </div>

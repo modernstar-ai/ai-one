@@ -34,4 +34,5 @@ export interface AssistantFilterOptions {
   indexName: string;
   documentLimit: number;
   strictness?: number;
+  folders: string[];
 }
