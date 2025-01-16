@@ -18,11 +18,19 @@ public class AiSearch() : CarterModule("/api")
 
         //GET
         aiSearch.MapGet("/{assistantId:guid}/{chunkId}", GetChunkById);
+        aiSearch.MapGet("/indexreport/{indexName}", GetIndexReport);
     }
 
     private async Task<IResult> GetChunkById([FromServices] IMediator mediator, Guid assistantId, string chunkId)
     {
         var query = new GetChunkById.Query(assistantId, chunkId);
+        var result = await mediator.Send(query);
+        return result;
+    }
+
+    private async Task<IResult> GetIndexReport([FromServices] IMediator mediator, string indexName)
+    {
+        var query = new GetIndexReport.Query(indexName);
         var result = await mediator.Send(query);
         return result;
     }
