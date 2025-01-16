@@ -17,8 +17,8 @@ export type CreateIndexDto = {
 export interface IndexReportDto {
   
   searchIndexStatistics? : SearchIndexStatistics;
-  indexers?: IndexerDetail[];
-  dataSources?: DataSourceDetail[];
+  indexer?: IndexerDetail;
+  dataSource?: DataSourceDetail;
 }
 
 export interface SearchIndexStatistics {

@@ -14,7 +14,6 @@ import {
     HardDrive,
     BarChart,
     Activity,
-    CircleDot,
     LucideIcon 
 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
@@ -271,7 +270,7 @@ const IndexReportComponent: React.FC = () => {
                 <StatsCard
                     icon={Clock}
                     title="Last Refresh"
-                    value={report.searchIndexStatistics?.lastRefreshTime || report.indexers?.[0]?.lastRunTime || 'N/A'}
+                    value={report.searchIndexStatistics?.lastRefreshTime || report.indexer?.lastRunTime || 'N/A'}
                 />
                 <StatsCard
                     icon={BarChart}
@@ -288,7 +287,7 @@ const IndexReportComponent: React.FC = () => {
             {/* Indexers Section */}
             <Card className="hover:shadow-lg transition-shadow duration-200">
                 <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-lg font-medium">Available Indexers</CardTitle>
+                    <CardTitle className="text-lg font-medium">Available Indexer</CardTitle>
                     <button
                         onClick={loadReport}
                         className="p-2 hover:bg-primary/10 rounded-full transition-colors"
@@ -313,28 +312,22 @@ const IndexReportComponent: React.FC = () => {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                            {report.indexers?.map((indexer) => {
-                                        const nextRunTime = calculateNextRunTime(indexer.lastRunTime, indexer.schedule);
-                                        
-                                        return (
-                                            <TableRow key={indexer.name} className="hover:bg-muted/50 transition-colors">
-                                                <TableCell className="font-medium">{indexer.name || 'N/A'}</TableCell>
-                                                <TableCell>{indexer.targetIndex || 'N/A'}</TableCell>
-                                                <TableCell>{indexer.dataSource || 'N/A'}</TableCell>
-                                                <TableCell>{indexer.schedule || 'N/A'}</TableCell>
-                                                <TableCell>
-                                                {indexer.lastRunTime ? new Date(indexer.lastRunTime).toLocaleDateString() : 'N/A'}
-                                                </TableCell>
-                                                <TableCell>{nextRunTime || 'N/A'}</TableCell>
-                                                <TableCell>{indexer.documentsProcessed || 'N/A'}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant={getBadgeVariant(indexer.status)}>
-                                                        {indexer.status || 'Unknown'}
-                                                    </Badge>
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
+                            <TableRow key={report.indexer?.name} className="hover:bg-muted/50 transition-colors">
+                                <TableCell className="font-medium">{report.indexer?.name || 'N/A'}</TableCell>
+                                <TableCell>{report.indexer?.targetIndex || 'N/A'}</TableCell>
+                                <TableCell>{report.indexer?.dataSource || 'N/A'}</TableCell>
+                                <TableCell>{report.indexer?.schedule || 'N/A'}</TableCell>
+                                <TableCell>
+                                {report.indexer?.lastRunTime ? new Date(report.indexer?.lastRunTime).toLocaleDateString() : 'N/A'}
+                                </TableCell>
+                                <TableCell>{ calculateNextRunTime(report.indexer?.lastRunTime, report.indexer?.schedule) || 'N/A'}</TableCell>
+                                <TableCell>{report.indexer?.documentsProcessed || 'N/A'}</TableCell>
+                                <TableCell>
+                                    <Badge variant={getBadgeVariant(report.indexer?.status)}>
+                                        {report.indexer?.status || 'Unknown'}
+                                    </Badge>
+                                </TableCell>
+                            </TableRow>
                             </TableBody>
                         </Table>
                     </div>
@@ -344,7 +337,7 @@ const IndexReportComponent: React.FC = () => {
             {/* Data Sources Section */}
             <Card className="hover:shadow-lg transition-shadow duration-200">
                 <CardHeader>
-                    <CardTitle className="text-lg font-medium">Available Data Sources</CardTitle>
+                    <CardTitle className="text-lg font-medium">Available Data Source</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto">
@@ -354,22 +347,14 @@ const IndexReportComponent: React.FC = () => {
                                     <TableHead>Name</TableHead>
                                     <TableHead>Type</TableHead>
                                     <TableHead>Container/Database</TableHead>
-                                    <TableHead>Connection Status</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {report.dataSources?.map((dataSource) => (
-                                    <TableRow key={dataSource.name} className="hover:bg-muted/50 transition-colors">
-                                        <TableCell className="font-medium">{dataSource.name || 'N/A'}</TableCell>
-                                        <TableCell>{dataSource.type || 'N/A'}</TableCell>
-                                        <TableCell>{dataSource.container || 'N/A'}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={getBadgeVariant(dataSource.connectionStatus)}>
-                                                {dataSource.connectionStatus || 'Unknown'}
-                                            </Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                <TableRow key={report.dataSource?.name} className="hover:bg-muted/50 transition-colors">
+                                    <TableCell className="font-medium">{report.dataSource?.name || 'N/A'}</TableCell>
+                                    <TableCell>{report.dataSource?.type || 'N/A'}</TableCell>
+                                    <TableCell>{report.dataSource?.container || 'N/A'}</TableCell>
+                                </TableRow>
                             </TableBody>
                         </Table>
                     </div>
