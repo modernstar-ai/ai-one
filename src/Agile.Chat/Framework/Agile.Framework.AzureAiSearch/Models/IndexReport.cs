@@ -26,6 +26,5 @@ namespace Agile.Framework.AzureAiSearch.Models
         public string? Name { get; set; }
         public string? Type { get; set; }
         public string? Container { get; set; }
-        public string? ConnectionStatus { get; set; }
     }
 }

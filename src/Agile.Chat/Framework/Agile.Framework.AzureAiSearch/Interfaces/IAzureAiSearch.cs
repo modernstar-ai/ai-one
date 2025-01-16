@@ -12,6 +12,6 @@ public interface IAzureAiSearch
     Task RunIndexerAsync(string indexName);
     Task DeleteIndexerAsync(string indexName);
     Task<SearchIndexStatistics> GetIndexStatisticsByNameAsync(string indexName);
-    Task<List<IndexerDetail>> GetIndexersByIndexNameAsync(string indexName);
-    Task<List<DataSourceDetail>> GetDataSourceByNameAsync(string indexName);
+    Task<IndexerDetail?> GetIndexersByIndexNameAsync(string indexName);
+    Task<DataSourceDetail?> GetDataSourceByNameAsync(string indexName);
 }

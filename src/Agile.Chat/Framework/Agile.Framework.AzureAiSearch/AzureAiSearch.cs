@@ -1,4 +1,4 @@
-﻿using Agile.Framework.AzureAiSearch.AiSearchConstants;
+using Agile.Framework.AzureAiSearch.AiSearchConstants;
 using Agile.Framework.AzureAiSearch.Interfaces;
 using Agile.Framework.AzureAiSearch.Models;
 using Agile.Framework.Common.Attributes;
@@ -168,35 +168,28 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
         }
     }
 
-    public async Task<List<IndexerDetail>> GetIndexersByIndexNameAsync(string indexName)
+    public async Task<IndexerDetail?> GetIndexersByIndexNameAsync(string indexName)
     {
         try
         {
-            // Get indexers 
+            var indexer = await indexerClient.GetIndexerAsync(SearchConstants.IndexerName(indexName));
 
-            List<IndexerDetail> indexersDetails = new();
-
-            var indexers = await indexerClient.GetIndexersAsync();
- 
-            var indexer = indexerClient.GetIndexerAsync(SearchConstants.IndexerName(indexName)).Result.Value;
-
-            if (indexer is SearchIndexer)
+            if (indexer.HasValue)
             {
-                var indexerStatus = await indexerClient.GetIndexerStatusAsync(indexer.Name);
+                var indexerStatus = await indexerClient.GetIndexerStatusAsync(indexer.Value.Name);
 
-                indexersDetails.Add(new IndexerDetail
+                return new IndexerDetail
                 {
-                    Name = indexer.Name,
-                    TargetIndex = indexer.TargetIndexName,
-                    DataSource = indexer.DataSourceName,
-                    Schedule = indexer.Schedule?.Interval.ToString() ?? "Manual",
+                    Name = indexer.Value.Name,
+                    TargetIndex = indexer.Value.TargetIndexName,
+                    DataSource = indexer.Value.DataSourceName,
+                    Schedule = indexer.Value.Schedule?.Interval.ToString() ?? "Manual",
                     LastRunTime = indexerStatus.Value.LastResult.EndTime?.DateTime,
                     DocumentsProcessed = indexerStatus.Value.LastResult?.ItemCount,
                     Status = indexerStatus.Value.Status.ToString()
-                });
+                };
             }
-            return indexersDetails;
-
+            return null;
         }
         catch (Exception ex)
         {
@@ -205,36 +198,22 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
     }
 
 
-    public async Task<List<DataSourceDetail>> GetDataSourceByNameAsync(string indexName)
+    public async Task<DataSourceDetail?> GetDataSourceByNameAsync(string indexName)
     {
         try
-        { 
-            List<DataSourceDetail> dataSourcesDetails = new();
+        {
+            var datasource = await indexerClient.GetDataSourceConnectionAsync(SearchConstants.DatasourceName(indexName));
 
-            // Get indexers and data sources
-            var indexers = await indexerClient.GetIndexersAsync();
-            
-            var indexer = indexerClient.GetIndexerAsync(SearchConstants.IndexerName(indexName)).Result.Value;
-
-            if (indexer is SearchIndexer)
+            if (datasource.HasValue)
             {
-                var indexerStatus = await indexerClient.GetIndexerStatusAsync(indexer.Name);
-
-             
-                if (!dataSourcesDetails.Any(ds => ds.Name == indexer.DataSourceName))
+                return new DataSourceDetail
                 {
-                    var dataSource = await indexerClient.GetDataSourceConnectionAsync(SearchConstants.DatasourceName(indexName));
-
-                    dataSourcesDetails.Add(new DataSourceDetail
-                    {
-                        Name = dataSource.Value.Name,
-                        Type = dataSource.Value.Type.ToString(),
-                        Container = dataSource.Value.Container?.Name ?? "N/A",
-                        ConnectionStatus = indexerStatus.Value.Status.ToString()
-                    });
-                }
+                    Name = datasource.Value.Name,
+                    Type = datasource.Value.Type.ToString(),
+                    Container = datasource.Value.Container?.Name ?? "N/A",
+                };
             }
-            return dataSourcesDetails;
+            return null;
         }
         catch (Exception ex)
         {
