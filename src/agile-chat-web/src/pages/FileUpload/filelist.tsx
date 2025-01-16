@@ -31,6 +31,22 @@ export default function FileList() {
     setSortedFiles(sorted);
   }, [files]);
 
+  // Sync "Select All" state with selectedFiles and sortedFiles
+  useEffect(() => {
+    setSelectAll(sortedFiles.length > 0 && selectedFiles.length === sortedFiles.length);
+  }, [selectedFiles, sortedFiles]);
+
+  //Function to select all files
+  const [selectAll, setSelectAll] = useState(false); // State to track "Select All"
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    if (checked) {
+      setSelectedFiles(sortedFiles.map((file) => file.id)); // Use sortedFiles instead of files
+    } else {
+      setSelectedFiles([]); // Deselect all
+    }
+  };
+
   // Function to toggle the selection of files
   const toggleFileSelection = (fileId: string) => {
     setSelectedFiles((prev) => (prev.includes(fileId) ? prev.filter((id) => id !== fileId) : [...prev, fileId]));
@@ -57,9 +73,20 @@ export default function FileList() {
       'text/plain': 'text/txt',
       'application/msword': 'application/msword',
       'application/vnd.ms-excel': 'application/xls',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'application/ppt',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'application/ppt'
     };
     return mimeTypeMappings[contentType] || contentType;
+  }
+
+  // Helper function to format the date
+  function formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
   }
 
   // Handle Delete Files
@@ -131,8 +158,7 @@ export default function FileList() {
                 size="icon"
                 aria-label="Refresh"
                 onClick={handleRefresh}
-                disabled={loading || isProcessing}
-              >
+                disabled={loading || isProcessing}>
                 <RefreshCw className="h-4 w-4" />
               </Button>
               <Button
@@ -140,8 +166,7 @@ export default function FileList() {
                 size="icon"
                 aria-label="Trash"
                 onClick={handleDeleteSelected}
-                disabled={selectedFiles.length === 0}
-              >
+                disabled={selectedFiles.length === 0}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
@@ -151,7 +176,11 @@ export default function FileList() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]" aria-label="Select row">
-                  <span className="sr-only">Select</span>
+                  <Checkbox
+                    checked={selectAll}
+                    onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                    aria-label="Select all files"
+                  />
                 </TableHead>
                 <TableHead>FileName</TableHead>
                 <TableHead>ContentType</TableHead>
@@ -173,7 +202,7 @@ export default function FileList() {
                   <TableCell>{removeFileExtension(file.name)}</TableCell>
                   <TableCell>{simplifyContentType(file.contentType || 'unknown')}</TableCell>
                   <TableCell>{formatBytesToKB(file.size)}</TableCell>
-                  <TableCell>{file.createdDate}</TableCell>
+                  <TableCell>{formatDate(file.createdDate)}</TableCell>
                   <TableCell>{file.indexName}</TableCell>
                 </TableRow>
               ))}
