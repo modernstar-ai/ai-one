@@ -177,10 +177,8 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
             List<IndexerDetail> indexersDetails = new();
 
             var indexers = await indexerClient.GetIndexersAsync();
-
-            string indexerName = SearchConstants.IndexerName(indexName);
-
-            var indexer = indexers.Value.Where(i => i.Name == indexerName).FirstOrDefault();
+ 
+            var indexer = indexerClient.GetIndexerAsync(SearchConstants.IndexerName(indexName)).Result.Value;
 
             if (indexer is SearchIndexer)
             {
@@ -216,18 +214,16 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
             // Get indexers and data sources
             var indexers = await indexerClient.GetIndexersAsync();
             
-            string indexerName = SearchConstants.IndexerName(indexName);
-
-            var indexer = indexers.Value.Where(i => i.Name == indexerName).FirstOrDefault();
+            var indexer = indexerClient.GetIndexerAsync(SearchConstants.IndexerName(indexName)).Result.Value;
 
             if (indexer is SearchIndexer)
             {
-                var indexerStatus = await indexerClient.GetIndexerStatusAsync(indexerName);
+                var indexerStatus = await indexerClient.GetIndexerStatusAsync(indexer.Name);
 
-                // Get data source details if not already added
+             
                 if (!dataSourcesDetails.Any(ds => ds.Name == indexer.DataSourceName))
                 {
-                    var dataSource = await indexerClient.GetDataSourceConnectionAsync(indexer.DataSourceName);
+                    var dataSource = await indexerClient.GetDataSourceConnectionAsync(SearchConstants.DatasourceName(indexName));
 
                     dataSourcesDetails.Add(new DataSourceDetail
                     {
