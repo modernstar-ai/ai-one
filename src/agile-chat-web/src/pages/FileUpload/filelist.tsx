@@ -23,16 +23,10 @@ export default function FileList() {
 	// Sorting logic
 	useEffect(() => {
 		const sorted = [...files].sort((a, b) => {
-			// Sort by container name (indexName) first
-			const containerA = a.indexName?.toLowerCase() ?? ''; // Convert to lowercase for case-insensitive sorting
-			const containerB = b.indexName?.toLowerCase() ?? '';
-			if (containerA < containerB) return -1;
-			if (containerA > containerB) return 1;
+			const indexNameA = a.indexName ?? ''; // Use empty string if indexName is undefined
+			const indexNameB = b.indexName ?? '';
 
-			// If container names are the same, sort by file name
-			const fileNameA = a.name?.toLowerCase() ?? '';
-			const fileNameB = b.name?.toLowerCase() ?? '';
-			return fileNameA.localeCompare(fileNameB); // Use localeCompare for string sorting
+			return indexNameA.localeCompare(indexNameB);
 		});
 		setSortedFiles(sorted);
 	}, [files]);
