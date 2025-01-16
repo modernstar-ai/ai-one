@@ -18,10 +18,10 @@ import {
     LucideIcon 
 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
-import { IndexReport } from '@/models/indexmetadata';
+import { IndexReportDto } from '@/models/indexmetadata';
 import { getIndexReport } from '@/services/indexes-service';
 
-const getBadgeVariant = (status: string | number | undefined) => {
+const getBadgeVariant = (status: string | number | undefined | null) => {
     if (!status) return 'outline';
     switch (status.toString().toLowerCase()) {
         case 'active':
@@ -43,10 +43,50 @@ const getBadgeVariant = (status: string | number | undefined) => {
     }
 };
 
+const formatFileSize = (bytesStr: string | number | null): string => {
+    // Handle null, undefined, or empty string
+    if (!bytesStr) return "0 B";
+    
+    // Handle string input
+    const trimmedStr = String(bytesStr).trim();
+    if (trimmedStr === "") return "0 B";
+    
+    // Try to parse the number, handling scientific notation
+    let bytes: number;
+    try {
+        bytes = typeof bytesStr === 'number' ? bytesStr : Number(trimmedStr);
+    } catch {
+        return "0 B";
+    }
+    
+    // Handle invalid numbers
+    if (isNaN(bytes) || bytes < 0) return "0 B";
+    if (bytes === 0) return "0 B";
+    
+    // Define size units
+    const sizes: string[] = ["B", "KB", "MB", "GB", "TB", "PB"];
+    
+    // Find the appropriate unit
+    const order = Math.floor(Math.log(bytes) / Math.log(1024));
+    
+    // Handle numbers too large for our units
+    if (order >= sizes.length) {
+        return "Size too large";
+    }
+    
+    // Calculate the final size
+    const size = bytes / Math.pow(1024, order);
+    
+    // Format with appropriate decimal places
+    // Use 0 decimals for bytes, up to 2 for larger units
+    const decimals = order === 0 ? 0 : 2;
+    return `${size.toFixed(decimals).replace(/\.?0+$/, '')} ${sizes[order]}`;
+};
+
 interface StatsCardProps {
     icon: LucideIcon;
     title: string;
-    value: string | number | undefined;
+    value: string | number | undefined | null;
     className?: string;
 }
 
@@ -90,7 +130,7 @@ const StatusCard: React.FC<StatsCardProps> = ({ icon: Icon, title, value, classN
 const IndexReportComponent: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [report, setReport] = useState<IndexReport | null>(null);
+    const [report, setReport] = useState<IndexReportDto | null>(null);
     const [refreshing, setRefreshing] = useState(false);
     const [searchParams] = useSearchParams();
     const indexName = searchParams.get('indexname');
@@ -166,37 +206,38 @@ const IndexReportComponent: React.FC = () => {
                 <StatsCard
                     icon={FileText}
                     title="Name"
-                    value={report.name || 'N/A'}
+                    value={report.searchIndexStatistics?.name || indexName}
                 />
                 <StatsCard
                     icon={Files}
                     title="Total Documents"
-                    value={report.documentCount?.toLocaleString() || 'N/A'}
+                    value={report.searchIndexStatistics?.documentCount?.toLocaleString() || 'N/A'}
+                    
                 />
                 <StatsCard
                     icon={HardDrive}
                     title="Storage Size"
-                    value={report.storageSize || 'N/A'}
+                    value={report?.searchIndexStatistics?.storageSize ? formatFileSize(report.searchIndexStatistics.storageSize) : 'N/A'}
                 />
                 <StatsCard
                     icon={Database}
                     title="Vector Index Size"
-                    value={report.vectorIndexSize || 'N/A'}
+                    value={report.searchIndexStatistics?.vectorIndexSize || 'N/A'}
                 />
                 <StatsCard
                     icon={Clock}
                     title="Last Refresh"
-                    value={report.lastRefreshTime || 'N/A'}
+                    value={report.searchIndexStatistics?.lastRefreshTime || 'N/A'}
                 />
                 <StatsCard
                     icon={BarChart}
                     title="Replicas Count"
-                    value={report.replicasCount || 'N/A'}
+                    value={report.searchIndexStatistics?.replicasCount || '1'}
                 />
                 <StatusCard
                     icon={Activity}
                     title="Status"
-                    value={report.status || 'N/A'}
+                    value={report.searchIndexStatistics?.status || 'Active'}
                 />
             </div>
 

@@ -14,7 +14,15 @@ export type CreateIndexDto = {
 };
 
 
-export interface IndexReport {
+export interface IndexReportDto {
+  
+  searchIndexStatistics? : SearchIndexStatistics;
+  indexers?: IndexerDetail[];
+  dataSources?: DataSourceDetail[];
+}
+
+export interface SearchIndexStatistics {
+
   name?: string;
   documentCount?: number;
   storageSize?: string;
@@ -22,8 +30,6 @@ export interface IndexReport {
   replicasCount?: number;
   lastRefreshTime?: string;
   status?: string;
-  indexers?: IndexerDetail[];
-  dataSources?: DataSourceDetail[];
 }
 
 export interface IndexerDetail {

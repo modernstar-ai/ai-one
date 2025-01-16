@@ -1,8 +1,11 @@
 ﻿using System.Net;
+using Agile.Chat.Application.AiSearch.Dtos;
 using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.Indexes.Services;
 using Agile.Framework.Authentication.Interfaces;
 using Agile.Framework.AzureAiSearch.Interfaces;
+using Agile.Framework.AzureAiSearch.Models;
+using Azure.Search.Documents.Indexes.Models;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -18,8 +21,15 @@ public static class GetIndexReport
     {
         public async Task<IResult> Handle(Query request, CancellationToken cancellationToken)
         {
-            var indexes = await azureAiSearch.GetIndexReportAsync(request.indexName);
-            return Results.Ok(indexes);
+            IndexReportDto indexReport = new IndexReportDto();
+
+            indexReport.SearchIndexStatistics = await azureAiSearch.GetIndexStatisticsByNameAsync(request.indexName);
+
+            indexReport.Indexers = await azureAiSearch.GetIndexersByIndexNameAsync(request.indexName);
+
+            indexReport.DataSources = await azureAiSearch.GetDataSourceByNameAsync(request.indexName);
+
+            return Results.Ok(indexReport);
         }
     }
 

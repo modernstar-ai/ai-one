@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Azure.Search.Documents.Indexes.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,18 +8,6 @@ using System.Threading.Tasks;
 namespace Agile.Framework.AzureAiSearch.Models
 {
 
-    public class IndexReport
-    {
-        public string? Name { get; set; }
-        public long? DocumentCount { get; set; }
-        public string? StorageSize { get; set; }
-        public string? VectorIndexSize { get; set; }
-        public int? ReplicasCount { get; set; }
-        public string? LastRefreshTime { get; set; }
-        public string? Status { get; set; }
-        public List<IndexerDetail>? Indexers { get; set; }
-        public List<DataSourceDetail>? DataSources { get; set; }
-    }
 
     public class IndexerDetail
     {
