@@ -106,7 +106,7 @@ export default function FileList() {
 			alert('Selected files deleted successfully.');
 			// Clear selected files
 			setSelectedFiles([]);
-			// Re-fetch files to update UIwe
+			// Re-fetch files to update UI
 			await refetch();
 		} catch (error) {
 			console.error('Error deleting files:', error);
