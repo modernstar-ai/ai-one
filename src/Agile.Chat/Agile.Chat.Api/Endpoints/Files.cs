@@ -36,31 +36,31 @@ public class Files() : CarterModule("/api")
         var query = new GetFiles.Query();
         return await mediator.Send(query);
     }
-    
+
     private async Task<IResult> Webhook([FromServices] IMediator mediator, [FromBody] JsonNode dto)
     {
         var command = new FileWebhook.Command(dto);
         return await mediator.Send(command);
     }
-    
+
     private async Task<IResult> UploadFile([FromServices] IMediator mediator, [FromForm] UploadFileDto dto)
     {
         var command = new UploadFile.Command(dto.File, dto.IndexName, dto.FolderName);
         return await mediator.Send(command);
     }
-    
+
     private async Task<IResult> DownloadFile([FromServices] IMediator mediator, [FromBody] DownloadFileDto dto)
     {
         var command = new DownloadFileByUrl.Command(dto.Url);
         return await mediator.Send(command);
     }
-    
+
     private async Task<IResult> GenerateSharedLinkByUrl([FromServices] IMediator mediator, [FromBody] DownloadFileDto dto)
     {
         var command = new GenerateSharedLinkByUrl.Command(dto.Url);
         return await mediator.Send(command);
     }
-    
+
     private async Task<IResult> DeleteFileById([FromServices] IMediator mediator, Guid id)
     {
         var command = new DeleteFileById.Command(id);
