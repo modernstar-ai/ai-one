@@ -15,9 +15,9 @@ namespace Agile.Framework.AzureAiSearch.Models
         public string? TargetIndex { get; set; }
         public string? DataSource { get; set; }
         public string? Schedule { get; set; }
-        public string? LastRunTime { get; set; }
-        public string? NextRunTime { get; set; }
-        public string? DocumentsProcessed { get; set; }
+        public DateTime? LastRunTime { get; set; }
+        public int? DocumentsProcessed { get; set; }
+
         public string? Status { get; set; }
     }
 

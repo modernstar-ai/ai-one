@@ -43,6 +43,50 @@ const getBadgeVariant = (status: string | number | undefined | null) => {
     }
 };
 
+
+const calculateNextRunTime = (lastRunTime?: Date , schedule?: string): string | null => {
+    if (!lastRunTime || !schedule || schedule === 'Manual') {
+        return null;
+    }
+
+    try {
+        const lastRun = new Date(lastRunTime);
+        
+        // Parse schedule interval (assuming format like "PT1H" for 1 hour)
+        const intervalMatch = schedule.match(/PT(\d+)([HMS])/);
+        if (!intervalMatch) {
+            return null;
+        }
+
+        const [, amount, unit] = intervalMatch;
+        const value = parseInt(amount);
+        
+        const nextRun = new Date(lastRun);
+        
+        switch (unit) {
+            case 'H':
+                nextRun.setHours(nextRun.getHours() + value);
+                break;
+            case 'M':
+                nextRun.setMinutes(nextRun.getMinutes() + value);
+                break;
+            case 'S':
+                nextRun.setSeconds(nextRun.getSeconds() + value);
+                break;
+            default:
+                return null;
+        }
+
+        return nextRun.toISOString()
+            .replace('T', ' ')
+            .replace(/\.\d{3}Z$/, '');
+    } catch (error) {
+        console.error('Error calculating next run time:', error);
+        return null;
+    }
+};
+
+
 const formatFileSize = (bytesStr: string | number | null): string => {
     // Handle null, undefined, or empty string
     if (!bytesStr) return "0 B";
@@ -86,7 +130,7 @@ const formatFileSize = (bytesStr: string | number | null): string => {
 interface StatsCardProps {
     icon: LucideIcon;
     title: string;
-    value: string | number | undefined | null;
+    value: string | number | Date | undefined | null;
     className?: string;
 }
 
@@ -99,7 +143,7 @@ const StatsCard: React.FC<StatsCardProps> = ({ icon: Icon, title, value, classNa
                 </div>
                 <div>
                     <p className="text-sm font-medium text-muted-foreground">{title}</p>
-                    <h3 className="text-xl font-bold mt-1">{value}</h3>
+                    <h3 className="text-xl font-bold mt-1">{value?.toString()}</h3>
                 </div>
             </div>
         </CardContent>
@@ -116,9 +160,9 @@ const StatusCard: React.FC<StatsCardProps> = ({ icon: Icon, title, value, classN
                 <div>
                     <p className="text-sm font-medium text-muted-foreground">{title}</p>
                     <h3 className="text-xl font-bold mt-1">
-                        <Badge variant={getBadgeVariant(value)}
+                        <Badge variant={getBadgeVariant(value?.toString())}
                             className="animate-fade-in">
-                            {value || 'Unknown'}
+                            {value?.toString() || 'Unknown'}
                         </Badge>
                     </h3>
                 </div>
@@ -222,12 +266,12 @@ const IndexReportComponent: React.FC = () => {
                 <StatsCard
                     icon={Database}
                     title="Vector Index Size"
-                    value={report.searchIndexStatistics?.vectorIndexSize || 'N/A'}
+                    value={report.searchIndexStatistics?.vectorIndexSize ? formatFileSize(report.searchIndexStatistics.vectorIndexSize) : 'N/A'}
                 />
                 <StatsCard
                     icon={Clock}
                     title="Last Refresh"
-                    value={report.searchIndexStatistics?.lastRefreshTime || 'N/A'}
+                    value={report.searchIndexStatistics?.lastRefreshTime || report.indexers?.[0]?.lastRunTime || 'N/A'}
                 />
                 <StatsCard
                     icon={BarChart}
@@ -269,22 +313,28 @@ const IndexReportComponent: React.FC = () => {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {report.indexers?.map((indexer) => (
-                                    <TableRow key={indexer.name} className="hover:bg-muted/50 transition-colors">
-                                        <TableCell className="font-medium">{indexer.name || 'N/A'}</TableCell>
-                                        <TableCell>{indexer.targetIndex || 'N/A'}</TableCell>
-                                        <TableCell>{indexer.dataSource || 'N/A'}</TableCell>
-                                        <TableCell>{indexer.schedule || 'N/A'}</TableCell>
-                                        <TableCell>{indexer.lastRunTime || 'N/A'}</TableCell>
-                                        <TableCell>{indexer.nextRunTime || 'N/A'}</TableCell>
-                                        <TableCell>{indexer.documentsProcessed || 'N/A'}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={getBadgeVariant(indexer.status)}>
-                                                {indexer.status || 'Unknown'}
-                                            </Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                            {report.indexers?.map((indexer) => {
+                                        const nextRunTime = calculateNextRunTime(indexer.lastRunTime, indexer.schedule);
+                                        
+                                        return (
+                                            <TableRow key={indexer.name} className="hover:bg-muted/50 transition-colors">
+                                                <TableCell className="font-medium">{indexer.name || 'N/A'}</TableCell>
+                                                <TableCell>{indexer.targetIndex || 'N/A'}</TableCell>
+                                                <TableCell>{indexer.dataSource || 'N/A'}</TableCell>
+                                                <TableCell>{indexer.schedule || 'N/A'}</TableCell>
+                                                <TableCell>
+                                                {indexer.lastRunTime ? new Date(indexer.lastRunTime).toLocaleDateString() : 'N/A'}
+                                                </TableCell>
+                                                <TableCell>{nextRunTime || 'N/A'}</TableCell>
+                                                <TableCell>{indexer.documentsProcessed || 'N/A'}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant={getBadgeVariant(indexer.status)}>
+                                                        {indexer.status || 'Unknown'}
+                                                    </Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                             </TableBody>
                         </Table>
                     </div>

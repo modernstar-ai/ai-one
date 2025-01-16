@@ -172,14 +172,17 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
     {
         try
         {
-            // Get indexers and data sources
-            var indexers = await indexerClient.GetIndexersAsync();
-            var relevantIndexers = indexers.Value.Where(i => i.TargetIndexName == indexName).ToList();
+            // Get indexers 
 
             List<IndexerDetail> indexersDetails = new();
 
-            // Get indexer details
-            foreach (var indexer in relevantIndexers)
+            var indexers = await indexerClient.GetIndexersAsync();
+
+            string indexerName = SearchConstants.IndexerName(indexName);
+
+            var indexer = indexers.Value.Where(i => i.Name == indexerName).FirstOrDefault();
+
+            if (indexer is SearchIndexer)
             {
                 var indexerStatus = await indexerClient.GetIndexerStatusAsync(indexer.Name);
 
@@ -189,10 +192,8 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
                     TargetIndex = indexer.TargetIndexName,
                     DataSource = indexer.DataSourceName,
                     Schedule = indexer.Schedule?.Interval.ToString() ?? "Manual",
-                    LastRunTime = indexerStatus.Value.LastResult.EndTime?.ToString("yyyy-MM-dd HH:mm:ss"),
-                    DocumentsProcessed = $"{indexerStatus.Value.LastResult?.ItemCount ?? 0} / {indexerStatus.Value.LastResult?.ItemCount ?? 0}",
-                    NextRunTime = (indexerStatus.Value.LastResult?.EndTime != null && indexer.Schedule?.Interval != null)
-                    ? indexerStatus.Value.LastResult.EndTime.Value.Add(indexer.Schedule.Interval).ToString("yyyy-MM-dd HH:mm:ss"): null,
+                    LastRunTime = indexerStatus.Value.LastResult.EndTime?.DateTime,
+                    DocumentsProcessed = indexerStatus.Value.LastResult?.ItemCount,
                     Status = indexerStatus.Value.Status.ToString()
                 });
             }
@@ -214,12 +215,14 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
 
             // Get indexers and data sources
             var indexers = await indexerClient.GetIndexersAsync();
-            var relevantIndexers = indexers.Value.Where(i => i.TargetIndexName == indexName).ToList();
+            
+            string indexerName = SearchConstants.IndexerName(indexName);
 
-            // Get indexer details
-            foreach (var indexer in relevantIndexers)
+            var indexer = indexers.Value.Where(i => i.Name == indexerName).FirstOrDefault();
+
+            if (indexer is SearchIndexer)
             {
-                var indexerStatus = await indexerClient.GetIndexerStatusAsync(indexer.Name);
+                var indexerStatus = await indexerClient.GetIndexerStatusAsync(indexerName);
 
                 // Get data source details if not already added
                 if (!dataSourcesDetails.Any(ds => ds.Name == indexer.DataSourceName))
@@ -235,7 +238,6 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
                     });
                 }
             }
-
             return dataSourcesDetails;
         }
         catch (Exception ex)

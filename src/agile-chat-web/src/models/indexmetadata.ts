@@ -37,8 +37,7 @@ export interface IndexerDetail {
   targetIndex?: string;
   dataSource?: string;
   schedule?: string;
-  lastRunTime?: string;
-  nextRunTime?: string;
+  lastRunTime?: Date;
   documentsProcessed?: string;
   status?: string;
 }
