@@ -56,10 +56,7 @@ function UploadSummaryPopup({
 								file.success ? 'text-green-600' : 'text-red-600'
 							}`}
 						>
-							{/* File Name */}
 							<span className='truncate break-all'>{file.name}</span>
-
-							{/* Status */}
 							<span>{file.success ? 'Uploaded Successfully' : 'Failed to Upload'}</span>
 						</li>
 					))}

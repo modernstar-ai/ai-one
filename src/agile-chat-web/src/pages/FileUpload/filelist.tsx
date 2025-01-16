@@ -37,6 +37,22 @@ export default function FileList() {
 		setSortedFiles(sorted);
 	}, [files]);
 
+	// Sync "Select All" state with selectedFiles and sortedFiles
+	useEffect(() => {
+		setSelectAll(sortedFiles.length > 0 && selectedFiles.length === sortedFiles.length);
+	}, [selectedFiles, sortedFiles]);
+
+	//Function to select all files
+	const [selectAll, setSelectAll] = useState(false); // State to track "Select All"
+	const handleSelectAll = (checked: boolean) => {
+		setSelectAll(checked);
+		if (checked) {
+			setSelectedFiles(sortedFiles.map((file) => file.id)); // Use sortedFiles instead of files
+		} else {
+			setSelectedFiles([]); // Deselect all
+		}
+	};
+
 	// Function to toggle the selection of files
 	const toggleFileSelection = (fileId: string) => {
 		setSelectedFiles((prev) => (prev.includes(fileId) ? prev.filter((id) => id !== fileId) : [...prev, fileId]));
@@ -182,7 +198,11 @@ export default function FileList() {
 									className='w-[50px]'
 									aria-label='Select row'
 								>
-									<span className='sr-only'>Select</span>
+									<Checkbox
+										checked={selectAll}
+										onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+										aria-label='Select all files'
+									/>
 								</TableHead>
 								<TableHead>FileName</TableHead>
 								<TableHead>ContentType</TableHead>
