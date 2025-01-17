@@ -105,7 +105,7 @@ const IndexerComponent: React.FC = () => {
               <TableBody>
                 {indexes.map((index) => (
                   <TableRow key={index.id}>
-                    <PermissionHandler role={UserRole.ContentManager} group={index.group}>
+                    <PermissionHandler role={UserRole.ContentManager}>
                       <TableCell>
                         <div className="flex items-start space-x-2">
                           <TooltipProvider>

@@ -3,6 +3,7 @@ using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Files.Aggregates;
 using Agile.Framework.Authentication.Interfaces;
 using Agile.Framework.Common.Attributes;
+using Agile.Framework.Common.Dtos;
 using Agile.Framework.Common.EnvironmentVariables;
 using Agile.Framework.CosmosDb;
 using Agile.Framework.CosmosDb.Interfaces;
@@ -13,7 +14,7 @@ namespace Agile.Chat.Application.Files.Services;
 
 public interface IFileService  : ICosmosRepository<CosmosFile>
 {
-    Task<List<CosmosFile>> GetAllAsync();
+    Task<PagedResultsDto<CosmosFile>> GetAllAsync(QueryDto queryDto);
     Task<bool> ExistsAsync(string fileName, string indexName, string? folderName = null);
     Task DeleteByMetadataAsync(string fileName, string indexName, string? folderName = null);
     Task DeleteAllByIndexAsync(string indexName);
@@ -22,12 +23,12 @@ public interface IFileService  : ICosmosRepository<CosmosFile>
 
 [Export(typeof(IFileService), ServiceLifetime.Scoped)]
 public class FileService(CosmosClient cosmosClient, IIndexService indexService, IRoleService roleService) : 
-    CosmosRepository<CosmosFile>(Constants.CosmosFilesContainerName, cosmosClient), IFileService
+    CosmosRepository<CosmosFile>(Constants.Cosmos.Files.ContainerName, cosmosClient), IFileService
 {
-    public async Task<List<CosmosFile>> GetAllAsync()
+    public async Task<PagedResultsDto<CosmosFile>> GetAllAsync(QueryDto queryDto)
     {
         var query = LinqQuery()
-            .OrderBy(a => a.LastModified)
+            .OrderByDescending(x => x.LastModified)
             .AsQueryable();
         
         if (!roleService.IsSystemAdmin())
@@ -36,8 +37,17 @@ public class FileService(CosmosClient cosmosClient, IIndexService indexService, 
             var indexNames = indexes.Select(x => x.Name);
             query = query.Where(x => indexNames.Contains(x.IndexName));
         }
+
+        if (!string.IsNullOrWhiteSpace(queryDto.Search))
+        {
+            query = query.Where(f => f.Name.ToLower().Contains(queryDto.Search.ToLower()) ||
+                                     (f.ContentType != null && f.ContentType.ToLower().Contains(queryDto.Search.ToLower())) ||
+                                     f.IndexName.ToLower().Contains(queryDto.Search.ToLower()) ||
+                                     (f.FolderName != null && f.FolderName.ToLower().Contains(queryDto.Search.ToLower())
+                                     ));
+        }
         
-        var results = await CollectResultsAsync(query);
+        var results = await CollectResultsAsync(query, queryDto);
         return results;
     }
 
