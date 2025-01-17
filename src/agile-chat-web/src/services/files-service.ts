@@ -1,6 +1,7 @@
-// src/services/personaservice.ts
 import axios from '@/error-handling/axiosSetup';
 import { CosmosFile } from '@/models/filemetadata';
+import { PagedResultsDto } from '@/models/pagedResultsDto';
+import { QueryDto } from '@/models/querydto';
 import { AxiosResponse } from 'axios';
 
 function getApiUrl(endpoint: string = ''): string {
@@ -33,10 +34,17 @@ export async function uploadFiles(formData: FormData): Promise<CosmosFile | null
 }
 
 // Function to fetch all files
-export const getFiles = async (): Promise<CosmosFile[]> => {
+export const getFiles = async (queryDto: QueryDto): Promise<PagedResultsDto<CosmosFile>> => {
   try {
+    const params = new URLSearchParams();
+    params.append("Page", queryDto.page.toString());
+    params.append("PageSize", queryDto.pageSize.toString());
+    queryDto.search && params.append("Search", queryDto.search);
+    queryDto.orderBy && params.append("OrderBy", queryDto.orderBy);
+    queryDto.orderType && params.append("OrderType", queryDto.orderType);
+    console.log(queryDto);
     const url = getApiUrl('');
-    const response = await axios.get<CosmosFile[]>(url);
+    const response = await axios.get<PagedResultsDto<CosmosFile>>(url, {params: params});
     return response.data;
   } catch (error) {
     console.error('Error fetching files from API:', error);

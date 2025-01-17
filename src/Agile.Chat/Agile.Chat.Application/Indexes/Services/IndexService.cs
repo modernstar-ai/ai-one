@@ -26,7 +26,7 @@ public class IndexService(CosmosClient cosmosClient, IRoleService roleService) :
         if (!roleService.IsSystemAdmin())
         {
             var roleClaims = roleService.GetRoleClaims();
-            query = query.Where(x => x.Group == null || x.Group == "" || roleClaims.Contains(UserRole.ContentManager.ToString() + "." + x.Group.ToLower()));
+            query = query.Where(x => roleClaims.Contains(UserRole.ContentManager.ToString() + "." + (x.Group != null ? x.Group.ToLower() : "")));
         }
         
         var results = await CollectResultsAsync(query);
