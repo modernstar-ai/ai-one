@@ -23,7 +23,7 @@ public interface IFileService  : ICosmosRepository<CosmosFile>
 
 [Export(typeof(IFileService), ServiceLifetime.Scoped)]
 public class FileService(CosmosClient cosmosClient, IIndexService indexService, IRoleService roleService) : 
-    CosmosRepository<CosmosFile>(Constants.CosmosFilesContainerName, cosmosClient), IFileService
+    CosmosRepository<CosmosFile>(Constants.Cosmos.Files.ContainerName, cosmosClient), IFileService
 {
     public async Task<PagedResultsDto<CosmosFile>> GetAllAsync(QueryDto queryDto)
     {

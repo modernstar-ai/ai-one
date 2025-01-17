@@ -1,5 +1,6 @@
 ﻿using System.Linq.Dynamic.Core;
 using System.Net;
+using System.Text.Json.Nodes;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.DomainAbstractions;
 using Agile.Framework.Common.Dtos;
@@ -19,7 +20,7 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
     public CosmosRepository(string containerId, CosmosClient cosmosClient)
     {
         CosmosClient = cosmosClient;
-        Database = cosmosClient.GetDatabase(Constants.CosmosDatabaseName);
+        Database = cosmosClient.GetDatabase(Constants.Cosmos.DatabaseName);
         Container = Database.GetContainer(containerId);
     }
     
@@ -43,15 +44,35 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
     protected async Task<PagedResultsDto<T>> CollectResultsAsync(IQueryable<T> query, QueryDto queryDto)
     {
         //Ordering by
-        if (!string.IsNullOrWhiteSpace(queryDto.OrderBy) && queryDto.OrderType != null)
+        var isQuerying = !string.IsNullOrWhiteSpace(queryDto.OrderBy) && queryDto.OrderType != null;
+        if (isQuerying)
+        {
             query = query.OrderBy(queryDto.OrderBy + " " + queryDto.OrderType);
+        }
         
         var countResponse = await query.Select(x => x.Id).CountAsync();
         //paging
-        query = query.Skip(queryDto.Page * queryDto.PageSize).Take(queryDto.PageSize);
-        
+        query = query.Skip((queryDto.Page ?? 0) * (queryDto.PageSize ?? 10)).Take(queryDto.PageSize ?? 10);
         var results = new List<T>();
-        var feed = query.ToFeedIterator();
+        FeedIterator<T> feed;
+        if (!isQuerying)
+        {
+            feed = query.ToFeedIterator();
+        }
+        else
+        {
+            var queryText = query.ToQueryDefinition().QueryText;
+            
+            var isString = typeof(T).GetProperty(queryDto.OrderBy!)?.PropertyType == typeof(string);
+            if (isString)
+            {
+                var fieldName = $"lower{queryDto.OrderBy}";
+                queryText = queryText.Replace($"\"{System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(queryDto.OrderBy!)}\"",
+                    $"\"{fieldName}\"");
+            }
+            
+            feed = Container.GetItemQueryIterator<T>(new QueryDefinition(queryText));
+        }
 
         while (feed.HasMoreResults)
         {
@@ -61,8 +82,8 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
 
         return new PagedResultsDto<T>
         {
-            Page = queryDto.Page,
-            PageSize = queryDto.PageSize,
+            Page = queryDto.Page ?? 0,
+            PageSize = queryDto.PageSize ?? 10,
             TotalCount = countResponse.Resource,
             Items = results
         };
