@@ -1,8 +1,6 @@
-// import { MultiSelectInput } from '@/components/ui-extended/multi-select';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-// import { useFolders } from '@/hooks/use-folders';
+import { DataTable } from '@/components/ui/data-table';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -10,26 +8,25 @@ import { useFetchFiles } from '@/hooks/use-files';
 import { CosmosFile } from '@/models/filemetadata';
 import { deleteFiles } from '@/services/files-service';
 import SimpleHeading from '@/components/Heading-Simple';
+import { PagedResultsDto } from '@/models/pagedResultsDto';
 
 export default function FileList() {
   // Using the custom hook to fetch files
-  const { files, refetch, loading } = useFetchFiles();
+  
+  const { files, refetch, loading, queryDto, setQueryDto } = useFetchFiles();
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false); // Processing state for delete/refresh
-  const [sortedFiles, setSortedFiles] = useState<CosmosFile[]>([]);
-  // const { folders } = useFolders();
-  // const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
+  const [sortedFiles, setSortedFiles] = useState<PagedResultsDto<CosmosFile>>();
+  const [currentPage, setCurrentPage] = useState<number>(0); // Track the current page
 
-  // Sorting logic
-  useEffect(() => {
-    const sorted = [...files].sort((a, b) => {
-      const indexNameA = a.indexName ?? ''; // Use empty string if indexName is undefined
-      const indexNameB = b.indexName ?? '';
+  const totalPages = files?.totalCount ? Math.ceil(files.totalCount / files.pageSize) : 1;
 
-      return indexNameA.localeCompare(indexNameB);
-    });
-    setSortedFiles(sorted);
-  }, [files]);
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    console.log("page", page);
+    setCurrentPage(page);
+    setQueryDto({ ...queryDto, page, pageSize: files.pageSize });
+  };
 
   // Function to toggle the selection of files
   const toggleFileSelection = (fileId: string) => {
@@ -103,20 +100,69 @@ export default function FileList() {
     }
   };
 
+  // data-table
+  const columns = [
+    {
+      accessorKey: 'checkbox',
+      header: '',
+      cell: ({ row }: { row: any }) => (
+        <Checkbox
+          checked={selectedFiles.includes(row.original.id)}
+          onCheckedChange={() => toggleFileSelection(row.original.id)}
+          aria-label={`Select file ${row.original.name}`}
+        />
+      ),
+    },
+    { 
+      accessorKey: 'name', 
+      header: 'File Name',
+      cell: ({ row }: { row: any }) => removeFileExtension(row.original.name),
+    },
+    {
+      accessorKey: 'contentType',
+      header: 'Content Type',
+      cell: ({ row }: { row: any }) => simplifyContentType(row.original.contentType || 'unknown'),
+    },
+    {
+      accessorKey: 'size',
+      header: 'Size',
+      cell: ({ row }: { row: any }) => formatBytesToKB(row.original.size),
+    },
+    {
+      accessorKey: 'createdDate',
+      header: 'Submitted On',
+    },
+    { 
+      accessorKey: 'indexName', 
+      header: 'Container',
+      cell: ({ row }: { row: any }) => row.original.indexName,
+    },
+  ];
+
+
+// Add this handler for "Enter" key press or focus loss
+const handleGlobalSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => {
+  if ('key' in e && e.key !== 'Enter') return; // Proceed only if "Enter" is pressed
+
+  const target = e.target as HTMLInputElement; 
+  const searchValue = target.value.trim(); // Get the trimmed value from the input
+  
+  setQueryDto({...queryDto, page: 0, search:searchValue});
+  setCurrentPage(0);
+};
+
+  // Fetch sorted data on every `files` change
+  useEffect(() => {
+    if (files?.items) {
+      setSortedFiles(files); // Update sorted files when new files are fetched
+    }
+  }, [files]);
+
   return (
     <div className="flex h-screen bg-background text-foreground">
       <div className="flex-1  flex flex-col">
         <SimpleHeading Title="Your Files" Subtitle="Manage your uploaded files" DocumentCount={0} />
         <div className="flex-1 p-4 overflow-auto">
-          {/* <div className="flex space-x-4 mb-4">
-          <MultiSelectInput
-            className="w-[30%] max-w-[500px]"
-            label="Folders"
-            items={folders}
-            selectedItems={selectedFolders}
-            onChange={setSelectedFolders}
-          />
-        </div> */}
 
           <div className="flex justify-between items-center mb-4">
             <Link to="/fileupload" aria-label="Add New File" accessKey="n">
@@ -146,39 +192,30 @@ export default function FileList() {
               </Button>
             </div>
           </div>
+          <div className="flex justify-between items-center mb-4">
+            <input
+              type="text"
+              placeholder="Search files..."
+              className="border rounded p-2 text-sm w-[300px]"
+              onKeyDown={handleGlobalSearchSubmit}
+              onBlur={handleGlobalSearchSubmit} 
+            />
+          </div>
+          <DataTable columns={columns}  data={sortedFiles?.items || []} />
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]" aria-label="Select row">
-                  <span className="sr-only">Select</span>
-                </TableHead>
-                <TableHead>FileName</TableHead>
-                <TableHead>ContentType</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>Submitted On</TableHead>
-                <TableHead>Container</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedFiles.map((file) => (
-                <TableRow key={file.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedFiles.includes(file.id)}
-                      onCheckedChange={() => toggleFileSelection(file.id)}
-                      aria-label={`Select file ${file.name}`}
-                    />
-                  </TableCell>
-                  <TableCell>{removeFileExtension(file.name)}</TableCell>
-                  <TableCell>{simplifyContentType(file.contentType || 'unknown')}</TableCell>
-                  <TableCell>{formatBytesToKB(file.size)}</TableCell>
-                  <TableCell>{file.createdDate}</TableCell>
-                  <TableCell>{file.indexName}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+           {/* Pagination */}
+           <div className="flex mt-4 space-x-2">
+            {Array.from({ length: totalPages }, (_, index) => (
+              <Button
+                key={index}
+                variant={currentPage === index ? "link" : "outline"}
+                onClick={() => handlePageChange(index)}
+                disabled={currentPage === index}
+              >
+                {index + 1}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
