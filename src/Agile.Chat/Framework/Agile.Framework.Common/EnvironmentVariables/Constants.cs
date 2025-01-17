@@ -3,7 +3,19 @@
 public static class Constants
 {
     #region CosmosDbConstants
-    public const string CosmosDatabaseName = "AgileChat";
+
+    public static class Cosmos
+    {
+        public const string DatabaseName = "AgileChat";
+
+        public static class Files
+        {
+            public const string ContainerName = "Files";
+            public const string PartitionKeyPath = "/id";
+            public static readonly string[] SortableTextProperties = ["Name", "ContentType", "IndexName", "FolderName"];
+        }
+    }
+    
     
     public const string CosmosAssistantsContainerName = "Assistants";
     public const string CosmosAssistantsPartitionKeyPath = "/id";
@@ -16,9 +28,6 @@ public static class Constants
     
     public const string CosmosToolsContainerName = "Tools";
     public const string CosmosToolsPartitionKeyPath = "/id";
-    
-    public const string CosmosFilesContainerName = "Files";
-    public const string CosmosFilesPartitionKeyPath = "/id";
     
     public const string CosmosIndexesContainerName = "Indexes";
     public const string CosmosIndexesPartitionKeyPath = "/id";

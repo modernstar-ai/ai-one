@@ -335,7 +335,9 @@ export function LeftSidebar() {
                         // onClick={() => navigate(`/chat/${thread.id}`)}
                         onClick={() => navigate(`/chat/${thread.id}`)}
                       >
-                        <span className="text-sm font-medium truncate">{thread.name}</span>
+                        <span className="text-sm font-medium truncate">
+                          {thread.name.length > 50 ? `${thread.name.slice(0, 30)}...` : thread.name}
+                        </span>
                         {/* <span className="text-xs text-muted-foreground">
                           {new Date(thread.lastMessageAt).toLocaleDateString()}
                         </span> */}
