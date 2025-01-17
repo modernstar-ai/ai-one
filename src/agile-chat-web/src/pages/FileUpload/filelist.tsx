@@ -54,9 +54,20 @@ export default function FileList() {
       'text/plain': 'text/txt',
       'application/msword': 'application/msword',
       'application/vnd.ms-excel': 'application/xls',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'application/ppt',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'application/ppt'
     };
     return mimeTypeMappings[contentType] || contentType;
+  }
+
+  // Helper function to format the date
+  function formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
   }
 
   // Handle Delete Files
@@ -104,7 +115,25 @@ export default function FileList() {
   const columns = [
     {
       accessorKey: 'checkbox',
-      header: '',
+      header: () => (
+        <Checkbox
+          checked={
+            sortedFiles?.items &&
+            selectedFiles.length === sortedFiles.items.length &&
+            sortedFiles.items.length > 0
+          }
+          onCheckedChange={(checked) => {
+            if (checked) {
+              // Select all file IDs
+              setSelectedFiles(sortedFiles?.items.map((file) => file.id) || []);
+            } else {
+              // Deselect all
+              setSelectedFiles([]);
+            }
+          }}
+          aria-label="Select all files"
+        />
+      ),
       cell: ({ row }: { row: any }) => (
         <Checkbox
           checked={selectedFiles.includes(row.original.id)}
@@ -131,6 +160,7 @@ export default function FileList() {
     {
       accessorKey: 'createdDate',
       header: 'Submitted On',
+      cell: ({ row }: { row: any }) => formatDate(row.original.createdDate),
     },
     { 
       accessorKey: 'indexName', 
@@ -177,8 +207,7 @@ const handleGlobalSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement> | Rea
                 size="icon"
                 aria-label="Refresh"
                 onClick={handleRefresh}
-                disabled={loading || isProcessing}
-              >
+                disabled={loading || isProcessing}>
                 <RefreshCw className="h-4 w-4" />
               </Button>
               <Button
@@ -186,8 +215,7 @@ const handleGlobalSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement> | Rea
                 size="icon"
                 aria-label="Trash"
                 onClick={handleDeleteSelected}
-                disabled={selectedFiles.length === 0}
-              >
+                disabled={selectedFiles.length === 0}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>

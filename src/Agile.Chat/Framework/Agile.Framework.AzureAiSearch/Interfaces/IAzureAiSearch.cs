@@ -1,4 +1,5 @@
 ﻿using Agile.Framework.AzureAiSearch.Models;
+using Azure.Search.Documents.Indexes.Models;
 
 namespace Agile.Framework.AzureAiSearch.Interfaces;
 
@@ -10,4 +11,7 @@ public interface IAzureAiSearch
     Task CreateIndexerAsync(string indexName);
     Task RunIndexerAsync(string indexName);
     Task DeleteIndexerAsync(string indexName);
+    Task<SearchIndexStatistics> GetIndexStatisticsByNameAsync(string indexName);
+    Task<IndexerDetail?> GetIndexersByIndexNameAsync(string indexName);
+    Task<DataSourceDetail?> GetDataSourceByNameAsync(string indexName);
 }

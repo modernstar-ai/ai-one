@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { toast } from './ui/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { deleteIndex } from '@/services/indexes-service';
 import { Index } from '@/models/indexmetadata';
-import { Loader2, Info, Trash2, Pencil } from 'lucide-react';
+import { Loader2, Info, Trash2, Pencil, BarChart  } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from './ui/button';
@@ -28,6 +29,7 @@ const IndexerComponent: React.FC = () => {
   const [indexToDelete, setIndexToDelete] = useState<Index | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [indexEditing, setIndexEditing] = useState<Index | undefined>(undefined);
+  const navigate = useNavigate();
 
   if (indexesLoading) {
     return (
@@ -46,6 +48,10 @@ const IndexerComponent: React.FC = () => {
 
   const handleEditIndex = async (index: Index) => {
     setIndexEditing(index);
+  };
+
+  const handleViewStats = (indexName: string) => {
+    navigate(`/index-report?indexname=${encodeURIComponent(indexName)}`);
   };
 
   const confirmDelete = async () => {
@@ -169,6 +175,25 @@ const IndexerComponent: React.FC = () => {
                               </AlertDialogContent>
                             </AlertDialog>
                           </PermissionHandler>
+
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => handleViewStats(index.name)}
+                                >
+                                  <BarChart className="h-4 w-4" />
+                                  <span className="sr-only">View Stats for {index.name}</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>View Stats for {index.name}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </TableCell>
                     </PermissionHandler>
