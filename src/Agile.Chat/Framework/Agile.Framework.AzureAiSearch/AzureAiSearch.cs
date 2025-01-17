@@ -186,7 +186,7 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
                     Schedule = indexer.Value.Schedule?.Interval.ToString() ?? "Manual",
                     LastRunTime = indexerStatus.Value.LastResult.EndTime?.DateTime,
                     DocumentsProcessed = indexerStatus.Value.LastResult?.ItemCount,
-                    Status = indexerStatus.Value.Status.ToString()
+                    Status = indexerStatus.Value.LastResult?.Status.ToString()
                 };
             }
             return null;
