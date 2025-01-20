@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agile.Framework.AzureAiSear
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agile.Framework.Ai", "Framework\Agile.Framework.Ai\Agile.Framework.Ai.csproj", "{73C78672-4B39-43A4-98C1-FBE9572B0A67}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agile.Framework.AzureDocumentIntelligence", "Framework\Agile.Framework.AzureDocumentIntelligence\Agile.Framework.AzureDocumentIntelligence.csproj", "{E49AD509-5987-4717-A119-12117D0F4484}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -74,6 +76,10 @@ Global
 		{73C78672-4B39-43A4-98C1-FBE9572B0A67}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{73C78672-4B39-43A4-98C1-FBE9572B0A67}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{73C78672-4B39-43A4-98C1-FBE9572B0A67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E49AD509-5987-4717-A119-12117D0F4484}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E49AD509-5987-4717-A119-12117D0F4484}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E49AD509-5987-4717-A119-12117D0F4484}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E49AD509-5987-4717-A119-12117D0F4484}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{1672E1EC-F0DE-44F3-93CE-51DD0D4B76EE} = {93608BB2-A304-41B6-A758-8AC30CA002FC}
@@ -84,5 +90,6 @@ Global
 		{0925BA63-D12C-482B-9BA5-CA7E7351FCE5} = {93608BB2-A304-41B6-A758-8AC30CA002FC}
 		{8E5BFDA3-E7B3-4082-9398-FEB5907738A2} = {93608BB2-A304-41B6-A758-8AC30CA002FC}
 		{73C78672-4B39-43A4-98C1-FBE9572B0A67} = {93608BB2-A304-41B6-A758-8AC30CA002FC}
+		{E49AD509-5987-4717-A119-12117D0F4484} = {93608BB2-A304-41B6-A758-8AC30CA002FC}
 	EndGlobalSection
 EndGlobal

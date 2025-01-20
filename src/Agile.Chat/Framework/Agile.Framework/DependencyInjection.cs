@@ -1,6 +1,7 @@
 ﻿using Agile.Framework.Ai;
 using Agile.Framework.Authentication;
 using Agile.Framework.AzureAiSearch;
+using Agile.Framework.AzureDocumentIntelligence;
 using Agile.Framework.BlobStorage;
 using Agile.Framework.Common.EnvironmentVariables;
 using Agile.Framework.Common.Interfaces;
@@ -24,6 +25,7 @@ public static class DependencyInjection
             .AddCosmosDb()
             .AddBlobStorage()
             .AddAzureAiSearch()
+            .AddAzureDocumentIntelligence()
             .AddAgileAuthentication();
     
     public static async Task InitializeServicesAsync(this IApplicationBuilder app)

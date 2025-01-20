@@ -26,6 +26,7 @@ public class Files() : CarterModule("/api")
         //POST
         files.MapPost("/", UploadFile);
         files.MapPost("webhook", Webhook);
+        files.MapPost("index", IndexFile);
         files.MapPost("download", DownloadFile);
         files.MapPost("share", GenerateSharedLinkByUrl);
         //DELETE
@@ -39,6 +40,12 @@ public class Files() : CarterModule("/api")
     }
 
     private async Task<IResult> Webhook([FromServices] IMediator mediator, [FromBody] JsonNode dto)
+    {
+        var command = new FileWebhook.Command(dto);
+        return await mediator.Send(command);
+    }
+    
+    private async Task<IResult> IndexFile([FromServices] IMediator mediator, [FromBody] JsonNode dto)
     {
         var command = new FileWebhook.Command(dto);
         return await mediator.Send(command);
