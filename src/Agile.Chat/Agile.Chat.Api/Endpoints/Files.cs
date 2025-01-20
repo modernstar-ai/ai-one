@@ -45,9 +45,9 @@ public class Files() : CarterModule("/api")
         return await mediator.Send(command);
     }
     
-    private async Task<IResult> IndexFile([FromServices] IMediator mediator, [FromBody] JsonNode dto)
+    private async Task<IResult> IndexFile([FromServices] IMediator mediator, [FromBody] FileUrlDto url)
     {
-        var command = new FileWebhook.Command(dto);
+        var command = new FileIndexer.Command(new Uri(url.Url));
         return await mediator.Send(command);
     }
 
@@ -57,13 +57,13 @@ public class Files() : CarterModule("/api")
         return await mediator.Send(command);
     }
 
-    private async Task<IResult> DownloadFile([FromServices] IMediator mediator, [FromBody] DownloadFileDto dto)
+    private async Task<IResult> DownloadFile([FromServices] IMediator mediator, [FromBody] FileUrlDto dto)
     {
         var command = new DownloadFileByUrl.Command(dto.Url);
         return await mediator.Send(command);
     }
 
-    private async Task<IResult> GenerateSharedLinkByUrl([FromServices] IMediator mediator, [FromBody] DownloadFileDto dto)
+    private async Task<IResult> GenerateSharedLinkByUrl([FromServices] IMediator mediator, [FromBody] FileUrlDto dto)
     {
         var command = new GenerateSharedLinkByUrl.Command(dto.Url);
         return await mediator.Send(command);
