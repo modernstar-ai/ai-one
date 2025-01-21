@@ -54,7 +54,8 @@ public static class Chat
         {
             //Fetch what's needed to do chatting
             var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId, ChatType.Thread.ToString());
-            var chatHistory = (await chatMessageService.GetAllAsync(thread!.Id)).ParseSemanticKernelChatHistory(request.UserPrompt);
+            var chatMessages = await chatMessageService.GetAllAsync(thread!.Id);
+            var chatHistory = chatMessages.ParseSemanticKernelChatHistory(request.UserPrompt);
             var assistant = !string.IsNullOrWhiteSpace(thread.AssistantId)
                 ? await assistantService.GetItemByIdAsync(thread.AssistantId)
                 : null;
@@ -64,6 +65,7 @@ public static class Chat
                 Thread = thread,
                 Assistant = assistant,
                 AzureAiSearch = azureAiSearch,
+                Messages = chatMessages,
                 AppKernel = appKernel
             };
             

@@ -31,11 +31,11 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
             .ToList();
     }
 
-    public async Task<string?> GetChunkByIdAsync(string indexName, string chunkId)
+    public async Task<AzureSearchDocument?> GetChunkByIdAsync(string indexName, string chunkId)
     {
         var searchClient = indexClient.GetSearchClient(indexName);
         var searchResults = await searchClient.GetDocumentAsync<AzureSearchDocument>(chunkId);
-        return !searchResults.HasValue ? null : searchResults.Value.Chunk;
+        return !searchResults.HasValue ? null : searchResults.Value;
     }
     
     #region Indexers
