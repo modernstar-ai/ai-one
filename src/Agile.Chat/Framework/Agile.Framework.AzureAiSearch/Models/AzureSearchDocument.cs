@@ -5,6 +5,7 @@ namespace Agile.Framework.AzureAiSearch.Models;
 
 public class AzureSearchDocument
 {
+    public int ReferenceNumber { get; set; }
     [JsonPropertyName("chunk_id")]
     public string Id { get; set; }
     [JsonPropertyName("chunk")]

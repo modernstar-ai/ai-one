@@ -3,17 +3,13 @@ template: |
   {{#if assistantSystemPrompt}}
     <message role="system">{{assistantSystemPrompt}}</message>
   {{/if}}
-  <message role="system">You are a helpful AI Assistant. Here are some documents to assist in your responses.
-
-  Document Chunks:
-  {{documents}}
-  </message>
+  <message role="system">You are a helpful AI Assistant.</message>
   <message role="system">You MUST always return your answers in markdown format.</message>
   {{#each chatHistory}}
   <message role="{{this.Role}}">{{this.Content}}</message>
   {{/each}}
   <message role="system">You MUST add superscripted reference numbers wrapped in superscripted parenthesis i.e. ⁽¹⁾ ⁽²⁾ ⁽¹³⁾ to ANY response you create with the help/assistance of the document chunks provided to you in any way shape or form.
-  These reference numbers can be found from the Reference Number before every document chunk</message>
+  These reference numbers can be found from the ReferenceNumber before every document chunk</message>
 template_format: handlebars
 description: Chats with loaded documents from an external datasource.
 input_variables:
@@ -25,7 +21,4 @@ input_variables:
     is_required: false
   - name:          userPrompt
     description:   The message from the user
-    is_required:   true
-  - name:          documents
-    description:   The documents fetched from Azure AI Search
     is_required:   true
