@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Nodes;
+using System.Text.Json.Nodes;
 using Agile.Chat.Application.Files.Commands;
 using Agile.Chat.Application.Files.Dtos;
 using Agile.Chat.Application.Files.Queries;
@@ -47,7 +47,7 @@ public class Files() : CarterModule("/api")
     
     private async Task<IResult> IndexFile([FromServices] IMediator mediator, [FromBody] FileUrlDto url)
     {
-        var command = new FileIndexer.Command(new Uri(url.Url));
+        var command = new FileIndexer.Command(url.Url);
         return await mediator.Send(command);
     }
 

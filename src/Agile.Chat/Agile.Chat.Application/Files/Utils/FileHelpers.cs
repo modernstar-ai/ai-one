@@ -2,6 +2,7 @@
 
 public static class FileHelpers
 {
+    public static HashSet<string> TextFormats = ["text/htm", "text/html", "text/plain", "application/json"];
     public static string GetContentType(string url)
     {
         var file = Path.GetFileName(url).Split(".").Last();
@@ -12,6 +13,7 @@ public static class FileHelpers
             "docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             "htm" => "text/htm",
             "html" => "text/html",
+            "json" => "application/json",
             "jpg" => "image/jpg",
             "jpeg" => "image/jpeg",
             "pdf" => "application/pdf",

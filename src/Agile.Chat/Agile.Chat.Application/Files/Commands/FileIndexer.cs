@@ -8,19 +8,28 @@ using Agile.Framework.AzureDocumentIntelligence;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
 namespace Agile.Chat.Application.Files.Commands;
 
 public static class FileIndexer
 {
-    public record Command(Uri FileUrl) : IRequest<IResult>;
+    public record Command(string FileUrl) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IFileService fileService, IDocumentIntelligence documentIntelligence) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IFileService fileService, IMediator mediator, IDocumentIntelligence documentIntelligence) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            await documentIntelligence.CrackDocumentAsync(request.FileUrl);
+            var command = new DownloadFileByUrl.Command(request.FileUrl);
+            var result = await mediator.Send(command);
+
+            if (result is not FileStreamHttpResult okResult)
+                return result;
+
+            var isTextDoc = FileHelpers.TextFormats.Contains(okResult.ContentType);
+            var chunks = await documentIntelligence.CrackDocumentAsync(okResult.FileStream, isTextDoc);
             return Results.Ok();
         }
     }

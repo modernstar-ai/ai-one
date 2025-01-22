@@ -17,7 +17,7 @@ public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) 
 
     public async Task<(Stream, BlobDownloadDetails)> DownloadAsync(string url)
     {
-        var blob = new BlobClient(new Uri(url));
+        var blob = new BlobClient(new Uri(url), credential: new StorageSharedKeyCredential(Configs.BlobStorage.Name, Configs.BlobStorage.Key));
         if(!await blob.ExistsAsync())
             throw new Exception("File doesn't exist");
         
