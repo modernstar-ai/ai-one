@@ -81,8 +81,8 @@ public static class Chat
             var chatSettings = thread.PromptOptions.ParseAzureOpenAiPromptExecutionSettings();
             IResult assistantResult = assistant?.Type switch
             {
-                AssistantType.Chat or null => await GetChatResultAsync(request.UserPrompt, assistant?.PromptOptions?.SystemPrompt, hasIndex, chatSettings, chatHistory),
-                AssistantType.Search => await GetSearchResultAsync(request.UserPrompt, assistant?.PromptOptions?.SystemPrompt, chatSettings),
+                AssistantType.Chat or null => await GetChatResultAsync(request.UserPrompt, assistant?.PromptOptions?.SystemPrompt, assistant?.FilterOptions, chatSettings, chatHistory),
+                AssistantType.Search => await GetSearchResultAsync(request.UserPrompt, assistant?.PromptOptions?.SystemPrompt, assistant?.FilterOptions, chatSettings),
                 _ => Results.BadRequest("Unknown chat type")
             };
             if(assistantResult is BadRequest<string> badRequest)
@@ -149,8 +149,9 @@ public static class Chat
             return number.ToString().Select(x => map[x]).Aggregate("", (x, y) => x + y);
         }
 
-        private async Task<IResult> GetChatResultAsync(string userPrompt, string? assistantSystemPrompt, bool hasIndex, AzureOpenAIPromptExecutionSettings chatSettings, ChatHistory chatHistory)
+        private async Task<IResult> GetChatResultAsync(string userPrompt, string? assistantSystemPrompt, AssistantFilterOptions? assistantFilterOptions, AzureOpenAIPromptExecutionSettings chatSettings, ChatHistory chatHistory)
         {
+            var hasIndex = !string.IsNullOrWhiteSpace(assistantFilterOptions?.IndexName);
             var aiStreamChats = hasIndex
                 ? appKernel.GetPromptFileChatStream(chatSettings, 
                     Constants.ChatCompletionsPromptsPath,
@@ -159,7 +160,8 @@ public static class Chat
                     {
                         {"assistantSystemPrompt", assistantSystemPrompt},
                         {"userPrompt", userPrompt},
-                        {"chatHistory", chatHistory}
+                        {"chatHistory", chatHistory.TakeLast(14).ToList()},
+                        {"limitKnowledge", assistantFilterOptions?.LimitKnowledgeToIndex ?? false}
                     })
                 : 
                 appKernel.GetChatStream(
@@ -169,7 +171,7 @@ public static class Chat
             return assistantFullResponse;
         }
         
-        private async Task<IResult> GetSearchResultAsync(string userPrompt, string? assistantSystemPrompt, AzureOpenAIPromptExecutionSettings chatSettings)
+        private async Task<IResult> GetSearchResultAsync(string userPrompt, string? assistantSystemPrompt, AssistantFilterOptions? assistantFilterOptions, AzureOpenAIPromptExecutionSettings chatSettings)
         {
             try
             {
@@ -182,7 +184,8 @@ public static class Chat
                     new Dictionary<string, object?>
                     {
                         {"assistantSystemPrompt", assistantSystemPrompt},
-                        { "userPrompt", userPrompt }
+                        { "userPrompt", userPrompt },
+                        { "limitKnowledge", assistantFilterOptions?.LimitKnowledgeToIndex ?? false}
                     });
                 var searchResponse = JsonSerializer.Deserialize<SearchResponseDto>(aiResponse);
                 return TypedResults.Ok(searchResponse);

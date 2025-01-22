@@ -6,6 +6,7 @@ public class AssistantFilterOptions
 {
     public string? Group { get; set; }
     public string IndexName { get; set; }
+    public bool LimitKnowledgeToIndex { get; set; } = false;
     public int DocumentLimit { get; set; }
     public double Strictness { get; set; } = 0;
     
