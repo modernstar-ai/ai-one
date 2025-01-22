@@ -88,7 +88,8 @@ public static class Chat
 
             if (assistantResult is BadRequest<string> badRequest)
             {
-                await SaveUserAndAssistantMessagesAuditLogsAsync(thread.Id, request.UserPrompt, string.Empty, null);
+                var (userMessage, assistantMessage) = CreateUserAndAssistantMessages(thread.Id, request.UserPrompt, badRequest.Value ?? string.Empty, null);
+                await SaveAuditLogsAsync(userMessage, assistantMessage);
                 return badRequest;
             }
             
@@ -221,12 +222,6 @@ public static class Chat
                 contextAccessor.HttpContext!,
                 ResponseType.DbMessages,
                 new List<Message> { userMessage, assistantMessage });
-        }
-
-        private async Task SaveUserAndAssistantMessagesAuditLogsAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
-        {
-            var (userMessage, assistantMessage) = CreateUserAndAssistantMessages(threadId, userPrompt, assistantResponse, assistantMetadata);
-            await SaveAuditLogsAsync(userMessage, assistantMessage);
         }
 
         private (Message userMessage, Message assistantMessage) CreateUserAndAssistantMessages(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
