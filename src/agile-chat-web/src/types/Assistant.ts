@@ -13,13 +13,13 @@ export type Assistant = {
 
 export enum AssistantType {
   Chat = 'Chat',
-  Search = 'Search',
+  Search = 'Search'
 }
 
 export enum AssistantStatus {
   Draft = 'Draft',
   Published = 'Published',
-  Archived = 'Archived',
+  Archived = 'Archived'
 }
 
 export interface AssistantPromptOptions {
@@ -32,6 +32,7 @@ export interface AssistantPromptOptions {
 export interface AssistantFilterOptions {
   group?: string;
   indexName: string;
+  limitKnowledgeToIndex: boolean;
   documentLimit: number;
   strictness?: number;
   folders: string[];

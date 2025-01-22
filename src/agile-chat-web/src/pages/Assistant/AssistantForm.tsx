@@ -26,6 +26,7 @@ import { fetchTools } from '@/services/toolservice';
 //import { Tool } from '@/types/Tool';
 import { useIndexes } from '@/hooks/use-indexes';
 import { Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { FoldersFilterInput } from '@/components/ui-extended/folder-filter';
 //import { enablePreviewFeatures } from '@/globals';
 
@@ -34,16 +35,17 @@ const AssistantPromptOptionsSchema = z.object({
   systemPrompt: z.string(),
   temperature: z.number(),
   topP: z.number().min(0).max(1).optional(),
-  maxTokens: z.number().int().max(16384).optional(),
+  maxTokens: z.number().int().max(16384).optional()
 });
 
 // Define the AssistantFilterOptions schema
 const AssistantFilterOptionsSchema = z.object({
   group: z.string().optional(),
   indexName: z.string(),
+  limitKnowledgeToIndex: z.boolean(),
   documentLimit: z.number().int(),
   strictness: z.number().min(-1).max(1).optional(),
-  folders: z.array(z.string()),
+  folders: z.array(z.string())
 });
 
 // Define the main schema
@@ -54,7 +56,7 @@ const formSchema = z.object({
   type: z.nativeEnum(AssistantType),
   status: z.nativeEnum(AssistantStatus),
   promptOptions: AssistantPromptOptionsSchema,
-  filterOptions: AssistantFilterOptionsSchema,
+  filterOptions: AssistantFilterOptionsSchema
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -83,16 +85,17 @@ export default function AssistantForm() {
         systemPrompt: '',
         temperature: 0.7,
         topP: 0.95,
-        maxTokens: undefined,
+        maxTokens: undefined
       },
       filterOptions: {
         indexName: '',
+        limitKnowledgeToIndex: false,
         group: undefined,
         documentLimit: 5,
         strictness: undefined,
-        folders: [],
-      },
-    },
+        folders: []
+      }
+    }
   });
 
   const getTools = async () => {
@@ -121,21 +124,22 @@ export default function AssistantForm() {
             systemPrompt: file.promptOptions.systemPrompt,
             temperature: file.promptOptions.temperature,
             topP: file.promptOptions.topP,
-            maxTokens: file.promptOptions.maxTokens ?? undefined,
+            maxTokens: file.promptOptions.maxTokens ?? undefined
           },
           filterOptions: {
             indexName: file.filterOptions.indexName,
+            limitKnowledgeToIndex: file.filterOptions.limitKnowledgeToIndex,
             documentLimit: file.filterOptions.documentLimit,
             group: file.filterOptions.group ?? undefined,
             strictness: file.filterOptions.strictness ?? undefined,
-            folders: file.filterOptions.folders ?? [],
-          },
+            folders: file.filterOptions.folders ?? []
+          }
         });
       } else {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to load assistant data',
+          description: 'Failed to load assistant data'
         });
       }
     }
@@ -163,6 +167,7 @@ export default function AssistantForm() {
   // }, [selectedToolIds, tools, form]);
 
   const onSubmit = async (values: FormValues) => {
+    console.log(values);
     setIsSubmitting(true);
     try {
       const fileData = values as Assistant;
@@ -172,14 +177,14 @@ export default function AssistantForm() {
 
       toast({
         title: 'Success',
-        description: fileId ? 'Assistant updated successfully' : 'Assistant created successfully',
+        description: fileId ? 'Assistant updated successfully' : 'Assistant created successfully'
       });
       navigate('/assistants');
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: error instanceof Error ? error.message : 'An error occurred'
       });
     } finally {
       setIsSubmitting(false);
@@ -326,6 +331,22 @@ export default function AssistantForm() {
                             ))}
                           </SelectContent>
                         </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="filterOptions.limitKnowledgeToIndex"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-y-0">
+                      <FormLabel htmlFor="container-select" className="my-auto">
+                        Limit Assistant knowledge to container only
+                      </FormLabel>
+                      <FormControl>
+                        <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -519,8 +540,7 @@ export default function AssistantForm() {
                     type="submit"
                     disabled={isSubmitting}
                     onClick={form.handleSubmit(onSubmit)}
-                    aria-label="Save Assistant"
-                  >
+                    aria-label="Save Assistant">
                     {isSubmitting ? 'Submitting...' : fileId ? 'Update' : 'Create'}
                   </Button>
                 </div>

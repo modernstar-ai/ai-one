@@ -9,7 +9,7 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
+  SheetTrigger
 } from '@/components/ui/sheet';
 import { Citation } from '@/types/ChatThread';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
@@ -20,12 +20,11 @@ import { getCitationChunkById } from '@/services/ai-search-service';
 import { FileViewingDialog } from './file-viewing-dialog';
 
 interface CitationSheetProps {
-  index: number;
   citation: Citation;
   assistantId?: string;
 }
 export function CitationSheet(props: CitationSheetProps) {
-  const { index, citation, assistantId } = props;
+  const { citation, assistantId } = props;
   const [chunk, setChunk] = useState<string | undefined>(undefined);
 
   const onOpen = async () => {
@@ -44,7 +43,7 @@ export function CitationSheet(props: CitationSheetProps) {
         <TooltipTrigger asChild>
           <SheetTrigger asChild>
             <Button variant="outline" className="mr-2">
-              {index}
+              {citation.referenceNumber}
             </Button>
           </SheetTrigger>
         </TooltipTrigger>

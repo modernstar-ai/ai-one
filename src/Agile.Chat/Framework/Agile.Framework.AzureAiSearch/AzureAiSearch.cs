@@ -1,4 +1,4 @@
-﻿using Agile.Framework.AzureAiSearch.AiSearchConstants;
+using Agile.Framework.AzureAiSearch.AiSearchConstants;
 using Agile.Framework.AzureAiSearch.Interfaces;
 using Agile.Framework.AzureAiSearch.Models;
 using Agile.Framework.Common.Attributes;
@@ -8,6 +8,8 @@ using Azure.Search.Documents.Indexes;
 using Azure.Search.Documents.Indexes.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 
 namespace Agile.Framework.AzureAiSearch;
 
@@ -29,11 +31,11 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
             .ToList();
     }
 
-    public async Task<string?> GetChunkByIdAsync(string indexName, string chunkId)
+    public async Task<AzureSearchDocument?> GetChunkByIdAsync(string indexName, string chunkId)
     {
         var searchClient = indexClient.GetSearchClient(indexName);
         var searchResults = await searchClient.GetDocumentAsync<AzureSearchDocument>(chunkId);
-        return !searchResults.HasValue ? null : searchResults.Value.Chunk;
+        return !searchResults.HasValue ? null : searchResults.Value;
     }
     
     #region Indexers
@@ -149,4 +151,78 @@ public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient 
         return skillset;
     }
     #endregion
+
+    #region IndexReport
+    public async Task<SearchIndexStatistics> GetIndexStatisticsByNameAsync(string indexName)
+    {
+        try
+        {
+            // Get index details
+            var stats = await indexClient.GetIndexStatisticsAsync(indexName);
+             
+            return stats;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to get index statistics for {{IndexName}}: {indexName} error: {ex.Message}");
+        }
+    }
+
+    public async Task<IndexerDetail?> GetIndexersByIndexNameAsync(string indexName)
+    {
+        try
+        {
+            var indexer = await indexerClient.GetIndexerAsync(SearchConstants.IndexerName(indexName));
+
+            if (indexer.HasValue)
+            {
+                var indexerStatus = await indexerClient.GetIndexerStatusAsync(indexer.Value.Name);
+
+                return new IndexerDetail
+                {
+                    Name = indexer.Value.Name,
+                    TargetIndex = indexer.Value.TargetIndexName,
+                    DataSource = indexer.Value.DataSourceName,
+                    Schedule = indexer.Value.Schedule?.Interval.ToString() ?? "Manual",
+                    LastRunTime = indexerStatus.Value.LastResult.EndTime?.DateTime,
+                    DocumentsProcessed = indexerStatus.Value.LastResult?.ItemCount,
+                    Status = indexerStatus.Value.LastResult?.Status.ToString()
+                };
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to get index details for {{IndexName}}: {indexName} error: {ex.Message}");
+        }
+    }
+
+
+    public async Task<DataSourceDetail?> GetDataSourceByNameAsync(string indexName)
+    {
+        try
+        {
+            var datasource = await indexerClient.GetDataSourceConnectionAsync(SearchConstants.DatasourceName(indexName));
+
+            if (datasource.HasValue)
+            {
+                return new DataSourceDetail
+                {
+                    Name = datasource.Value.Name,
+                    Type = datasource.Value.Type.ToString(),
+                    Container = datasource.Value.Container?.Name ?? "N/A",
+                };
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to get index data source for {{IndexName}}: {indexName} error: {ex.Message}");
+        }
+    }
+
+    
+
+    #endregion
+
 }
