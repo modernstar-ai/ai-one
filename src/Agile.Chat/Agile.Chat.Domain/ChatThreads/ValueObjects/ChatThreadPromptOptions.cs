@@ -1,4 +1,5 @@
-﻿using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+﻿using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 
 namespace Agile.Chat.Domain.ChatThreads.ValueObjects;
 
@@ -13,6 +14,7 @@ public class ChatThreadPromptOptions
     {
         var options = new AzureOpenAIPromptExecutionSettings()
         {
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             ChatSystemPrompt = string.IsNullOrWhiteSpace(SystemPrompt) ? null : SystemPrompt,
             Temperature = Temperature,
             TopP = TopP,

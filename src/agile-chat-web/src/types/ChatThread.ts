@@ -32,12 +32,12 @@ export interface ChatThreadFilterOptions {
 
 export enum ChatType {
   Thread = 'Thread',
-  Message = 'Message',
+  Message = 'Message'
 }
 
 export enum MessageType {
   User = 'User',
-  Assistant = 'Assistant',
+  Assistant = 'Assistant'
 }
 
 export interface Message {
@@ -59,10 +59,12 @@ export interface MessageOptions {
 
 export enum MetadataType {
   Citations = 'Citations',
-  SearchProcess = 'SearchProcess',
+  DocumentsRetrieved = 'DocumentsRetrieved',
+  SearchProcess = 'SearchProcess'
 }
 
 export interface Citation {
+  referenceNumber: number;
   id: string;
   name: string;
   url: string;

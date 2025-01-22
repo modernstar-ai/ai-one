@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Graph;
 using Serilog;
+using Serilog.Sinks.ApplicationInsights.TelemetryConverters;
 
 namespace Agile.Framework;
 
@@ -38,5 +39,9 @@ public static class DependencyInjection
     public static bool IsLocal(this IHostEnvironment app) => app.IsEnvironment("Local");
     
     private static IServiceCollection AddSeriLogLogging(this IServiceCollection services, IConfiguration configuration) =>
-        services.AddSerilog(opt => opt.ReadFrom.Configuration(configuration));
+        services.AddSerilog(opt =>
+        {
+            opt.ReadFrom.Configuration(configuration);
+            opt.WriteTo.ApplicationInsights(Configs.AppInsightsConnectionString, new TraceTelemetryConverter());
+        });
 }

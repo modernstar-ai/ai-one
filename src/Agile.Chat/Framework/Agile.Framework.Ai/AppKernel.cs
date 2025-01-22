@@ -23,6 +23,8 @@ public interface IAppKernel
         string promptRelativeDirectory,
         string promptFile,
         Dictionary<string, object?>? kernelArguments = null!);
+    
+    void AddPlugin<T>(IServiceProvider? serviceProvider = null);
 }
 
 [Experimental("SKEXP0001")]
@@ -38,6 +40,11 @@ public class AppKernel : IAppKernel
          _kernel = kernel;
          _textEmbedding = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
          _chatCompletion = kernel.GetRequiredService<IChatCompletionService>();
+     }
+
+     public void AddPlugin<T>(IServiceProvider? serviceProvider = null)
+     {
+         _kernel.Plugins.AddFromType<T>(nameof(T), serviceProvider);
      }
      
      public async Task<ReadOnlyMemory<float>> GenerateEmbeddingAsync(string text) =>
