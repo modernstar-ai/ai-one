@@ -206,36 +206,50 @@ public static class Chat
 
         private async Task SaveUserAndAssistantMessagesAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
         {
-            var userMessage = Message.CreateUser(threadId, userPrompt, new MessageOptions());
+            // Create messages
+            var (userMessage, assistantMessage) = CreateUserAndAssistantMessages(threadId, userPrompt, assistantResponse, assistantMetadata);
+
+            // Save messages 
             await chatMessageService.AddItemAsync(userMessage);
-            
-            var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
-            if(assistantMetadata != null) 
-            { 
-                foreach(var (key, value) in assistantMetadata)
-                    assistantMessage.AddMetadata(key, value);
-            }
-          
             await chatMessageService.AddItemAsync(assistantMessage);
-            await SaveUserAndAssistantMessagesAuditLogsAsync(threadId, userPrompt, assistantResponse, assistantMetadata);
-            
-            await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, ResponseType.DbMessages, new List<Message>([userMessage, assistantMessage]));
+
+            // Save audit logs
+            await SaveAuditLogsAsync(userMessage, assistantMessage);
+
+            // Write to response stream
+            await ChatUtils.WriteToResponseStreamAsync(
+                contextAccessor.HttpContext!,
+                ResponseType.DbMessages,
+                new List<Message> { userMessage, assistantMessage });
         }
 
         private async Task SaveUserAndAssistantMessagesAuditLogsAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
         {
-            var userMessage = Message.CreateUser(threadId, userPrompt, new MessageOptions());
-            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage));
-            var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
+            var (userMessage, assistantMessage) = CreateUserAndAssistantMessages(threadId, userPrompt, assistantResponse, assistantMetadata);
+            await SaveAuditLogsAsync(userMessage, assistantMessage);
+        }
 
+        private (Message userMessage, Message assistantMessage) CreateUserAndAssistantMessages(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
+        {
+            var userMessage = Message.CreateUser(threadId, userPrompt, new MessageOptions());
+
+            var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
             if (assistantMetadata != null)
             {
                 foreach (var (key, value) in assistantMetadata)
+                {
                     assistantMessage.AddMetadata(key, value);
+                }
             }
-            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage));
+
+            return (userMessage, assistantMessage);
         }
 
+        private async Task SaveAuditLogsAsync(Message userMessage, Message assistantMessage)
+        {
+            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage));
+            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage));
+        }
     }
 
     public class Validator : AbstractValidator<Command>
