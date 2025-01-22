@@ -85,12 +85,18 @@ public static class Chat
                 AssistantType.Search => await GetSearchResultAsync(request.UserPrompt, assistant?.PromptOptions?.SystemPrompt, assistant?.FilterOptions, chatSettings),
                 _ => Results.BadRequest("Unknown chat type")
             };
-            if(assistantResult is BadRequest<string> badRequest)
+
+            bool isSavingBadRequest = false;
+            if (assistantResult is BadRequest<string> badRequest)
+            {
+                isSavingBadRequest = true;
+                await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, string.Empty, null, isSavingBadRequest);
                 return badRequest;
+            }
             
             //Get the full response and metadata
             var (assistantResponse, assistantMetadata) = GetAssistantResponseAndMetadata(assistant?.Type, assistantResult, chatContainer.Citations);
-            await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, assistantResponse, assistantMetadata);
+            await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, assistantResponse, assistantMetadata, isSavingBadRequest);
             
             //If its a new chat, update the threads name, otherwise just update the last modified date
             thread.Update(chatHistory.Count <= 1 ? TruncateUserPrompt(request.UserPrompt) : thread.Name, thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions);
@@ -200,20 +206,27 @@ public static class Chat
             }
         }
 
-        private async Task SaveUserAndAssistantMessagesAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object> assistantMetadata)
+        private async Task SaveUserAndAssistantMessagesAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata, bool isSavingBadRequest)
         {
             var userMessage = Message.CreateUser(threadId, userPrompt, new MessageOptions());
-            await chatMessageService.AddItemAsync(userMessage);
+            // save bad request only in audit logs not in chat hisotry
+            if (!isSavingBadRequest)
+                await chatMessageService.AddItemAsync(userMessage);
             await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage));
             
             var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
-            foreach(var (key, value) in assistantMetadata)
-                assistantMessage.AddMetadata(key, value);
-            
-            await chatMessageService.AddItemAsync(assistantMessage);
+
+            if(assistantMetadata != null) 
+            { 
+                foreach(var (key, value) in assistantMetadata)
+                    assistantMessage.AddMetadata(key, value);
+            }
+            if (!isSavingBadRequest)
+                await chatMessageService.AddItemAsync(assistantMessage);
             await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage));
 
-            await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, ResponseType.DbMessages, new List<Message>([userMessage, assistantMessage]));
+            if (!isSavingBadRequest)
+                await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, ResponseType.DbMessages, new List<Message>([userMessage, assistantMessage]));
         }
     }
 
