@@ -86,17 +86,15 @@ public static class Chat
                 _ => Results.BadRequest("Unknown chat type")
             };
 
-            bool isSavingBadRequest = false;
             if (assistantResult is BadRequest<string> badRequest)
             {
-                isSavingBadRequest = true;
-                await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, string.Empty, null, isSavingBadRequest);
+                await SaveUserAndAssistantMessagesAuditLogsAsync(thread.Id, request.UserPrompt, string.Empty, null);
                 return badRequest;
             }
             
             //Get the full response and metadata
             var (assistantResponse, assistantMetadata) = GetAssistantResponseAndMetadata(assistant?.Type, assistantResult, chatContainer.Citations);
-            await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, assistantResponse, assistantMetadata, isSavingBadRequest);
+            await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, assistantResponse, assistantMetadata);
             
             //If its a new chat, update the threads name, otherwise just update the last modified date
             thread.Update(chatHistory.Count <= 1 ? TruncateUserPrompt(request.UserPrompt) : thread.Name, thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions);
@@ -206,28 +204,38 @@ public static class Chat
             }
         }
 
-        private async Task SaveUserAndAssistantMessagesAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata, bool isSavingBadRequest)
+        private async Task SaveUserAndAssistantMessagesAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
         {
             var userMessage = Message.CreateUser(threadId, userPrompt, new MessageOptions());
-            // save bad request only in audit logs not in chat hisotry
-            if (!isSavingBadRequest)
-                await chatMessageService.AddItemAsync(userMessage);
-            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage));
+            await chatMessageService.AddItemAsync(userMessage);
             
             var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
-
             if(assistantMetadata != null) 
             { 
                 foreach(var (key, value) in assistantMetadata)
                     assistantMessage.AddMetadata(key, value);
             }
-            if (!isSavingBadRequest)
-                await chatMessageService.AddItemAsync(assistantMessage);
-            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage));
-
-            if (!isSavingBadRequest)
-                await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, ResponseType.DbMessages, new List<Message>([userMessage, assistantMessage]));
+          
+            await chatMessageService.AddItemAsync(assistantMessage);
+            await SaveUserAndAssistantMessagesAuditLogsAsync(threadId, userPrompt, assistantResponse, assistantMetadata);
+            
+            await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, ResponseType.DbMessages, new List<Message>([userMessage, assistantMessage]));
         }
+
+        private async Task SaveUserAndAssistantMessagesAuditLogsAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
+        {
+            var userMessage = Message.CreateUser(threadId, userPrompt, new MessageOptions());
+            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage));
+            var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
+
+            if (assistantMetadata != null)
+            {
+                foreach (var (key, value) in assistantMetadata)
+                    assistantMessage.AddMetadata(key, value);
+            }
+            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage));
+        }
+
     }
 
     public class Validator : AbstractValidator<Command>
