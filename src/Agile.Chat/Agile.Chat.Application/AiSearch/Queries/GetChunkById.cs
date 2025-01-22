@@ -23,7 +23,7 @@ public static class GetChunkById
             logger.LogInformation("Found Assistant name: {Name} with Id: {Id}", assistant!.Name, assistant.Id);
             
             var chunk = await azureAiSearch.GetChunkByIdAsync(assistant!.FilterOptions.IndexName, request.ChunkId);
-            return Results.Ok(chunk);
+            return Results.Ok(chunk?.Chunk);
         }
     }
     

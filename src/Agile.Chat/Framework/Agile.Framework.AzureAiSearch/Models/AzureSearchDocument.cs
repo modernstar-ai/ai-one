@@ -5,6 +5,7 @@ namespace Agile.Framework.AzureAiSearch.Models;
 
 public class AzureSearchDocument
 {
+    public int ReferenceNumber { get; set; }
     [JsonPropertyName("chunk_id")]
     public string Id { get; set; }
     [JsonPropertyName("chunk")]
@@ -14,11 +15,11 @@ public class AzureSearchDocument
     [JsonPropertyName("metadata_storage_path")]
     public string Url { get; set; }
     
-    public string ToString(int index)
+    public new string ToString()
     {
         return $"""
                 Reference Number:
-                {index}
+                {ReferenceNumber}
                 Title:
                 {Name}
                 Chunk:

@@ -6,5 +6,6 @@ namespace Agile.Chat.Domain.ChatThreads.ValueObjects;
 public enum MetadataType
 {
     Citations,
+    DocumentsRetrieved,
     SearchProcess
 }
