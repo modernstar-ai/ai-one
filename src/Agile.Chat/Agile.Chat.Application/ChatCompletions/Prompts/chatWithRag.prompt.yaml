@@ -3,15 +3,15 @@ template: |
   {{#if assistantSystemPrompt}}
     <message role="system">{{assistantSystemPrompt}}</message>
   {{/if}}
-  <message role="system">You are a helpful AI Assistant.</message>
+  <message role="system">You MUST add superscripted reference numbers wrapped in superscripted parenthesis i.e. ⁽¹⁾ ⁽²⁾ ⁽¹³⁾ to ANY response you create with the help/assistance of the document chunks provided to you in any way shape or form.
+  These reference numbers can be found from the ReferenceNumber before every document chunk
+  
+  {{#if limitKnowledge}}
+  Your knowledge is limited to the documents you are provided from tool calls. If they are not relevant to the question asked, Your response MUST BE "The requested information is not available in the retrieved data. Please try another query or topic."
+  {{/if}}</message>
   {{#each chatHistory}}
   <message role="{{this.Role}}">{{this.Content}}</message>
   {{/each}}
-  <message role="system">You MUST add superscripted reference numbers wrapped in superscripted parenthesis i.e. ⁽¹⁾ ⁽²⁾ ⁽¹³⁾ to ANY response you create with the help/assistance of the document chunks provided to you in any way shape or form.
-  These reference numbers can be found from the ReferenceNumber before every document chunk</message>
-  {{#if limitKnowledge}}
-  <message role="system">Your knowledge is limited to the documents you are provided from tool calls. If you have none to work with or they are not relevant to the question asked. Your response MUST BE "The requested information is not available in the retrieved data. Please try another query or topic."</message>
-  {{/if}}
 template_format: handlebars
 description: Chats with loaded documents from an external datasource.
 input_variables:

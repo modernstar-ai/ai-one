@@ -43,6 +43,9 @@ param embeddingDeploymentName string
 param embeddingDeploymentCapacity int
 param embeddingModelName string
 
+@description('APIM Azure OpenAI Endpoint')
+param apimAiEndpointOverride string = ''
+
 @description('Admin email addresses array')
 param AdminEmailAddresses array = [
   'adam-stephensen@agile-analytics.com.au'
@@ -123,13 +126,6 @@ param deployEventGrid bool = false
 var databaseName = 'chat'
 var historyContainerName = 'history'
 var configContainerName = 'config'
-
-@description('UTS Role Endpoint')
-param UtsRoleApiEndpoint string = ''
-
-@description('UTS Subject Query API Key')
-@secure()
-param UtsXApiKey string = ''
 
 @description('AI Services  Name')
 var aiServices_name = toLower('${projectName}${environmentName}-ai-services')
@@ -278,10 +274,18 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AzureAiServicesKey'
           value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_AI_SERVICES_KEY.name})'
         }
-        {
-          name: 'AzureOpenAi__Endpoint'
-          value: azureopenai.properties.endpoint
-        }
+        !empty(apimAiEndpointOverride)
+          ? {
+              name: 'AzureOpenAi__Apim__Endpoint'
+              value: apimAiEndpointOverride
+            }
+          : {}
+        empty(apimAiEndpointOverride)
+          ? {
+              name: 'AzureOpenAi__Endpoint'
+              value: azureopenai.properties.endpoint
+            }
+          : {}
         {
           name: 'AzureOpenAi__ApiKey'
           value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_KEY.name})'
@@ -325,14 +329,6 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'AdminEmailAddresses'
           value: join(AdminEmailAddresses, ',')
-        }
-        {
-          name: 'UtsRoleApiEndpoint'
-          value: UtsRoleApiEndpoint
-        }
-        {
-          name: 'UtsXApiKey'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::UTS_XAPI_KEY.name})'
         }
         {
           name: 'ASPNETCORE_ENVIRONMENT'
@@ -413,7 +409,7 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     enabledForTemplateDeployment: false
   }
 
-  resource AZURE_OPENAI_API_KEY 'secrets' = {
+  resource AZURE_OPENAI_API_KEY 'secrets' = if (empty(apimAiEndpointOverride)) {
     name: 'AZURE-OPENAI-API-KEY'
     properties: {
       contentType: 'text/plain'
@@ -482,14 +478,6 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     properties: {
       contentType: 'text/plain'
       value: azureTenantId
-    }
-  }
-
-  resource UTS_XAPI_KEY 'secrets' = {
-    name: 'UTS-XAPI-KEY'
-    properties: {
-      contentType: 'text/plain'
-      value: UtsXApiKey
     }
   }
 }
@@ -569,7 +557,7 @@ resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   identity: { type: 'SystemAssigned' }
 }
 
-resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (empty(apimAiEndpointOverride)) {
   name: openai_name
   location: openAiLocation
   tags: tags

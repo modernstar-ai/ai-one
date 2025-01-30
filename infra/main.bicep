@@ -57,6 +57,9 @@ param embeddingDeploymentName string = 'embedding'
 param embeddingDeploymentCapacity int = 120
 param embeddingModelName string = 'text-embedding-ada-002'
 
+@description('The optional APIM Gateway URL to override the azure open AI instance')
+param apimAiEndpointOverride string = ''
+
 param searchServiceSkuName string = 'standard'
 
 // TODO: define good default Sku and settings for storage account
@@ -88,14 +91,6 @@ param deployEventGrid bool = false
 @description('Conditionally deploy key vault Api app permissions')
 param kvSetFunctionAppPermissions bool = false
 
-@description('UTS Role Endpoint')
-param UtsRoleApiEndpoint string = ''
-
-@description('UTS Subject Query API Key')
-@secure()
-param UtsXApiKey string = ''
-
-
 @description('ets options that control the availability of semantic search')
 @allowed(['disabled', 'free', 'standard'])
 param semanticSearchSku string = 'free'
@@ -103,7 +98,6 @@ param semanticSearchSku string = 'free'
 @description('Shared variables pattern for loading tags')
 var tagsFilePath = './tags.json'
 var tags = loadJsonContent(tagsFilePath)
-
 
 module resources 'resources.bicep' = {
   name: 'all-resources'
@@ -130,11 +124,10 @@ module resources 'resources.bicep' = {
     azureClientSecret: azureClientSecret
     azureTenantId: azureTenantId
     azureADAppIdOrUri: azureADAppIdOrUri
-    UtsRoleApiEndpoint: UtsRoleApiEndpoint
-    UtsXApiKey: UtsXApiKey
+    apimAiEndpointOverride: apimAiEndpointOverride
     deployEventGrid: deployEventGrid
     kvSetFunctionAppPermissions: kvSetFunctionAppPermissions
-    semanticSearchSku:semanticSearchSku
+    semanticSearchSku: semanticSearchSku
   }
 }
 
