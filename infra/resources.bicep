@@ -573,7 +573,7 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (emp
 
 @batchSize(1)
 resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [
-  for deployment in llmDeployments: {
+  for deployment in llmDeployments: if (empty(apimAiEndpointOverride)) {
     parent: azureopenai
     name: deployment.name
     properties: {
