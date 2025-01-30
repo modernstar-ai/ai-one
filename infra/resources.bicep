@@ -280,48 +280,34 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
               value: apimAiEndpointOverride
             }
           : {}
-        empty(apimAiEndpointOverride)
-          ? {
-              name: 'AzureOpenAi__Endpoint'
-              value: azureopenai.properties.endpoint
-            }
-          : {}
-        empty(apimAiEndpointOverride)
-          ? {
-              name: 'AzureOpenAi__ApiKey'
-              value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_KEY.name})'
-            }
-          : {}
-        empty(apimAiEndpointOverride)
-          ? {
-              name: 'AzureOpenAi__ApiVersion'
-              value: openai_api_version
-            }
-          : {}
-        empty(apimAiEndpointOverride)
-          ? {
-              name: 'AzureOpenAi__InstanceName'
-              value: openai_name
-            }
-          : {}
-        empty(apimAiEndpointOverride)
-          ? {
-              name: 'AzureOpenAi__DeploymentName'
-              value: chatGptDeploymentName
-            }
-          : {}
-        empty(apimAiEndpointOverride)
-          ? {
-              name: 'AzureOpenAi__EmbeddingsDeploymentName'
-              value: embeddingDeploymentName
-            }
-          : {}
-        empty(apimAiEndpointOverride)
-          ? {
-              name: 'AzureOpenAi__EmbeddingsModelName'
-              value: embeddingModelName
-            }
-          : {}
+        {
+          name: 'AzureOpenAi__Endpoint'
+          value: azureopenai.properties.endpoint
+        }
+        {
+          name: 'AzureOpenAi__ApiKey'
+          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_KEY.name})'
+        }
+        {
+          name: 'AzureOpenAi__ApiVersion'
+          value: openai_api_version
+        }
+        {
+          name: 'AzureOpenAi__InstanceName'
+          value: openai_name
+        }
+        {
+          name: 'AzureOpenAi__DeploymentName'
+          value: chatGptDeploymentName
+        }
+        {
+          name: 'AzureOpenAi__EmbeddingsDeploymentName'
+          value: embeddingDeploymentName
+        }
+        {
+          name: 'AzureOpenAi__EmbeddingsModelName'
+          value: embeddingModelName
+        }
         {
           name: 'AzureSearch__Endpoint'
           value: 'https://${search_name}.search.windows.net'
