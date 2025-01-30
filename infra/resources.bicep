@@ -43,6 +43,9 @@ param embeddingDeploymentName string
 param embeddingDeploymentCapacity int
 param embeddingModelName string
 
+@description('APIM Azure OpenAI Endpoint')
+param apimAiEndpointOverride string = ''
+
 @description('Admin email addresses array')
 param AdminEmailAddresses array = [
   'adam-stephensen@agile-analytics.com.au'
@@ -123,13 +126,6 @@ param deployEventGrid bool = false
 var databaseName = 'chat'
 var historyContainerName = 'history'
 var configContainerName = 'config'
-
-@description('UTS Role Endpoint')
-param UtsRoleApiEndpoint string = ''
-
-@description('UTS Subject Query API Key')
-@secure()
-param UtsXApiKey string = ''
 
 @description('AI Services  Name')
 var aiServices_name = toLower('${projectName}${environmentName}-ai-services')
@@ -278,6 +274,12 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           name: 'AzureAiServicesKey'
           value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_AI_SERVICES_KEY.name})'
         }
+        !empty(apimAiEndpointOverride)
+          ? {
+              name: 'AzureOpenAi__Apim__Endpoint'
+              value: apimAiEndpointOverride
+            }
+          : {}
         {
           name: 'AzureOpenAi__Endpoint'
           value: azureopenai.properties.endpoint
@@ -325,14 +327,6 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'AdminEmailAddresses'
           value: join(AdminEmailAddresses, ',')
-        }
-        {
-          name: 'UtsRoleApiEndpoint'
-          value: UtsRoleApiEndpoint
-        }
-        {
-          name: 'UtsXApiKey'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::UTS_XAPI_KEY.name})'
         }
         {
           name: 'ASPNETCORE_ENVIRONMENT'
@@ -482,14 +476,6 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     properties: {
       contentType: 'text/plain'
       value: azureTenantId
-    }
-  }
-
-  resource UTS_XAPI_KEY 'secrets' = {
-    name: 'UTS-XAPI-KEY'
-    properties: {
-      contentType: 'text/plain'
-      value: UtsXApiKey
     }
   }
 }
