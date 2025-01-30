@@ -85,8 +85,13 @@ public static class Chat
                 AssistantType.Search => await GetSearchResultAsync(request.UserPrompt, assistant?.PromptOptions?.SystemPrompt, assistant?.FilterOptions, chatSettings),
                 _ => Results.BadRequest("Unknown chat type")
             };
-            if(assistantResult is BadRequest<string> badRequest)
+
+            if (assistantResult is BadRequest<string> badRequest)
+            {
+                var (userMessage, assistantMessage) = CreateUserAndAssistantMessages(thread.Id, request.UserPrompt, badRequest.Value ?? string.Empty, null);
+                await SaveAuditLogsAsync(userMessage, assistantMessage);
                 return badRequest;
+            }
             
             //Get the full response and metadata
             var (assistantResponse, assistantMetadata) = GetAssistantResponseAndMetadata(assistant?.Type, assistantResult, chatContainer.Citations);
@@ -200,20 +205,45 @@ public static class Chat
             }
         }
 
-        private async Task SaveUserAndAssistantMessagesAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object> assistantMetadata)
+        private async Task SaveUserAndAssistantMessagesAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
+        {
+            // Create messages
+            var (userMessage, assistantMessage) = CreateUserAndAssistantMessages(threadId, userPrompt, assistantResponse, assistantMetadata);
+
+            // Save messages 
+            await chatMessageService.AddItemAsync(userMessage);
+            await chatMessageService.AddItemAsync(assistantMessage);
+
+            // Save audit logs
+            await SaveAuditLogsAsync(userMessage, assistantMessage);
+
+            // Write to response stream
+            await ChatUtils.WriteToResponseStreamAsync(
+                contextAccessor.HttpContext!,
+                ResponseType.DbMessages,
+                new List<Message> { userMessage, assistantMessage });
+        }
+
+        private (Message userMessage, Message assistantMessage) CreateUserAndAssistantMessages(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
         {
             var userMessage = Message.CreateUser(threadId, userPrompt, new MessageOptions());
-            await chatMessageService.AddItemAsync(userMessage);
-            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage));
-            
-            var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
-            foreach(var (key, value) in assistantMetadata)
-                assistantMessage.AddMetadata(key, value);
-            
-            await chatMessageService.AddItemAsync(assistantMessage);
-            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage));
 
-            await ChatUtils.WriteToResponseStreamAsync(contextAccessor.HttpContext!, ResponseType.DbMessages, new List<Message>([userMessage, assistantMessage]));
+            var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
+            if (assistantMetadata != null)
+            {
+                foreach (var (key, value) in assistantMetadata)
+                {
+                    assistantMessage.AddMetadata(key, value);
+                }
+            }
+
+            return (userMessage, assistantMessage);
+        }
+
+        private async Task SaveAuditLogsAsync(Message userMessage, Message assistantMessage)
+        {
+            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage));
+            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage));
         }
     }
 

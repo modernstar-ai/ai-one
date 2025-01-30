@@ -111,6 +111,31 @@ export default function FileList() {
     }
   };
 
+  const getPaginationButtons = () => {
+    const paginationButtons = [];
+  
+    // Always add the first page
+    paginationButtons.push(0);
+  
+    // Add ... before the current range if necessary
+    if (currentPage > 3) paginationButtons.push("...");
+  
+    // Add the range of pages
+    const start = Math.max(1, currentPage - 2);
+    const end = Math.min(totalPages - 1, currentPage + 2);
+    for (let i = start; i < end; i++) {
+      paginationButtons.push(i);
+    }
+  
+    // Add ... after the current range if necessary
+    if (currentPage < totalPages - 3) paginationButtons.push("...");
+  
+    // Always add the last page
+    if (totalPages > 1) paginationButtons.push(totalPages - 1);
+  
+    return paginationButtons;
+  };
+
   // data-table
   const columns = [
     {
@@ -227,17 +252,24 @@ export default function FileList() {
           </div>
           <DataTable columns={columns} data={sortedFiles?.items || []} />
 
-          {/* Pagination */}
-          <div className="flex mt-4 space-x-2">
-            {Array.from({ length: totalPages }, (_, index) => (
-              <Button
-                key={index}
-                variant={currentPage === index ? 'link' : 'outline'}
-                onClick={() => handlePageChange(index)}
-                disabled={currentPage === index}>
-                {index + 1}
-              </Button>
-            ))}
+           {/* Pagination */}
+           <div className="flex mt-4 space-x-2">
+            {getPaginationButtons().map((page, index) =>
+              typeof page === "number" ? (
+                <Button
+                  key={index}
+                  variant={currentPage === page ? "link" : "outline"}
+                  onClick={() => handlePageChange(page)}
+                  disabled={currentPage === page}
+                >
+                  {page + 1}
+                </Button>
+              ) : (
+                <span key={index} className="px-2">
+                  ...
+                </span>
+              )
+            )}
           </div>
         </div>
       </div>
