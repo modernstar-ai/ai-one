@@ -1,15 +1,72 @@
 # Agile Chat FAQS
 
+## What is Agile AI-One?
+
+AI-One is an enterprise AI platform designed to help organizations rapidly adopt AI safely, at scale, and with deep enterprise integration. It empowers enterprise, public sector, and commercial customers to create, validate, and deploy AI-driven use cases in minutes—not hours or days.
+
+AI-One seamlessly connects with enterprise data and integration sources, solving the common challenges of AI adoption by providing:
+
+Enterprise-grade AI orchestration – unify and manage AI Assistants, Agents, and Chatbots across your organization.
+Seamless scalability & security – deploy AI solutions with role-based access control and enterprise authentication.
+Frictionless AI use case validation – experiment with new AI applications quickly, reducing time-to-value.
+Centralized AI management – streamline deployment, monitoring, and governance of AI solutions.
+AI-powered search & data insights – create AI Search Indexes, integrate unstructured data sources, and enhance decision-making with intelligent retrieval.
+By consolidating AI capabilities into a single, scalable platform, AI-One reduces complexity, accelerates innovation, and ensures AI solutions are robust, secure, and aligned with enterprise needs.
+
 ## Who is AgileChat Built for ?
-AgileChat is aimed at enterprise, public sector and commercial customers like government agencies, universities, finaincial institutions and retail enterprises. 
 
-## What are the challenges that AgileChat addresses ? 
+AI-One is built for enterprise, public sector, and commercial organizations looking to accelerate AI adoption while maintaining security, scalability, and governance.
 
-The Challenges that we see customers have when building AI projects are
+It is designed for government agencies, universities, financial institutions, and businesses of all sizes, including SMBs, that want to:
 
-- Many customers have built several AI point solutions, either using AI solution accelerators provided by Microsoft, by using the AI Studio portal or using Microsoft Copilot. Because each of these AI Assistants is developed separately there is no common authentication/administration/security layer. Features that are built and customised for one AI application are not available in other AI applications. Maintenance and management of these solutions is complex. Managing data sources for these assistants is complex. In the age of agent orchestration it is complex to create an orchtestrator that can incorporate and co-ordinate these discrete AI applications as agents in a broader AI ecosystem.
-- If every time you want to do a new poc you need to do a new copilot or accelerator deployment.. each one is quick, but your complexity and mamagement overhead is goign to explode. 
+•	Rapidly validate AI use cases – shorten time-to-value and move from experimentation to production seamlessly.
+•	Scale AI across the organization – provide a centralized platform for consistent AI management and governance.
+•	Unify AI initiatives – eliminate AI silos by integrating multiple AI Assistants, Agents, and Chatbots under a single framework.
+•	Ensure compliance and security – leverage enterprise-grade security, authentication, and access controls.
 
+Whether an organization is just starting its AI journey or scaling enterprise-wide AI adoption, AI-One provides the foundation for managing, optimizing, and orchestrating AI solutions with confidence.
+
+
+## What Problem Does AI-One Solve?
+AI-One addresses the key challenges organizations face when adopting AI at scale, ensuring seamless integration, security, and manageability.
+
+•	Fragmented AI Solutions – Many organizations develop multiple AI applications using different accelerators and tools, leading to inconsistent authentication, security, and governance. AI-One provides a unified platform where AI Assistants, Agents, and Chatbots share common security, administration, and feature sets.
+•	Scaling AI Efficiently – Without a centralized approach, organizations often reinvent the wheel for every new AI initiative, leading to high operational overhead. AI-One streamlines AI adoption, enabling rapid proof-of-concept validation and enterprise-wide scalability without unnecessary duplication.
+•	Orchestrating AI Agents – In the era of AI-driven automation, businesses need a cohesive AI ecosystem where multiple AI Assistants, Agents, and Chatbots work together seamlessly. AI-One provides enterprise-grade AI orchestration, enabling teams to integrate and coordinate AI-driven workflows effectively.
+
+By consolidating AI development, deployment, and management into a single, scalable framework, AI-One eliminates complexity, accelerates AI innovation, and ensures organizations maximize the value of their AI investments.
+
+## How AI-One Solves These Problems
+AI-One provides a unified, scalable, and secure platform that simplifies AI adoption and management across an organization. It eliminates fragmented AI solutions, enables efficient scaling, and orchestrates AI agents seamlessly.
+
+1. Unified AI Platform for Scalable AI Adoption
+	Provides a centralized framework to develop, deploy, and manage AI Assistants, Agents, and Chatbots.
+	Ensures all AI applications share a common authentication, security, and governance model, reducing maintenance complexity.
+2. Seamless Enterprise Integration & AI Workflows
+	Integrates with enterprise data sources such as databases, APIs, CMSs, and data platforms like Azure Fabric.
+	Enables custom AI workflows and agent coordination, supporting the creation of AI search indexes, assistants, and chatbots with configurable parameters (e.g., system prompts, temperature, etc.).
+3. Rapid AI Use Case Validation & Deployment
+	AI Agents can be created and validated instantly through the AI-One UI, removing the need for complex deployments and custom development.
+	Data interaction can be assessed quickly through automated ingestion or direct uploads, allowing teams to test, iterate, and release AI-driven solutions in minutes—not weeks.
+4. Role-Based Access Control & Security
+	Granular permission management ensures teams and departments only access their assigned AI Assistants and data.
+	Built-in enterprise-grade security supports private deployments, leveraging Azure authentication and compliance controls.
+5. Private AI with Secure ChatGPT-Like Capabilities
+	Deploy a private AI chat solution that offers a familiar ChatGPT experience while ensuring enterprise security, governance, and control.
+	Enables organizations to chat over internal data sources while maintaining data sovereignty within their Azure environment.
+6. Enterprise AI Orchestration & Scalability
+	Seamlessly integrates and scales multiple AI Agents across the organization while maintaining a consistent security and administration layer.
+	Supports AI-powered search and document intelligence, allowing users to upload, index, and query enterprise data within AI-One.
+
+By consolidating AI initiatives under one powerful, scalable platform, AI-One accelerates AI adoption, enhances security, reduces complexity, and enables enterprises to innovate with AI at scale.
+
+## AI Innovation in Action
+Imagine a world where:
+- Customer and employee queries are answered instantly by intelligent AI Agents trained on your enterprise data.
+- Teams access critical knowledge effortlessly, retrieving the right information in seconds without searching through endless documents.
+- AI Agents streamline complex workflows, automating repetitive tasks and enabling employees to focus on high-value work.
+
+With AI-One, this isn’t the future—it’s your competitive advantage today.
 
 ## What featuers does AgileChat provide
 It has the following features.
