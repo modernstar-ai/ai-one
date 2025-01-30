@@ -280,10 +280,12 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
               value: apimAiEndpointOverride
             }
           : {}
-        {
-          name: 'AzureOpenAi__Endpoint'
-          value: azureopenai.properties.endpoint
-        }
+        empty(apimAiEndpointOverride)
+          ? {
+              name: 'AzureOpenAi__Endpoint'
+              value: azureopenai.properties.endpoint
+            }
+          : {}
         {
           name: 'AzureOpenAi__ApiKey'
           value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_KEY.name})'
@@ -407,7 +409,7 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     enabledForTemplateDeployment: false
   }
 
-  resource AZURE_OPENAI_API_KEY 'secrets' = {
+  resource AZURE_OPENAI_API_KEY 'secrets' = if (empty(apimAiEndpointOverride)) {
     name: 'AZURE-OPENAI-API-KEY'
     properties: {
       contentType: 'text/plain'
@@ -555,7 +557,7 @@ resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   identity: { type: 'SystemAssigned' }
 }
 
-resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (empty(apimAiEndpointOverride)) {
   name: openai_name
   location: openAiLocation
   tags: tags
