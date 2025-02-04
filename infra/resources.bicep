@@ -245,100 +245,106 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
         'string'
       ]
 
-      appSettings: [
-        {
-          name: 'BlobStorage__Name'
-          value: storage_name
-        }
-        {
-          name: 'BlobStorage__Key'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_KEY.name})'
-        }
-        {
-          name: 'Audit__IncludePII'
-          value: auditIncludePII
-        }
-        {
-          name: 'AzureAd__ClientId'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_ID.name})'
-        }
-        {
-          name: 'AzureAd__ClientSecret'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_SECRET.name})'
-        }
-        {
-          name: 'AzureAd__TenantId'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_TENANT_ID.name})'
-        }
-        {
-          name: 'AzureAiServicesKey'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_AI_SERVICES_KEY.name})'
-        }
+      appSettings: concat(
+        [
+          {
+            name: 'BlobStorage__Name'
+            value: storage_name
+          }
+          {
+            name: 'BlobStorage__Key'
+            value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_STORAGE_ACCOUNT_KEY.name})'
+          }
+          {
+            name: 'Audit__IncludePII'
+            value: auditIncludePII
+          }
+          {
+            name: 'AzureAd__ClientId'
+            value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_ID.name})'
+          }
+          {
+            name: 'AzureAd__ClientSecret'
+            value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_SECRET.name})'
+          }
+          {
+            name: 'AzureAd__TenantId'
+            value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_TENANT_ID.name})'
+          }
+          {
+            name: 'AzureAiServicesKey'
+            value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_AI_SERVICES_KEY.name})'
+          }
+          {
+            name: 'AzureOpenAi__ApiKey'
+            value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_KEY.name})'
+          }
+          {
+            name: 'AzureOpenAi__ApiVersion'
+            value: openai_api_version
+          }
+          {
+            name: 'AzureOpenAi__InstanceName'
+            value: openai_name
+          }
+          {
+            name: 'AzureOpenAi__DeploymentName'
+            value: chatGptDeploymentName
+          }
+          {
+            name: 'AzureOpenAi__EmbeddingsDeploymentName'
+            value: embeddingDeploymentName
+          }
+          {
+            name: 'AzureOpenAi__EmbeddingsModelName'
+            value: embeddingModelName
+          }
+          {
+            name: 'AzureSearch__Endpoint'
+            value: 'https://${search_name}.search.windows.net'
+          }
+          {
+            name: 'AzureSearch__ApiKey'
+            value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_SEARCH_API_KEY.name})'
+          }
+          {
+            name: 'CosmosDb__Endpoint'
+            value: cosmosDbAccount.properties.documentEndpoint
+          }
+          {
+            name: 'CosmosDb__Key'
+            value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_COSMOSDB_KEY.name})'
+          }
+          {
+            name: 'AdminEmailAddresses'
+            value: join(AdminEmailAddresses, ',')
+          }
+          {
+            name: 'ASPNETCORE_ENVIRONMENT'
+            value: aspCoreEnvironment
+          }
+          {
+            name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+            value: 'false'
+          }
+        ],
         !empty(apimAiEndpointOverride)
-          ? {
-              name: 'AzureOpenAi__Apim__Endpoint'
-              value: apimAiEndpointOverride
-            }
-          : {}
+          ? [
+              {
+                name: 'AzureOpenAi__Apim__Endpoint'
+                value: apimAiEndpointOverride
+              }
+            ]
+          : [],
         empty(apimAiEndpointOverride)
-          ? {
-              name: 'AzureOpenAi__Endpoint'
-              value: azureopenai.properties.endpoint
-            }
-          : {}
-        {
-          name: 'AzureOpenAi__ApiKey'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_OPENAI_API_KEY.name})'
-        }
-        {
-          name: 'AzureOpenAi__ApiVersion'
-          value: openai_api_version
-        }
-        {
-          name: 'AzureOpenAi__InstanceName'
-          value: openai_name
-        }
-        {
-          name: 'AzureOpenAi__DeploymentName'
-          value: chatGptDeploymentName
-        }
-        {
-          name: 'AzureOpenAi__EmbeddingsDeploymentName'
-          value: embeddingDeploymentName
-        }
-        {
-          name: 'AzureOpenAi__EmbeddingsModelName'
-          value: embeddingModelName
-        }
-        {
-          name: 'AzureSearch__Endpoint'
-          value: 'https://${search_name}.search.windows.net'
-        }
-        {
-          name: 'AzureSearch__ApiKey'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_SEARCH_API_KEY.name})'
-        }
-        {
-          name: 'CosmosDb__Endpoint'
-          value: cosmosDbAccount.properties.documentEndpoint
-        }
-        {
-          name: 'CosmosDb__Key'
-          value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_COSMOSDB_KEY.name})'
-        }
-        {
-          name: 'AdminEmailAddresses'
-          value: join(AdminEmailAddresses, ',')
-        }
-        {
-          name: 'ASPNETCORE_ENVIRONMENT'
-          value: aspCoreEnvironment
-        }
-        {
-          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
-          value: 'false'
-        }
-      ]
+          ? [
+              {
+                name: 'AzureOpenAi__Endpoint'
+                value: azureopenai.properties.endpoint
+              }
+            ]
+          : []
+      )
     }
   }
   identity: { type: 'SystemAssigned' }
