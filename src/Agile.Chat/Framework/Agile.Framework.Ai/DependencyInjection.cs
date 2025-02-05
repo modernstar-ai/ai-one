@@ -38,9 +38,14 @@ public static class DependencyInjection
                     Endpoint = new Uri(configs.Apim.Endpoint),
                     Transport = new HttpClientPipelineTransport(httpClient)
                 });
+                var embeddingsClient = new OpenAIClient(new ApiKeyCredential(defaultConfig), new OpenAIClientOptions
+                {
+                    Endpoint = new Uri(configs.Apim.EmbeddingsEndpoint!),
+                    Transport = new HttpClientPipelineTransport(httpClient)
+                });
                 builder = builder
                     .AddOpenAIChatCompletion(modelId: configs.DeploymentName!,openaiClient)
-                    .AddOpenAITextEmbeddingGeneration(modelId: configs.EmbeddingsDeploymentName!, openaiClient);
+                    .AddOpenAITextEmbeddingGeneration(modelId: configs.EmbeddingsDeploymentName!, embeddingsClient);
             }
             else
             {
