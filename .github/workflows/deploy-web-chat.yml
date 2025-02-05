@@ -82,7 +82,7 @@ jobs:
           zip -r ../../release.zip dist
 
       - name: Agile-Chat-Web - Upload artifact for deployment job
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: node-app
           path: release.zip
