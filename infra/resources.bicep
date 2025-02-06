@@ -45,6 +45,8 @@ param embeddingModelName string
 
 @description('APIM Azure OpenAI Endpoint')
 param apimAiEndpointOverride string = ''
+@description('APIM Azure OpenAI Embedding Endpoint')
+param apimAiEmbeddingsEndpointOverride string = ''
 
 @description('Admin email addresses array')
 param AdminEmailAddresses array = [
@@ -333,6 +335,14 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
               {
                 name: 'AzureOpenAi__Apim__Endpoint'
                 value: apimAiEndpointOverride
+              }
+            ]
+          : [],
+        !empty(apimAiEmbeddingsEndpointOverride)
+          ? [
+              {
+                name: 'AzureOpenAi__Apim__EmbeddingsEndpoint'
+                value: apimAiEmbeddingsEndpointOverride
               }
             ]
           : [],
