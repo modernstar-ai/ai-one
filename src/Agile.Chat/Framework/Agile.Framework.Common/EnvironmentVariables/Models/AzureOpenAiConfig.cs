@@ -15,4 +15,5 @@ public class AzureOpenAiConfig
 public class AzureOpenAiApimConfig
 {
     public string? Endpoint { get; set; }
+    public string? EmbeddingsEndpoint { get; set; }
 }
