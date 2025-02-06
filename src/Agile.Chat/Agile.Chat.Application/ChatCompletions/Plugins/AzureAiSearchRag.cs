@@ -15,7 +15,7 @@ namespace Agile.Chat.Application.ChatCompletions.Plugins;
 public class AzureAiSearchRag(ChatContainer container)
 {
     [KernelFunction("get_documents")]
-    [Description("Searches for documents to reference with citations")]
+    [Description("Searches for documents to reference with citations. Use this whenever a user asks or inquires for information")]
     public async Task<List<string>> GetDocumentsAsync([Description("The full query to search for the appropriate documents")] string query)
     {
         ReadOnlyMemory<float> embedding;
