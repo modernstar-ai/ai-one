@@ -1,13 +1,17 @@
-﻿using Agile.Framework.AzureAiSearch.AiSearchConstants;
+﻿using System.Reflection;
+using System.Text.Json.Serialization;
+using Agile.Framework.AzureAiSearch.AiSearchConstants;
+using Agile.Framework.Common.EnvironmentVariables;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Models;
 
 namespace Agile.Framework.AzureAiSearch.Models;
 
-public class AiSearchOptions(string userPrompt, ReadOnlyMemory<float> vector)
+public class AiSearchOptions(string userPrompt, string indexName, ReadOnlyMemory<float> vector)
 {
     public int DocumentLimit { get; init; } = 6;
     public double? Strictness { get; init; }
+    public List<string> FolderFilters { get; init; } = new();
     public SearchOptions ParseSearchOptions()
     {
         VectorSearchOptions vectorSearchOptions = new VectorSearchOptions();
@@ -31,7 +35,33 @@ public class AiSearchOptions(string userPrompt, ReadOnlyMemory<float> vector)
         searchOptions.SemanticSearch = semanticSearch;
         searchOptions.VectorSearch = vectorSearchOptions;
         searchOptions.Size = DocumentLimit;
+        searchOptions.Filter = BuildODataFolderFilters();
         
         return searchOptions;
+    }
+
+    private string BuildODataFolderFilters()
+    {
+        if (FolderFilters.Count == 0)
+            return string.Empty;
+        
+        var cleanFilters = FolderFilters
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(filter =>
+        {
+            filter = filter.Trim();
+            
+            if (filter.StartsWith("/"))
+                filter = filter.TrimStart('/');
+            if (!filter.EndsWith('/'))
+                filter += '/';
+
+            return filter;
+        });
+
+        var property = typeof(AzureSearchDocument).GetProperty(nameof(AzureSearchDocument.Url))!
+            .GetCustomAttribute<JsonPropertyNameAttribute>()!
+            .Name;
+        return string.Join(" or ", cleanFilters.Select(folder => $"search.ismatch('\"/{Constants.BlobContainerName}/{indexName}/{folder}\"~', '{property}', null, 'any')"));
     }
 }

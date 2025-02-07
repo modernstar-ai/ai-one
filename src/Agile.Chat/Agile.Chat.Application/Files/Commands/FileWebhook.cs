@@ -38,8 +38,16 @@ public static class FileWebhook
                 logger.LogInformation("Creating default indexer for new index name: {IndexName}", indexName);
                 await azureAiSearch.CreateIndexerAsync(indexName);
             }
-            
-            await azureAiSearch.RunIndexerAsync(indexName);
+
+            try
+            {
+                await azureAiSearch.RunIndexerAsync(indexName);
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Failed to run indexer. Message {Message}", e.Message);
+            }
+
             return Results.Ok();
             
         }

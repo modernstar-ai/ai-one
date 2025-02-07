@@ -27,6 +27,7 @@ import { fetchTools } from '@/services/toolservice';
 import { useIndexes } from '@/hooks/use-indexes';
 import { Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { FoldersFilterInput } from '@/components/ui-extended/folder-filter';
 //import { enablePreviewFeatures } from '@/globals';
 
 // Define the AssistantPromptOptions schema
@@ -43,7 +44,8 @@ const AssistantFilterOptionsSchema = z.object({
   indexName: z.string(),
   limitKnowledgeToIndex: z.boolean(),
   documentLimit: z.number().int(),
-  strictness: z.number().min(-1).max(1).optional()
+  strictness: z.number().min(-1).max(1).optional(),
+  folders: z.array(z.string())
 });
 
 // Define the main schema
@@ -90,7 +92,8 @@ export default function AssistantForm() {
         limitKnowledgeToIndex: false,
         group: undefined,
         documentLimit: 5,
-        strictness: undefined
+        strictness: undefined,
+        folders: []
       }
     }
   });
@@ -128,7 +131,8 @@ export default function AssistantForm() {
             limitKnowledgeToIndex: file.filterOptions.limitKnowledgeToIndex,
             documentLimit: file.filterOptions.documentLimit,
             group: file.filterOptions.group ?? undefined,
-            strictness: file.filterOptions.strictness ?? undefined
+            strictness: file.filterOptions.strictness ?? undefined,
+            folders: file.filterOptions.folders ?? []
           }
         });
       } else {
@@ -349,31 +353,19 @@ export default function AssistantForm() {
                   )}
                 />
 
-                {/* 
-                    
-                    <FormField
-                      control={form.control}
-                      name="folder"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Folders</FormLabel>
-                          <FormControl>
-                            <div>
-                              <MultiSelectInput
-                                className="w-full"
-                                items={folders}
-                                selectedItems={field.value}
-                                {...field}
-                                onChange={(values: string[]) => field.onChange(values)}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    */}
-
+                <FormField
+                  control={form.control}
+                  name="filterOptions.folders"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Folder Filters</FormLabel>
+                      <FormControl>
+                        <FoldersFilterInput {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="filterOptions.documentLimit"

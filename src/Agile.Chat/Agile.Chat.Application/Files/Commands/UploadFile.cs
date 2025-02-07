@@ -19,10 +19,13 @@ public static class UploadFile
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            var url = await blobStorage.UploadAsync(request.File.OpenReadStream(), request.File.ContentType, request.File.FileName, request.IndexName, request.FolderName);
+            var folderName = request.FolderName;
+            if (!string.IsNullOrWhiteSpace(folderName))
+                folderName = folderName.Trim().Trim('/');
+            
+            var url = await blobStorage.UploadAsync(request.File.OpenReadStream(), request.File.ContentType, request.File.FileName, request.IndexName, folderName);
 
-            var cosmosFile = await fileService.GetFileByFolderAsync(request.File.FileName, request.IndexName,
-                request.FolderName);
+            var cosmosFile = await fileService.GetFileByFolderAsync(request.File.FileName, request.IndexName, folderName);
 
             if (cosmosFile != null)
             {
@@ -36,7 +39,7 @@ public static class UploadFile
                     request.File.ContentType, 
                     request.File.Length, 
                     request.IndexName, 
-                    request.FolderName);
+                    folderName);
             }
             
             await fileService.UpdateItemByIdAsync(cosmosFile.Id, cosmosFile);
