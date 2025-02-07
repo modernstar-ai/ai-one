@@ -59,6 +59,8 @@ param embeddingModelName string = 'text-embedding-ada-002'
 
 @description('The optional APIM Gateway URL to override the azure open AI instance')
 param apimAiEndpointOverride string = ''
+@description('The optional APIM Gateway URL to override the azure open AI embedding instance')
+param apimAiEmbeddingsEndpointOverride string = ''
 
 param searchServiceSkuName string = 'standard'
 
@@ -125,6 +127,7 @@ module resources 'resources.bicep' = {
     azureTenantId: azureTenantId
     azureADAppIdOrUri: azureADAppIdOrUri
     apimAiEndpointOverride: apimAiEndpointOverride
+    apimAiEmbeddingsEndpointOverride: apimAiEmbeddingsEndpointOverride
     deployEventGrid: deployEventGrid
     kvSetFunctionAppPermissions: kvSetFunctionAppPermissions
     semanticSearchSku: semanticSearchSku
