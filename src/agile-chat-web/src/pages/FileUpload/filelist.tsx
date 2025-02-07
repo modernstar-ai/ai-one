@@ -189,6 +189,11 @@ export default function FileList() {
       accessorKey: 'indexName',
       header: 'Container',
       cell: ({ row }: { row: any }) => row.original.indexName
+    },
+    {
+      accessorKey: 'folderName',
+      header: 'Folder',
+      cell: ({ row }: { row: any }) => row.original.folderName
     }
   ];
 
