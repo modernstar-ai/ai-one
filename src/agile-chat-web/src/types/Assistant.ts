@@ -35,4 +35,5 @@ export interface AssistantFilterOptions {
   limitKnowledgeToIndex: boolean;
   documentLimit: number;
   strictness?: number;
+  folders: string[];
 }

@@ -1,4 +1,4 @@
-﻿using System.ClientModel;
+using System.ClientModel;
 using System.ComponentModel;
 using System.Text.Json;
 using Agile.Chat.Application.ChatCompletions.Models;
@@ -29,10 +29,11 @@ public class AzureAiSearchRag(ChatContainer container)
         }
             
         var documents = await container.AzureAiSearch.SearchAsync(container.Assistant!.FilterOptions.IndexName, 
-            new AiSearchOptions(query, embedding)
+            new AiSearchOptions(query, container.Assistant.FilterOptions.IndexName, embedding)
             {
                 DocumentLimit = container.Thread.FilterOptions.DocumentLimit,
-                Strictness = container.Thread.FilterOptions.Strictness
+                Strictness = container.Thread.FilterOptions.Strictness,
+                FolderFilters = container.Assistant.FilterOptions.Folders
             });
         UpdateReferenceNumbers(documents);
 

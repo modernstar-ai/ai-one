@@ -23,11 +23,7 @@ const ChatConfigPanel: React.FC<ChatConfigProps> = ({ thread }) => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="icon"
-          className="ml-2" aria-label="Open settings"
-        >
+        <Button variant="outline" size="icon" className="ml-2" aria-label="Open settings">
           <Settings2 className="h-4 w-4" />
         </Button>
       </SheetTrigger>
@@ -41,16 +37,14 @@ const ChatConfigPanel: React.FC<ChatConfigProps> = ({ thread }) => {
             topP: thread.topP,
             maxResponseToken: thread.maxResponseToken,
             strictness: thread.strictness,
-            documentLimit: thread.documentLimit
+            documentLimit: thread.documentLimit,
           }).map(([key, value]) => (
             <Card key={key} className="border-none">
               <CardContent className="p-3">
                 <Label className="text-sm font-medium text-muted-foreground">
                   {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
                 </Label>
-                <div className="mt-1 text-sm">
-                  {formatValue(value)}
-                </div>
+                <div className="mt-1 text-sm">{formatValue(value)}</div>
               </CardContent>
             </Card>
           ))}

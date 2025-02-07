@@ -1,4 +1,4 @@
-﻿using System.ClientModel;
+using System.ClientModel;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
