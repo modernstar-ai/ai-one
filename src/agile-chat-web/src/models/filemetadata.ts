@@ -7,7 +7,7 @@ export interface CosmosFile {
   blobUrl: string;
   contentType?: string;
   size: number;
-  folder?: string;
+  folderName?: string;
   indexName: string;
   createdDate: string;
   lastModified: string;

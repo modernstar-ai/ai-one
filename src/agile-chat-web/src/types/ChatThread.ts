@@ -28,6 +28,7 @@ export interface ChatThreadPromptOptions {
 export interface ChatThreadFilterOptions {
   documentLimit: number;
   strictness: number;
+  folders: string[];
 }
 
 export enum ChatType {

@@ -12,7 +12,7 @@ import { PagedResultsDto } from '@/models/pagedResultsDto';
 
 export default function FileList() {
   // Using the custom hook to fetch files
-  
+
   const { files, refetch, loading, queryDto, setQueryDto } = useFetchFiles();
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false); // Processing state for delete/refresh
@@ -23,7 +23,7 @@ export default function FileList() {
 
   // Handle page change
   const handlePageChange = (page: number) => {
-    console.log("page", page);
+    console.log('page', page);
     setCurrentPage(page);
     setQueryDto({ ...queryDto, page, pageSize: files.pageSize });
   };
@@ -143,9 +143,7 @@ export default function FileList() {
       header: () => (
         <Checkbox
           checked={
-            sortedFiles?.items &&
-            selectedFiles.length === sortedFiles.items.length &&
-            sortedFiles.items.length > 0
+            sortedFiles?.items && selectedFiles.length === sortedFiles.items.length && sortedFiles.items.length > 0
           }
           onCheckedChange={(checked) => {
             if (checked) {
@@ -165,46 +163,50 @@ export default function FileList() {
           onCheckedChange={() => toggleFileSelection(row.original.id)}
           aria-label={`Select file ${row.original.name}`}
         />
-      ),
+      )
     },
-    { 
-      accessorKey: 'name', 
+    {
+      accessorKey: 'name',
       header: 'File Name',
-      cell: ({ row }: { row: any }) => removeFileExtension(row.original.name),
+      cell: ({ row }: { row: any }) => removeFileExtension(row.original.name)
     },
     {
       accessorKey: 'contentType',
       header: 'Content Type',
-      cell: ({ row }: { row: any }) => simplifyContentType(row.original.contentType || 'unknown'),
+      cell: ({ row }: { row: any }) => simplifyContentType(row.original.contentType || 'unknown')
     },
     {
       accessorKey: 'size',
       header: 'Size',
-      cell: ({ row }: { row: any }) => formatBytesToKB(row.original.size),
+      cell: ({ row }: { row: any }) => formatBytesToKB(row.original.size)
     },
     {
       accessorKey: 'createdDate',
       header: 'Submitted On',
-      cell: ({ row }: { row: any }) => formatDate(row.original.createdDate),
+      cell: ({ row }: { row: any }) => formatDate(row.original.createdDate)
     },
-    { 
-      accessorKey: 'indexName', 
+    {
+      accessorKey: 'indexName',
       header: 'Container',
-      cell: ({ row }: { row: any }) => row.original.indexName,
+      cell: ({ row }: { row: any }) => row.original.indexName
     },
+    {
+      accessorKey: 'folderName',
+      header: 'Folder',
+      cell: ({ row }: { row: any }) => row.original.folderName
+    }
   ];
 
+  // Add this handler for "Enter" key press or focus loss
+  const handleGlobalSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => {
+    if ('key' in e && e.key !== 'Enter') return; // Proceed only if "Enter" is pressed
 
-// Add this handler for "Enter" key press or focus loss
-const handleGlobalSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => {
-  if ('key' in e && e.key !== 'Enter') return; // Proceed only if "Enter" is pressed
+    const target = e.target as HTMLInputElement;
+    const searchValue = target.value.trim(); // Get the trimmed value from the input
 
-  const target = e.target as HTMLInputElement; 
-  const searchValue = target.value.trim(); // Get the trimmed value from the input
-  
-  setQueryDto({...queryDto, page: 0, search:searchValue});
-  setCurrentPage(0);
-};
+    setQueryDto({ ...queryDto, page: 0, search: searchValue });
+    setCurrentPage(0);
+  };
 
   // Fetch sorted data on every `files` change
   useEffect(() => {
@@ -218,7 +220,6 @@ const handleGlobalSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement> | Rea
       <div className="flex-1  flex flex-col">
         <SimpleHeading Title="Your Files" Subtitle="Manage your uploaded files" DocumentCount={0} />
         <div className="flex-1 p-4 overflow-auto">
-
           <div className="flex justify-between items-center mb-4">
             <Link to="/fileupload" aria-label="Add New File" accessKey="n">
               <Button tabIndex={-1} aria-label="Add New File Button">
@@ -251,10 +252,10 @@ const handleGlobalSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement> | Rea
               placeholder="Search files..."
               className="border rounded p-2 text-sm w-[300px]"
               onKeyDown={handleGlobalSearchSubmit}
-              onBlur={handleGlobalSearchSubmit} 
+              onBlur={handleGlobalSearchSubmit}
             />
           </div>
-          <DataTable columns={columns}  data={sortedFiles?.items || []} />
+          <DataTable columns={columns} data={sortedFiles?.items || []} />
 
            {/* Pagination */}
            <div className="flex mt-4 space-x-2">
