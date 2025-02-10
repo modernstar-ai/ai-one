@@ -5,6 +5,7 @@ using Agile.Chat.Application.Files.Queries;
 using Agile.Framework.Common.Dtos;
 using Carter;
 using Carter.OpenApi;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -45,9 +46,9 @@ public class Files() : CarterModule("/api")
         return await mediator.Send(command);
     }
     
-    private async Task<IResult> IndexFile([FromServices] IMediator mediator, [FromBody] FileUrlDto url)
+    private async Task<IResult> IndexFile([FromServices] IMediator mediator, [FromBody] FileIndexDto dto)
     {
-        var command = new FileIndexer.Command(url.Url);
+        var command = dto.Adapt<FileIndexer.Command>();
         return await mediator.Send(command);
     }
 

@@ -24,11 +24,6 @@ public static class GetIndexReport
             IndexReportDto indexReport = new IndexReportDto();
 
             indexReport.SearchIndexStatistics = await azureAiSearch.GetIndexStatisticsByNameAsync(request.indexName);
-
-            indexReport.Indexer = await azureAiSearch.GetIndexersByIndexNameAsync(request.indexName);
-
-            indexReport.DataSource = await azureAiSearch.GetDataSourceByNameAsync(request.indexName);
-
             return Results.Ok(indexReport);
         }
     }

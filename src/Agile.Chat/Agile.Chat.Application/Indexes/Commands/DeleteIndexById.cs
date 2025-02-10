@@ -30,8 +30,8 @@ public static class DeleteIndexById
             await blobStorage.DeleteIndexFilesAsync(index.Name);
             //Delete all files in cosmos next
             await fileService.DeleteAllByIndexAsync(index.Name);
-            //Delete index/indexer/skillset/datasource on ai search
-            await azureAiSearch.DeleteIndexerAsync(index.Name);
+            //Delete index on ai search
+            await azureAiSearch.DeleteIndexAsync(index.Name);
             
             return Results.Ok();
         }

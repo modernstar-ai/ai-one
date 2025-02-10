@@ -1,18 +1,20 @@
 ﻿using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace Agile.Chat.Application.Files.Utils;
 
 public static class EventGridHelpers
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum Type
     {
-        BlobCreated = 0,
-        BlobDeleted = 1,
-        Unknown = 2
+        BlobCreated,
+        BlobDeleted,
+        Unknown
     }
 
-    public class FileMetaData
+    public class FileMetadata
     {
         public string BlobUrl { get; set; }
         public string ContentType { get; set; }
@@ -57,11 +59,11 @@ public static class EventGridHelpers
         return (fileName!, eventType);
     }
     
-    public static FileMetaData GetFileCreatedMetaData(JsonNode eventGrid)
+    public static FileMetadata GetFileCreatedMetaData(JsonNode eventGrid)
     {
         var eventObj = eventGrid.AsArray().FirstOrDefault();
 
-        return new FileMetaData
+        return new FileMetadata
         {
             BlobUrl = eventObj?["data"]?["url"]?.ToString(),
             ContentType = eventObj?["data"]?["contentType"]?.ToString(),

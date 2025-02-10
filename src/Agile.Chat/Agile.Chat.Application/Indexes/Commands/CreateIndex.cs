@@ -26,10 +26,10 @@ public static class CreateIndex
                 request.Description, 
                 request.Group);
 
-            if (await azureAiSearch.IndexerExistsAsync(index.Name))
+            if (await azureAiSearch.IndexExistsAsync(index.Name))
                 return Results.BadRequest("Indexer on Azure AI Search already exists.");
 
-            await azureAiSearch.CreateIndexerAsync(index.Name);
+            await azureAiSearch.CreateIndexIfNotExistsAsync(index.Name);
             await indexService.AddItemAsync(index);
             
             return Results.Created(index.Id, index);
