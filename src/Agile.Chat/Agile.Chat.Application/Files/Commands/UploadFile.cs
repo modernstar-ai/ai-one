@@ -30,7 +30,7 @@ public static class UploadFile
 
             if (cosmosFile != null)
             {
-                cosmosFile.Update(FileStatus.Uploaded, request.File.ContentType, request.File.Length);
+                cosmosFile.Update(FileStatus.QueuedForIndexing, request.File.ContentType, request.File.Length);
             }
             else
             {

@@ -6,6 +6,10 @@ namespace Agile.Chat.Domain.Files.ValueObjects;
 public enum FileStatus
 {
     Uploaded,
+    QueuedForIndexing,
     Indexing,
-    Indexed
+    Indexed,
+    QueuedForDeletion,
+    Deleting,
+    Failed
 }

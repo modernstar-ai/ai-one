@@ -1,21 +1,19 @@
-﻿using System.Text.Json.Nodes;
-using Agile.Chat.Application.Files.Services;
+﻿using Agile.Chat.Application.Files.Services;
 using Agile.Chat.Application.Files.Utils;
 using Agile.Chat.Application.Indexes.Services;
-using Agile.Chat.Domain.Assistants.ValueObjects;
 using Agile.Chat.Domain.Files.Aggregates;
 using Agile.Chat.Domain.Files.ValueObjects;
 using Agile.Chat.Domain.Indexes.Aggregates;
 using Agile.Framework.Ai;
-using Agile.Framework.AzureAiSearch.Interfaces;
+using Agile.Framework.AzureAiSearch;
 using Agile.Framework.AzureAiSearch.Models;
 using Agile.Framework.AzureDocumentIntelligence;
-using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Retry;
 
 namespace Agile.Chat.Application.Files.Commands;
 
@@ -31,18 +29,33 @@ public static class FileIndexer
         IMediator mediator, 
         IDocumentIntelligence documentIntelligence) : IRequestHandler<Command, IResult>
     {
+        private AsyncRetryPolicy _retryPolicy = Policy
+            .Handle<Exception>()
+            .WaitAndRetryAsync(4, retryAttempt =>
+                TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))); // Exponential backoff 
         private bool _indexExists;
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             await HandleIndexSyncing(request.IndexName, request.EventType);
             _indexExists = await azureAiSearch.IndexExistsAsync(request.IndexName);
-            
-            var file = await HandleFileSyncing(request.EventType, request.FileName, request.IndexName, request.FolderName, request.FileMetadata);
 
-            if (request.EventType == EventGridHelpers.Type.BlobDeleted)
-                return await HandleFileDeletionAsync(file);
+            var file = await HandleFileSyncing(request.EventType, request.FileName, request.IndexName,
+                request.FolderName, request.FileMetadata);
+            if (file is null) return Results.Ok();
             
-            return await HandleFileUpdatingAsync(file);
+            try
+            {
+                if (request.EventType == EventGridHelpers.Type.BlobDeleted)
+                    return await HandleFileDeletionAsync(file);
+
+                return await HandleFileUpdatingAsync(file);
+            }
+            catch (Exception)
+            {
+                file.Update(FileStatus.Failed, file.ContentType, file.Size);
+                await fileService.UpdateItemByIdAsync(file.Id, file);
+                throw;
+            }
         }
 
         private async Task<IResult> HandleFileDeletionAsync(CosmosFile file)
@@ -61,10 +74,13 @@ public static class FileIndexer
                 return result;
 
             var isTextDoc = FileHelpers.TextFormats.Contains(okResult.ContentType);
-            var chunks = await documentIntelligence.CrackDocumentAsync(okResult.FileStream, isTextDoc);
-            var embeddings = await appKernel.GenerateEmbeddingsAsync(chunks.Where(chunk => !string.IsNullOrWhiteSpace(chunk)).ToList());
+            var chunks = (await documentIntelligence.CrackDocumentAsync(okResult.FileStream, isTextDoc))
+                .Where(chunk => !string.IsNullOrWhiteSpace(chunk)).ToList();
+            
+            var embeddings = await _retryPolicy.ExecuteAsync(async _ => await appKernel.GenerateEmbeddingsAsync([..chunks, file.Name]), new CancellationToken());
+            var nameEmbedding = embeddings.Last();
             var documents = chunks
-                .Select((chunk, index) => AzureSearchDocument.Create(file.Id, chunk, file.Name, file.Url, embeddings[index]))
+                .Select((chunk, index) => AzureSearchDocument.Create(file.Id, chunk, file.Name, file.Url, embeddings[index], nameEmbedding))
                 .ToList();
             
             if(_indexExists) await azureAiSearch.DeleteFileContentsByIdAsync(file.Id, file.IndexName);
@@ -74,7 +90,7 @@ public static class FileIndexer
             return Results.Ok();
         }
         
-        private async Task<CosmosFile> HandleFileSyncing(EventGridHelpers.Type eventType, string fileName, string indexName, string folderName, EventGridHelpers.FileMetadata fileMetadata)
+        private async Task<CosmosFile?> HandleFileSyncing(EventGridHelpers.Type eventType, string fileName, string indexName, string folderName, EventGridHelpers.FileMetadata fileMetadata)
         {
             //In the case of blob creating, ensure it's created in cosmos
             if (eventType == EventGridHelpers.Type.BlobCreated && !await fileService.ExistsAsync(fileName, indexName, folderName))
@@ -85,13 +101,19 @@ public static class FileIndexer
                     fileMetadata.ContentLength, 
                     indexName, 
                     folderName);
-
+                file.Update(FileStatus.Indexing, file.ContentType, file.Size);
+                
                 await fileService.AddItemAsync(file);
                 return file;
             }
             else
             {
                 var file = await fileService.GetFileByFolderAsync(fileName, indexName, folderName);
+                if (file != null)
+                {
+                    file.Update(eventType == EventGridHelpers.Type.BlobDeleted ? FileStatus.Deleting : FileStatus.Indexing, file.ContentType, file.Size);
+                    await fileService.UpdateItemByIdAsync(file.Id, file);
+                }
                 return file;
             }
         }
@@ -106,13 +128,6 @@ public static class FileIndexer
                 var index = CosmosIndex.Create(indexName, indexName, null);
                 await indexService.AddItemAsync(index);
             }
-        }
-    }
-
-    public class Validator : AbstractValidator<Command>
-    {
-        public Validator(ILogger<Validator> logger)
-        {
         }
     }
 }

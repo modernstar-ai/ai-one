@@ -2,7 +2,7 @@
 using Agile.Chat.Application.Indexes.Services;
 using Agile.Chat.Domain.Indexes.Aggregates;
 using Agile.Framework.Authentication.Interfaces;
-using Agile.Framework.AzureAiSearch.Interfaces;
+using Agile.Framework.AzureAiSearch;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;

@@ -6,7 +6,7 @@ using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Ai;
-using Agile.Framework.AzureAiSearch.Interfaces;
+using Agile.Framework.AzureAiSearch;
 using Agile.Framework.AzureAiSearch.Models;
 using Microsoft.SemanticKernel;
 

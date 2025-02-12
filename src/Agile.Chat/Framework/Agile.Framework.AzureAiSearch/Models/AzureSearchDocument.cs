@@ -1,11 +1,10 @@
-﻿using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace Agile.Framework.AzureAiSearch.Models;
 
 public class AzureSearchDocument
 {
-    public static AzureSearchDocument Create(string fileId, string chunk, string fileName, string url, ReadOnlyMemory<float> vector)
+    public static AzureSearchDocument Create(string fileId, string chunk, string fileName, string url, ReadOnlyMemory<float> chunkVector, ReadOnlyMemory<float> nameVector)
     {
         return new AzureSearchDocument()
         {
@@ -14,26 +13,19 @@ public class AzureSearchDocument
             Chunk = chunk,
             Name = fileName,
             Url = url,
-            Vector = vector
+            ChunkVector = chunkVector,
+            NameVector = nameVector
         };
     }
     
     public int ReferenceNumber { get; set; }
-    [JsonPropertyName("chunk_id")]
     public string Id { get; set; }
-    
-    [JsonPropertyName("file_id")]
     public string FileId { get; set; }
-    
-    [JsonPropertyName("chunk")]
     public string Chunk { get; set; }
-    [JsonPropertyName("title")]
+    public ReadOnlyMemory<float> ChunkVector { get; set; }
     public string Name { get; set; }
-    [JsonPropertyName("metadata_storage_path")]
+    public ReadOnlyMemory<float> NameVector { get; set; }
     public string Url { get; set; }
-    
-    [JsonPropertyName("text_vector")]
-    public ReadOnlyMemory<float> Vector { get; set; }
     
     public new string ToString()
     {

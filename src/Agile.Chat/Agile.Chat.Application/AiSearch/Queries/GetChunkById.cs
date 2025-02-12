@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using Agile.Chat.Application.Assistants.Services;
 using Agile.Framework.Authentication.Interfaces;
-using Agile.Framework.AzureAiSearch.Interfaces;
+using Agile.Framework.AzureAiSearch;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;

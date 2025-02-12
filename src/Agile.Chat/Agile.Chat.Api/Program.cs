@@ -11,7 +11,7 @@ Configs.InitializeConfigs(builder.Configuration);
 
 builder.Services
     .AddFramework(builder.Configuration)
-    .AddApplication()
+    .AddApplication(builder)
     .AddApi();
 
 var app = builder.Build();

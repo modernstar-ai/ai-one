@@ -2,7 +2,7 @@
 using Agile.Chat.Application.Files.Services;
 using Agile.Chat.Application.Indexes.Services;
 using Agile.Framework.Authentication.Interfaces;
-using Agile.Framework.AzureAiSearch.Interfaces;
+using Agile.Framework.AzureAiSearch;
 using Agile.Framework.BlobStorage.Interfaces;
 using FluentValidation;
 using MediatR;

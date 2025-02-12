@@ -1,5 +1,4 @@
 using Agile.Framework.AzureAiSearch.AiSearchConstants;
-using Agile.Framework.AzureAiSearch.Interfaces;
 using Agile.Framework.AzureAiSearch.Models;
 using Agile.Framework.Common.Attributes;
 using Azure;
@@ -8,16 +7,26 @@ using Azure.Search.Documents.Indexes;
 using Azure.Search.Documents.Indexes.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using Azure.Search.Documents.Models;
 
 namespace Agile.Framework.AzureAiSearch;
 
+public interface IAzureAiSearch
+{
+    Task<AzureSearchDocument?> GetChunkByIdAsync(string indexName, string chunkId);
+    Task<List<AzureSearchDocument>> SearchAsync(string indexName, AiSearchOptions aiSearchOptions);
+    Task IndexDocumentsAsync(List<AzureSearchDocument> documents, string indexName);
+    Task CreateIndexIfNotExistsAsync(string indexName);
+    Task<bool> IndexExistsAsync(string indexName);
+    Task DeleteIndexAsync(string indexName);
+    Task<SearchIndexStatistics> GetIndexStatisticsByNameAsync(string indexName);
+    Task DeleteFileContentsByIdAsync(string fileId, string indexName);
+}
+
 [Export(typeof(IAzureAiSearch), ServiceLifetime.Singleton)]
-public class AzureAiSearch(SearchIndexerClient indexerClient, SearchIndexClient indexClient, ILogger<AzureAiSearch> logger) : IAzureAiSearch
+public class AzureAiSearch(SearchIndexClient indexClient, ILogger<AzureAiSearch> logger) : IAzureAiSearch
 {
     public async Task<List<AzureSearchDocument>> SearchAsync(string indexName, AiSearchOptions aiSearchOptions)
     {

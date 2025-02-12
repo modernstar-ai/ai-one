@@ -2,7 +2,7 @@
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Framework.Ai;
-using Agile.Framework.AzureAiSearch.Interfaces;
+using Agile.Framework.AzureAiSearch;
 using Agile.Framework.AzureAiSearch.Models;
 
 namespace Agile.Chat.Application.ChatCompletions.Models;
