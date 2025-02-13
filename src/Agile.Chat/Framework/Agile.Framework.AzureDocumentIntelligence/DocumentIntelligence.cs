@@ -8,7 +8,8 @@ namespace Agile.Framework.AzureDocumentIntelligence;
 
 public interface IDocumentIntelligence
 {
-    Task<List<string>> CrackDocumentAsync(Stream fileStream, bool isTextDoc = false);
+    Task<string> CrackDocumentAsync(Stream fileStream, bool isTextDoc = false);
+    List<string> ChunkDocumentWithOverlap(string document);
 }
 
 [Export(typeof(IDocumentIntelligence), ServiceLifetime.Singleton)]
@@ -16,15 +17,7 @@ public class DocumentIntelligence(DocumentIntelligenceClient client, ILogger<Doc
 {
     private const int ChunkSize = 2300;
     private const int ChunkOverlap = (int)(ChunkSize * 0.25);
-    public async Task<List<string>> CrackDocumentAsync(Stream fileStream, bool isTextDoc = false)
-    {
-        var doc = await LoadFileAsync(fileStream, isTextDoc);
-        var chunks = ChunkDocumentWithOverlap(doc);
-
-        return chunks;
-    }
-
-    private async Task<string> LoadFileAsync(Stream fileStream, bool isTextDoc)
+    public async Task<string> CrackDocumentAsync(Stream fileStream, bool isTextDoc = false)
     {
         if (isTextDoc)
         {
@@ -39,7 +32,7 @@ public class DocumentIntelligence(DocumentIntelligenceClient client, ILogger<Doc
         return string.Join('\n', operation.Value.Paragraphs.Select(p => p.Content));
     }
 
-    private List<string> ChunkDocumentWithOverlap(string document)
+    public List<string> ChunkDocumentWithOverlap(string document)
     {
         var chunks = new List<string>();
 

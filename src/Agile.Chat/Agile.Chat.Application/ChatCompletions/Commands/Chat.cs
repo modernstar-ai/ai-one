@@ -103,7 +103,7 @@ public static class Chat
                                                                     ? string.Empty
                                                                     : "...");
 
-        private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(AssistantType? assistantType, IResult result, List<AzureSearchDocument> documents)
+        private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(AssistantType? assistantType, IResult result, List<AzureSearchDocWithRefNo> documents)
         {
             var assistantResponse = string.Empty;
             var metadata = new Dictionary<MetadataType, object>();

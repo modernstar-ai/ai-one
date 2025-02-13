@@ -8,6 +8,7 @@ using Agile.Framework.Ai;
 using Agile.Framework.AzureAiSearch;
 using Agile.Framework.AzureAiSearch.Models;
 using Agile.Framework.AzureDocumentIntelligence;
+using Agile.Framework.AzureDocumentIntelligence.Converters;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -73,9 +74,11 @@ public static class FileIndexer
             if (result is not FileStreamHttpResult okResult)
                 return result;
 
-            var isTextDoc = FileHelpers.TextFormats.Contains(okResult.ContentType);
-            var chunks = (await documentIntelligence.CrackDocumentAsync(okResult.FileStream, isTextDoc))
-                .Where(chunk => !string.IsNullOrWhiteSpace(chunk)).ToList();
+            var document = FileHelpers.HasCustomConverter(file.Url, out var converter)
+                ? await converter.ExtractDocumentAsync(okResult.FileStream)
+                : await documentIntelligence.CrackDocumentAsync(okResult.FileStream,
+                    FileHelpers.TextFormats.Contains(okResult.ContentType));
+            var chunks = documentIntelligence.ChunkDocumentWithOverlap(document).Where(chunk => !string.IsNullOrWhiteSpace(chunk)).ToList();
             
             var embeddings = await _retryPolicy.ExecuteAsync(async _ => await appKernel.GenerateEmbeddingsAsync([..chunks, file.Name]), new CancellationToken());
             var nameEmbedding = embeddings.Last();
@@ -85,7 +88,7 @@ public static class FileIndexer
             
             if(_indexExists) await azureAiSearch.DeleteFileContentsByIdAsync(file.Id, file.IndexName);
             if(_indexExists) await azureAiSearch.IndexDocumentsAsync(documents, file.IndexName);
-            file.Update(FileStatus.Indexed, okResult.ContentType, okResult.FileLength!.Value);
+            file.Update(FileStatus.Indexed, okResult.ContentType, okResult.FileStream.Position);
             await fileService.UpdateItemByIdAsync(file.Id, file);
             return Results.Ok();
         }

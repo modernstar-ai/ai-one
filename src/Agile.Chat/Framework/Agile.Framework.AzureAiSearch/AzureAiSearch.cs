@@ -53,42 +53,33 @@ public class AzureAiSearch(SearchIndexClient indexClient, ILogger<AzureAiSearch>
     public async Task DeleteFileContentsByIdAsync(string fileId, string indexName)
     {
         var searchClient = indexClient.GetSearchClient(indexName);
-        var idProperty = typeof(AzureSearchDocument).GetProperty(nameof(AzureSearchDocument.Id))!
-            .GetCustomAttribute<JsonPropertyNameAttribute>()!
-            .Name;
-        var property = typeof(AzureSearchDocument).GetProperty(nameof(AzureSearchDocument.FileId))!
-            .GetCustomAttribute<JsonPropertyNameAttribute>()!
-            .Name;
-
-        var documentIds = new List<string>();
-        while (documentIds.Count > 0)
+        
+        while (true)
         {
             int batchSize = 1000; // Adjust batch size based on your needs
-            string filter = $"{property} eq '{fileId}'";
+            string filter = $"{nameof(AzureSearchDocument.FileId)} eq '{fileId}'";
 
             var options = new SearchOptions
             {
                 Filter = filter,
-                Select = { idProperty },
+                Select = { nameof(AzureSearchDocument.Id) },
                 Size = batchSize
             };
 
             var searchResults = await searchClient.SearchAsync<AzureSearchDocument>(options);
 
-            documentIds = searchResults.Value.GetResults().Select(x => x.Document.Id).ToList();
-            if (documentIds.Count > 0)
-            {
-                var batch = documentIds.Select(id => new IndexDocumentsAction<AzureSearchDocument>(
-                    IndexActionType.Delete, new AzureSearchDocument { Id = id })
-                ).ToList();
+            var documentIds = searchResults.Value.GetResults().Select(x => x.Document.Id).ToList();
+            if (documentIds.Count == 0) break;
 
-                var batchRequest = IndexDocumentsBatch.Delete(batch);
-                await searchClient.IndexDocumentsAsync(batchRequest);
+            // Create document objects with just the ID property
+            var documents = documentIds.Select(id => new AzureSearchDocument { Id = id });
+        
+            // Create the batch with the document objects
+            var batch = IndexDocumentsBatch.Delete(documents);
+            await searchClient.IndexDocumentsAsync(batch);
 
-                logger.LogInformation($"Deleted {documentIds.Count} documents where {property} = '{fileId}'.");
-            }
+            logger.LogInformation($"Deleted {documentIds.Count} documents where {nameof(AzureSearchDocument.FileId)} = '{fileId}'.");
         }
-
     }
     
     #region Indexes

@@ -8,6 +8,7 @@ using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Ai;
 using Agile.Framework.AzureAiSearch;
 using Agile.Framework.AzureAiSearch.Models;
+using Mapster;
 using Microsoft.SemanticKernel;
 
 namespace Agile.Chat.Application.ChatCompletions.Plugins;
@@ -35,19 +36,22 @@ public class AzureAiSearchRag(ChatContainer container)
                 Strictness = container.Thread.FilterOptions.Strictness,
                 FolderFilters = container.Assistant.FilterOptions.Folders
             });
-        UpdateReferenceNumbers(documents);
+        var refDocs = UpdateReferenceNumbers(documents);
 
-        container.Citations.AddRange(documents);
+        container.Citations.AddRange(refDocs);
         return documents.Select(x => x.ToString()).ToList();
     }
 
-    private void UpdateReferenceNumbers(List<AzureSearchDocument> documents)
+    private List<AzureSearchDocWithRefNo> UpdateReferenceNumbers(List<AzureSearchDocument> documents)
     {
         var count = container.Citations.Count;
-        documents.ForEach(document =>
+        var refDocs = documents.Adapt<List<AzureSearchDocWithRefNo>>();
+        refDocs.ForEach(document =>
         {
             document.ReferenceNumber = count + 1;
             count++;
         });
+
+        return refDocs;
     }
 }
