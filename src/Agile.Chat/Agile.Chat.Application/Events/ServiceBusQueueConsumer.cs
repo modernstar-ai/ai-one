@@ -31,12 +31,13 @@ public class ServiceBusQueueConsumer : BackgroundService
             AutoCompleteMessages = false,
             ReceiveMode = ServiceBusReceiveMode.PeekLock
         });
-        _processor.ProcessMessageAsync += MessageHandler;
-        _processor.ProcessErrorAsync += ErrorHandler;
     }
     
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _processor.ProcessMessageAsync += MessageHandler;
+        _processor.ProcessErrorAsync += ErrorHandler;
+        
         await _processor.StartProcessingAsync(stoppingToken);
     }
     
