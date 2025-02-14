@@ -79,6 +79,9 @@ var openai_name = toLower('${resourcePrefix}-aillm')
 
 var cosmos_name = toLower('${resourcePrefix}-cosmos')
 var search_name = toLower('${resourcePrefix}-search')
+var form_recognizer_name = toLower('${resourcePrefix}-form')
+var service_bus_name = toLower('${resourcePrefix}-service-bus')
+var service_bus_queue_name = toLower('${resourcePrefix}-folders-queue')
 
 @description('ets options that control the availability of semantic search')
 @allowed(['disabled', 'free', 'standard'])
@@ -116,14 +119,11 @@ param storageServiceFoldersContainerName string = 'index-content'
 @secure()
 param azureADAppIdOrUri string = ''
 
-@description('Event Grid System Topic Name')
-var EventGridSystemTopicName = toLower('${resourcePrefix}-folders-listener')
-
 @description('Event Grid Subscription')
 var EventGridSystemTopicSubName = toLower('${resourcePrefix}-folders-blobs-listener')
 
-@description('Conditionally deploy event Grid')
-param deployEventGrid bool = false
+@description('Event Grid Name')
+var eventGridName = toLower('${resourcePrefix}-blob-eg')
 
 var databaseName = 'chat'
 var historyContainerName = 'history'
@@ -262,6 +262,22 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
             value: auditIncludePII
           }
           {
+            name: 'AzureDocumentIntelligence__ApiKey'
+            value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_DOCUMENT_INTELLIGENCE_KEY.name})'
+          }
+          {
+            name: 'AzureDocumentIntelligence__Endpoint'
+            value: 'https://${form_recognizer_name}.cognitiveservices.azure.com/'
+          }
+          {
+            name: 'AzureServiceBus__ConnectionString'
+            value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_SERVICE_BUS_CONNECTION_STRING.name})'
+          }
+          {
+            name: 'AzureServiceBus__BlobQueueName'
+            value: service_bus_queue_name
+          }
+          {
             name: 'AzureAd__ClientId'
             value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_ID.name})'
           }
@@ -396,7 +412,6 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 
 @description('The name of the Role Assignment - from Guid.')
 param roleAssignmentName string = newGuid()
-
 resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (kvSetFunctionAppPermissions) {
   name: roleAssignmentName
   scope: kv
@@ -408,7 +423,6 @@ resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-
 }
 
 //**************************************************************************
-
 resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
   name: keyVaultName
   location: location
@@ -430,6 +444,22 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     properties: {
       contentType: 'text/plain'
       value: azureopenai.listKeys().key1
+    }
+  }
+
+  resource AZURE_DOCUMENT_INTELLIGENCE_KEY 'secrets' = {
+    name: 'AZURE-DOCUMENT-INTELLIGENCE-KEY'
+    properties: {
+      contentType: 'text/plain'
+      value: formRecognizer.listKeys().key1
+    }
+  }
+
+  resource AZURE_SERVICE_BUS_CONNECTION_STRING 'secrets' = {
+    name: 'AZURE-SERVICE-BUS-CONNECTION-STRING'
+    properties: {
+      contentType: 'text/plain'
+      value: listKeys('${serviceBus.id}/AuthorizationRules/RootManageSharedAccessKey', serviceBus.apiVersion).primaryConnectionString
     }
   }
 
@@ -640,23 +670,9 @@ resource indexContainer 'Microsoft.Storage/storageAccounts/blobServices/containe
   }
 }
 
-@description('Role Assignment for search to access blob storage')
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storage.id, searchService.id, 'blob-reader')
-  scope: storage
-  properties: {
-    roleDefinitionId: subscriptionResourceId(
-      'Microsoft.Authorization/roleDefinitions',
-      '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
-    )
-    principalId: searchService.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
 @description('Event Grid System Topic')
-resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = if (deployEventGrid) {
-  name: EventGridSystemTopicName
+resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = {
+  name: eventGridName
   location: location
   tags: tags
   identity: {
@@ -664,24 +680,19 @@ resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-previ
   }
   properties: {
     source: storage.id
-    //source: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Storage/storageAccounts/${storage_name}'
     topicType: 'Microsoft.Storage.StorageAccounts'
   }
 }
 
 @description('Event Grid Subscription')
-resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-01-preview' = if (deployEventGrid) {
+resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-01-preview' = {
   name: EventGridSystemTopicSubName
   parent: eventGridSystemTopic
   properties: {
     destination: {
-      endpointType: 'WebHook'
+      endpointType: 'ServiceBusQueue'
       properties: {
-        azureActiveDirectoryApplicationIdOrUri: azureADAppIdOrUri
-        azureActiveDirectoryTenantId: azureTenantId
-        endpointUrl: 'https://${apiApp.properties.defaultHostName}/api/files/webhook'
-        maxEventsPerBatch: 1
-        preferredBatchSizeInKilobytes: 64
+        resourceId: serviceBus.id
       }
     }
     filter: {
@@ -720,6 +731,45 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
     publicNetworkAccess: 'Enabled'
     networkAcls: {
       defaultAction: 'Allow'
+    }
+  }
+}
+
+resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+  name: form_recognizer_name
+  location: location
+  tags: tags
+  kind: 'FormRecognizer'
+  properties: {
+    customSubDomainName: form_recognizer_name
+    publicNetworkAccess: 'Enabled'
+  }
+  sku: {
+    name: 'S0'
+  }
+}
+
+resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' = {
+  location: location
+  name: service_bus_name
+
+  resource queue 'queues' = {
+    name: service_bus_queue_name
+    properties: {
+      maxMessageSizeInKilobytes: 256
+      lockDuration: 'PT5M'
+      maxSizeInMegabytes: 5120
+      requiresDuplicateDetection: false
+      requiresSession: false
+      defaultMessageTimeToLive: 'P14D'
+      deadLetteringOnMessageExpiration: true
+      enableBatchedOperations: true
+      duplicateDetectionHistoryTimeWindow: 'PT10M'
+      maxDeliveryCount: 10
+      status: 'Active'
+      autoDeleteOnIdle: 'P10675199DT2H48M5.4775807S'
+      enablePartitioning: false
+      enableExpress: false
     }
   }
 }
