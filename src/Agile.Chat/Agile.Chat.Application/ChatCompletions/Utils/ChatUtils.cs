@@ -69,7 +69,6 @@ public static class ChatUtils
                 {
                     chatContainer.Citations.AddRange(messageContext.Citations.Select(c => new Citation()
                     {
-                        Id = c.ChunkId,
                         Name = c.Title,
                         Url = c.Url,
                         Content = c.Content
@@ -126,6 +125,8 @@ public static class ChatUtils
             QueryType = DataSourceQueryType.VectorSemanticHybrid,
             InScope = assistant.FilterOptions.LimitKnowledgeToIndex,
             VectorizationSource = DataSourceVectorizer.FromDeploymentName(Configs.AzureOpenAi.EmbeddingsDeploymentName),
+            Strictness = chatThread.FilterOptions.Strictness,
+            TopNDocuments = chatThread.FilterOptions.DocumentLimit
         };
     }
     

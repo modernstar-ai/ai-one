@@ -14,36 +14,22 @@ import {
 import { Citation } from '@/types/ChatThread';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Textarea } from '../ui/textarea';
-import { useState } from 'react';
-import { Loader2Icon } from 'lucide-react';
-import { getCitationChunkById } from '@/services/ai-search-service';
 import { FileViewingDialog } from './file-viewing-dialog';
 
 interface CitationSheetProps {
   citation: Citation;
-  assistantId?: string;
+  index: number;
 }
 export function CitationSheet(props: CitationSheetProps) {
-  const { citation, assistantId } = props;
-  const [chunk, setChunk] = useState<string | undefined>(undefined);
-
-  const onOpen = async () => {
-    if (!assistantId) {
-      setChunk('Unknown');
-      return;
-    }
-
-    const chunk = await getCitationChunkById(assistantId, citation.id);
-    setChunk(chunk);
-  };
+  const { citation, index } = props;
 
   return (
-    <Sheet onOpenChange={onOpen}>
+    <Sheet>
       <Tooltip>
         <TooltipTrigger asChild>
           <SheetTrigger asChild>
             <Button variant="outline" className="mr-2">
-              {citation.referenceNumber}
+              {index + 1}
             </Button>
           </SheetTrigger>
         </TooltipTrigger>
@@ -66,11 +52,7 @@ export function CitationSheet(props: CitationSheetProps) {
         </div>
         <div className="flex flex-col grow min-h-0">
           <Label htmlFor="content">Content</Label>
-          {chunk ? (
-            <Textarea className="mt-2 h-full" readOnly={true} value={chunk}></Textarea>
-          ) : (
-            <Loader2Icon className="flex self-center animate-spin" />
-          )}
+          {citation.content && <Textarea className="mt-2 h-full" readOnly={true} value={citation.content}></Textarea>}
         </div>
 
         <SheetFooter>

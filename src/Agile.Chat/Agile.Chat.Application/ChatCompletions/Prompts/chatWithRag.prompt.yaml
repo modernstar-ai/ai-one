@@ -3,9 +3,7 @@ template: |
   {{#if assistantSystemPrompt}}
     <message role="system">{{assistantSystemPrompt}}</message>
   {{/if}}
-  {{#if limitKnowledge}}
-  <message role="system">Your knowledge is limited to the documents you are provided from tool calls. If they are not relevant to the question asked, Your response MUST BE "The requested information is not available in the retrieved data. Please try another query or topic."</message>
-  {{/if}}
+  <message role="system">You must include references to the citations you use in your responses</message>
   {{#each chatHistory}}
   <message role="{{this.Role}}">{{this.Content}}</message>
   {{/each}}
@@ -21,6 +19,3 @@ input_variables:
   - name:          userPrompt
     description:   The message from the user
     is_required:   true
-  - name: limitKnowledge
-    description: A true or false boolean to limit the knowledge of the ai based on retrieved documents
-    is_required: true

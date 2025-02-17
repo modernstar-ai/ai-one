@@ -16,7 +16,6 @@ interface MessageContentProps {
 const MessageContent = (props: MessageContentProps) => {
   const { message, assistantId } = props;
   const citations = (message.options.metadata.Citations as Citation[]) ?? undefined;
-  const documents = (message.options.metadata.DocumentsRetrieved as Citation[]) ?? undefined;
 
   const contentOverride = useRef<string | undefined>(undefined);
 
@@ -29,12 +28,6 @@ const MessageContent = (props: MessageContentProps) => {
   const onStreamCallback = (content: string) => {
     contentOverride.current = (contentOverride.current ?? '') + content;
   };
-
-  //  // Validate content
-  // if (!content || typeof content !== "string") {
-  //   console.error("Invalid message content:", content);
-  //   return <></>;
-  // }
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -69,7 +62,9 @@ const MessageContent = (props: MessageContentProps) => {
   return (
     <>
       <Markdown
-        content={contentOverride.current ? contentOverride.current : message.content}
+        content={
+          message.id === TempIdType.Assistant && contentOverride.current ? contentOverride.current : message.content
+        }
         onCitationClick={handleCitationClick}></Markdown>
 
       {/* Handle citations */}
@@ -86,26 +81,7 @@ const MessageContent = (props: MessageContentProps) => {
                 <div className="citations mb-2">
                   {citations.map((citation, index) =>
                     citation.name && citation.url ? (
-                      <CitationSheet citation={citation} key={message.id + index} assistantId={assistantId} />
-                    ) : (
-                      <li key={index}>Invalid citation data</li>
-                    )
-                  )}
-                </div>
-              )}
-            </AccordionContent>
-          </AccordionItem>
-        )}
-
-        {documents && documents.length > 0 && (
-          <AccordionItem value="item-2" className="m-0 p-0">
-            <AccordionTrigger className="m-0 p-0">Documents Retrieved</AccordionTrigger>
-            <AccordionContent className="m-0 p-0">
-              {documents && (
-                <div className="citations mb-2">
-                  {documents.map((document, index) =>
-                    document.name && document.url ? (
-                      <CitationSheet citation={document} key={message.id + index} assistantId={assistantId} />
+                      <CitationSheet citation={citation} key={message.id + index} index={index} />
                     ) : (
                       <li key={index}>Invalid citation data</li>
                     )

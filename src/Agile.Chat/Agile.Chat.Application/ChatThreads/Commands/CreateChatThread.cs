@@ -74,8 +74,8 @@ public static class CreateChatThread
                 .WithMessage("Name is required");
             
             RuleFor(request => request.FilterOptions.Strictness)
-                .InclusiveBetween(-1, 1)
-                .WithMessage("Strictness must be between -1 and 1 inclusive");
+                .InclusiveBetween(1, 5)
+                .WithMessage("Strictness must be between 1 and 5 inclusive");
         }
     }
 }

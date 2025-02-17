@@ -160,8 +160,7 @@ public static class Chat
                 {
                     { "assistantSystemPrompt", assistantSystemPrompt },
                     { "userPrompt", userPrompt },
-                    { "chatHistory", chatHistory.TakeLast(14).ToList() },
-                    { "limitKnowledge", assistantFilterOptions?.LimitKnowledgeToIndex ?? false }
+                    { "chatHistory", chatHistory.TakeLast(14).ToList() }
                 });
 
             var assistantFullResponse = await ChatUtils.StreamAndGetAssistantResponseAsync(contextAccessor.HttpContext!, indexStream!, _chatContainer);

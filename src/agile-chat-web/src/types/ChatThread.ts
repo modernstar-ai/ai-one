@@ -60,13 +60,11 @@ export interface MessageOptions {
 
 export enum MetadataType {
   Citations = 'Citations',
-  DocumentsRetrieved = 'DocumentsRetrieved',
   SearchProcess = 'SearchProcess'
 }
 
 export interface Citation {
-  referenceNumber: number;
-  id: string;
+  content: string;
   name: string;
   url: string;
 }
