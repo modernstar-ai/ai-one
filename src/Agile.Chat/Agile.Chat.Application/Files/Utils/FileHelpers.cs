@@ -5,7 +5,7 @@ namespace Agile.Chat.Application.Files.Utils;
 
 public static class FileHelpers
 {
-    public static HashSet<string> TextFormats = ["text/htm", "text/html", "text/plain", "application/json"];
+    public static HashSet<string> TextFormats = ["text/plain", "application/json"];
     public static string GetContentType(string url)
     {
         var file = Path.GetFileName(url).Split(".").Last();

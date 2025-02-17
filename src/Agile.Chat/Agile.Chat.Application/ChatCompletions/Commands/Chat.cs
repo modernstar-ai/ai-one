@@ -5,7 +5,6 @@ using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.Audits.Services;
 using Agile.Chat.Application.ChatCompletions.Dtos;
 using Agile.Chat.Application.ChatCompletions.Models;
-using Agile.Chat.Application.ChatCompletions.Plugins;
 using Agile.Chat.Application.ChatCompletions.Utils;
 using Agile.Chat.Application.ChatThreads.Services;
 using Agile.Chat.Domain.Assistants.ValueObjects;
@@ -15,13 +14,10 @@ using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Ai;
 using Agile.Framework.AzureAiSearch;
-using Agile.Framework.AzureAiSearch.Models;
 using FluentValidation;
-using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
@@ -46,6 +42,8 @@ public static class Chat
         IAuditService<Message> chatMessageAuditService,
         IAuditService<ChatThread> chatThreadAuditService) : IRequestHandler<Command, IResult>
     {
+        private ChatContainer _chatContainer;
+        
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             //Fetch what's needed to do chatting
@@ -56,7 +54,7 @@ public static class Chat
                 ? await assistantService.GetItemByIdAsync(thread.AssistantId)
                 : null;
 
-            var chatContainer = new ChatContainer
+            _chatContainer = new ChatContainer
             {
                 Thread = thread,
                 Assistant = assistant,
@@ -65,16 +63,8 @@ public static class Chat
                 AppKernel = appKernel
             };
             
-            //Add Plugins to call automatically when needed
-            var hasIndex = !string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName);
-            var sp = new ServiceCollection()
-                .AddSingleton<ChatContainer>(_ => chatContainer)
-                .BuildServiceProvider();
-            if(hasIndex)
-                appKernel.AddPlugin<AzureAiSearchRag>(sp);
-            
             //Execute Chat Stream
-            var chatSettings = thread.PromptOptions.ParseAzureOpenAiPromptExecutionSettings();
+            var chatSettings = ChatUtils.ParseAzureOpenAiPromptExecutionSettings(assistant, thread);
             IResult assistantResult = assistant?.Type switch
             {
                 AssistantType.Chat or null => await GetChatResultAsync(request.UserPrompt, assistant?.PromptOptions?.SystemPrompt, assistant?.FilterOptions, chatSettings, chatHistory),
@@ -90,7 +80,7 @@ public static class Chat
             }
             
             //Get the full response and metadata
-            var (assistantResponse, assistantMetadata) = GetAssistantResponseAndMetadata(assistant?.Type, assistantResult, chatContainer.Citations);
+            var (assistantResponse, assistantMetadata) = GetAssistantResponseAndMetadata(assistant?.Type, assistantResult);
             await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, assistantResponse, assistantMetadata);
             
             //If its a new chat, update the threads name, otherwise just update the last modified date
@@ -103,7 +93,7 @@ public static class Chat
                                                                     ? string.Empty
                                                                     : "...");
 
-        private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(AssistantType? assistantType, IResult result, List<AzureSearchDocWithRefNo> documents)
+        private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(AssistantType? assistantType, IResult result)
         {
             var assistantResponse = string.Empty;
             var metadata = new Dictionary<MetadataType, object>();
@@ -111,7 +101,7 @@ public static class Chat
             switch (assistantType)
             {
                 case AssistantType.Chat or null:
-                    assistantResponse = (result as Ok<string>)!.Value;
+                    assistantResponse = (result as Ok<string>)!.Value ?? string.Empty;
                     break;
                 case AssistantType.Search:
                     var searchResponse = (result as Ok<SearchResponseDto>)!.Value;
@@ -120,14 +110,18 @@ public static class Chat
                     break;
             }
 
-            if (documents.Count > 0)
+            var citations = new List<Citation>();
+            for (var i = 0; i < _chatContainer.Citations.Count; i++)
             {
-                metadata.Add(MetadataType.DocumentsRetrieved, documents.Adapt<List<Citation>>());
-                
-                var citations = documents
-                    .Where(x => assistantResponse?.Contains("⁽" + ToSuperscript(x.ReferenceNumber) + "⁾") ?? false).ToList();
-                if(citations.Count > 0) metadata.Add(MetadataType.Citations, citations.Adapt<List<Citation>>());
+                var docIndex = i + 1;
+                if (!assistantResponse.Contains($"[doc{docIndex}]")) continue;
+            
+                citations.Add(_chatContainer.Citations[i]);
+                assistantResponse = assistantResponse.Replace($"[doc{docIndex}]", $"⁽{ToSuperscript(docIndex)}⁾");
             }
+            
+            if (citations.Count > 0)
+                metadata.Add(MetadataType.Citations, citations);
             
             return (assistantResponse!, metadata);
         }
@@ -153,22 +147,24 @@ public static class Chat
         private async Task<IResult> GetChatResultAsync(string userPrompt, string? assistantSystemPrompt, AssistantFilterOptions? assistantFilterOptions, AzureOpenAIPromptExecutionSettings chatSettings, ChatHistory chatHistory)
         {
             var hasIndex = !string.IsNullOrWhiteSpace(assistantFilterOptions?.IndexName);
-            var aiStreamChats = hasIndex
-                ? appKernel.GetPromptFileChatStream(chatSettings, 
-                    Constants.ChatCompletionsPromptsPath,
-                    Constants.Prompts.ChatWithRag, 
-                    new Dictionary<string, object?>
-                    {
-                        {"assistantSystemPrompt", assistantSystemPrompt},
-                        {"userPrompt", userPrompt},
-                        {"chatHistory", chatHistory.TakeLast(14).ToList()},
-                        {"limitKnowledge", assistantFilterOptions?.LimitKnowledgeToIndex ?? false}
-                    })
-                : 
-                appKernel.GetChatStream(
-                    chatHistory, chatSettings);
+            if (!hasIndex)
+            {
+                var assistantResp = await ChatUtils.StreamAndGetAssistantResponseAsync(contextAccessor.HttpContext!, appKernel.GetChatStream(chatHistory, chatSettings));
+                return assistantResp;
+            }
 
-            var assistantFullResponse = await ChatUtils.StreamAndGetAssistantResponseAsync(contextAccessor.HttpContext!, aiStreamChats);
+            var indexStream = appKernel.GetPromptFileChatStream(chatSettings,
+                Constants.ChatCompletionsPromptsPath,
+                Constants.Prompts.ChatWithRag,
+                new Dictionary<string, object?>
+                {
+                    { "assistantSystemPrompt", assistantSystemPrompt },
+                    { "userPrompt", userPrompt },
+                    { "chatHistory", chatHistory.TakeLast(14).ToList() },
+                    { "limitKnowledge", assistantFilterOptions?.LimitKnowledgeToIndex ?? false }
+                });
+
+            var assistantFullResponse = await ChatUtils.StreamAndGetAssistantResponseAsync(contextAccessor.HttpContext!, indexStream!, _chatContainer);
             return assistantFullResponse;
         }
         
