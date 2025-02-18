@@ -2,12 +2,12 @@ import { ChatType, Message, MessageType } from '@/types/ChatThread';
 
 export enum ResponseType {
   Chat = 'Chat',
-  DbMessages = 'DbMessages',
+  DbMessages = 'DbMessages'
 }
 
 export enum TempIdType {
   User = '-1',
-  Assistant = '-2',
+  Assistant = '-2'
 }
 
 export const updateMessages = (messages: Message[], newMessage: Message): Message[] => {
@@ -32,6 +32,6 @@ export const createTempMessage = (content: string, messageType: MessageType): Me
     threadId: '',
     createdDate: new Date(Date.now()),
     lastModified: new Date(Date.now()),
-    options: { isDisliked: false, isLiked: false, metadata: {} },
+    options: { IsDisliked: false, IsLiked: false }
   };
 };

@@ -177,7 +177,7 @@ const ChatPage = () => {
                   onCopy={() => {
                     navigator.clipboard.writeText(message.content);
                   }}>
-                  <MessageContent message={message} assistantId={thread.assistantId} />
+                  <MessageContent message={message} />
                 </ChatMessageArea>
               ))}
             </>
