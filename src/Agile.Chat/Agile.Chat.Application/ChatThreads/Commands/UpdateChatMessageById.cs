@@ -14,7 +14,7 @@ namespace Agile.Chat.Application.ChatThreads.Commands;
 
 public static class UpdateChatMessageById
 {
-    public record Command(Guid Id, bool IsLiked, bool IsDisliked) : IRequest<IResult>;
+    public record Command(Guid Id, Dictionary<MetadataType, object> Options) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> logger, IAuditService<Message> chatMessageAuditService, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService, IChatMessageService chatMessageService) : IRequestHandler<Command, IResult>
     {
@@ -29,7 +29,8 @@ public static class UpdateChatMessageById
             if (!IsUserOwnerOfThread(thread))
                 return Results.Forbid();
             
-            message.Update(request.IsLiked, request.IsDisliked);
+            message.AddMetadata(MetadataType.IsLiked, request.Options[MetadataType.IsLiked]);
+            message.AddMetadata(MetadataType.IsDisliked, request.Options[MetadataType.IsDisliked]);
             await chatMessageService.UpdateItemByIdAsync(message.Id, message, ChatType.Message.ToString());
             await chatMessageAuditService.UpdateItemByPayloadIdAsync(message);
             logger.LogInformation("Updated Message: {@Message}", message);

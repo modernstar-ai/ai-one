@@ -44,7 +44,7 @@ const AssistantFilterOptionsSchema = z.object({
   indexName: z.string(),
   limitKnowledgeToIndex: z.boolean(),
   documentLimit: z.number().int(),
-  strictness: z.number().min(-1).max(1).optional(),
+  strictness: z.number().min(1).max(5).optional(),
   folders: z.array(z.string())
 });
 
@@ -497,9 +497,9 @@ export default function AssistantForm() {
                       <FormControl>
                         <Slider
                           value={[field.value ?? 0]}
-                          min={-1}
-                          max={1}
-                          step={0.1}
+                          min={1}
+                          max={5}
+                          step={1}
                           onValueChange={(value) => {
                             field.onChange(value[0]);
                           }}

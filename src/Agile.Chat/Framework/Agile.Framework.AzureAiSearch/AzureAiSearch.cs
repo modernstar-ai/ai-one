@@ -16,7 +16,6 @@ namespace Agile.Framework.AzureAiSearch;
 public interface IAzureAiSearch
 {
     Task<AzureSearchDocument?> GetChunkByIdAsync(string indexName, string chunkId);
-    Task<List<AzureSearchDocument>> SearchAsync(string indexName, AiSearchOptions aiSearchOptions);
     Task IndexDocumentsAsync(List<AzureSearchDocument> documents, string indexName);
     Task CreateIndexIfNotExistsAsync(string indexName);
     Task<bool> IndexExistsAsync(string indexName);
@@ -28,21 +27,6 @@ public interface IAzureAiSearch
 [Export(typeof(IAzureAiSearch), ServiceLifetime.Singleton)]
 public class AzureAiSearch(SearchIndexClient indexClient, ILogger<AzureAiSearch> logger) : IAzureAiSearch
 {
-    public async Task<List<AzureSearchDocument>> SearchAsync(string indexName, AiSearchOptions aiSearchOptions)
-    {
-        var searchClient = indexClient.GetSearchClient(indexName);
-
-        var searchResults = await searchClient.SearchAsync<AzureSearchDocument>(aiSearchOptions.ParseSearchOptions());
-
-        if (!searchResults.HasValue) return [];
-
-        var results = searchResults.Value.GetResultsAsync();
-        return results
-            .ToBlockingEnumerable()
-            .Select(x => x.Document)
-            .ToList();
-    }
-
     public async Task<AzureSearchDocument?> GetChunkByIdAsync(string indexName, string chunkId)
     {
         var searchClient = indexClient.GetSearchClient(indexName);

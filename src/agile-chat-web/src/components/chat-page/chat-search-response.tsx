@@ -4,20 +4,19 @@ import { Tabs } from '@radix-ui/react-tabs';
 import { TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Book, Lightbulb, Loader2Icon, MessageCircleMore, View } from 'lucide-react';
 import { useState } from 'react';
-import { getCitationChunkById } from '@/services/ai-search-service';
 import { Separator } from '../ui/separator';
 import { FileViewingDialog } from './file-viewing-dialog';
 import { Badge } from '../ui/badge';
+import { getCitationChunkById } from '@/services/chatthreadservice';
 
 interface ChatSearchResponseProps {
   message: Message;
-  assistantId: string;
 }
 
 export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
-  const { message, assistantId } = props;
-  const searchProcess = message.options.metadata.SearchProcess as SearchProcess;
-  searchProcess.Citations = (message.options.metadata.Citations as Citation[]) ?? [];
+  const { message } = props;
+  const searchProcess = message.options.SearchProcess as SearchProcess;
+  searchProcess.Citations = (message.options.Citations as Citation[]) ?? [];
   const [chunks, setChunks] = useState<string[] | undefined>(undefined);
 
   const onOpenSupportingContent = async () => {
@@ -28,7 +27,7 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
 
       const chunkReqs: Promise<string>[] = [];
       searchProcess.Citations.forEach((citation) => {
-        chunkReqs.push(getCitationChunkById(assistantId, citation.id));
+        chunkReqs.push(getCitationChunkById(citation.id));
       });
 
       const chunks = await Promise.all(chunkReqs);
@@ -49,8 +48,7 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
       defaultValue="answer"
       onValueChange={(val) => {
         if (val === 'search results' && !chunks) onOpenSupportingContent();
-      }}
-    >
+      }}>
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="answer">
           <span className="flex items-center justify-center gap-2">
@@ -76,7 +74,7 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex flex-wrap">
-              {(message.options.metadata.Citations as Citation[])?.map((citation, index) => {
+              {(message.options.Citations as Citation[])?.map((citation, index) => {
                 const elemenet = citationBadge(citation, index);
                 return (
                   <FileViewingDialog key={index} citation={citation}>
@@ -112,7 +110,7 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
           </CardHeader>
           <CardContent className="space-y-2 max-h-[20rem] overflow-auto">
             {!chunks && <Loader2Icon className="animate-spin" size={24} />}
-            {((message.options.metadata.Citations as Citation[]) ?? []).map(
+            {((message.options.Citations as Citation[]) ?? []).map(
               (citation, index) =>
                 citation.name &&
                 citation.url &&

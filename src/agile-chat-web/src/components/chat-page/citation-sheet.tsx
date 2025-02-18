@@ -14,27 +14,24 @@ import {
 import { Citation } from '@/types/ChatThread';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Textarea } from '../ui/textarea';
+import { FileViewingDialog } from './file-viewing-dialog';
 import { useState } from 'react';
 import { Loader2Icon } from 'lucide-react';
-import { getCitationChunkById } from '@/services/ai-search-service';
-import { FileViewingDialog } from './file-viewing-dialog';
+import { getCitationChunkById } from '@/services/chatthreadservice';
 
 interface CitationSheetProps {
   citation: Citation;
-  assistantId?: string;
+  index: number;
 }
 export function CitationSheet(props: CitationSheetProps) {
-  const { citation, assistantId } = props;
+  const { citation, index } = props;
   const [chunk, setChunk] = useState<string | undefined>(undefined);
 
   const onOpen = async () => {
-    if (!assistantId) {
-      setChunk('Unknown');
-      return;
+    if (!chunk) {
+      const chunk = await getCitationChunkById(citation.id);
+      setChunk(chunk);
     }
-
-    const chunk = await getCitationChunkById(assistantId, citation.id);
-    setChunk(chunk);
   };
 
   return (
@@ -43,7 +40,7 @@ export function CitationSheet(props: CitationSheetProps) {
         <TooltipTrigger asChild>
           <SheetTrigger asChild>
             <Button variant="outline" className="mr-2">
-              {citation.referenceNumber}
+              {index + 1}
             </Button>
           </SheetTrigger>
         </TooltipTrigger>

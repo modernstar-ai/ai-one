@@ -32,7 +32,7 @@ public static class FileIndexer
     {
         private AsyncRetryPolicy _retryPolicy = Policy
             .Handle<Exception>()
-            .WaitAndRetryAsync(4, retryAttempt =>
+            .WaitAndRetryAsync(6, retryAttempt =>
                 TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))); // Exponential backoff 
         private bool _indexExists;
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)

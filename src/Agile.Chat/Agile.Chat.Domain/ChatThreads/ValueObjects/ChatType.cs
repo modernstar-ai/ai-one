@@ -6,5 +6,6 @@ namespace Agile.Chat.Domain.ChatThreads.ValueObjects;
 public enum ChatType
 {
     Thread,
-    Message
+    Message,
+    Citation
 }

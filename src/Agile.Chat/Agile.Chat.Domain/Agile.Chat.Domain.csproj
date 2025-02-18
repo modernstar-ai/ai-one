@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Framework\Agile.Framework.Ai\Agile.Framework.Ai.csproj" />
+      <ProjectReference Include="..\Framework\Agile.Framework.AzureAiSearch\Agile.Framework.AzureAiSearch.csproj" />
       <ProjectReference Include="..\Framework\Agile.Framework.Common\Agile.Framework.Common.csproj" />
     </ItemGroup>
 

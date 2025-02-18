@@ -30,6 +30,7 @@
 
     <ItemGroup>
       <Folder Include="Audits\Commands\" />
+      <Folder Include="ChatCompletions\Plugins\" />
       <Folder Include="Tools\" />
     </ItemGroup>
 
