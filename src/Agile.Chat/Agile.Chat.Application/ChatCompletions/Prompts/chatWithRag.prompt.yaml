@@ -3,7 +3,6 @@ template: |
   {{#if assistantSystemPrompt}}
     <message role="system">{{assistantSystemPrompt}}</message>
   {{/if}}
-  <message role="system">You must include references to the citations you use in your responses</message>
   {{#each chatHistory}}
   <message role="{{this.Role}}">{{this.Content}}</message>
   {{/each}}

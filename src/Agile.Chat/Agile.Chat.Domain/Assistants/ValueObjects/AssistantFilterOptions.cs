@@ -16,8 +16,7 @@ public class AssistantFilterOptions
         var options = new ChatThreadFilterOptions()
         {
             DocumentLimit = DocumentLimit,
-            Strictness = Strictness,
-            Folders = Folders
+            Strictness = Strictness
         };
         return options;
     }

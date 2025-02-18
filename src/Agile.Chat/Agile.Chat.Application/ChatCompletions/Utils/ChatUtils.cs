@@ -114,7 +114,7 @@ public static class ChatUtils
             Authentication = DataSourceAuthentication.FromApiKey(Configs.AzureSearch.ApiKey),
             IndexName = assistant.FilterOptions.IndexName,
             SemanticConfiguration = SearchConstants.SemanticConfigurationName,
-            Filter = BuildODataFolderFilters(assistant.FilterOptions.IndexName, chatThread),
+            Filter = BuildODataFolderFilters(assistant, chatThread),
             FieldMappings = new DataSourceFieldMappings()
             {
                 ContentFieldNames = { nameof(AzureSearchDocument.Chunk) },
@@ -126,29 +126,33 @@ public static class ChatUtils
             InScope = assistant.FilterOptions.LimitKnowledgeToIndex,
             VectorizationSource = DataSourceVectorizer.FromDeploymentName(Configs.AzureOpenAi.EmbeddingsDeploymentName),
             Strictness = chatThread.FilterOptions.Strictness,
-            TopNDocuments = chatThread.FilterOptions.DocumentLimit
+            TopNDocuments = chatThread.FilterOptions.DocumentLimit,
         };
     }
     
-    private static string BuildODataFolderFilters(string indexName, ChatThread chatThread)
+    private static string BuildODataFolderFilters(Assistant assistant, ChatThread chatThread)
     {
-        if (chatThread.FilterOptions.Folders.Count == 0)
+        string cleanFilter(string filter)
+        {
+            filter = filter.Trim();
+            
+            if (filter.StartsWith("/"))
+                filter = filter.TrimStart('/');
+            if (!filter.EndsWith('/'))
+                filter += '/';
+
+            return filter;
+        }
+        
+        var filters = chatThread.FilterOptions.Folders
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(filter => cleanFilter(filter)).ToList();
+        filters.AddRange(assistant.FilterOptions.Folders.Where(x => !string.IsNullOrWhiteSpace(x)).Select(filter => cleanFilter(filter)));
+        filters = filters.Distinct().ToList();
+        
+        if (filters.Count == 0)
             return string.Empty;
         
-        var cleanFilters = chatThread.FilterOptions.Folders
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Select(filter =>
-            {
-                filter = filter.Trim();
-            
-                if (filter.StartsWith("/"))
-                    filter = filter.TrimStart('/');
-                if (!filter.EndsWith('/'))
-                    filter += '/';
-
-                return filter;
-            });
-        
-        return string.Join(" or ", cleanFilters.Select(folder => $"search.ismatch('\"/{Constants.BlobContainerName}/{indexName}/{folder}\"~', '{nameof(AzureSearchDocument.Url)}', null, 'any')"));
+        return string.Join(" or ", filters.Select(folder => $"search.ismatch('\"/{Constants.BlobContainerName}/{assistant.FilterOptions.IndexName}/{folder}\"~', '{nameof(AzureSearchDocument.Url)}', null, 'any')"));
     }
 }
