@@ -1,0 +1,112 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+trigger: none
+
+parameters:
+- name: environment
+  type: string
+  default: Development
+  displayName: 'Select the Azure Deployment Environment'
+  values:
+  - Development
+  - Test
+  - UAT
+  - Production
+
+- name: apiWebAppName
+  displayName: 'Enter the name of the Azure Web Api'
+  type: string
+  default: 'agilechat-dev-apiapp'
+
+- name: uiWebAppName
+  displayName: 'Azure Web App Name'
+  type: string
+  default: 'agilechat-dev-webapp'
+
+variables:
+  agileChartApiSrc: './src/Agile.Chat/Agile.Chat.Api'
+  agileChartApiPub: './publish/Agile.Chat/Agile.Chat.Api'
+  agileWebSrc: './src/agile-chat-web'
+  agileWebPub: './publish/agile-chat-web'
+  #SERVICE_CONNECTION_NAME
+  #VITE_AGILECHAT_API_URL
+  #VITE_AZURE_AD_CLIENT_ID
+  #VITE_AZURE_AD_TENANT_ID
+
+
+stages:
+- stage: BuildAndDeployApi
+  displayName: 'Build and Deploy AgileChat Web API'
+  jobs:
+  - job: BuildAndDeployJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    displayName: 'Build and Deploy API Job'
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      persistCredentials: true
+
+    - task: UseDotNet@2
+      displayName: 'Use .NET 8 SDK'
+      inputs:
+        version: '8.0.x'
+        performMultiLevelLookup: true
+    
+    - script: |
+        dotnet restore $(agileChartApiSrc)
+        dotnet build $(agileChartApiSrc) --no-restore --configuration Release
+        dotnet publish $(agileChartApiSrc) -c Release -o $(agileChartApiPub)
+      displayName: 'Agile-Chat-Api - dotnet build and publish'
+      env:
+        ENVIRONMENT: ${{ parameters.environment }}
+
+    - task: AzureWebApp@1
+      displayName: 'Deploy - Agile-Chat-Api'
+      inputs:
+        appType: webAppLinux
+        azureSubscription: $(SERVICE_CONNECTION_NAME)
+        appName: ${{ parameters.apiWebAppName }}
+        package: $(agileChartApiPub)
+
+# NOW DEPLOY WEB APP
+- stage: BuildAndDeployWeb
+  displayName: 'Build and Deploy AgileChat Web UI'
+  jobs:
+  - job: BuildAndDeployJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    displayName: 'Build and Deploy Web App Job'
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      persistCredentials: true
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+      displayName: 'Install Node.js'
+
+    - script: |
+        cd $(agileWebSrc)
+        npm install
+        npm run build
+      displayName: 'Build Agile Chat Web App'
+    
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(agileWebSrc)/dist'
+        includeRootFolder: true
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/release.zip'
+      displayName: 'Create ZIP artifact'
+    
+    - task: AzureWebApp@1
+      inputs:
+        appType: webAppLinux
+        azureSubscription: $(SERVICE_CONNECTION_NAME)
+        appName: '${{ parameters.uiWebAppName }}'
+        package: '$(Build.ArtifactStagingDirectory)/release.zip'
+        runtimeStack: 'NODE|18-lts'
+      displayName: 'Deploy Agile Chat Web App'
