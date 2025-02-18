@@ -5,6 +5,7 @@ using Agile.Framework.Common.EnvironmentVariables;
 using Azure.Messaging.ServiceBus;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -15,12 +16,12 @@ public class ServiceBusQueueConsumer : BackgroundService
     private readonly ServiceBusClient _client;
     private readonly ServiceBusProcessor _processor;
     private readonly ILogger<ServiceBusQueueConsumer> _logger;
-    private readonly IMediator _mediator;
+    private readonly IServiceProvider _sp;
     
-    public ServiceBusQueueConsumer(ILogger<ServiceBusQueueConsumer> logger, IMediator mediator)
+    public ServiceBusQueueConsumer(ILogger<ServiceBusQueueConsumer> logger, IServiceProvider sp)
     {
         _logger = logger;
-        _mediator = mediator;
+        _sp = sp;
         _client = new ServiceBusClient(Configs.AzureServiceBus.ConnectionString, new ServiceBusClientOptions()
         {
             TransportType = ServiceBusTransportType.AmqpWebSockets
@@ -82,7 +83,8 @@ public class ServiceBusQueueConsumer : BackgroundService
             return Results.Ok();
 
         var command = new FileIndexer.Command(fileName, indexName, folderName, fileMetadata, eventType);
-        return await _mediator.Send(command);
+        var mediator = _sp.CreateScope().ServiceProvider.GetService<IMediator>();
+        return await mediator!.Send(command);
     }
     
     private Task ErrorHandler(ProcessErrorEventArgs args)
