@@ -45,7 +45,7 @@ public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) 
         logger.LogInformation("Uploading {FileName} to Index {IndexName} with folder {FolderName}", fileName, indexName, folderName);
         var resp = await blobClient.UploadAsync(stream, new BlobHttpHeaders(){ContentType = contentType});
         logger.LogInformation("Finished upload with response {@Response}", resp.Value);
-        return blobClient.Uri.ToString();
+        return $"https://{blobClient.Uri.Host}{blobClient.Uri.LocalPath}";
     }
 
     public async Task DeleteAsync(string fileName, string indexName, string? folderName = null)
