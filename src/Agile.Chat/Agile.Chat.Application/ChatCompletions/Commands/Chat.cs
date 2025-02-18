@@ -48,7 +48,7 @@ public static class Chat
         {
             //Fetch what's needed to do chatting
             var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId, ChatType.Thread.ToString());
-            var chatMessages = await chatMessageService.GetAllAsync(thread!.Id);
+            var chatMessages = await chatMessageService.GetAllMessagesAsync(thread!.Id);
             var chatHistory = chatMessages.ParseSemanticKernelChatHistory(request.UserPrompt);
             var assistant = !string.IsNullOrWhiteSpace(thread.AssistantId)
                 ? await assistantService.GetItemByIdAsync(thread.AssistantId)
@@ -74,14 +74,14 @@ public static class Chat
 
             if (assistantResult is BadRequest<string> badRequest)
             {
-                var (userMessage, assistantMessage) = CreateUserAndAssistantMessages(thread.Id, request.UserPrompt, badRequest.Value ?? string.Empty, null);
-                await SaveAuditLogsAsync(userMessage, assistantMessage);
+                var (userMessage, assistantMessage, citationMessages) = CreateUserAssistantAndCitationMessages(thread.Id, request.UserPrompt, badRequest.Value ?? string.Empty, null);
+                await SaveAuditLogsAsync(userMessage, assistantMessage, citationMessages);
                 return badRequest;
             }
             
             //Get the full response and metadata
             var (assistantResponse, assistantMetadata) = GetAssistantResponseAndMetadata(assistant?.Type, assistantResult);
-            await SaveUserAndAssistantMessagesAsync(thread.Id, request.UserPrompt, assistantResponse, assistantMetadata);
+            await SaveUserAssistantCitationsMessagesAsync(thread.Id, request.UserPrompt, assistantResponse, assistantMetadata);
             
             //If its a new chat, update the threads name, otherwise just update the last modified date
             thread.Update(chatHistory.Count <= 1 ? TruncateUserPrompt(request.UserPrompt) : thread.Name, thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions);
@@ -110,14 +110,15 @@ public static class Chat
                     break;
             }
 
-            var citations = new List<Citation>();
+            var citations = new List<ChatContainerCitation>();
+            var docIndex = 1;
             for (var i = 0; i < _chatContainer.Citations.Count; i++)
             {
-                var docIndex = i + 1;
-                if (!assistantResponse.Contains($"[doc{docIndex}]")) continue;
-            
+                if (!assistantResponse.Contains($"[doc{i + 1}]")) continue;
+
                 citations.Add(_chatContainer.Citations[i]);
-                assistantResponse = assistantResponse.Replace($"[doc{docIndex}]", $"⁽{ToSuperscript(docIndex)}⁾");
+                assistantResponse = assistantResponse.Replace($"[doc{i + 1}]", $"⁽{ToSuperscript(docIndex)}⁾");
+                docIndex++;
             }
             
             if (citations.Count > 0)
@@ -196,17 +197,19 @@ public static class Chat
             }
         }
 
-        private async Task SaveUserAndAssistantMessagesAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
+        private async Task SaveUserAssistantCitationsMessagesAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
         {
             // Create messages
-            var (userMessage, assistantMessage) = CreateUserAndAssistantMessages(threadId, userPrompt, assistantResponse, assistantMetadata);
+            var (userMessage, assistantMessage, citationMessages) = CreateUserAssistantAndCitationMessages(threadId, userPrompt, assistantResponse, assistantMetadata);
 
             // Save messages 
-            await chatMessageService.AddItemAsync(userMessage);
-            await chatMessageService.AddItemAsync(assistantMessage);
+            await Task.WhenAll([
+                chatMessageService.AddItemAsync(userMessage), 
+                chatMessageService.AddItemAsync(assistantMessage), 
+                ..citationMessages.Select(m => chatMessageService.AddItemAsync(m))]);
 
             // Save audit logs
-            await SaveAuditLogsAsync(userMessage, assistantMessage);
+            await SaveAuditLogsAsync(userMessage, assistantMessage, citationMessages);
 
             // Write to response stream
             await ChatUtils.WriteToResponseStreamAsync(
@@ -215,26 +218,45 @@ public static class Chat
                 new List<Message> { userMessage, assistantMessage });
         }
 
-        private (Message userMessage, Message assistantMessage) CreateUserAndAssistantMessages(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
+        private (Message userMessage, Message assistantMessage, List<Message> citationMessages) CreateUserAssistantAndCitationMessages(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
         {
-            var userMessage = Message.CreateUser(threadId, userPrompt, new MessageOptions());
-
-            var assistantMessage = Message.CreateAssistant(threadId, assistantResponse, new MessageOptions());
+            var userMessage = Message.CreateUser(threadId, userPrompt);
+            var assistantMessage = Message.CreateAssistant(threadId, assistantResponse);
+            var citationMessages = new List<Message>();
+            
             if (assistantMetadata != null)
             {
                 foreach (var (key, value) in assistantMetadata)
                 {
-                    assistantMessage.AddMetadata(key, value);
+                    if (key == MetadataType.Citations)
+                    {
+                        //Add only the citation message ids to the assistant message metadata for joining later
+                        var citations = value as List<ChatContainerCitation>;
+                        citationMessages = citations!.Select(c => Message.CreateCitation(threadId, c.Content)).ToList();
+                        assistantMessage.AddMetadata(key, citationMessages.Select((c, index) => new Citation
+                        {
+                            Id = c.Id,
+                            Name = citations![index].Name,
+                            Url = citations![index].Url
+                        }).ToList());
+                    }
+                    else
+                    {
+                        assistantMessage.AddMetadata(key, value);
+                    }
                 }
             }
 
-            return (userMessage, assistantMessage);
+            return (userMessage, assistantMessage, citationMessages);
         }
 
-        private async Task SaveAuditLogsAsync(Message userMessage, Message assistantMessage)
+        private async Task SaveAuditLogsAsync(Message userMessage, Message assistantMessage, List<Message> citationMessages)
         {
-            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage));
-            await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage));
+            await Task.WhenAll([
+                chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage)),
+                chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage)),
+                ..citationMessages.Select(c => chatMessageAuditService.AddItemAsync(Audit<Message>.Create(c)))
+            ]);
         }
     }
 

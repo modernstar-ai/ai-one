@@ -1,8 +1,6 @@
 ﻿using System.ClientModel;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Agile.Chat.Application.ChatCompletions.Models;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
@@ -12,7 +10,6 @@ using Agile.Framework.Common.Enums;
 using Agile.Framework.Common.EnvironmentVariables;
 using Azure.AI.OpenAI.Chat;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 
@@ -67,7 +64,7 @@ public static class ChatUtils
                 var messageContext = update.GetMessageContext();
                 if (messageContext is { Citations.Count: > 0 })
                 {
-                    chatContainer.Citations.AddRange(messageContext.Citations.Select(c => new Citation()
+                    chatContainer.Citations.AddRange(messageContext.Citations.Select(c => new ChatContainerCitation
                     {
                         Name = c.Title,
                         Url = c.Url,

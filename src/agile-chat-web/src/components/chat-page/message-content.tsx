@@ -10,12 +10,11 @@ import { DotIcon } from 'lucide-react';
 
 interface MessageContentProps {
   message: Message;
-  assistantId?: string;
 }
 
 const MessageContent = (props: MessageContentProps) => {
-  const { message, assistantId } = props;
-  const citations = (message.options.metadata.Citations as Citation[]) ?? undefined;
+  const { message } = props;
+  const citations = (message.options.Citations as Citation[]) ?? undefined;
 
   const contentOverride = useRef<string | undefined>(undefined);
 
@@ -55,8 +54,8 @@ const MessageContent = (props: MessageContentProps) => {
     );
   }
 
-  if (message.options.metadata.SearchProcess) {
-    return <ChatSearchResponse message={message} assistantId={assistantId!} />;
+  if (message.options.SearchProcess) {
+    return <ChatSearchResponse message={message} />;
   }
 
   return (

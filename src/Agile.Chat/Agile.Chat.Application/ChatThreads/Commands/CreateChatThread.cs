@@ -58,7 +58,7 @@ public static class CreateChatThread
         {
             if (assistant is not null && !string.IsNullOrWhiteSpace(assistant.Greeting))
             {
-                var greetingMessage = Message.CreateAssistant(threadId, assistant.Greeting, new MessageOptions());
+                var greetingMessage = Message.CreateAssistant(threadId, assistant.Greeting);
                 await chatMessageService.AddItemAsync(greetingMessage);
                 await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(greetingMessage));
             }

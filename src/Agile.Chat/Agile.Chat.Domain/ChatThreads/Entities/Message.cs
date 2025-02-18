@@ -9,7 +9,7 @@ namespace Agile.Chat.Domain.ChatThreads.Entities;
 public class Message : AuditableAggregateRoot
 {
     [JsonConstructor]
-    private Message(string content, ChatType type, MessageType messageType, string threadId, MessageOptions options)
+    private Message(string content, ChatType type, MessageType messageType, string threadId, Dictionary<MetadataType, object> options)
     {
         Content = content;
         Type = type;
@@ -21,36 +21,38 @@ public class Message : AuditableAggregateRoot
     public ChatType Type { get; private set; }
     public MessageType MessageType { get; private set; }
     public string ThreadId { get; private set; }
-    public MessageOptions Options { get; private set; }
+    public Dictionary<MetadataType, object> Options { get; private set; }
 
     public static Message CreateUser(string threadId,
         string content,
-        MessageOptions options)
+        Dictionary<MetadataType, object>? options = null)
     {
         //Do validation logic and throw domain level exceptions if fails
-        return new Message(content, ChatType.Message, MessageType.User, threadId, options);
+        return new Message(content, ChatType.Message, MessageType.User, threadId, options ?? new Dictionary<MetadataType, object>());
     }
     
     public static Message CreateAssistant(string threadId,
         string content,
-        MessageOptions options)
+        Dictionary<MetadataType, object>? options = null)
     {
         //Do validation logic and throw domain level exceptions if fails
-        return new Message(content, ChatType.Message, MessageType.Assistant, threadId, options);
+        var msg = new Message(content, ChatType.Message, MessageType.Assistant, threadId, options ?? new Dictionary<MetadataType, object>());
+        msg.AddMetadata(MetadataType.IsLiked, false);
+        msg.AddMetadata(MetadataType.IsDisliked, false);
+        return msg;
     }
     
-    public void Update(bool isLiked, bool isDisliked)
+    public static Message CreateCitation(string threadId, string content)
     {
         //Do validation logic and throw domain level exceptions if fails
-        Options.IsLiked = isLiked;
-        Options.IsDisliked = isDisliked;
-        LastModified = DateTime.UtcNow;
+        var msg = new Message(content, ChatType.Citation, MessageType.Assistant, threadId, new Dictionary<MetadataType, object>());
+        return msg;
     }
     
     public void AddMetadata(MetadataType key, object value)
     {
         //Do validation logic and throw domain level exceptions if fails
-        Options.Metadata.Add(key, value);
+        Options[key] = value;
         LastModified = DateTime.UtcNow;
     }
 }

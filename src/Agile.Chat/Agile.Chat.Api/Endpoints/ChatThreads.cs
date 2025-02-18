@@ -24,6 +24,7 @@ public class ChatThreads() : CarterModule("/api")
         threads.MapGet("/", GetThreads);
         threads.MapGet("/{id:guid}", GetThreadById);
         threads.MapGet("/Messages/{id:guid}", GetMessagesByThreadId);
+        threads.MapGet("/Chunk/{id:guid}", GetChunkById);
         //POST
         threads.MapPost("/", CreateThread);
         //PUT
@@ -63,15 +64,22 @@ public class ChatThreads() : CarterModule("/api")
         return await mediator.Send(command with {Id = id});
     }
     
-    private async Task<IResult> UpdateMessageById([FromServices] IMediator mediator, [FromBody] MessageOptions dto, [FromRoute] Guid id)
+    private async Task<IResult> UpdateMessageById([FromServices] IMediator mediator, [FromBody] Dictionary<MetadataType, object> dto, [FromRoute] Guid id)
     {
-        var command = dto.Adapt<UpdateChatMessageById.Command>();
-        return await mediator.Send(command with {Id = id});
+        var command = new UpdateChatMessageById.Command(id, dto);
+        return await mediator.Send(command);
     }
     
     private async Task<IResult> DeleteThreadById([FromServices] IMediator mediator, Guid id)
     {
         var command = new DeleteChatThreadById.Command(id);
         return await mediator.Send(command);
+    }
+    
+    private async Task<IResult> GetChunkById([FromServices] IMediator mediator, Guid id)
+    {
+        var query = new GetChunkById.Query(id);
+        var result = await mediator.Send(query);
+        return result;
     }
 }

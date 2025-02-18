@@ -16,7 +16,7 @@ public static class GetMessagesByThreadId
     {
         public async Task<IResult> Handle(Query request, CancellationToken cancellationToken)
         {
-            var messages = await chatMessageService.GetAllAsync(request.Id.ToString());
+            var messages = await chatMessageService.GetAllMessagesAsync(request.Id.ToString());
             logger.LogInformation("Fetched {Count} Messages from Thread {Id}", messages.Count, request.Id);
             return Results.Ok(messages);
         }

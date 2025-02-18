@@ -15,6 +15,9 @@ import { Citation } from '@/types/ChatThread';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Textarea } from '../ui/textarea';
 import { FileViewingDialog } from './file-viewing-dialog';
+import { useState } from 'react';
+import { Loader2Icon } from 'lucide-react';
+import { getCitationChunkById } from '@/services/chatthreadservice';
 
 interface CitationSheetProps {
   citation: Citation;
@@ -22,9 +25,17 @@ interface CitationSheetProps {
 }
 export function CitationSheet(props: CitationSheetProps) {
   const { citation, index } = props;
+  const [chunk, setChunk] = useState<string | undefined>(undefined);
+
+  const onOpen = async () => {
+    if (!chunk) {
+      const chunk = await getCitationChunkById(citation.id);
+      setChunk(chunk);
+    }
+  };
 
   return (
-    <Sheet>
+    <Sheet onOpenChange={onOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
           <SheetTrigger asChild>
@@ -52,7 +63,11 @@ export function CitationSheet(props: CitationSheetProps) {
         </div>
         <div className="flex flex-col grow min-h-0">
           <Label htmlFor="content">Content</Label>
-          {citation.content && <Textarea className="mt-2 h-full" readOnly={true} value={citation.content}></Textarea>}
+          {chunk ? (
+            <Textarea className="mt-2 h-full" readOnly={true} value={chunk}></Textarea>
+          ) : (
+            <Loader2Icon className="flex self-center animate-spin" />
+          )}
         </div>
 
         <SheetFooter>
