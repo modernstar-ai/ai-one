@@ -692,7 +692,7 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
     destination: {
       endpointType: 'ServiceBusQueue'
       properties: {
-        resourceId: serviceBus.id
+        resourceId: serviceBus::queue.id
       }
     }
     filter: {
