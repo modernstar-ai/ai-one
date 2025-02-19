@@ -9,7 +9,7 @@ namespace Agile.Framework.AzureDocumentIntelligence;
 public interface IDocumentIntelligence
 {
     Task<string> CrackDocumentAsync(Stream fileStream, bool isTextDoc = false);
-    List<string> ChunkDocumentWithOverlap(string document);
+    List<string> ChunkDocumentWithOverlap(string document, int? chunkSize = null, int? chunkOverlap = null);
 }
 
 [Export(typeof(IDocumentIntelligence), ServiceLifetime.Singleton)]
@@ -32,11 +32,13 @@ public class DocumentIntelligence(DocumentIntelligenceClient client, ILogger<Doc
         return string.Join('\n', operation.Value.Paragraphs.Select(p => p.Content));
     }
 
-    public List<string> ChunkDocumentWithOverlap(string document)
+    public List<string> ChunkDocumentWithOverlap(string document, int? chunkSize = null, int? chunkOverlap = null)
     {
+        var size = chunkSize ?? ChunkSize;
+        var overlap = chunkOverlap != null ? (int)(size * ((double)chunkOverlap.Value / 100)) : ChunkOverlap;
         var chunks = new List<string>();
 
-        if (document.Length <= ChunkSize)
+        if (document.Length <= size)
         {
             chunks.Add(document);
             return chunks;
@@ -46,12 +48,12 @@ public class DocumentIntelligence(DocumentIntelligenceClient client, ILogger<Doc
 
         while (startIndex < document.Length)
         {
-            int endIndex = startIndex + ChunkSize;
+            int endIndex = startIndex + size;
             string chunk = document.Substring(startIndex, Math.Min(endIndex - startIndex, document.Length - startIndex));
             chunks.Add(chunk);
-            startIndex = endIndex - ChunkOverlap;
+            startIndex = endIndex - overlap;
         }
 
-        return chunks;
+        return chunks.Where(chunk => !string.IsNullOrWhiteSpace(chunk)).ToList();
     }
 }

@@ -2,6 +2,8 @@ export type Index = {
   id: string;
   name: string;
   description?: string;
+  chunkSize: number;
+  chunkOverlap: number;
   group?: string;
   createdAt: string;
   createdBy: string;
@@ -10,19 +12,16 @@ export type Index = {
 export type CreateIndexDto = {
   name: string;
   description?: string;
+  chunkSize: number;
+  chunkOverlap: number;
   group?: string;
 };
 
-
 export interface IndexReportDto {
-  
-  searchIndexStatistics? : SearchIndexStatistics;
-  indexer?: IndexerDetail;
-  dataSource?: DataSourceDetail;
+  searchIndexStatistics?: SearchIndexStatistics;
 }
 
 export interface SearchIndexStatistics {
-
   name?: string;
   documentCount?: number;
   storageSize?: string;
@@ -30,21 +29,4 @@ export interface SearchIndexStatistics {
   replicasCount?: number;
   lastRefreshTime?: string;
   status?: string;
-}
-
-export interface IndexerDetail {
-  name?: string;
-  targetIndex?: string;
-  dataSource?: string;
-  schedule?: string;
-  lastRunTime?: Date;
-  documentsProcessed?: string;
-  status?: string;
-}
-
-export interface DataSourceDetail {
-  name?: string;
-  type?: string;
-  container?: string;
-  connectionStatus?: string;
 }

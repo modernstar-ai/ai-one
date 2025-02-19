@@ -12,7 +12,7 @@ namespace Agile.Chat.Application.Indexes.Commands;
 
 public static class CreateIndex
 {
-    public record Command(string Name, string Description, string? Group) : IRequest<IResult>;
+    public record Command(string Name, string Description, int ChunkSize, int ChunkOverlap, string? Group) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> logger, IIndexService indexService, IAzureAiSearch azureAiSearch) : IRequestHandler<Command, IResult>
     {
@@ -24,6 +24,8 @@ public static class CreateIndex
             var index = CosmosIndex.Create(
                 request.Name, 
                 request.Description, 
+                request.ChunkSize,
+                request.ChunkOverlap,
                 request.Group);
 
             if (await azureAiSearch.IndexExistsAsync(index.Name))

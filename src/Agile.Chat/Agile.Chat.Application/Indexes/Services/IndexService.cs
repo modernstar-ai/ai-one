@@ -14,6 +14,7 @@ public interface IIndexService  : ICosmosRepository<CosmosIndex>
 {
     public bool Exists(string indexName);
     public Task<List<CosmosIndex>> GetAllAsync();
+    public CosmosIndex? GetByName(string indexName);
 }
 
 [Export(typeof(IIndexService), ServiceLifetime.Scoped)]
@@ -31,6 +32,14 @@ public class IndexService(CosmosClient cosmosClient, IRoleService roleService) :
         
         var results = await CollectResultsAsync(query);
         return results;
+    }
+
+    public CosmosIndex? GetByName(string indexName)
+    {
+        return LinqQuery()
+            .AsQueryable()
+            .Where(x => x.Name == indexName)
+            .FirstOrDefault();
     }
 
     public bool Exists(string indexName)

@@ -37,7 +37,7 @@ public static class FileIndexer
         private bool _indexExists;
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            await HandleIndexSyncing(request.IndexName, request.EventType);
+            var index = await HandleIndexSyncing(request.IndexName, request.EventType);
             _indexExists = await azureAiSearch.IndexExistsAsync(request.IndexName);
 
             var file = await HandleFileSyncing(request.EventType, request.FileName, request.IndexName,
@@ -49,7 +49,7 @@ public static class FileIndexer
                 if (request.EventType == EventGridHelpers.Type.BlobDeleted)
                     return await HandleFileDeletionAsync(file);
 
-                return await HandleFileUpdatingAsync(file);
+                return await HandleFileUpdatingAsync(file, index);
             }
             catch (Exception)
             {
@@ -66,7 +66,7 @@ public static class FileIndexer
             return Results.Ok();
         }
 
-        private async Task<IResult> HandleFileUpdatingAsync(CosmosFile file)
+        private async Task<IResult> HandleFileUpdatingAsync(CosmosFile file, CosmosIndex? index)
         {
             var command = new DownloadFileByUrl.Command(file.Url);
             var result = await mediator.Send(command);
@@ -78,7 +78,7 @@ public static class FileIndexer
                 ? await converter.ExtractDocumentAsync(okResult.FileStream)
                 : await documentIntelligence.CrackDocumentAsync(okResult.FileStream,
                     FileHelpers.TextFormats.Contains(okResult.ContentType));
-            var chunks = documentIntelligence.ChunkDocumentWithOverlap(document).Where(chunk => !string.IsNullOrWhiteSpace(chunk)).ToList();
+            var chunks = documentIntelligence.ChunkDocumentWithOverlap(document, index?.ChunkSize, index?.ChunkOverlap).ToList();
             
             var embeddings = await _retryPolicy.ExecuteAsync(async _ => await appKernel.GenerateEmbeddingsAsync([..chunks, file.Name]), new CancellationToken());
             var nameEmbedding = embeddings.Last();
@@ -121,16 +121,23 @@ public static class FileIndexer
             }
         }
 
-        private async Task HandleIndexSyncing(string indexName, EventGridHelpers.Type eventType)
+        private async Task<CosmosIndex?> HandleIndexSyncing(string indexName, EventGridHelpers.Type eventType)
         {
-            if (!indexService.Exists(indexName) && eventType != EventGridHelpers.Type.BlobDeleted)
+            var indexExists = indexService.Exists(indexName);
+            if (!indexExists && eventType != EventGridHelpers.Type.BlobDeleted)
             {
                 if(!await azureAiSearch.IndexExistsAsync(indexName))
                     await azureAiSearch.CreateIndexIfNotExistsAsync(indexName);
                 
-                var index = CosmosIndex.Create(indexName, indexName, null);
+                var index = CosmosIndex.Create(indexName, indexName, 2300, 25, null);
                 await indexService.AddItemAsync(index);
+                return index;
             }
+            else if (indexExists)
+            {
+                return indexService.GetByName(indexName);
+            }
+            return null;
         }
     }
 }
