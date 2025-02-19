@@ -41,6 +41,12 @@ jobs:
       with:
         fetch-depth: 1
         persist-credentials: true
+        
+    - uses: azure/login@v1
+      with:
+        client-id: ${{ vars.AZURE_CLIENT_ID }}
+        tenant-id: ${{ vars.AZURE_TENANT_ID }}
+        subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
     - name: Setup .NET 8
       uses: actions/setup-dotnet@v3
@@ -54,12 +60,7 @@ jobs:
         dotnet publish ${{ env.AGILE_CHAT_API_SRC }} -c Release -o ${{ env.AGILE_CHAT_API_PUB }}
       env:
         ENVIRONMENT: ${{ github.event.inputs.environment }}
-
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
+      
     - name: Deploy - Agile-Chat-Api
       uses: azure/webapps-deploy@v2
       with:
@@ -75,6 +76,12 @@ jobs:
       with:
         fetch-depth: 1
         persist-credentials: true
+        
+    - uses: azure/login@v1
+      with:
+        client-id: ${{ vars.AZURE_CLIENT_ID }}
+        tenant-id: ${{ vars.AZURE_TENANT_ID }}
+        subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
     - name: Setup Node.js
       uses: actions/setup-node@v3
@@ -91,11 +98,6 @@ jobs:
       run: |
         cd ${{ env.AGILE_WEB_SRC }}/dist
         zip -r ${{ github.workspace }}/release.zip .
-
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
         
     - name: Deploy Agile Chat Web App
       uses: azure/webapps-deploy@v2
