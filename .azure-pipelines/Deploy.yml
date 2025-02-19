@@ -1,7 +1,3 @@
-# Node.js
-# Build a general Node.js project with npm.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 trigger: none
 
 parameters:
@@ -26,8 +22,8 @@ parameters:
   default: 'agilechat-dev-webapp'
 
 variables:
-  agileChartApiSrc: './src/Agile.Chat/Agile.Chat.Api'
-  agileChartApiPub: './publish/Agile.Chat/Agile.Chat.Api'
+  agileChatApiSrc: './src/Agile.Chat/Agile.Chat.Api'
+  agileChatApiPub: './publish/Agile.Chat/Agile.Chat.Api'
   agileWebSrc: './src/agile-chat-web'
   agileWebPub: './publish/agile-chat-web'
   #SERVICE_CONNECTION_NAME
@@ -56,9 +52,9 @@ stages:
         performMultiLevelLookup: true
     
     - script: |
-        dotnet restore $(agileChartApiSrc)
-        dotnet build $(agileChartApiSrc) --no-restore --configuration Release
-        dotnet publish $(agileChartApiSrc) -c Release -o $(agileChartApiPub)
+        dotnet restore $(agileChatApiSrc)
+        dotnet build $(agileChatApiSrc) --no-restore --configuration Release
+        dotnet publish $(agileChatApiSrc) -c Release -o $(agileChatApiPub)
       displayName: 'Agile-Chat-Api - dotnet build and publish'
       env:
         ENVIRONMENT: ${{ parameters.environment }}
@@ -69,7 +65,7 @@ stages:
         appType: webAppLinux
         azureSubscription: $(SERVICE_CONNECTION_NAME)
         appName: ${{ parameters.apiWebAppName }}
-        package: $(agileChartApiPub)
+        package: $(agileChatApiPub)
 
 # NOW DEPLOY WEB APP
 - stage: BuildAndDeployWeb

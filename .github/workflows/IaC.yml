@@ -53,6 +53,14 @@ on:
 
 env:
   AZURE_BICEP_MAIN: './infra/main.bicep'
+  # SERVICE_CONNECTION_NAME
+  # AZURE_SUBSCRIPTION_ID
+  # AZURE_CLIENT_ID
+  # AZURE_TENANT_ID
+  # AZURE_APP_ID
+  # AZURE_RESOURCE_GROUP
+  # APIM_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
+  # APIM_EMBEDDINGS_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
 
 jobs:
   deploy-infrastructure:
