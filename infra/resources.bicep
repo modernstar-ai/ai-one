@@ -19,10 +19,6 @@ param aspCoreEnvironment string = 'Development'
 @secure()
 param azureClientID string = ''
 
-@description('AZURE_CLIENT_SECRET')
-@secure()
-param azureClientSecret string = ''
-
 @description('AZURE_TENANT_ID')
 @secure()
 param azureTenantId string = ''
@@ -508,14 +504,6 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     properties: {
       contentType: 'text/plain'
       value: azureClientID
-    }
-  }
-
-  resource AZURE_CLIENT_SECRET 'secrets' = {
-    name: 'AZURE-CLIENT-SECRET'
-    properties: {
-      contentType: 'text/plain'
-      value: azureClientSecret
     }
   }
 

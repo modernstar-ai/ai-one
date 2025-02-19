@@ -76,10 +76,6 @@ param aspCoreEnvironment string = 'Development'
 @secure()
 param azureClientID string = ''
 
-@description('AZURE_CLIENT_SECRET')
-@secure()
-param azureClientSecret string = ''
-
 @description('AZURE_TENANT_ID')
 @secure()
 param azureTenantId string = ''
@@ -120,7 +116,6 @@ module resources 'resources.bicep' = {
     location: location
     aspCoreEnvironment: aspCoreEnvironment
     azureClientID: azureClientID
-    azureClientSecret: azureClientSecret
     azureTenantId: azureTenantId
     azureADAppIdOrUri: azureADAppIdOrUri
     apimAiEndpointOverride: apimAiEndpointOverride

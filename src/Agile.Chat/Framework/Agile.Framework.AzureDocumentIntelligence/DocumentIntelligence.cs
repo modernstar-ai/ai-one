@@ -34,8 +34,8 @@ public class DocumentIntelligence(DocumentIntelligenceClient client, ILogger<Doc
 
     public List<string> ChunkDocumentWithOverlap(string document, int? chunkSize = null, int? chunkOverlap = null)
     {
-        var size = chunkSize ?? ChunkSize;
-        var overlap = chunkOverlap != null ? (int)(size * ((double)chunkOverlap.Value / 100)) : ChunkOverlap;
+        var size = chunkSize != null && chunkSize != 0 ? chunkSize.Value : ChunkSize;
+        var overlap = chunkOverlap != null && chunkOverlap != 0 ? (int)(size * ((double)chunkOverlap.Value / 100)) : ChunkOverlap;
         var chunks = new List<string>();
 
         if (document.Length <= size)

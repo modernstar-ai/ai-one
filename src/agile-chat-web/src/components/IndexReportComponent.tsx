@@ -7,7 +7,6 @@ import {
   AlertCircle,
   RefreshCcw,
   Database,
-  Clock,
   Files,
   FileText,
   HardDrive,
@@ -219,11 +218,6 @@ const IndexReportComponent: React.FC = () => {
               ? formatFileSize(report.searchIndexStatistics.vectorIndexSize)
               : 'N/A'
           }
-        />
-        <StatsCard
-          icon={Clock}
-          title="Last Refresh"
-          value={report.searchIndexStatistics?.lastRefreshTime || report.indexer?.lastRunTime || 'N/A'}
         />
         <StatsCard icon={BarChart} title="Replicas Count" value={report.searchIndexStatistics?.replicasCount || '1'} />
         <StatusCard icon={Activity} title="Status" value={report.searchIndexStatistics?.status || 'Active'} />

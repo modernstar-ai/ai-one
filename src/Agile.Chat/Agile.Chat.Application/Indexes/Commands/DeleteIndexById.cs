@@ -25,13 +25,12 @@ public static class DeleteIndexById
 
             //Delete index from cosmos
             await indexService.DeleteItemByIdAsync(request.Id.ToString());
-            
-            //Delete all files on blob first
-            await blobStorage.DeleteIndexFilesAsync(index.Name);
-            //Delete all files in cosmos next
-            await fileService.DeleteAllByIndexAsync(index.Name);
             //Delete index on ai search
             await azureAiSearch.DeleteIndexAsync(index.Name);
+            //Delete all files on blob
+            await blobStorage.DeleteIndexFilesAsync(index.Name);
+            //Delete all files in cosmos
+            await fileService.DeleteAllByIndexAsync(index.Name);
             
             return Results.Ok();
         }

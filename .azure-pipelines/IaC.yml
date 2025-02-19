@@ -111,7 +111,6 @@ stages:
           -location "${{ parameters.azure_location }}"
           -openAILocation "${{ parameters.azure_location }}"
           -azureClientID "$(AZURE_CLIENT_ID)"
-          -azureClientSecret "$(AZURE_CLIENT_SECRET)"
           -azureTenantId "$(AZURE_TENANT_ID)"
           -azureADAppIdOrUri "$(AZURE_APP_ID)"
           -aspCoreEnvironment "${{ parameters.asp_core_environment }}"
