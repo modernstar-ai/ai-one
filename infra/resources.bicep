@@ -122,7 +122,7 @@ var historyContainerName = 'history'
 var configContainerName = 'config'
 
 @description('AI Services  Name')
-var aiServices_name = toLower('${projectName}${environmentName}-ai-services')
+var aiServices_name = toLower('${resourcePrefix}-ai-services')
 
 var llmDeployments = [
   {
@@ -399,9 +399,8 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 //**************************************************************************
 
 @description('The name of the Role Assignment - from Guid.')
-param roleAssignmentName string = newGuid()
 resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (kvSetFunctionAppPermissions) {
-  name: roleAssignmentName
+  name: apiApp.name
   scope: kv
   properties: {
     principalId: apiApp.identity.principalId
