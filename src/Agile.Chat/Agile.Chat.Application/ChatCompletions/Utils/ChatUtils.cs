@@ -51,7 +51,7 @@ public static class ChatUtils
         }
         catch (Exception ex)
         {
-            return TypedResults.BadRequest($"Bad Request Error: {ex.Message}");
+            return TypedResults.BadRequest($"Bad Request Error: {ex.Message} {ex.InnerException?.Message}");
         }
         
         return TypedResults.Ok(assistantFullResponse.ToString());
@@ -91,7 +91,7 @@ public static class ChatUtils
         }
         catch (Exception ex)
         {
-            return TypedResults.BadRequest($"Bad Request Error: {ex.Message}");
+            return TypedResults.BadRequest($"Bad Request Error: {ex.Message} {ex.InnerException?.Message}");
         }
         
         return TypedResults.Ok(assistantFullResponse.ToString());
