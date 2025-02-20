@@ -1,4 +1,4 @@
-name: DEV-IaC
+name: IaC
 
 on:
   workflow_dispatch:
