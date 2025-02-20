@@ -87,12 +87,9 @@ param semanticSearchSku string = 'free'
 // var storage_prefix = take(clean_name, 13)
 
 @description('The unique name of the Storage Account.')
-param storage_name string = toLower('stg${uniqueString(resourceGroup().id)}')
+var storage_name = toLower('${resourcePrefix}sto')
 
-//var keyVaultName = toLower('${resourcePrefix}-kv')
-
-@description('The unique name of the Key Vault.')
-param keyVaultName string = toLower('kv-${uniqueString(resourceGroup().id)}')
+var keyVaultName = toLower('${resourcePrefix}-kv')
 
 var la_workspace_name = toLower('${resourcePrefix}-la')
 var diagnostic_setting_name = 'AppServiceConsoleLogs'
