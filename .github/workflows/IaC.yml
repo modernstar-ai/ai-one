@@ -63,7 +63,7 @@ env:
 
 jobs:
   deploy-infrastructure:
-    environment: Development
+    environment: ${{ inputs.asp_core_environment }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
