@@ -1,7 +1,7 @@
 targetScope = 'resourceGroup'
 
 @minLength(1)
-@maxLength(9)
+@maxLength(12)
 @description('The name of the solution.')
 param projectName string
 
