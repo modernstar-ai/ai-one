@@ -80,9 +80,6 @@ param azureClientID string = ''
 @secure()
 param azureTenantId string = ''
 
-@description('The Azure Active Directory Application ID or URI to get the access token that will be included as the bearer token in delivery requests')
-param azureADAppIdOrUri string = ''
-
 @description('Conditionally deploy key vault Api app permissions')
 param kvSetFunctionAppPermissions bool = false
 
@@ -117,7 +114,6 @@ module resources 'resources.bicep' = {
     aspCoreEnvironment: aspCoreEnvironment
     azureClientID: azureClientID
     azureTenantId: azureTenantId
-    azureADAppIdOrUri: azureADAppIdOrUri
     apimAiEndpointOverride: apimAiEndpointOverride
     apimAiEmbeddingsEndpointOverride: apimAiEmbeddingsEndpointOverride
     kvSetFunctionAppPermissions: kvSetFunctionAppPermissions
