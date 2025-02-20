@@ -1,6 +1,7 @@
 ﻿using System.ClientModel;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Agile.Chat.Application.ChatCompletions.Models;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
@@ -46,15 +47,14 @@ public static class ChatUtils
         {
             return TypedResults.BadRequest("Rate limit exceeded");
         }
-        catch (Exception ex) when (ex is ClientResultException exception &&
-                                   exception.Message.Contains("content_filter"))
+        catch (Exception ex) when (ex is ClientResultException exception && JsonNode.Parse(exception.GetRawResponse()?.Content.ToString() ?? "{}")?["error"]?["message"]?.ToString().Contains("content_filter") == true)
         {
             return TypedResults.BadRequest("High likelyhood of adult content. Response denied.");
         }
         catch (Exception ex) when (ex is ClientResultException exception)
         {
             Log.Logger.Error(exception, "Error while processing request. ");
-            return TypedResults.BadRequest($"Bad Request Error: {exception.Message} {exception.GetRawResponse()?.ReasonPhrase} {exception.GetRawResponse()?.Content}");
+            return TypedResults.BadRequest($"Bad Request Error: {exception.Message} {exception.GetRawResponse()?.Content}");
         }
         
         return TypedResults.Ok(assistantFullResponse.ToString());
@@ -88,14 +88,14 @@ public static class ChatUtils
         {
             return TypedResults.BadRequest("Rate limit exceeded");
         }
-        catch (Exception ex) when (ex is ClientResultException exception && exception.Message.Contains("content_filter"))
+        catch (Exception ex) when (ex is ClientResultException exception && JsonNode.Parse(exception.GetRawResponse()?.Content.ToString() ?? "{}")?["error"]?["message"]?.ToString().Contains("content_filter") == true)
         {
             return TypedResults.BadRequest("High likelyhood of adult content. Response denied.");
         }
         catch (Exception ex) when (ex is ClientResultException exception)
         {
             Log.Logger.Error(exception, "Error while processing request. ");
-            return TypedResults.BadRequest($"Bad Request Error: {exception.Message} {exception.GetRawResponse()?.ReasonPhrase} {exception.GetRawResponse()?.Content}");
+            return TypedResults.BadRequest($"Bad Request Error: {exception.Message} {exception.GetRawResponse()?.Content}");
         }
         
         return TypedResults.Ok(assistantFullResponse.ToString());
