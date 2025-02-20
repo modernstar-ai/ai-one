@@ -23,7 +23,7 @@ parameters:
 
 - name: project_name
   type: string
-  default: 'agilechat'
+  default: 'agile-aione'
   displayName: 'Enter the Name of the project'
 
 - name: azure_location
@@ -55,7 +55,6 @@ variables:
 # AZURE_SUBSCRIPTION_ID
 # AZURE_CLIENT_ID
 # AZURE_TENANT_ID
-# AZURE_APP_ID
 # AZURE_RESOURCE_GROUP
 # APIM_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
 # APIM_EMBEDDINGS_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
@@ -90,7 +89,6 @@ stages:
           -openAILocation "${{ parameters.azure_location }}"
           -azureClientID "$(AZURE_CLIENT_ID)"
           -azureTenantId "$(AZURE_TENANT_ID)"
-          -azureADAppIdOrUri "$(AZURE_APP_ID)"
           -aspCoreEnvironment "${{ parameters.asp_core_environment }}"
           -kvSetFunctionAppPermissions ${{ lower(parameters.set_kv_function_app_permissions) }}
           -semanticSearchSku "${{ parameters.semantic_search_sku }}"
