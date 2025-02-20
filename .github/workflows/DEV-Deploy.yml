@@ -26,7 +26,6 @@ env:
   AGILE_CHAT_API_SRC: './src/Agile.Chat/Agile.Chat.Api'
   AGILE_CHAT_API_PUB: './publish/Agile.Chat/Agile.Chat.Api'
   AGILE_WEB_SRC: './src/agile-chat-web'
-  AGILE_WEB_PUB: './publish/agile-chat-web'
   VITE_AGILECHAT_API_URL: ${{ vars.VITE_AGILECHAT_API_URL }}
   VITE_AZURE_AD_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   VITE_AZURE_AD_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
@@ -107,7 +106,7 @@ jobs:
 
     - name: Agile-Chat-Web - Zip artifact for deployment
       run: |
-        cd ${{ env.AGILE_CHAT_WEB_SRC }}
+        cd ${{ env.AGILE_WEB_SRC }}
         zip -r ../../release.zip dist
 
     - name: Agile-Chat-Web - Upload artifact for deployment job
