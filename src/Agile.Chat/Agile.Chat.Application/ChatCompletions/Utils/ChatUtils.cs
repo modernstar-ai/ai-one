@@ -42,7 +42,7 @@ public static class ChatUtils
                 assistantFullResponse.Append(tokens);
             }
         }
-        catch (Exception ex) when (ex is ClientResultException exception && exception.Status == 429)
+        catch (Exception ex) when (ex is ClientResultException exception && exception.GetRawResponse()?.Status == 429)
         {
             return TypedResults.BadRequest("Rate limit exceeded");
         }
@@ -84,7 +84,7 @@ public static class ChatUtils
                 assistantFullResponse.Append(tokens);
             }
         }
-        catch (Exception ex) when (ex is ClientResultException exception && exception.Status == 429)
+        catch (Exception ex) when (ex is ClientResultException exception && exception.GetRawResponse()?.Status == 429)
         {
             return TypedResults.BadRequest("Rate limit exceeded");
         }
