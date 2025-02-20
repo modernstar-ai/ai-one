@@ -111,10 +111,6 @@ var validStorageServiceImageContainerName = toLower(replace(storageServiceImageC
 @description('The container name where files will be stored for folder search')
 param storageServiceFoldersContainerName string = 'index-content'
 
-@description('The Azure Active Directory Application ID or URI to get the access token that will be included as the bearer token in delivery requests')
-@secure()
-param azureADAppIdOrUri string = ''
-
 @description('Event Grid Subscription')
 var EventGridSystemTopicSubName = toLower('${resourcePrefix}-folders-blobs-listener')
 
@@ -276,10 +272,6 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           {
             name: 'AzureAd__ClientId'
             value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_ID.name})'
-          }
-          {
-            name: 'AzureAd__ClientSecret'
-            value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_CLIENT_SECRET.name})'
           }
           {
             name: 'AzureAd__TenantId'

@@ -56,7 +56,6 @@ env:
   # AZURE_SUBSCRIPTION_ID
   # AZURE_CLIENT_ID
   # AZURE_TENANT_ID
-  # AZURE_APP_ID
   # AZURE_RESOURCE_GROUP
   # APIM_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
   # APIM_EMBEDDINGS_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
@@ -95,7 +94,6 @@ jobs:
             openAILocation="${{ inputs.azure_location }}"
             azureClientID="${{ vars.AZURE_CLIENT_ID }}"
             azureTenantId="${{ vars.AZURE_TENANT_ID }}"
-            azureADAppIdOrUri="${{ vars.AZURE_APP_ID }}"
             aspCoreEnvironment="${{ inputs.asp_core_environment }}"
             kvSetFunctionAppPermissions=${{ inputs.set_kv_function_app_permissions }}
             semanticSearchSku="${{ inputs.semantic_search_sku }}"
