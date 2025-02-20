@@ -37,14 +37,14 @@ export async function uploadFiles(formData: FormData): Promise<CosmosFile | null
 export const getFiles = async (queryDto: QueryDto): Promise<PagedResultsDto<CosmosFile>> => {
   try {
     const params = new URLSearchParams();
-    params.append("Page", queryDto.page.toString());
-    params.append("PageSize", queryDto.pageSize.toString());
-    queryDto.search && params.append("Search", queryDto.search);
-    queryDto.orderBy && params.append("OrderBy", queryDto.orderBy);
-    queryDto.orderType && params.append("OrderType", queryDto.orderType);
+    params.append('Page', queryDto.page.toString());
+    params.append('PageSize', queryDto.pageSize.toString());
+    queryDto.search && params.append('Search', queryDto.search);
+    queryDto.orderBy && params.append('OrderBy', queryDto.orderBy);
+    queryDto.orderType && params.append('OrderType', queryDto.orderType);
     console.log(queryDto);
     const url = getApiUrl('');
-    const response = await axios.get<PagedResultsDto<CosmosFile>>(url, {params: params});
+    const response = await axios.get<PagedResultsDto<CosmosFile>>(url, { params: params });
     return response.data;
   } catch (error) {
     console.error('Error fetching files from API:', error);
@@ -59,7 +59,7 @@ export const deleteFiles = async (fileId: string): Promise<void> => {
 
     await axios.request({
       method: 'DELETE',
-      url: url,
+      url: url
     });
   } catch (error) {
     console.error('Error deleting files from API:', error);

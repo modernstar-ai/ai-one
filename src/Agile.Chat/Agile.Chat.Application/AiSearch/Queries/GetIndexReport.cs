@@ -1,11 +1,7 @@
 ﻿using System.Net;
 using Agile.Chat.Application.AiSearch.Dtos;
-using Agile.Chat.Application.Assistants.Services;
-using Agile.Chat.Application.Indexes.Services;
 using Agile.Framework.Authentication.Interfaces;
-using Agile.Framework.AzureAiSearch.Interfaces;
-using Agile.Framework.AzureAiSearch.Models;
-using Azure.Search.Documents.Indexes.Models;
+using Agile.Framework.AzureAiSearch;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -24,11 +20,6 @@ public static class GetIndexReport
             IndexReportDto indexReport = new IndexReportDto();
 
             indexReport.SearchIndexStatistics = await azureAiSearch.GetIndexStatisticsByNameAsync(request.indexName);
-
-            indexReport.Indexer = await azureAiSearch.GetIndexersByIndexNameAsync(request.indexName);
-
-            indexReport.DataSource = await azureAiSearch.GetDataSourceByNameAsync(request.indexName);
-
             return Results.Ok(indexReport);
         }
     }

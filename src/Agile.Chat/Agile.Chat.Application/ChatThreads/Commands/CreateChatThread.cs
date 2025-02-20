@@ -58,7 +58,7 @@ public static class CreateChatThread
         {
             if (assistant is not null && !string.IsNullOrWhiteSpace(assistant.Greeting))
             {
-                var greetingMessage = Message.CreateAssistant(threadId, assistant.Greeting, new MessageOptions());
+                var greetingMessage = Message.CreateAssistant(threadId, assistant.Greeting);
                 await chatMessageService.AddItemAsync(greetingMessage);
                 await chatMessageAuditService.AddItemAsync(Audit<Message>.Create(greetingMessage));
             }
@@ -74,8 +74,8 @@ public static class CreateChatThread
                 .WithMessage("Name is required");
             
             RuleFor(request => request.FilterOptions.Strictness)
-                .InclusiveBetween(-1, 1)
-                .WithMessage("Strictness must be between -1 and 1 inclusive");
+                .InclusiveBetween(1, 5)
+                .WithMessage("Strictness must be between 1 and 5 inclusive");
         }
     }
 }

@@ -8,7 +8,7 @@ public class AssistantFilterOptions
     public string IndexName { get; set; }
     public bool LimitKnowledgeToIndex { get; set; } = false;
     public int DocumentLimit { get; set; }
-    public double Strictness { get; set; } = 0;
+    public int? Strictness { get; set; } = null;
     public List<string> Folders { get; set; } = new();
     
     public ChatThreadFilterOptions ParseChatThreadFilterOptions()
@@ -16,8 +16,7 @@ public class AssistantFilterOptions
         var options = new ChatThreadFilterOptions()
         {
             DocumentLimit = DocumentLimit,
-            Strictness = Strictness,
-            Folders = Folders
+            Strictness = Strictness
         };
         return options;
     }

@@ -75,7 +75,7 @@ export async function deleteChatThread(id: string): Promise<boolean> {
   const apiUrl = getApiUrl(`/${id}`);
   try {
     await axios.delete(apiUrl, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' }
     });
     return true;
   } catch {
@@ -90,5 +90,16 @@ export async function GetChatThreadMessages(chatThreadId: string): Promise<Messa
     return messages.data;
   } catch {
     return [];
+  }
+}
+
+export async function getCitationChunkById(chunkId: string): Promise<string> {
+  const apiUrl = getApiUrl(`/Chunk/${chunkId}`);
+  try {
+    const response = await axios.get<string>(apiUrl);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching chunk:', error);
+    return '';
   }
 }

@@ -1,0 +1,110 @@
+name: IaC
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment_name:
+        description: 'Select the application environment name - used to name resources'
+        type: choice
+        default: 'dev'
+        options:
+          - 'dev'
+          - 'tst'
+          - 'uat'
+          - 'prod'
+        required: true
+      asp_core_environment:
+        description: 'Select the ASP Core deployment environment'
+        type: choice
+        default: 'Development'
+        options:
+          - 'Development'
+          - 'Test'
+          - 'UAT'
+          - 'Production'
+        required: true
+      project_name:
+        description: 'Enter the Name of the project'
+        type: string
+        default: 'agilechat'
+        required: true
+      azure_location:
+        description: 'Select the Azure deployment location'
+        type: choice
+        default: 'australiaeast'
+        options:
+          - 'australiaeast'
+          - 'australiasoutheast'
+        required: true
+      set_kv_function_app_permissions:
+        description: 'Deploy and Assign Keyvault Web App Permissions?'
+        type: boolean
+        default: false
+        required: true
+      semantic_search_sku:
+        description: 'Select the Azure Search AI Semantic Search Sku'
+        type: choice
+        default: 'standard'
+        options:
+          - 'disabled'
+          - 'free'
+          - 'standard'
+        required: true
+
+env:
+  AZURE_BICEP_MAIN: './infra/main.bicep'
+  # AZURE_SUBSCRIPTION_ID
+  # AZURE_CLIENT_ID
+  # AZURE_TENANT_ID
+  # AZURE_APP_ID
+  # AZURE_RESOURCE_GROUP
+  # APIM_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
+  # APIM_EMBEDDINGS_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
+
+jobs:
+  deploy-infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Check if Resource Group Exists
+        id: check-rg
+        run: |
+          if ! az group show --name "${{ vars.AZURE_RESOURCE_GROUP }}" > /dev/null 2>&1; then
+            echo "resource_group_missing=true" >> $GITHUB_OUTPUT
+          else
+            echo "resource_group_missing=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Resource Group
+        if: steps.check-rg.outputs.resource_group_missing == 'true'
+        run: |
+          az group create --name "${{ vars.AZURE_RESOURCE_GROUP }}" --location "${{ inputs.azure_location }}"
+
+      - name: Deploy Bicep Infrastructure
+        uses: azure/arm-deploy@v1
+        with:
+          scope: resourcegroup
+          subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template: ${{ env.AZURE_BICEP_MAIN }}
+          parameters: >
+            projectName="${{ inputs.project_name }}"
+            environmentName="${{ inputs.environment_name }}"
+            location="${{ inputs.azure_location }}"
+            openAILocation="${{ inputs.azure_location }}"
+            azureClientID="${{ vars.AZURE_CLIENT_ID }}"
+            azureTenantId="${{ vars.AZURE_TENANT_ID }}"
+            azureADAppIdOrUri="${{ vars.AZURE_APP_ID }}"
+            aspCoreEnvironment="${{ inputs.asp_core_environment }}"
+            kvSetFunctionAppPermissions=${{ inputs.set_kv_function_app_permissions }}
+            semanticSearchSku="${{ inputs.semantic_search_sku }}"
+            apimAiEndpointOverride="${{ vars.APIM_ENDPOINT_OVERRIDE }}"
+            apimAiEmbeddingsEndpointOverride="${{ vars.APIM_EMBEDDINGS_ENDPOINT_OVERRIDE }}"

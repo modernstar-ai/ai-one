@@ -52,20 +52,16 @@ export interface Message {
   lastModified: Date;
 }
 
-export interface MessageOptions {
-  isLiked: boolean;
-  isDisliked: boolean;
-  metadata: { [key in MetadataType]?: object };
-}
+export type MessageOptions = { [key in MetadataType]?: any };
 
 export enum MetadataType {
   Citations = 'Citations',
-  DocumentsRetrieved = 'DocumentsRetrieved',
+  IsLiked = 'IsLiked',
+  IsDisliked = 'IsDisliked',
   SearchProcess = 'SearchProcess'
 }
 
 export interface Citation {
-  referenceNumber: number;
   id: string;
   name: string;
   url: string;

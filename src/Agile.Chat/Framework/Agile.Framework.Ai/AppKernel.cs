@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.Enums;
+using Azure.AI.OpenAI.Chat;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -15,7 +16,7 @@ public interface IAppKernel
     Task<ReadOnlyMemory<float>> GenerateEmbeddingAsync(string text);
     Task<IList<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(IList<string> texts);
     IAsyncEnumerable<string> GetChatStream(ChatHistory chatHistory, AzureOpenAIPromptExecutionSettings settings);
-    IAsyncEnumerable<string> GetPromptFileChatStream(AzureOpenAIPromptExecutionSettings settings, 
+    IAsyncEnumerable<StreamingKernelContent>? GetPromptFileChatStream(AzureOpenAIPromptExecutionSettings settings, 
         string promptRelativeDirectory,
         string promptFile,
         Dictionary<string, object?>? kernelArguments = null!);
@@ -62,14 +63,14 @@ public class AppKernel : IAppKernel
          }
      }
      
-     public async IAsyncEnumerable<string> GetPromptFileChatStream(
+     public IAsyncEnumerable<StreamingKernelContent>? GetPromptFileChatStream(
          AzureOpenAIPromptExecutionSettings settings,
          string promptRelativeDirectory,
          string promptFile,
          Dictionary<string, object?>? kernelArguments = null!)
      {
          var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, promptRelativeDirectory, promptFile);
-         var prompt = await File.ReadAllTextAsync(path);
+         var prompt = File.ReadAllText(path);
          
          if(string.IsNullOrWhiteSpace(prompt)) throw new Exception("Prompt file path is empty");
          var kernelFunction = _kernel.CreateFunctionFromPromptYaml(prompt, new HandlebarsPromptTemplateFactory());
@@ -80,10 +81,7 @@ public class AppKernel : IAppKernel
              arguments[kvp.Key] = kvp.Value;
          
          var responses = kernelFunction.InvokeStreamingAsync(_kernel, arguments);
-         await foreach (var tokens in responses)
-         {
-             yield return tokens.ToString();
-         }
+         return responses;
      }
      
      public async Task<string> GetPromptFileChat(

@@ -17,10 +17,12 @@ const formSchema = z.object({
     .string()
     .min(1, { message: 'Name is required' })
     .regex(/^[a-z][a-z0-9-]*$/, {
-      message: 'Name must be lowercase, start with a letter and contain only letters, numbers and hyphens',
+      message: 'Name must be lowercase, start with a letter and contain only letters, numbers and hyphens'
     }),
   description: z.string(),
-  group: z.string().optional(),
+  chunkSize: z.number().min(2000).max(5000).default(2300),
+  chunkOverlap: z.number().min(25).max(50).default(25),
+  group: z.string().optional()
 });
 type FormValues = z.infer<typeof formSchema>;
 
@@ -35,8 +37,10 @@ export default function IndexForm() {
     defaultValues: {
       name: '',
       description: '',
-      group: undefined,
-    },
+      chunkSize: 2300,
+      chunkOverlap: 25,
+      group: undefined
+    }
   });
 
   const onSubmit = async (values: FormValues) => {
@@ -48,21 +52,21 @@ export default function IndexForm() {
       if (createdIndex) {
         toast({
           title: 'Success',
-          description: 'Index created successfully',
+          description: 'Index created successfully'
         });
         navigate('/containers');
       } else {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Operation failed. Please try again or check logs for details.',
+          description: 'Operation failed. Please try again or check logs for details.'
         });
       }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred'
       });
     } finally {
       setIsSubmitting(false);
@@ -99,6 +103,46 @@ export default function IndexForm() {
                       <FormLabel>Description</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="A brief overview of your container" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="chunkSize"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Chunk Size</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          onChange={(val) => field.onChange(+val.target.value)}
+                          type="number"
+                          min={2000}
+                          max={5000}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="chunkOverlap"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Chunk Overlap (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          onChange={(val) => field.onChange(+val.target.value)}
+                          type="number"
+                          min={25}
+                          max={50}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -1,5 +1,6 @@
 ﻿using Agile.Chat.Application.Files.Services;
 using Agile.Chat.Domain.Files.Aggregates;
+using Agile.Chat.Domain.Files.ValueObjects;
 using Agile.Framework.BlobStorage.Interfaces;
 using FluentValidation;
 using MediatR;
@@ -29,7 +30,7 @@ public static class UploadFile
 
             if (cosmosFile != null)
             {
-                cosmosFile.Update(request.File.ContentType, request.File.Length);
+                cosmosFile.Update(FileStatus.QueuedForIndexing, request.File.ContentType, request.File.Length);
             }
             else
             {
