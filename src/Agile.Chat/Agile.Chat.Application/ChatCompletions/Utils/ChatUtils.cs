@@ -44,9 +44,14 @@ public static class ChatUtils
         {
             return TypedResults.BadRequest("Rate limit exceeded");
         }
-        catch (Exception ex) when (ex is ClientResultException exception && exception.Message.Contains("content_filter"))
+        catch (Exception ex) when (ex is ClientResultException exception &&
+                                   exception.Message.Contains("content_filter"))
         {
             return TypedResults.BadRequest("High likelyhood of adult content. Response denied.");
+        }
+        catch (Exception ex)
+        {
+            return TypedResults.BadRequest($"Bad Request Error: {ex.Message}");
         }
         
         return TypedResults.Ok(assistantFullResponse.ToString());
