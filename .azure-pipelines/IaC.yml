@@ -69,28 +69,6 @@ stages:
     pool:
       vmImage: 'ubuntu-latest'
     steps:
-    - task: AzureCLI@2
-      displayName: 'Check if Resource Group Exists'
-      inputs:
-        azureSubscription: '$(SERVICE_CONNECTION_NAME)'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          if ! az group show --name "$(AZURE_RESOURCE_GROUP)" > /dev/null 2>&1; then
-            echo "Resource group does not exist"
-            echo "##vso[task.setvariable variable=ResourceGroupMissing]true"
-          fi
-
-    - task: AzureCLI@2
-      displayName: 'Create Resource Group (if not exists)'
-      condition: eq(variables['ResourceGroupMissing'], 'true')
-      inputs:
-        azureSubscription: '$(SERVICE_CONNECTION_NAME)'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          az group create --name "$(AZURE_RESOURCE_GROUP)" --location "${{ parameters.azure_location }}"
-      
     - task: AzureResourceManagerTemplateDeployment@3
       name: 'DeployBicep'
       displayName: '🚀 Deploy Core Bicep Infrastructure'

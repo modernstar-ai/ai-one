@@ -81,20 +81,6 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Check if Resource Group Exists
-        id: check-rg
-        run: |
-          if ! az group show --name "${{ vars.AZURE_RESOURCE_GROUP }}" > /dev/null 2>&1; then
-            echo "resource_group_missing=true" >> $GITHUB_OUTPUT
-          else
-            echo "resource_group_missing=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create Resource Group
-        if: steps.check-rg.outputs.resource_group_missing == 'true'
-        run: |
-          az group create --name "${{ vars.AZURE_RESOURCE_GROUP }}" --location "${{ inputs.azure_location }}"
-
       - name: Deploy Bicep Infrastructure
         uses: azure/arm-deploy@v1
         with:
