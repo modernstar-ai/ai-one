@@ -1,4 +1,5 @@
-﻿using Agile.Framework.Common.EnvironmentVariables;
+﻿using Agile.Framework.AzureAiSearch.Models;
+using Agile.Framework.Common.EnvironmentVariables;
 using Azure.Search.Documents.Indexes.Models;
 
 namespace Agile.Framework.AzureAiSearch.AiSearchConstants;
@@ -10,7 +11,7 @@ public static class DefaultIndex
         var newIndex = new SearchIndex(indexName);
             newIndex.Fields = new List<SearchField>()
             {
-                new("chunk_id", SearchFieldDataType.String)
+                new(nameof(AzureSearchDocument.Id), SearchFieldDataType.String)
                 {
                     IsKey = true,
                     IsSearchable = true,
@@ -19,23 +20,23 @@ public static class DefaultIndex
                     IsFacetable = true,
                     AnalyzerName = "keyword"
                 },
-                new("parent_id", SearchFieldDataType.String)
+                new(nameof(AzureSearchDocument.FileId), SearchFieldDataType.String)
                 {
                     IsSearchable = true,
                     IsFilterable = true,
                     IsSortable = true,
                     IsFacetable = true
                 },
-                new("chunk", SearchFieldDataType.String)
+                new(nameof(AzureSearchDocument.Chunk), SearchFieldDataType.String)
                 {
                     IsSearchable = true,
                 },
-                new("title", SearchFieldDataType.String)
+                new(nameof(AzureSearchDocument.Name), SearchFieldDataType.String)
                 {
                     IsSearchable = true,
                     IsFilterable = true
                 },
-                new("text_vector", SearchFieldDataType.Collection(SearchFieldDataType.Single))
+                new(nameof(AzureSearchDocument.ChunkVector), SearchFieldDataType.Collection(SearchFieldDataType.Single))
                 {
                     IsSearchable = true,
                     IsHidden = true,
@@ -43,8 +44,15 @@ public static class DefaultIndex
                     VectorSearchDimensions = 1536,
                     VectorSearchProfileName = "azureOpenAi-text-profile"
                 },
-                new("metadata_storage_name", SearchFieldDataType.String),
-                new("metadata_storage_path", SearchFieldDataType.String)
+                new(nameof(AzureSearchDocument.NameVector), SearchFieldDataType.Collection(SearchFieldDataType.Single))
+                {
+                    IsSearchable = true,
+                    IsHidden = true,
+                    IsStored = true,
+                    VectorSearchDimensions = 1536,
+                    VectorSearchProfileName = "azureOpenAi-text-profile"
+                },
+                new(nameof(AzureSearchDocument.Url), SearchFieldDataType.String)
                 {
                     IsSearchable = true,
                     IsFilterable = true
@@ -54,8 +62,8 @@ public static class DefaultIndex
             newIndex.SemanticSearch = new SemanticSearch();
             newIndex.SemanticSearch.Configurations.Add(new SemanticConfiguration("semantic-configuration", new SemanticPrioritizedFields()
             {
-                TitleField = new SemanticField("title"),
-                ContentFields = { new SemanticField("chunk") }
+                TitleField = new SemanticField(nameof(AzureSearchDocument.Name)),
+                ContentFields = { new SemanticField(nameof(AzureSearchDocument.Chunk)) }
             }));
             newIndex.SemanticSearch.DefaultConfigurationName = "semantic-configuration";
             

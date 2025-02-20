@@ -78,10 +78,9 @@ const ChatPage = () => {
       const dbMsgs = JSON.parse(event.data) as Message[];
       let newMessages = [...prevMessagesRef.current!];
       dbMsgs.forEach((msg) => {
-        newMessages = updateMessages(prevMessagesRef.current!, msg);
+        newMessages = updateMessages(newMessages, msg);
       });
       prevMessagesRef.current = newMessages;
-      //setMessagesDb(newMessages);
       clearStream();
     }
   };
@@ -105,7 +104,7 @@ const ChatPage = () => {
 
       const response = await chat({
         threadId: thread.id,
-        userPrompt: userPrompt,
+        userPrompt: userPrompt
       } as ChatDto);
 
       const parser = createParser({ onEvent });
@@ -177,9 +176,8 @@ const ChatPage = () => {
                   userId={thread!.userId || ''} // Ensure username is never undefined
                   onCopy={() => {
                     navigator.clipboard.writeText(message.content);
-                  }}
-                >
-                  <MessageContent message={message} assistantId={thread.assistantId} />
+                  }}>
+                  <MessageContent message={message} />
                 </ChatMessageArea>
               ))}
             </>

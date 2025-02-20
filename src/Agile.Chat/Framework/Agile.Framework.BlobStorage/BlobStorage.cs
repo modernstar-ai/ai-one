@@ -17,7 +17,7 @@ public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) 
 
     public async Task<(Stream, BlobDownloadDetails)> DownloadAsync(string url)
     {
-        var blob = new BlobClient(new Uri(url));
+        var blob = new BlobClient(new Uri(url), credential: new StorageSharedKeyCredential(Configs.BlobStorage.Name, Configs.BlobStorage.Key));
         if(!await blob.ExistsAsync())
             throw new Exception("File doesn't exist");
         
@@ -45,7 +45,7 @@ public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) 
         logger.LogInformation("Uploading {FileName} to Index {IndexName} with folder {FolderName}", fileName, indexName, folderName);
         var resp = await blobClient.UploadAsync(stream, new BlobHttpHeaders(){ContentType = contentType});
         logger.LogInformation("Finished upload with response {@Response}", resp.Value);
-        return blobClient.Uri.ToString();
+        return $"https://{blobClient.Uri.Host}{blobClient.Uri.LocalPath}";
     }
 
     public async Task DeleteAsync(string fileName, string indexName, string? folderName = null)

@@ -3,7 +3,7 @@ import { toast } from './ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { deleteIndex } from '@/services/indexes-service';
 import { Index } from '@/models/indexmetadata';
-import { Loader2, Info, Trash2, Pencil, BarChart  } from 'lucide-react';
+import { Loader2, Info, Trash2, Pencil, BarChart } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from './ui/button';
@@ -16,7 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
 import { useIndexes } from '@/hooks/use-indexes';
 import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
@@ -63,7 +63,7 @@ const IndexerComponent: React.FC = () => {
           refreshIndexes();
           toast({
             title: 'Success',
-            description: `Index "${indexToDelete.name}" has been deleted.`,
+            description: `Index "${indexToDelete.name}" has been deleted.`
           });
         } else {
           throw new Error('Delete operation failed');
@@ -73,7 +73,7 @@ const IndexerComponent: React.FC = () => {
         toast({
           title: 'Error',
           description: 'Failed to delete the index. Please try again later.',
-          variant: 'destructive',
+          variant: 'destructive'
         });
       } finally {
         setIsDeleting(false);
@@ -100,6 +100,7 @@ const IndexerComponent: React.FC = () => {
                   <TableHead className="w-[250px]">Name</TableHead>
                   <TableHead className="w-[500px]">Description</TableHead>
                   <TableHead className="w-[200px]">Group</TableHead>
+                  <TableHead className="w-[200px]">Chunk Size/Overlap (%)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -116,8 +117,7 @@ const IndexerComponent: React.FC = () => {
                                   size="sm"
                                   className="h-8 w-8 p-0"
                                   disabled={isDeleting}
-                                  onClick={() => handleEditIndex(index)}
-                                >
+                                  onClick={() => handleEditIndex(index)}>
                                   <Pencil className="h-4 w-4" />
                                   <span className="sr-only">Edit {index.name}</span>
                                 </Button>
@@ -139,8 +139,7 @@ const IndexerComponent: React.FC = () => {
                                         size="sm"
                                         disabled={isDeleting}
                                         className="h-8 w-8 p-0"
-                                        onClick={() => handleDeleteIndex(index)}
-                                      >
+                                        onClick={() => handleDeleteIndex(index)}>
                                         <Trash2 className="h-4 w-4" />
                                         <span className="sr-only">Delete {index.name}</span>
                                       </Button>
@@ -183,8 +182,7 @@ const IndexerComponent: React.FC = () => {
                                   variant="outline"
                                   size="sm"
                                   className="h-8 w-8 p-0"
-                                  onClick={() => handleViewStats(index.name)}
-                                >
+                                  onClick={() => handleViewStats(index.name)}>
                                   <BarChart className="h-4 w-4" />
                                   <span className="sr-only">View Stats for {index.name}</span>
                                 </Button>
@@ -198,10 +196,12 @@ const IndexerComponent: React.FC = () => {
                       </TableCell>
                     </PermissionHandler>
                     <TableCell className="font-medium">{index.name}</TableCell>
-                    <TableCell className="font-medium">
-                      {index.description ? index.description : 'N/A'}
-                    </TableCell>
+                    <TableCell className="font-medium">{index.description ? index.description : 'N/A'}</TableCell>
                     <TableCell className="font-medium">{index.group ? index.group : 'N/A'}</TableCell>
+                    <TableCell className="font-medium">
+                      {index.chunkSize === 0 ? 2300 : index.chunkSize}/
+                      {index.chunkOverlap === 0 ? 25 : index.chunkOverlap}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

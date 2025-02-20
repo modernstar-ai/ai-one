@@ -76,19 +76,12 @@ param aspCoreEnvironment string = 'Development'
 @secure()
 param azureClientID string = ''
 
-@description('AZURE_CLIENT_SECRET')
-@secure()
-param azureClientSecret string = ''
-
 @description('AZURE_TENANT_ID')
 @secure()
 param azureTenantId string = ''
 
 @description('The Azure Active Directory Application ID or URI to get the access token that will be included as the bearer token in delivery requests')
 param azureADAppIdOrUri string = ''
-
-@description('Conditionally deploy event Grid')
-param deployEventGrid bool = false
 
 @description('Conditionally deploy key vault Api app permissions')
 param kvSetFunctionAppPermissions bool = false
@@ -123,12 +116,10 @@ module resources 'resources.bicep' = {
     location: location
     aspCoreEnvironment: aspCoreEnvironment
     azureClientID: azureClientID
-    azureClientSecret: azureClientSecret
     azureTenantId: azureTenantId
     azureADAppIdOrUri: azureADAppIdOrUri
     apimAiEndpointOverride: apimAiEndpointOverride
     apimAiEmbeddingsEndpointOverride: apimAiEmbeddingsEndpointOverride
-    deployEventGrid: deployEventGrid
     kvSetFunctionAppPermissions: kvSetFunctionAppPermissions
     semanticSearchSku: semanticSearchSku
   }

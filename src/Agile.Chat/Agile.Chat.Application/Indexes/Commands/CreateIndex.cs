@@ -2,7 +2,7 @@
 using Agile.Chat.Application.Indexes.Services;
 using Agile.Chat.Domain.Indexes.Aggregates;
 using Agile.Framework.Authentication.Interfaces;
-using Agile.Framework.AzureAiSearch.Interfaces;
+using Agile.Framework.AzureAiSearch;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -12,7 +12,7 @@ namespace Agile.Chat.Application.Indexes.Commands;
 
 public static class CreateIndex
 {
-    public record Command(string Name, string Description, string? Group) : IRequest<IResult>;
+    public record Command(string Name, string Description, int ChunkSize, int ChunkOverlap, string? Group) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> logger, IIndexService indexService, IAzureAiSearch azureAiSearch) : IRequestHandler<Command, IResult>
     {
@@ -24,12 +24,14 @@ public static class CreateIndex
             var index = CosmosIndex.Create(
                 request.Name, 
                 request.Description, 
+                request.ChunkSize,
+                request.ChunkOverlap,
                 request.Group);
 
-            if (await azureAiSearch.IndexerExistsAsync(index.Name))
+            if (await azureAiSearch.IndexExistsAsync(index.Name))
                 return Results.BadRequest("Indexer on Azure AI Search already exists.");
 
-            await azureAiSearch.CreateIndexerAsync(index.Name);
+            await azureAiSearch.CreateIndexIfNotExistsAsync(index.Name);
             await indexService.AddItemAsync(index);
             
             return Results.Created(index.Id, index);

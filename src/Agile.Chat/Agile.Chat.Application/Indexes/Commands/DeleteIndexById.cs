@@ -2,7 +2,7 @@
 using Agile.Chat.Application.Files.Services;
 using Agile.Chat.Application.Indexes.Services;
 using Agile.Framework.Authentication.Interfaces;
-using Agile.Framework.AzureAiSearch.Interfaces;
+using Agile.Framework.AzureAiSearch;
 using Agile.Framework.BlobStorage.Interfaces;
 using FluentValidation;
 using MediatR;
@@ -25,13 +25,12 @@ public static class DeleteIndexById
 
             //Delete index from cosmos
             await indexService.DeleteItemByIdAsync(request.Id.ToString());
-            
-            //Delete all files on blob first
+            //Delete index on ai search
+            await azureAiSearch.DeleteIndexAsync(index.Name);
+            //Delete all files on blob
             await blobStorage.DeleteIndexFilesAsync(index.Name);
-            //Delete all files in cosmos next
+            //Delete all files in cosmos
             await fileService.DeleteAllByIndexAsync(index.Name);
-            //Delete index/indexer/skillset/datasource on ai search
-            await azureAiSearch.DeleteIndexerAsync(index.Name);
             
             return Results.Ok();
         }

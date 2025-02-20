@@ -11,4 +11,15 @@ export interface CosmosFile {
   indexName: string;
   createdDate: string;
   lastModified: string;
+  status: FileStatus;
+}
+
+export enum FileStatus {
+  Uploaded = 'Uploaded',
+  QueuedForIndexing = 'QueuedForIndexing',
+  Indexing = 'Indexing',
+  Indexed = 'Indexed',
+  QueuedForDeletion = 'QueuedForDeletion',
+  Deleting = 'Deleting',
+  Failed = 'Failed'
 }

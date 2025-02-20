@@ -43,7 +43,8 @@ public class FileService(CosmosClient cosmosClient, IIndexService indexService, 
             query = query.Where(f => f.Name.ToLower().Contains(queryDto.Search.ToLower()) ||
                                      (f.ContentType != null && f.ContentType.ToLower().Contains(queryDto.Search.ToLower())) ||
                                      f.IndexName.ToLower().Contains(queryDto.Search.ToLower()) ||
-                                     (f.FolderName != null && f.FolderName.ToLower().Contains(queryDto.Search.ToLower())
+                                     (f.FolderName != null && f.FolderName.ToLower().Contains(queryDto.Search.ToLower())) ||
+                                     f.Status.ToString().ToLower().Contains(queryDto.Search.ToLower()
                                      ));
         }
         

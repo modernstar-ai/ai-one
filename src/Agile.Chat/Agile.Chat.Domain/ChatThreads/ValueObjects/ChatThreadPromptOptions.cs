@@ -1,7 +1,4 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
-
-namespace Agile.Chat.Domain.ChatThreads.ValueObjects;
+﻿namespace Agile.Chat.Domain.ChatThreads.ValueObjects;
 
 public class ChatThreadPromptOptions
 {
@@ -9,17 +6,4 @@ public class ChatThreadPromptOptions
     public float? Temperature { get; set; }
     public float? TopP { get; set; }
     public int? MaxTokens { get; set; }
-    
-    public AzureOpenAIPromptExecutionSettings ParseAzureOpenAiPromptExecutionSettings()
-    {
-        var options = new AzureOpenAIPromptExecutionSettings()
-        {
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
-            ChatSystemPrompt = string.IsNullOrWhiteSpace(SystemPrompt) ? null : SystemPrompt,
-            Temperature = Temperature,
-            TopP = TopP,
-            MaxTokens = MaxTokens
-        };
-        return options;
-    }
 }

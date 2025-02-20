@@ -6,22 +6,28 @@ namespace Agile.Chat.Domain.Indexes.Aggregates;
 public class CosmosIndex : AuditableAggregateRoot
 {
     [JsonConstructor]
-    private CosmosIndex(string name, string description, string? group)
+    private CosmosIndex(string name, string description, int chunkSize, int chunkOverlap, string? group)
     {
         Name = name;
         Description = description;
         Group = group;
+        ChunkSize = chunkSize;
+        ChunkOverlap = chunkOverlap;
     }
     public string Name { get; private set; }
     public string Description { get; private set; }
+    public int ChunkSize { get; private set; }
+    public int ChunkOverlap { get; private set; }
     public string? Group { get; private set; }
 
     public static CosmosIndex Create(string name, 
         string description, 
+        int chunkSize,
+        int chunkOverlap,
         string? group)
     {
         //Do validation logic and throw domain level exceptions if fails
-        return new CosmosIndex(name, description, group);
+        return new CosmosIndex(name, description, chunkSize, chunkOverlap, group);
     }
     
     public void Update(string description, string? group)

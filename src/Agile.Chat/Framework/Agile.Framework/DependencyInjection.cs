@@ -1,6 +1,8 @@
-﻿using Agile.Framework.Ai;
+﻿using System.Text;
+using Agile.Framework.Ai;
 using Agile.Framework.Authentication;
 using Agile.Framework.AzureAiSearch;
+using Agile.Framework.AzureDocumentIntelligence;
 using Agile.Framework.BlobStorage;
 using Agile.Framework.Common.EnvironmentVariables;
 using Agile.Framework.Common.Interfaces;
@@ -18,14 +20,21 @@ namespace Agile.Framework;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddFramework(this IServiceCollection services, IConfiguration configuration) =>
-        services
+    public static IServiceCollection AddFramework(this IServiceCollection services, IConfiguration configuration)
+    {
+        // Register the encoding provider for .msg conversion
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        
+        return services
             .AddSeriLogLogging(configuration)
             .AddSemanticKernel()
             .AddCosmosDb()
             .AddBlobStorage()
             .AddAzureAiSearch()
+            .AddAzureDocumentIntelligence()
             .AddAgileAuthentication();
+    }
+
     
     public static async Task InitializeServicesAsync(this IApplicationBuilder app)
     {

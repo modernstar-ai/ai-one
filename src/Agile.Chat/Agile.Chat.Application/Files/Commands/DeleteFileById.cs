@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using Agile.Chat.Application.Files.Services;
+using Agile.Chat.Domain.Files.ValueObjects;
 using Agile.Framework.Authentication.Interfaces;
 using Agile.Framework.BlobStorage.Interfaces;
 using FluentValidation;
@@ -22,8 +23,8 @@ public static class DeleteFileById
 
             logger.LogInformation("Beginning to delete cosmos file {@File}", file);
             await blobStorage.DeleteAsync(file.Name, file.IndexName, file.FolderName);
-            logger.LogInformation("File from blob deleted. Beginning to delete cosmos record");
-            await fileService.DeleteItemByIdAsync(file.Id);
+            file.Update(FileStatus.QueuedForDeletion, file.ContentType, file.Size);
+            await fileService.UpdateItemByIdAsync(file.Id, file);
             
             return Results.Ok();
         }

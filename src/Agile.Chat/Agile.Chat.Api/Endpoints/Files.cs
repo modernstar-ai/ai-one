@@ -1,10 +1,11 @@
-﻿using System.Text.Json.Nodes;
+using System.Text.Json.Nodes;
 using Agile.Chat.Application.Files.Commands;
 using Agile.Chat.Application.Files.Dtos;
 using Agile.Chat.Application.Files.Queries;
 using Agile.Framework.Common.Dtos;
 using Carter;
 using Carter.OpenApi;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,7 +26,7 @@ public class Files() : CarterModule("/api")
         files.MapGet("/", GetFiles);
         //POST
         files.MapPost("/", UploadFile);
-        files.MapPost("webhook", Webhook);
+        files.MapPost("index", IndexFile);
         files.MapPost("download", DownloadFile);
         files.MapPost("share", GenerateSharedLinkByUrl);
         //DELETE
@@ -37,10 +38,10 @@ public class Files() : CarterModule("/api")
         var query = new GetFiles.Query(dto);
         return await mediator.Send(query);
     }
-
-    private async Task<IResult> Webhook([FromServices] IMediator mediator, [FromBody] JsonNode dto)
+    
+    private async Task<IResult> IndexFile([FromServices] IMediator mediator, [FromBody] FileIndexDto dto)
     {
-        var command = new FileWebhook.Command(dto);
+        var command = dto.Adapt<FileIndexer.Command>();
         return await mediator.Send(command);
     }
 
@@ -50,13 +51,13 @@ public class Files() : CarterModule("/api")
         return await mediator.Send(command);
     }
 
-    private async Task<IResult> DownloadFile([FromServices] IMediator mediator, [FromBody] DownloadFileDto dto)
+    private async Task<IResult> DownloadFile([FromServices] IMediator mediator, [FromBody] FileUrlDto dto)
     {
         var command = new DownloadFileByUrl.Command(dto.Url);
         return await mediator.Send(command);
     }
 
-    private async Task<IResult> GenerateSharedLinkByUrl([FromServices] IMediator mediator, [FromBody] DownloadFileDto dto)
+    private async Task<IResult> GenerateSharedLinkByUrl([FromServices] IMediator mediator, [FromBody] FileUrlDto dto)
     {
         var command = new GenerateSharedLinkByUrl.Command(dto.Url);
         return await mediator.Send(command);
