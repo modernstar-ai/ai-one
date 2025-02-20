@@ -10,8 +10,10 @@ using Agile.Framework.Common.Enums;
 using Agile.Framework.Common.EnvironmentVariables;
 using Azure.AI.OpenAI.Chat;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using Serilog;
 
 namespace Agile.Chat.Application.ChatCompletions.Utils;
 
@@ -51,6 +53,7 @@ public static class ChatUtils
         }
         catch (Exception ex)
         {
+            Log.Logger.Error(ex, "Error while processing request. ");
             return TypedResults.BadRequest($"Bad Request Error: {ex.Message} {ex.InnerException?.Message}");
         }
         
@@ -91,6 +94,7 @@ public static class ChatUtils
         }
         catch (Exception ex)
         {
+            Log.Logger.Error(ex, "Error while processing request. ");
             return TypedResults.BadRequest($"Bad Request Error: {ex.Message} {ex.InnerException?.Message}");
         }
         
