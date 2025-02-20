@@ -87,7 +87,7 @@ param semanticSearchSku string = 'free'
 // var storage_prefix = take(clean_name, 13)
 
 @description('The unique name of the Storage Account.')
-var storage_name = toLower('${resourcePrefix}sto')
+var storage_name = toLower('${projectName}${environmentName}sto')
 
 var keyVaultName = toLower('${resourcePrefix}-kv')
 
