@@ -118,9 +118,6 @@ var databaseName = 'chat'
 var historyContainerName = 'history'
 var configContainerName = 'config'
 
-@description('AI Services  Name')
-var aiServices_name = toLower('${resourcePrefix}-ai-services')
-
 var llmDeployments = [
   {
     name: chatGptDeploymentName
@@ -273,10 +270,6 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
           {
             name: 'AzureAd__TenantId'
             value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_TENANT_ID.name})'
-          }
-          {
-            name: 'AzureAiServicesKey'
-            value: '@Microsoft.KeyVault(VaultName=${kv.name};SecretName=${kv::AZURE_AI_SERVICES_KEY.name})'
           }
           {
             name: 'AzureOpenAi__ApiKey'
@@ -476,14 +469,6 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     properties: {
       contentType: 'text/plain'
       value: 'DefaultEndpointsProtocol=https;AccountName=${storage.name};AccountKey=${listKeys(storage.id, '2023-01-01').keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
-    }
-  }
-
-  resource AZURE_AI_SERVICES_KEY 'secrets' = {
-    name: 'AZURE-AI-SERVICES-KEY'
-    properties: {
-      contentType: 'text/plain'
-      value: aiServices.listKeys().key1
     }
   }
 
@@ -689,26 +674,6 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
   dependsOn: [
     apiApp
   ]
-}
-
-@description('AI Cognitive Services')
-resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
-  name: aiServices_name
-  location: location
-  identity: {
-    type: 'SystemAssigned'
-  }
-  sku: {
-    name: 'S0'
-  }
-  kind: 'CognitiveServices'
-  properties: {
-    disableLocalAuth: false
-    publicNetworkAccess: 'Enabled'
-    networkAcls: {
-      defaultAction: 'Allow'
-    }
-  }
 }
 
 resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
