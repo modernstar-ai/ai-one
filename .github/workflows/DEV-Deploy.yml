@@ -105,13 +105,19 @@ jobs:
         npm install
         npm run build
 
-    - name: Create ZIP artifact
+    - name: Agile-Chat-Web - Zip artifact for deployment
       run: |
-        cd ${{ env.AGILE_WEB_SRC }}/dist
-        zip -r ${{ github.workspace }}/release.zip .
+        cd ${{ env.AGILE_CHAT_WEB_SRC }}
+        zip -r ../../release.zip dist
+
+    - name: Agile-Chat-Web - Upload artifact for deployment job
+      uses: actions/upload-artifact@v4
+      with:
+        name: node-app
+        path: release.zip
         
     - name: Deploy Agile Chat Web App
       uses: azure/webapps-deploy@v2
       with:
         app-name: ${{ github.event.inputs.uiWebAppName }}
-        package: ${{ github.workspace }}/release.zip
+        package: ./release.zip
