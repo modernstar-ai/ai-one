@@ -21,7 +21,7 @@ public static class DependencyInjection
 
     private static IServiceCollection AddServiceBus(this IServiceCollection services, WebApplicationBuilder builder)
     {
-        //if (builder.Environment.IsLocal()) return services;
+        if (builder.Environment.IsLocal()) return services;
 
         return services.AddHostedService<ServiceBusQueueConsumer>();
     }
