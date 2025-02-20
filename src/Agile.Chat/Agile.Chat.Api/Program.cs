@@ -18,7 +18,7 @@ var app = builder.Build();
 await app.InitializeServicesAsync();
 app.UseCors();
 
-if (app.Environment.IsLocal())
+if (!app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
