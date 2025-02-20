@@ -12,7 +12,6 @@ public static class Configs
     
     public static BlobConfig BlobStorage => config.GetSection("BlobStorage").Get<BlobConfig>() ?? throw new NullReferenceException("BlobStorage is null");
     public static string AppInsightsConnectionString => config.GetConnectionString("APPLICATIONINSIGHTS_CONNECTION_STRING") ?? throw new NullReferenceException("APPLICATIONINSIGHTS_CONNECTION_STRING is null");
-    public static string AzureAiServicesKey => config["AzureAiServicesKey"] ?? throw new NullReferenceException("AzureAiServicesKey is null");
     public static AzureAdConfig AzureAd => config.GetSection("AzureAd").Get<AzureAdConfig>()! ?? throw new NullReferenceException("AzureAd is null");
     public static AzureDocumentIntelligenceConfig AzureDocumentIntelligence => config.GetSection("AzureDocumentIntelligence").Get<AzureDocumentIntelligenceConfig>()! ?? throw new NullReferenceException("AzureDocumentIntelligence is null");
     public static AzureServiceBusConfig AzureServiceBus => config.GetSection("AzureServiceBus").Get<AzureServiceBusConfig>()! ?? throw new NullReferenceException("AzureServiceBus is null");
