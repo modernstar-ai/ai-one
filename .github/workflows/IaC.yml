@@ -61,6 +61,12 @@ env:
   # APIM_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
   # APIM_EMBEDDINGS_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
 
+# Set up permissions for deploying with secretless Azure federated credentials
+# https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
+permissions:
+  id-token: write
+  contents: read
+  
 jobs:
   deploy-infrastructure:
     environment: ${{ inputs.asp_core_environment }}
