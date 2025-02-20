@@ -51,10 +51,10 @@ public static class ChatUtils
         {
             return TypedResults.BadRequest("High likelyhood of adult content. Response denied.");
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is ClientResultException exception)
         {
-            Log.Logger.Error(ex, "Error while processing request. ");
-            return TypedResults.BadRequest($"Bad Request Error: {ex.Message} {ex.InnerException?.Message}");
+            Log.Logger.Error(exception, "Error while processing request. ");
+            return TypedResults.BadRequest($"Bad Request Error: {exception.Message} {exception.GetRawResponse()?.ReasonPhrase} {exception.GetRawResponse()?.Content}");
         }
         
         return TypedResults.Ok(assistantFullResponse.ToString());
