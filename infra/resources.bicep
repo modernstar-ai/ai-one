@@ -114,10 +114,6 @@ var EventGridSystemTopicSubName = toLower('${resourcePrefix}-folders-blobs-liste
 @description('Event Grid Name')
 var eventGridName = toLower('${resourcePrefix}-blob-eg')
 
-var databaseName = 'chat'
-var historyContainerName = 'history'
-var configContainerName = 'config'
-
 var llmDeployments = [
   {
     name: chatGptDeploymentName
@@ -390,7 +386,7 @@ resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
 
 @description('The name of the Role Assignment - from Guid.')
 resource kvFunctionAppPermissions 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (kvSetFunctionAppPermissions) {
-  name: apiApp.name
+  name: guid(subscription().id, apiApp.id, keyVaultSecretsOfficerRole)
   scope: kv
   properties: {
     principalId: apiApp.identity.principalId
@@ -502,48 +498,6 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
         failoverPriority: 0
       }
     ]
-  }
-}
-
-resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15' = {
-  name: databaseName
-  parent: cosmosDbAccount
-  properties: {
-    resource: {
-      id: databaseName
-    }
-  }
-}
-
-resource historyContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2022-05-15' = {
-  name: historyContainerName
-  parent: database
-  properties: {
-    resource: {
-      id: historyContainerName
-      partitionKey: {
-        paths: [
-          '/userId'
-        ]
-        kind: 'Hash'
-      }
-    }
-  }
-}
-
-resource configContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2022-05-15' = {
-  name: configContainerName
-  parent: database
-  properties: {
-    resource: {
-      id: configContainerName
-      partitionKey: {
-        paths: [
-          '/userId'
-        ]
-        kind: 'Hash'
-      }
-    }
   }
 }
 
