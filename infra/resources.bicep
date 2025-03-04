@@ -132,7 +132,7 @@ var llmDeployments = [
     model: {
       format: 'OpenAI'
       name: embeddingModelName
-      version: '2'
+      version: '1'
     }
     capacity: embeddingDeploymentCapacity
   }

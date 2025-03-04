@@ -54,8 +54,8 @@ param chatGptDeploymentName string = 'gpt-4o'
 param chatGptModelName string = 'gpt-4o'
 param chatGptModelVersion string = '2024-05-13'
 param embeddingDeploymentName string = 'embedding'
-param embeddingDeploymentCapacity int = 120
-param embeddingModelName string = 'text-embedding-ada-002'
+param embeddingDeploymentCapacity int = 350
+param embeddingModelName string = 'text-embedding-3-small'
 
 @description('The optional APIM Gateway URL to override the azure open AI instance')
 param apimAiEndpointOverride string = ''
