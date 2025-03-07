@@ -114,6 +114,8 @@ var EventGridSystemTopicSubName = toLower('${resourcePrefix}-folders-blobs-liste
 @description('Event Grid Name')
 var eventGridName = toLower('${resourcePrefix}-blob-eg')
 
+var deployAzueOpenAi = (!empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride)) || (empty(apimAiEndpointOverride) && !empty(apimAiEmbeddingsEndpointOverride)) ||  (empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride))
+
 /* **************************************************** */
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
@@ -312,7 +314,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
               }
             ]
           : [],
-        empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride)
+          deployAzueOpenAi
           ? [
               {
                 name: 'AzureOpenAi__Endpoint'
@@ -388,7 +390,7 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     enabledForTemplateDeployment: false
   }
 
-  resource AZURE_OPENAI_API_KEY 'secrets' = if (empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride)) {
+  resource AZURE_OPENAI_API_KEY 'secrets' = if (deployAzueOpenAi) {
     name: 'AZURE-OPENAI-API-KEY'
     properties: {
       contentType: 'text/plain'
@@ -494,7 +496,7 @@ resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   identity: { type: 'SystemAssigned' }
 }
 
-resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride)) {
+resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (deployAzueOpenAi) {
   name: openai_name
   location: openAiLocation
   tags: tags
