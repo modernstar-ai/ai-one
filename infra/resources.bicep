@@ -114,30 +114,6 @@ var EventGridSystemTopicSubName = toLower('${resourcePrefix}-folders-blobs-liste
 @description('Event Grid Name')
 var eventGridName = toLower('${resourcePrefix}-blob-eg')
 
-var llmDeployments = [
-  {
-    name: chatGptDeploymentName
-    model: {
-      format: 'OpenAI'
-      name: chatGptModelName
-      version: chatGptModelVersion
-    }
-    sku: {
-      name: 'GlobalStandard'
-      capacity: chatGptDeploymentCapacity
-    }
-  }
-  {
-    name: embeddingDeploymentName
-    model: {
-      format: 'OpenAI'
-      name: embeddingModelName
-      version: '1'
-    }
-    capacity: embeddingDeploymentCapacity
-  }
-]
-
 /* **************************************************** */
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
@@ -336,7 +312,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
               }
             ]
           : [],
-        empty(apimAiEndpointOverride)
+        empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride)
           ? [
               {
                 name: 'AzureOpenAi__Endpoint'
@@ -412,7 +388,7 @@ resource kv 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     enabledForTemplateDeployment: false
   }
 
-  resource AZURE_OPENAI_API_KEY 'secrets' = if (empty(apimAiEndpointOverride)) {
+  resource AZURE_OPENAI_API_KEY 'secrets' = if (empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride)) {
     name: 'AZURE-OPENAI-API-KEY'
     properties: {
       contentType: 'text/plain'
@@ -518,7 +494,7 @@ resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   identity: { type: 'SystemAssigned' }
 }
 
-resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (empty(apimAiEndpointOverride)) {
+resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride)) {
   name: openai_name
   location: openAiLocation
   tags: tags
@@ -532,25 +508,38 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (emp
   }
 }
 
-@batchSize(1)
-resource llmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [
-  for deployment in llmDeployments: if (empty(apimAiEndpointOverride)) {
-    parent: azureopenai
-    name: deployment.name
-    properties: {
-      model: deployment.model
-      #disable-next-line use-safe-access BCP053
-      raiPolicyName: contains(deployment, 'raiPolicyName') ? deployment.?raiPolicyName : null
+resource gptllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01'  = if (empty(apimAiEndpointOverride)) {
+  parent: azureopenai
+  name: chatGptDeploymentName
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: chatGptModelName
+      version: chatGptModelVersion
     }
-    #disable-next-line use-safe-access
-    sku: contains(deployment, 'sku')
-      ? deployment.sku
-      : {
-          name: 'Standard'
-          capacity: deployment.capacity
-        }
   }
-]
+  #disable-next-line use-safe-access
+  sku: {
+    name: 'GlobalStandard'
+    capacity: chatGptDeploymentCapacity
+  }
+}
+
+resource embeddingsllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01'  = if (empty(apimAiEmbeddingsEndpointOverride)) {
+  parent: azureopenai
+  name: embeddingDeploymentName
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: embeddingModelName
+      version: '1'
+    }
+  }
+  sku: {
+    name: 'Standard'
+    capacity: embeddingDeploymentCapacity
+  }
+}
 
 @description('Storage Account')
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
