@@ -26,31 +26,42 @@ public static class DependencyInjection
             var defaultConfig = "default";
             var configs = Configs.AzureOpenAi;
             
+            var httpContext = sp.GetService<IHttpContextAccessor>();
+            var httpClient = new HttpClient(); 
+            httpClient.DefaultRequestHeaders.Add("Authorization", httpContext?.HttpContext.Request.Headers["Authorization"].ToString());
+            httpClient.DefaultRequestHeaders.Add("api-key", configs.ApiKey);
+            
             if (!string.IsNullOrWhiteSpace(configs.Apim.Endpoint))
             {
                 //Override configs with APIM settings
-                var httpContext = sp.GetService<IHttpContextAccessor>();
-                var httpClient = new HttpClient(); 
-                httpClient.DefaultRequestHeaders.Add("Authorization", httpContext?.HttpContext.Request.Headers["Authorization"].ToString());
-                httpClient.DefaultRequestHeaders.Add("api-key", configs.ApiKey);
                 var openaiClient = new OpenAIClient(new ApiKeyCredential(defaultConfig), new OpenAIClientOptions
                 {
                     Endpoint = new Uri(configs.Apim.Endpoint),
                     Transport = new HttpClientPipelineTransport(httpClient)
                 });
+                builder = builder
+                    .AddOpenAIChatCompletion(modelId: configs.DeploymentName!, openaiClient);
+            }
+            else
+            {
+                builder = builder.AddAzureOpenAIChatCompletion(configs.DeploymentName!, configs.Endpoint,
+                    configs.ApiKey!,
+                    apiVersion: configs.ApiVersion);
+            }
+            
+            if (!string.IsNullOrWhiteSpace(configs.Apim.EmbeddingsEndpoint))
+            {
                 var embeddingsClient = new OpenAIClient(new ApiKeyCredential(defaultConfig), new OpenAIClientOptions
                 {
                     Endpoint = new Uri(configs.Apim.EmbeddingsEndpoint!),
                     Transport = new HttpClientPipelineTransport(httpClient)
                 });
                 builder = builder
-                    .AddOpenAIChatCompletion(modelId: configs.DeploymentName!,openaiClient)
                     .AddOpenAITextEmbeddingGeneration(modelId: configs.EmbeddingsDeploymentName!, embeddingsClient);
             }
             else
             {
-                builder = builder.AddAzureOpenAIChatCompletion(configs.DeploymentName!, configs.Endpoint, configs.ApiKey!,
-                        apiVersion: configs.ApiVersion)
+                builder = builder
                     .AddAzureOpenAITextEmbeddingGeneration(configs.EmbeddingsDeploymentName!, configs.Endpoint,
                         configs.ApiKey!, apiVersion: configs.ApiVersion);
             }
