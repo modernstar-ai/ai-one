@@ -94,19 +94,18 @@ const IndexerComponent: React.FC = () => {
             <Table aria-label="Available Assistants">
               <TableHeader>
                 <TableRow>
-                  <PermissionHandler role={UserRole.ContentManager}>
+                  <PermissionHandler roles={[UserRole.ContentManager]}>
                     <TableHead className="w-[100px]">Actions</TableHead>
                   </PermissionHandler>
                   <TableHead className="w-[250px]">Name</TableHead>
                   <TableHead className="w-[500px]">Description</TableHead>
-                  <TableHead className="w-[200px]">Group</TableHead>
                   <TableHead className="w-[200px]">Chunk Size/Overlap (%)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {indexes.map((index) => (
                   <TableRow key={index.id}>
-                    <PermissionHandler role={UserRole.ContentManager}>
+                    <PermissionHandler roles={[UserRole.ContentManager]}>
                       <TableCell>
                         <div className="flex items-start space-x-2">
                           <TooltipProvider>
@@ -128,7 +127,7 @@ const IndexerComponent: React.FC = () => {
                             </Tooltip>
                           </TooltipProvider>
 
-                          <PermissionHandler role={UserRole.SystemAdmin}>
+                          <PermissionHandler roles={[UserRole.SystemAdmin]}>
                             <AlertDialog>
                               <TooltipProvider>
                                 <Tooltip>
@@ -197,7 +196,6 @@ const IndexerComponent: React.FC = () => {
                     </PermissionHandler>
                     <TableCell className="font-medium">{index.name}</TableCell>
                     <TableCell className="font-medium">{index.description ? index.description : 'N/A'}</TableCell>
-                    <TableCell className="font-medium">{index.group ? index.group : 'N/A'}</TableCell>
                     <TableCell className="font-medium">
                       {index.chunkSize === 0 ? 2300 : index.chunkSize}/
                       {index.chunkOverlap === 0 ? 25 : index.chunkOverlap}

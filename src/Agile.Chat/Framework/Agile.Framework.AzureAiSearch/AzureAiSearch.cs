@@ -18,6 +18,7 @@ public interface IAzureAiSearch
     Task<AzureSearchDocument?> GetChunkByIdAsync(string indexName, string chunkId);
     Task IndexDocumentsAsync(List<AzureSearchDocument> documents, string indexName);
     Task CreateIndexIfNotExistsAsync(string indexName);
+    Task SyncIndexAsync(string indexName);
     Task<bool> IndexExistsAsync(string indexName);
     Task DeleteIndexAsync(string indexName);
     Task<SearchIndexStatistics> GetIndexStatisticsByNameAsync(string indexName);
@@ -70,6 +71,8 @@ public class AzureAiSearch(SearchIndexClient indexClient, ILogger<AzureAiSearch>
 
     public async Task IndexDocumentsAsync(List<AzureSearchDocument> documents, string indexName)
     {
+        if (documents.Count == 0) return;
+        
         var searchClient = indexClient.GetSearchClient(indexName);
 
         var batch = documents.Select(document => new IndexDocumentsAction<AzureSearchDocument>(
@@ -108,6 +111,16 @@ public class AzureAiSearch(SearchIndexClient indexClient, ILogger<AzureAiSearch>
             if(!resp.HasValue)
                 throw new Exception($"Error creating new index name: {newIndex} response: {resp.GetRawResponse().ReasonPhrase}");
         }
+    }
+
+    public async Task SyncIndexAsync(string indexName)
+    {
+        var index = await indexClient.GetIndexAsync(indexName);
+        if (!index.HasValue) return;
+
+        var fields = DefaultIndex.Create(indexName).Fields;
+        index.Value.Fields = fields;
+        await indexClient.CreateOrUpdateIndexAsync(index.Value);
     }
 
     public async Task DeleteIndexAsync(string indexName)

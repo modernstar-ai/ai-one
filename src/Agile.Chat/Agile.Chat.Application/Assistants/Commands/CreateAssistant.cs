@@ -1,6 +1,7 @@
 ﻿using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Assistants.ValueObjects;
+using Agile.Chat.Domain.Shared.ValueObjects;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -17,7 +18,8 @@ public static class CreateAssistant
         AssistantType Type,
         AssistantStatus Status, 
         AssistantFilterOptions FilterOptions, 
-        AssistantPromptOptions PromptOptions) : IRequest<IResult>;
+        AssistantPromptOptions PromptOptions,
+        PermissionsAccessControl AccessControl) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> logger, IAssistantService assistantService) : IRequestHandler<Command, IResult>
     {
@@ -32,7 +34,8 @@ public static class CreateAssistant
                 request.Type,
                 request.Status,
                 request.FilterOptions,
-                request.PromptOptions);
+                request.PromptOptions,
+                request.AccessControl);
 
             await assistantService.AddItemAsync(assistant);
             return Results.Created(assistant.Id, assistant);

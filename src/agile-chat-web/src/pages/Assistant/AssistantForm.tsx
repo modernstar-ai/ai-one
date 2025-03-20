@@ -27,7 +27,12 @@ import { fetchTools } from '@/services/toolservice';
 import { useIndexes } from '@/hooks/use-indexes';
 import { Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FoldersFilterInput } from '@/components/ui-extended/folder-filter';
+import {
+  PermissionsAccessControl,
+  permissionsAccessControlDefaultValues
+} from '@/components/ui-extended/permissions-access-control';
+import { PermissionsAccessControlSchema } from '@/components/ui-extended/permissions-access-control/form';
+import { MultiInput } from '@/components/ui-extended/multi-input';
 //import { enablePreviewFeatures } from '@/globals';
 
 // Define the AssistantPromptOptions schema
@@ -40,12 +45,14 @@ const AssistantPromptOptionsSchema = z.object({
 
 // Define the AssistantFilterOptions schema
 const AssistantFilterOptionsSchema = z.object({
-  group: z.string().optional(),
   indexName: z.string(),
   limitKnowledgeToIndex: z.boolean(),
   documentLimit: z.number().int(),
   strictness: z.number().min(1).max(5).optional(),
-  folders: z.array(z.string())
+  folders: z.array(z.string()),
+  tags: z.array(z.string()).refine((arr) => arr.every((tag) => tag.trim().length > 0), {
+    message: 'Each tag must contain at least one character'
+  })
 });
 
 // Define the main schema
@@ -56,7 +63,8 @@ const formSchema = z.object({
   type: z.nativeEnum(AssistantType),
   status: z.nativeEnum(AssistantStatus),
   promptOptions: AssistantPromptOptionsSchema,
-  filterOptions: AssistantFilterOptionsSchema
+  filterOptions: AssistantFilterOptionsSchema,
+  accessControl: PermissionsAccessControlSchema
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -90,11 +98,12 @@ export default function AssistantForm() {
       filterOptions: {
         indexName: '',
         limitKnowledgeToIndex: false,
-        group: undefined,
         documentLimit: 5,
         strictness: undefined,
-        folders: []
-      }
+        folders: [],
+        tags: []
+      },
+      accessControl: permissionsAccessControlDefaultValues
     }
   });
 
@@ -130,10 +139,11 @@ export default function AssistantForm() {
             indexName: file.filterOptions.indexName,
             limitKnowledgeToIndex: file.filterOptions.limitKnowledgeToIndex,
             documentLimit: file.filterOptions.documentLimit,
-            group: file.filterOptions.group ?? undefined,
             strictness: file.filterOptions.strictness ?? undefined,
-            folders: file.filterOptions.folders ?? []
-          }
+            folders: file.filterOptions.folders ?? [],
+            tags: file.filterOptions.tags ?? []
+          },
+          accessControl: file.accessControl ?? permissionsAccessControlDefaultValues
         });
       } else {
         toast({
@@ -167,7 +177,6 @@ export default function AssistantForm() {
   // }, [selectedToolIds, tools, form]);
 
   const onSubmit = async (values: FormValues) => {
-    console.log(values);
     setIsSubmitting(true);
     try {
       const fileData = values as Assistant;
@@ -297,12 +306,14 @@ export default function AssistantForm() {
 
                 <FormField
                   control={form.control}
-                  name="filterOptions.group"
+                  name="accessControl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Security Group</FormLabel>
+                      <FormLabel>Security Access</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <div>
+                          <PermissionsAccessControl onChange={field.onChange} pac={field.value} />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -360,7 +371,20 @@ export default function AssistantForm() {
                     <FormItem>
                       <FormLabel>Folder Filters</FormLabel>
                       <FormControl>
-                        <FoldersFilterInput {...field} />
+                        <MultiInput {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="filterOptions.tags"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tag Filters</FormLabel>
+                      <FormControl>
+                        <MultiInput {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

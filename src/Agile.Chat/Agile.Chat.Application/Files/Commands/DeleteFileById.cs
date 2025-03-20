@@ -23,7 +23,7 @@ public static class DeleteFileById
 
             logger.LogInformation("Beginning to delete cosmos file {@File}", file);
             await blobStorage.DeleteAsync(file.Name, file.IndexName, file.FolderName);
-            file.Update(FileStatus.QueuedForDeletion, file.ContentType, file.Size);
+            file.Update(FileStatus.QueuedForDeletion, file.Url, file.ContentType, file.Size, file.Tags);
             await fileService.UpdateItemByIdAsync(file.Id, file);
             
             return Results.Ok();

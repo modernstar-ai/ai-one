@@ -26,9 +26,10 @@ public class Files() : CarterModule("/api")
         files.MapGet("/", GetFiles);
         //POST
         files.MapPost("/", UploadFile);
-        files.MapPost("index", IndexFile);
         files.MapPost("download", DownloadFile);
         files.MapPost("share", GenerateSharedLinkByUrl);
+        //PUT
+        files.MapPut("/", UpdateFile);
         //DELETE
         files.MapDelete("/{id:guid}", DeleteFileById);
     }
@@ -38,16 +39,16 @@ public class Files() : CarterModule("/api")
         var query = new GetFiles.Query(dto);
         return await mediator.Send(query);
     }
-    
-    private async Task<IResult> IndexFile([FromServices] IMediator mediator, [FromBody] FileIndexDto dto)
-    {
-        var command = dto.Adapt<FileIndexer.Command>();
-        return await mediator.Send(command);
-    }
 
     private async Task<IResult> UploadFile([FromServices] IMediator mediator, [FromForm] UploadFileDto dto)
     {
-        var command = new UploadFile.Command(dto.File, dto.IndexName, dto.FolderName);
+        var command = new UploadFile.Command(dto.File, dto.IndexName, dto.FolderName, dto.Tags);
+        return await mediator.Send(command);
+    }
+    
+    private async Task<IResult> UpdateFile([FromServices] IMediator mediator, [FromBody] UpdateFileDto dto)
+    {
+        var command = dto.Adapt<UpdateFileById.Command>();
         return await mediator.Send(command);
     }
 

@@ -1,13 +1,15 @@
 ﻿using System.Text.Json.Serialization;
 using Agile.Chat.Domain.Assistants.ValueObjects;
+using Agile.Chat.Domain.Shared.Interfaces;
+using Agile.Chat.Domain.Shared.ValueObjects;
 using Agile.Framework.Common.DomainAbstractions;
 
 namespace Agile.Chat.Domain.Assistants.Aggregates;
 
-public class Assistant : AuditableAggregateRoot
+public class Assistant : AuditableAggregateRoot, IAccessControllable
 {
     [JsonConstructor]
-    private Assistant(string name, string description, AssistantType type, AssistantStatus status, string greeting, AssistantFilterOptions filterOptions, AssistantPromptOptions promptOptions)
+    private Assistant(string name, string description, AssistantType type, AssistantStatus status, string greeting, AssistantFilterOptions filterOptions, AssistantPromptOptions promptOptions, PermissionsAccessControl accessControl)
     {
         //Do validation logic and throw domain level exceptions if fails
         Name = name;
@@ -17,6 +19,7 @@ public class Assistant : AuditableAggregateRoot
         Greeting = greeting;
         FilterOptions = filterOptions;
         PromptOptions = promptOptions;
+        AccessControl = accessControl;
     }
     
     public string Name { get; private set; }
@@ -26,6 +29,7 @@ public class Assistant : AuditableAggregateRoot
     public AssistantStatus Status { get; private set; }
     public AssistantPromptOptions PromptOptions { get; private set; }
     public AssistantFilterOptions FilterOptions { get; private set; }
+    public PermissionsAccessControl AccessControl { get; private set; }
 
     public static Assistant Create(string name,
         string description, 
@@ -33,9 +37,10 @@ public class Assistant : AuditableAggregateRoot
         AssistantType type,
         AssistantStatus status, 
         AssistantFilterOptions filterOptions,
-        AssistantPromptOptions promptOptions)
+        AssistantPromptOptions promptOptions,
+        PermissionsAccessControl? accessControl = null)
     {
-        return new Assistant(name, description, type, status, greeting, filterOptions, promptOptions);
+        return new Assistant(name, description, type, status, greeting, filterOptions, promptOptions, accessControl ?? new PermissionsAccessControl());
     }
     
     public void Update(string name, 
@@ -54,6 +59,12 @@ public class Assistant : AuditableAggregateRoot
         Greeting = greeting;
         FilterOptions = filterOptions;
         PromptOptions = promptOptions;
+        LastModified = DateTime.UtcNow;
+    }
+
+    public void UpdateAccessControl(PermissionsAccessControl accessControl)
+    {
+        AccessControl = accessControl;
         LastModified = DateTime.UtcNow;
     }
 }

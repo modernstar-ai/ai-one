@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using Agile.Chat.Application.ChatCompletions.Models;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
+using Agile.Framework.AzureAiSearch;
 using Agile.Framework.AzureAiSearch.AiSearchConstants;
 using Agile.Framework.AzureAiSearch.Models;
 using Agile.Framework.Common.Enums;
@@ -124,7 +125,12 @@ public static class ChatUtils
             Authentication = DataSourceAuthentication.FromApiKey(Configs.AzureSearch.ApiKey),
             IndexName = assistant.FilterOptions.IndexName,
             SemanticConfiguration = SearchConstants.SemanticConfigurationName,
-            Filter = BuildODataFolderFilters(assistant, chatThread),
+            Filter = new SearchFilterBuilder(assistant.FilterOptions.IndexName)
+                .AddFolders(assistant.FilterOptions.Folders)
+                .AddFolders(chatThread.FilterOptions.Folders)
+                .AddTags(assistant.FilterOptions.Tags)
+                .AddTags(chatThread.FilterOptions.Tags)
+                .Build(),
             FieldMappings = new DataSourceFieldMappings()
             {
                 ContentFieldNames = { nameof(AzureSearchDocument.Chunk) },
@@ -138,31 +144,5 @@ public static class ChatUtils
             Strictness = chatThread.FilterOptions.Strictness,
             TopNDocuments = chatThread.FilterOptions.DocumentLimit,
         };
-    }
-    
-    private static string BuildODataFolderFilters(Assistant assistant, ChatThread chatThread)
-    {
-        string cleanFilter(string filter)
-        {
-            filter = filter.Trim();
-            
-            if (filter.StartsWith("/"))
-                filter = filter.TrimStart('/');
-            if (!filter.EndsWith('/'))
-                filter += '/';
-
-            return filter;
-        }
-        
-        var filters = chatThread.FilterOptions.Folders
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Select(filter => cleanFilter(filter)).ToList();
-        filters.AddRange(assistant.FilterOptions.Folders.Where(x => !string.IsNullOrWhiteSpace(x)).Select(filter => cleanFilter(filter)));
-        filters = filters.Distinct().ToList();
-        
-        if (filters.Count == 0)
-            return string.Empty;
-        
-        return string.Join(" or ", filters.Select(folder => $"search.ismatch('\"/{Constants.BlobContainerName}/{assistant.FilterOptions.IndexName}/{folder}\"~', '{nameof(AzureSearchDocument.Url)}', null, 'any')"));
     }
 }

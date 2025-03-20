@@ -9,4 +9,6 @@ public class UploadFileDto
     public string IndexName { get; set; }
 
     public string? FolderName { get; set; }
+
+    public List<string> Tags { get; set; } = new();
 }

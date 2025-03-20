@@ -1,10 +1,12 @@
+import { PermissionsAccessControlModel } from '@/components/ui-extended/permissions-access-control';
+
 export type Index = {
   id: string;
   name: string;
   description?: string;
   chunkSize: number;
   chunkOverlap: number;
-  group?: string;
+  accessControl: PermissionsAccessControlModel;
   createdAt: string;
   createdBy: string;
 };
@@ -14,7 +16,7 @@ export type CreateIndexDto = {
   description?: string;
   chunkSize: number;
   chunkOverlap: number;
-  group?: string;
+  accessControl: PermissionsAccessControlModel;
 };
 
 export interface IndexReportDto {

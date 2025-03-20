@@ -1,6 +1,9 @@
-﻿using System.Text.Json.Nodes;
+﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Agile.Chat.Domain.Files.Aggregates;
+using Agile.Framework.Common.EnvironmentVariables;
 
 namespace Agile.Chat.Application.Files.Utils;
 
@@ -67,5 +70,23 @@ public static class EventGridHelpers
             ContentType = eventObj?["data"]?["contentType"]?.ToString(),
             ContentLength = eventObj?["data"]?["contentLength"]?.ToString() != null ? long.Parse(eventObj?["data"]?["contentLength"]?.ToString()!) : 0
         };
+    }
+
+    public static string CreateEventObjectFromCosmosFile(CosmosFile file, Type eventType)
+    {
+        var folder = !string.IsNullOrWhiteSpace(file.FolderName) ? file.FolderName + "/" : string.Empty;
+        var type = eventType == Type.BlobDeleted ? "Microsoft.Storage.BlobDeleted" : "Microsoft.Storage.BlobCreated";
+        
+        return JsonSerializer.Serialize(new
+        {
+            subject = $"/blobServices/default/containers/{Constants.BlobContainerName}/blobs/{file.IndexName}/{folder}{file.Name}",
+            eventType = type,
+            data = new
+            {
+                url = file.Url,
+                contentType = file.ContentType,
+                contentLength = file.Size
+            }
+        });
     }
 }

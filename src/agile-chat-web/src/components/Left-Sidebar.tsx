@@ -18,7 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
 import {
   DropdownMenu,
@@ -26,7 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -44,13 +44,14 @@ import {
   PanelLeftClose,
   Loader2,
   Database,
-  Bot,
+  Bot
 } from 'lucide-react';
 import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
 import { UserRole } from '@/authentication/user-roles';
 
 import Logo from '@/assets/agile-logo.png';
 import { useThreadsStore } from '@/stores/threads-store';
+import { useSettingsStore } from '@/stores/settings-store';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -62,6 +63,7 @@ export function LeftSidebar() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { instance, accounts, isLoggedIn, name, username } = useAuth();
+  const { settings } = useSettingsStore();
 
   // Theme handling
   useEffect(() => {
@@ -151,7 +153,7 @@ export function LeftSidebar() {
         personaMessage: '',
         personaMessageTitle: '',
         userId: username,
-        ...(assistantId && { assistantId }), // Only add assistantId if it exists
+        ...(assistantId && { assistantId }) // Only add assistantId if it exists
       };
 
       const newThread = await createChatThread(chatData);
@@ -232,10 +234,10 @@ export function LeftSidebar() {
           {/* Navigation Items */}
           <div className="flex flex-col space-y-2 mt-4 h-screen justify-center items-center  dark:text-white">
             <SideNavButton path="/assistants" label="Assistants" Icon={Bot} accessKey="a" />
-            <PermissionHandler role={UserRole.ContentManager}>
+            <PermissionHandler roles={[UserRole.ContentManager]}>
               <SideNavButton path="/files" label="Files" Icon={FileBox} accessKey="U" />
             </PermissionHandler>
-            <PermissionHandler role={UserRole.ContentManager}>
+            <PermissionHandler roles={[UserRole.ContentManager]}>
               <SideNavButton path="/containers" label="Database" Icon={Database} accessKey="c" />
             </PermissionHandler>
             {/* <PermissionHandler role={UserRole.SystemAdmin}>
@@ -293,13 +295,12 @@ export function LeftSidebar() {
         className={cn(
           'border-r bg-background transition-all duration-300 ease-in-out',
           isPanelOpen ? 'w-80' : 'w-0 opacity-0'
-        )}
-      >
+        )}>
         {isPanelOpen && (
           <div className="h-full flex flex-col dark:text-white ">
             {/* Panel Header */}
             <div className="p-4 space-y-2">
-              <img src={Logo} alt="Agile Logo" className="w-1/2" />
+              <img src={(settings?.logoUrl && settings.logoUrl != '') ? settings.logoUrl : Logo} alt="Agile Logo" className="w-1/2" />
             </div>
 
             <div className="p-4 border-b flex justify-between">
@@ -328,13 +329,11 @@ export function LeftSidebar() {
                         'group flex items-center justify-between p-2 rounded-md',
                         'hover:bg-muted cursor-pointer',
                         loading && 'opacity-50 pointer-events-none'
-                      )}
-                    >
+                      )}>
                       <div
                         className="flex flex-col flex-grow min-w-0"
                         // onClick={() => navigate(`/chat/${thread.id}`)}
-                        onClick={() => navigate(`/chat/${thread.id}`)}
-                      >
+                        onClick={() => navigate(`/chat/${thread.id}`)}>
                         <span className="text-sm font-medium truncate">
                           {thread.name.length > 50 ? `${thread.name.slice(0, 30)}...` : thread.name}
                         </span>
@@ -349,8 +348,7 @@ export function LeftSidebar() {
                             size="icon"
                             className="opacity-0 group-hover:opacity-100"
                             disabled={loading}
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                            onClick={(e) => e.stopPropagation()}>
                             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                           </Button>
                         </AlertDialogTrigger>
@@ -365,8 +363,7 @@ export function LeftSidebar() {
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => handleDeleteThread(thread.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                               Delete
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -400,8 +397,7 @@ export function LeftSidebar() {
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleClearHistory}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                         Clear All
                       </AlertDialogAction>
                     </AlertDialogFooter>

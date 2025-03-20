@@ -14,7 +14,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Pencil, Trash2, Loader2, Info, MessageSquare } from 'lucide-react';
@@ -45,7 +45,7 @@ const AssistantsComponent: React.FC = () => {
         toast({
           title: 'Error',
           description: 'Failed to load data. Please try again later.',
-          variant: 'destructive',
+          variant: 'destructive'
         });
       } finally {
         setIsLoading(false);
@@ -76,7 +76,7 @@ const AssistantsComponent: React.FC = () => {
           setAssistants((prevAssistants) => prevAssistants.filter((t) => t.id !== assistantToDelete.id));
           toast({
             title: 'Success',
-            description: `Assistant "${assistantToDelete.name}" has been deleted.`,
+            description: `Assistant "${assistantToDelete.name}" has been deleted.`
           });
         } else {
           throw new Error('Delete operation failed');
@@ -86,7 +86,7 @@ const AssistantsComponent: React.FC = () => {
         toast({
           title: 'Error',
           description: 'Failed to delete the assistant. Please try again later.',
-          variant: 'destructive',
+          variant: 'destructive'
         });
       } finally {
         setIsDeleting(false);
@@ -153,7 +153,6 @@ const AssistantsComponent: React.FC = () => {
                   <TableHead className="w-[250px]">Name</TableHead>
                   <TableHead className="w-[40px]">Status</TableHead>
                   <TableHead className="w-[200px]">Container</TableHead>
-                  <TableHead className="w-[200px]">Group</TableHead>
                   <TableHead className="w-[500px]">Description</TableHead>
                 </TableRow>
               </TableHeader>
@@ -169,8 +168,7 @@ const AssistantsComponent: React.FC = () => {
                                 variant="outline"
                                 size="sm"
                                 className="h-8 w-8 p-0"
-                                onClick={() => handleLaunchAssistant(assistant.id)}
-                              >
+                                onClick={() => handleLaunchAssistant(assistant.id)}>
                                 {getTypeIcon()}
                                 <span className="sr-only">Chat with {assistant.name}</span>
                               </Button>
@@ -180,27 +178,26 @@ const AssistantsComponent: React.FC = () => {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                        <PermissionHandler role={UserRole.ContentManager} group={assistant.filterOptions.group} blockContentManagerIfNoGroup={true}>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => handleEditAssistant(assistant.id)}
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                    <span className="sr-only">Edit {assistant.name}</span>
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Edit {assistant.name}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </PermissionHandler>
-                        <PermissionHandler role={UserRole.SystemAdmin}>
+                        <PermissionHandler roles={[UserRole.ContentManager]} pac={assistant.accessControl}>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => handleEditAssistant(assistant.id)}>
+                                  <Pencil className="h-4 w-4" />
+                                  <span className="sr-only">Edit {assistant.name}</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Edit {assistant.name}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </PermissionHandler>
+                        <PermissionHandler roles={[UserRole.SystemAdmin]}>
                           <AlertDialog>
                             <TooltipProvider>
                               <Tooltip>
@@ -210,8 +207,7 @@ const AssistantsComponent: React.FC = () => {
                                       variant="outline"
                                       size="sm"
                                       className="h-8 w-8 p-0"
-                                      onClick={() => handleDeleteAssistant(assistant)}
-                                    >
+                                      onClick={() => handleDeleteAssistant(assistant)}>
                                       <Trash2 className="h-4 w-4" />
                                       <span className="sr-only">Delete {assistant.name}</span>
                                     </Button>
@@ -251,7 +247,6 @@ const AssistantsComponent: React.FC = () => {
                     <TableCell className="font-medium">{assistant.name}</TableCell>
                     <TableCell>{getStatusBadge(assistant.status)}</TableCell>
                     <TableCell>{assistant.filterOptions.indexName}</TableCell>
-                    <TableCell>{assistant.filterOptions.group}</TableCell>
                     <TableCell className="font-medium">{assistant.description}</TableCell>
                   </TableRow>
                 ))}

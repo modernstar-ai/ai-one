@@ -7,7 +7,7 @@ namespace Agile.Chat.Domain.Files.Aggregates;
 public class CosmosFile : AuditableAggregateRoot
 {
     [JsonConstructor]
-    private CosmosFile(string name, FileStatus status, string url, string? contentType, long size, string indexName, string? folderName)
+    private CosmosFile(string name, FileStatus status, string url, string? contentType, long size, string indexName, string? folderName, List<string> tags)
     {
         Name = name;
         Status = status;
@@ -16,6 +16,7 @@ public class CosmosFile : AuditableAggregateRoot
         Size = size;
         IndexName = indexName;
         FolderName = folderName;
+        Tags = tags;
     }
     public string Name { get; private set; }
     public FileStatus Status { get; private set; }
@@ -24,23 +25,26 @@ public class CosmosFile : AuditableAggregateRoot
     public long Size { get; private set; }
     public string IndexName { get; private set; }
     public string? FolderName { get; private set; }
+    public List<string> Tags { get; private set; }
 
     public static CosmosFile Create(string name, 
-        string url, 
         string? contentType,
         long size,
         string indexName,
-        string? folderName)
+        string? folderName,
+        List<string> tags)
     {
         //Do validation logic and throw domain level exceptions if fails
-        return new CosmosFile(name, FileStatus.Uploaded, url, contentType, size, indexName, folderName);
+        return new CosmosFile(name, FileStatus.Uploaded, string.Empty, contentType, size, indexName, folderName, tags);
     }
     
-    public void Update(FileStatus status, string? contentType, long size)
+    public void Update(FileStatus status, string url, string? contentType, long size, List<string> tags)
     {
         Status = status;
         ContentType = contentType;
+        Url = url;
         Size = size;
+        Tags = tags;
         LastModified = DateTime.UtcNow;
     }
 }

@@ -11,6 +11,11 @@ import { toast } from '@/components/ui/use-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createIndex } from '@/services/indexes-service';
 import { CreateIndexDto } from '@/models/indexmetadata';
+import { PermissionsAccessControlSchema } from '@/components/ui-extended/permissions-access-control/form';
+import {
+  PermissionsAccessControl,
+  permissionsAccessControlDefaultValues
+} from '@/components/ui-extended/permissions-access-control';
 
 const formSchema = z.object({
   name: z
@@ -22,7 +27,7 @@ const formSchema = z.object({
   description: z.string(),
   chunkSize: z.number().min(2000).max(5000).default(2300),
   chunkOverlap: z.number().min(25).max(50).default(25),
-  group: z.string().optional()
+  accessControl: PermissionsAccessControlSchema
 });
 type FormValues = z.infer<typeof formSchema>;
 
@@ -39,7 +44,7 @@ export default function IndexForm() {
       description: '',
       chunkSize: 2300,
       chunkOverlap: 25,
-      group: undefined
+      accessControl: permissionsAccessControlDefaultValues
     }
   });
 
@@ -151,12 +156,14 @@ export default function IndexForm() {
 
                 <FormField
                   control={form.control}
-                  name="group"
+                  name="accessControl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Group</FormLabel>
+                      <FormLabel>Security Access</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="" />
+                        <div>
+                          <PermissionsAccessControl onChange={field.onChange} pac={field.value} hideUsers={true} />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
