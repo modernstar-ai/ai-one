@@ -1,3 +1,5 @@
+import { PermissionsAccessControlModel } from '@/components/ui-extended/permissions-access-control';
+
 export type Assistant = {
   id: string;
   name: string;
@@ -7,6 +9,7 @@ export type Assistant = {
   status: AssistantStatus;
   promptOptions: AssistantPromptOptions;
   filterOptions: AssistantFilterOptions;
+  accessControl: PermissionsAccessControlModel;
   createdDate: Date;
   lastModified: Date;
 };
@@ -30,10 +33,10 @@ export interface AssistantPromptOptions {
 }
 
 export interface AssistantFilterOptions {
-  group?: string;
   indexName: string;
   limitKnowledgeToIndex: boolean;
   documentLimit: number;
   strictness?: number;
   folders: string[];
+  tags: string[];
 }

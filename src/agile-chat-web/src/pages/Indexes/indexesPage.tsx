@@ -18,12 +18,12 @@ export default function IndexesPage() {
         <SimpleHeading Title="Containers" Subtitle={'Configure your Containers'} DocumentCount={0} />
         <div className="flex-1 p-4 overflow-auto">
           <main className="flex-1 space-y-6">
-              <PermissionHandler role={UserRole.SystemAdmin}>
-                <Button className="bg-black text-white hover:bg-gray-800 h-12" onClick={handleNewContainer}>
-                  New Container
-                </Button>
-              </PermissionHandler>
-              <IndexerComponent />
+            <PermissionHandler roles={[UserRole.SystemAdmin]}>
+              <Button className="bg-black text-white hover:bg-gray-800 h-12" onClick={handleNewContainer}>
+                New Container
+              </Button>
+            </PermissionHandler>
+            <IndexerComponent />
           </main>
         </div>
       </div>

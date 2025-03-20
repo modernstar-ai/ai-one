@@ -1,6 +1,7 @@
-﻿using System.Net;
+using System.Net;
 using Agile.Chat.Application.Indexes.Services;
 using Agile.Chat.Domain.Assistants.ValueObjects;
+using Agile.Chat.Domain.Shared.ValueObjects;
 using Agile.Framework.Authentication.Enums;
 using Agile.Framework.Authentication.Interfaces;
 using FluentValidation;
@@ -12,7 +13,7 @@ namespace Agile.Chat.Application.Indexes.Commands;
 
 public static class UpdateIndexById
 {
-    public record Command(Guid Id, string Description, string? Group) : IRequest<IResult>;
+    public record Command(Guid Id, string Description, PermissionsAccessControl AccessControl) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> logger, IRoleService roleService, IIndexService indexService) : IRequestHandler<Command, IResult>
     {
@@ -21,12 +22,8 @@ public static class UpdateIndexById
             var index = await indexService.GetItemByIdAsync(request.Id.ToString());
             if (index is null) return Results.NotFound();
             
-            //Check permissions to see if group exists for user
-            if (!string.IsNullOrWhiteSpace(index.Group) &&
-                !roleService.IsUserInRole(UserRole.ContentManager, index.Group))
-                return Results.Forbid();
-            
-            index.Update(request.Description, request.Group);
+            index.Update(request.Description, null);
+            index.UpdateAccessControl(request.AccessControl);
             await indexService.UpdateItemByIdAsync(index.Id, index);
             
             return Results.Ok();
@@ -37,11 +34,6 @@ public static class UpdateIndexById
     {
         public Validator(IRoleService roleService)
         {
-            RuleFor(request => roleService.IsContentManager())
-                .Must(contentManager => contentManager)
-                .WithMessage("Unauthorized to perform action")
-                .WithErrorCode(HttpStatusCode.Forbidden.ToString());
-            
             RuleFor(request => request.Id)
                 .NotNull()
                 .WithMessage("Id is required");

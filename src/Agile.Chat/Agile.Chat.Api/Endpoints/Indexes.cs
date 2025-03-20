@@ -24,6 +24,7 @@ public class Indexes() : CarterModule("/api")
         indexes.MapGet("/{id:guid}", GetIndexById);
         //POST
         indexes.MapPost("/", CreateIndex);
+        indexes.MapPost("/sync", SyncIndexes);
         //PUT
         indexes.MapPut("/{id:guid}", UpdateIndexById);
         //DELETE
@@ -45,6 +46,12 @@ public class Indexes() : CarterModule("/api")
     private async Task<IResult> CreateIndex([FromServices] IMediator mediator, [FromBody] CreateIndexDto dto)
     {
         var command = dto.Adapt<CreateIndex.Command>();
+        return await mediator.Send(command);
+    }
+    
+    private async Task<IResult> SyncIndexes([FromServices] IMediator mediator)
+    {
+        var command = new SyncIndexes.Command();
         return await mediator.Send(command);
     }
     

@@ -14,7 +14,8 @@ public static class UploadFile
     public record Command(
         IFormFile File,
         string IndexName, 
-        string? FolderName) : IRequest<IResult>;
+        string? FolderName,
+        List<string> Tags) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> logger, IBlobStorage blobStorage, IFileService fileService) : IRequestHandler<Command, IResult>
     {
@@ -23,27 +24,26 @@ public static class UploadFile
             var folderName = request.FolderName;
             if (!string.IsNullOrWhiteSpace(folderName))
                 folderName = folderName.Trim().Trim('/');
-            
-            var url = await blobStorage.UploadAsync(request.File.OpenReadStream(), request.File.ContentType, request.File.FileName, request.IndexName, folderName);
 
             var cosmosFile = await fileService.GetFileByFolderAsync(request.File.FileName, request.IndexName, folderName);
 
             if (cosmosFile != null)
             {
-                cosmosFile.Update(FileStatus.QueuedForIndexing, request.File.ContentType, request.File.Length);
+                cosmosFile.Update(FileStatus.QueuedForIndexing, cosmosFile.Url, request.File.ContentType, request.File.Length, request.Tags);
             }
             else
             {
                 cosmosFile = CosmosFile.Create(
-                    request.File.FileName, 
-                    url, 
+                    request.File.FileName,
                     request.File.ContentType, 
                     request.File.Length, 
                     request.IndexName, 
-                    folderName);
+                    folderName,
+                    request.Tags);
             }
             
             await fileService.UpdateItemByIdAsync(cosmosFile.Id, cosmosFile);
+            await blobStorage.UploadAsync(request.File.OpenReadStream(), request.File.ContentType, request.File.FileName, request.IndexName, folderName);
             return Results.Created(cosmosFile.Id, cosmosFile);
         }
     }

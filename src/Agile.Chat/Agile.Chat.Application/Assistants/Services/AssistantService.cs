@@ -1,4 +1,5 @@
-﻿using Agile.Chat.Domain.Assistants.Aggregates;
+﻿using Agile.Chat.Application.ExtensionMethods;
+using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Assistants.ValueObjects;
 using Agile.Framework.Authentication.Enums;
 using Agile.Framework.Authentication.Interfaces;
@@ -28,12 +29,10 @@ public class AssistantService(CosmosClient cosmosClient, IRoleService roleServic
             return await CollectResultsAsync(query);
 
         var roleClaims = roleService.GetRoleClaims();
-        query = query.Where(x =>
-            (x.FilterOptions.Group == null || x.FilterOptions.Group == string.Empty)
-                ? x.Status == AssistantStatus.Published
-                : roleClaims.Contains(UserRole.ContentManager.ToString() + "." + x.FilterOptions.Group.ToLower()) ||
-                  (roleClaims.Contains(UserRole.EndUser.ToString() + "." + x.FilterOptions.Group.ToLower()) && x.Status == AssistantStatus.Published)
-        );
+        if (roleClaims.Count == 0 || (roleClaims.Count == 1 && roleClaims.First() == UserRole.EndUser.ToString()))
+            query = query.Where(x => x.Status == AssistantStatus.Published);
+
+        query = query.AccessControlQuery(roleService);
 
         return await CollectResultsAsync(query);
     }

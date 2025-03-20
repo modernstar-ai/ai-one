@@ -1,8 +1,10 @@
-﻿using Agile.Framework.Authentication.Implementations.Default;
+﻿using Agile.Framework.Authentication.Implementations.AzureAD;
+using Agile.Framework.Authentication.Implementations.Default;
 using Agile.Framework.Authentication.Interfaces;
 using Agile.Framework.Common.EnvironmentVariables;
-using Microsoft.AspNetCore.Authentication;
+using Agile.Framework.Common.EnvironmentVariables.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Identity.Web;
@@ -13,8 +15,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddAgileAuthentication(this IServiceCollection services) =>
         services.AddAzureAdAuth()
-            .AddDefaultPermissions()
-            .AddClaimsTransformer();
+            .AddPermissionsHandling();
     
     private static IServiceCollection AddAzureAdAuth(this IServiceCollection services)
     {
@@ -23,8 +24,9 @@ public static class DependencyInjection
             {
                 {"AzureAd:Instance", "https://login.microsoftonline.com/"},
                 {"AzureAd:ClientId", Configs.AzureAd.ClientId},
+                {"AzureAd:ClientSecret", Configs.AzureAd.ClientSecret},
                 {"AzureAd:TenantId", Configs.AzureAd.TenantId},
-                {"AzureAd:AllowWebApiToBeAuthorizedByACL", "True"}
+                {"AzureAd:AllowWebApiToBeAuthorizedByACL", "True"},
             })
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -40,25 +42,28 @@ public static class DependencyInjection
 
         return services;
     }
-    
-    private static IServiceCollection AddDefaultPermissions(this IServiceCollection services) => services.AddScoped<IRoleService, DefaultRoleService>();
 
-    private static IServiceCollection AddClaimsTransformer(this IServiceCollection services) =>
-        // Register the claims transformation
-        services.AddScoped<IClaimsTransformation, ClaimsTransformer>()
-            // Configure JWT Bearer options
-            .Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
-            {
-                options.Events = new JwtBearerEvents
-                {
-                    OnTokenValidated = async context =>
-                    {
-                        var claimsTransformation = context.HttpContext.RequestServices
-                            .GetRequiredService<IClaimsTransformation>();
-                    
-                        context.Principal = await claimsTransformation
-                            .TransformAsync(context.Principal);
-                    }
-                };
-            });
+    private static IServiceCollection AddPermissionsHandling(this IServiceCollection services)
+    {
+        var permissionsType = Configs.PermissionsType;
+
+        switch (permissionsType)
+        {
+            case PermissionsType.AzureAd:
+                return services.AddScoped<IRoleService, AzureAdRoleService>();
+            default:
+                return services.AddScoped<IRoleService, DefaultRoleService>();
+        }
+    }
+
+    public static IApplicationBuilder UsePermissionsHandling(this IApplicationBuilder app)
+    {
+        var permissionsType = Configs.PermissionsType;
+
+        return permissionsType switch
+        {
+            PermissionsType.AzureAd => app.UseMiddleware<AzureAdPermissionsResolutionMiddleware>(),
+            _ => app.UseMiddleware<DefaultPermissionsResolutionMiddleware>()
+        };
+    }
 }

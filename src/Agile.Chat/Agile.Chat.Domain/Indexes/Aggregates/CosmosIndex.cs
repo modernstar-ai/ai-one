@@ -1,40 +1,53 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
+using Agile.Chat.Domain.Shared.Interfaces;
+using Agile.Chat.Domain.Shared.ValueObjects;
+using Agile.Chat.Domain.Indexes.ValueObjects;
 using Agile.Framework.Common.DomainAbstractions;
 
 namespace Agile.Chat.Domain.Indexes.Aggregates;
 
-public class CosmosIndex : AuditableAggregateRoot
+public class CosmosIndex : AuditableAggregateRoot, IAccessControllable
 {
     [JsonConstructor]
-    private CosmosIndex(string name, string description, int chunkSize, int chunkOverlap, string? group)
+    private CosmosIndex(string name, string description, int chunkSize, int chunkOverlap, PermissionsAccessControl accessControl, List<TaggingSettings>? taggingSettings)
     {
         Name = name;
         Description = description;
-        Group = group;
+        AccessControl = accessControl;
         ChunkSize = chunkSize;
         ChunkOverlap = chunkOverlap;
+        TaggingSettings = taggingSettings;
     }
     public string Name { get; private set; }
     public string Description { get; private set; }
     public int ChunkSize { get; private set; }
     public int ChunkOverlap { get; private set; }
-    public string? Group { get; private set; }
+    public PermissionsAccessControl AccessControl { get; private set; }
 
+    public List<TaggingSettings>? TaggingSettings { get; set; }
     public static CosmosIndex Create(string name, 
         string description, 
         int chunkSize,
         int chunkOverlap,
-        string? group)
+        PermissionsAccessControl? accessControl,
+        List<TaggingSettings>? taggingSettings)
     {
         //Do validation logic and throw domain level exceptions if fails
-        return new CosmosIndex(name, description, chunkSize, chunkOverlap, group);
+        return new CosmosIndex(name, description, chunkSize, chunkOverlap, accessControl ?? new PermissionsAccessControl(), taggingSettings ?? new List<TaggingSettings>());
     }
     
-    public void Update(string description, string? group)
+    public void Update(string description, List<TaggingSettings>? taggingSettings)
     {
         //Do validation logic and throw domain level exceptions if fails
-        Group = group;
         Description = description;
         LastModified = DateTime.UtcNow;
+        TaggingSettings = taggingSettings ?? new List<TaggingSettings>();
     }
+    
+    public void UpdateAccessControl(PermissionsAccessControl accessControl)
+    {
+        AccessControl = accessControl;
+        LastModified = DateTime.UtcNow;
+    }
+    
 }

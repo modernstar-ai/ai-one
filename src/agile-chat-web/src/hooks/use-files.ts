@@ -5,8 +5,8 @@ import { PagedResultsDto } from '@/models/pagedResultsDto';
 import { QueryDto } from '@/models/querydto';
 
 export const useFetchFiles = () => {
-  const [queryDto, setQueryDto] = useState<QueryDto>({page: 0, pageSize: 10} as QueryDto);
-  const [files, setFiles] = useState<PagedResultsDto<CosmosFile>>({page: 0, pageSize:10, totalCount:0, items: []});
+  const [queryDto, setQueryDto] = useState<QueryDto>({ page: 0, pageSize: 10 } as QueryDto);
+  const [files, setFiles] = useState<PagedResultsDto<CosmosFile>>({ page: 0, pageSize: 10, totalCount: 0, items: [] });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -27,7 +27,6 @@ export const useFetchFiles = () => {
   // Initial fetch when the component mounts
   useEffect(() => {
     fetchFiles();
-    console.log(queryDto);
   }, [queryDto]);
 
   // Return the data, loading state, error state, and refetch function
@@ -37,6 +36,6 @@ export const useFetchFiles = () => {
     error,
     queryDto,
     setQueryDto,
-    refetch: fetchFiles, // Refetch function to manually refresh data
+    refetch: fetchFiles // Refetch function to manually refresh data
   };
 };

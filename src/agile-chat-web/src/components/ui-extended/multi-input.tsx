@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useRef } from 'react';
+import React from 'react';
 import { PlusIcon, XIcon } from 'lucide-react';
 import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
-interface IChatThreadSettingsProps {
+interface IMutliInputProps {
   label?: string;
   className?: string;
   value?: string[];
@@ -13,27 +13,26 @@ interface IChatThreadSettingsProps {
   onBlur?: () => void;
 }
 
-type FolderFiltersInputProps = IChatThreadSettingsProps;
+type MultiInputProps = IMutliInputProps;
 
-export const FoldersFilterInput = React.forwardRef<
+export const MultiInput = React.forwardRef<
   HTMLInputElement,
-  FolderFiltersInputProps
+  MultiInputProps
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
->((props, _ref) => {
-  const inputRef = useRef<HTMLInputElement>(null);
+>((props, ref) => {
   const { label, value = [], onChange, onBlur } = props;
 
   const addFolder = () => {
     onChange?.([...value, '']);
   };
 
-  const removeFolder = (index: number) => {
+  const removeInput = (index: number) => {
     const newFolders = [...value];
     newFolders.splice(index, 1);
     onChange?.(newFolders);
   };
 
-  const updateFolder = (index: number, newValue: string) => {
+  const updateInput = (index: number, newValue: string) => {
     const newFolders = [...value];
     newFolders[index] = newValue;
     onChange?.(newFolders);
@@ -55,18 +54,18 @@ export const FoldersFilterInput = React.forwardRef<
               <Input
                 className="mx-2"
                 value={folder}
-                onChange={(e) => updateFolder(index, e.target.value)}
-                placeholder="Enter folder name"
+                onChange={(e) => updateInput(index, e.target.value)}
+                placeholder="Enter value"
               />
-              <Button onClick={() => removeFolder(index)} className="h-full p-1" size={'icon'}>
+              <Button onClick={() => removeInput(index)} className="h-full p-1" size={'icon'}>
                 <XIcon />
               </Button>
             </div>
           );
         })}
       </div>
-      <Input type="hidden" ref={inputRef} value={JSON.stringify(value)} onChange={() => {}} onBlur={onBlur} />
+      <Input type="hidden" ref={ref} value={JSON.stringify(value)} onChange={() => {}} onBlur={onBlur} />
     </>
   );
 });
-FoldersFilterInput.displayName = 'FoldersFilterInput';
+MultiInput.displayName = 'MultiInput';

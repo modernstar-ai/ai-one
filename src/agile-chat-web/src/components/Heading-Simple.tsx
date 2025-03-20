@@ -12,10 +12,10 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import { useLocation } from 'react-router-dom';
-import { FoldersFilterInput } from './ui-extended/folder-filter';
+import { MultiInput } from './ui-extended/multi-input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,13 +32,16 @@ interface SimpleHeadingProps {
 
 const formSchema = z.object({
   folders: z.array(z.string()),
+  tags: z.array(z.string()).refine((arr) => arr.every((tag) => tag.trim().length > 0), {
+    message: 'Each tag must contain at least one character'
+  })
 });
 
 const SimpleHeading: React.FC<SimpleHeadingProps> = ({
   Title,
   Subtitle,
   //DocumentCount,
-  threadId,
+  threadId
 }) => {
   const [thread, setThread] = useState<ChatThread | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,16 +68,18 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       folders: thread?.filterOptions.folders ?? [],
-    },
+      tags: thread?.filterOptions.tags ?? []
+    }
   });
 
   const onSave = async (form: FormValues) => {
     if (thread) {
       const newThread: ChatThread = { ...thread };
       newThread.filterOptions.folders = form.folders ?? [];
+      newThread.filterOptions.tags = form.tags ?? [];
       await updateChatThread(newThread);
       toast({
-        title: 'Saved configuration',
+        title: 'Saved configuration'
       });
     }
   };
@@ -91,6 +96,7 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
 
         setThread(thread);
         form.setValue('folders', thread.filterOptions.folders ?? []);
+        form.setValue('tags', thread.filterOptions.tags ?? []);
       } catch (err) {
         console.error('Error fetching thread:', err);
         setError(err instanceof Error ? err.message : 'An error occurred while loading configuration');
@@ -127,7 +133,7 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
           topP: thread.promptOptions.topP,
           maxResponseToken: thread.promptOptions.maxTokens,
           strictness: thread.filterOptions.strictness,
-          documentLimit: thread.filterOptions.documentLimit,
+          documentLimit: thread.filterOptions.documentLimit
         }).map(([key, value]) => (
           <Card key={key} className="border-none">
             <CardContent className="p-3">
@@ -146,7 +152,20 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
                 <FormItem>
                   <FormLabel>Folder Filters</FormLabel>
                   <FormControl>
-                    <FoldersFilterInput {...field} />
+                    <MultiInput {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tag Filters</FormLabel>
+                  <FormControl>
+                    <MultiInput {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -159,8 +178,7 @@ const SimpleHeading: React.FC<SimpleHeadingProps> = ({
               type="submit"
               disabled={form.formState.isSubmitting}
               onClick={form.handleSubmit(onSave)}
-              aria-label="Save Assistant"
-            >
+              aria-label="Save Assistant">
               {form.formState.isSubmitting ? 'Saving...' : 'Save'}
             </Button>
           </div>

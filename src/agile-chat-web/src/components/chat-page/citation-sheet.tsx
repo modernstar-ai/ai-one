@@ -16,7 +16,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Textarea } from '../ui/textarea';
 import { FileViewingDialog } from './file-viewing-dialog';
 import { useState } from 'react';
-import { Loader2Icon } from 'lucide-react';
+import { Check, CopyIcon, Loader2Icon } from 'lucide-react';
 import { getCitationChunkById } from '@/services/chatthreadservice';
 
 interface CitationSheetProps {
@@ -26,6 +26,7 @@ interface CitationSheetProps {
 export function CitationSheet(props: CitationSheetProps) {
   const { citation, index } = props;
   const [chunk, setChunk] = useState<string | undefined>(undefined);
+  const [copied, setCopied] = useState(false);
 
   const onOpen = async () => {
     if (!chunk) {
@@ -56,6 +57,30 @@ export function CitationSheet(props: CitationSheetProps) {
         <div className="flex flex-col items-start">
           <Label htmlFor="name">Name</Label>
           <Input readOnly={true} id="name" value={citation.name} className="mt-2" />
+        </div>
+        <div className="flex flex-col items-start">
+          <Label htmlFor="path" className="mb-2">
+            Folder Path
+          </Label>
+          <div className="flex w-full items-center gap-2">
+            <Input
+              readOnly={true}
+              id="name"
+              value={new URL(citation.url).pathname.replace(/\/index-content\/[^/]+\//, '')}
+              className=""
+            />
+            <Button
+              size={'icon'}
+              variant={'outline'}
+              title="Copy"
+              onClick={() => {
+                navigator.clipboard.writeText(new URL(citation.url).pathname.replace(/\/index-content\/[^/]+\//, ''));
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1000);
+              }}>
+              {copied ? <Check className={`text-green-500 animate-pulse`} /> : <CopyIcon />}
+            </Button>
+          </div>
         </div>
         <div className="flex flex-col items-start">
           <Label htmlFor="link">Link</Label>

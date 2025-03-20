@@ -4,11 +4,12 @@ namespace Agile.Framework.Authentication.Interfaces;
 
 public interface IRoleService
 {
-    Task<(List<string>, List<string>)> GetRolesAndGroupsByUserIdAsync(string userId);
+    Task<(List<UserRole>, List<string>)> GetRolesAndGroupsByUserIdAsync(string userId);
     bool IsSystemAdmin();
     bool IsContentManager();
-    bool IsUserInRole(UserRole userRole, string group);
+    bool IsUserInRole(UserRole userRole);
     bool IsUserInGroup(string group);
     List<string> GetRoleClaims();
     List<string> GetGroupClaims();
+    string UserId { get; }
 }

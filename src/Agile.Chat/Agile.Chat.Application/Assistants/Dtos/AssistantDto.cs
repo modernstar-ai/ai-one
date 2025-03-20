@@ -1,4 +1,5 @@
 ﻿using Agile.Chat.Domain.Assistants.ValueObjects;
+using Agile.Chat.Domain.Shared.ValueObjects;
 
 namespace Agile.Chat.Application.Assistants.Dtos;
 
@@ -16,4 +17,6 @@ public class AssistantDto
     public AssistantFilterOptions FilterOptions { get; set; } = new();
 
     public AssistantPromptOptions PromptOptions { get; set; } = new();
+
+    public PermissionsAccessControl AccessControl { get; set; } = new();
 }

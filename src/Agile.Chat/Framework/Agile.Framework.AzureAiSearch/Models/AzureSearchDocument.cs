@@ -4,7 +4,7 @@ namespace Agile.Framework.AzureAiSearch.Models;
 
 public class AzureSearchDocument
 {
-    public static AzureSearchDocument Create(string fileId, string chunk, string fileName, string url, ReadOnlyMemory<float> chunkVector, ReadOnlyMemory<float> nameVector)
+    public static AzureSearchDocument Create(string fileId, string chunk, string fileName, string url, List<string> tags, ReadOnlyMemory<float> chunkVector, ReadOnlyMemory<float> nameVector)
     {
         return new AzureSearchDocument()
         {
@@ -14,7 +14,8 @@ public class AzureSearchDocument
             Name = fileName,
             Url = url,
             ChunkVector = chunkVector,
-            NameVector = nameVector
+            NameVector = nameVector,
+            Tags = tags ?? new()
         };
     }
     public string Id { get; set; }
@@ -24,4 +25,5 @@ public class AzureSearchDocument
     public string Name { get; set; }
     public ReadOnlyMemory<float> NameVector { get; set; }
     public string Url { get; set; }
+    public List<string> Tags { get; set; } = new();
 }

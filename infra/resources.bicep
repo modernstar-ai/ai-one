@@ -651,7 +651,7 @@ resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' = {
       deadLetteringOnMessageExpiration: true
       enableBatchedOperations: true
       duplicateDetectionHistoryTimeWindow: 'PT10M'
-      maxDeliveryCount: 10
+      maxDeliveryCount: 5
       status: 'Active'
       autoDeleteOnIdle: 'P10675199DT2H48M5.4775807S'
       enablePartitioning: false

@@ -19,11 +19,6 @@ public static class GetIndexById
         {
             var index = await indexService.GetItemByIdAsync(request.Id.ToString());
             if(index is null) return Results.NotFound();
-
-            if (!string.IsNullOrWhiteSpace(index.Group) &&
-                !roleService.IsUserInRole(UserRole.ContentManager, index.Group))
-                return Results.Forbid();
-            
             
             return Results.Ok(index);
         }
@@ -33,7 +28,7 @@ public static class GetIndexById
     {
         public Validator(IRoleService roleService)
         {
-            RuleFor(request => roleService.IsContentManager())
+            RuleFor(request => roleService.IsContentManager() || roleService.IsSystemAdmin())
                 .Must(contentManager => contentManager)
                 .WithMessage("Unauthorized to perform action")
                 .WithErrorCode(HttpStatusCode.Forbidden.ToString());

@@ -1,3 +1,8 @@
+import {
+  PermissionsAccessControl,
+  permissionsAccessControlDefaultValues
+} from '@/components/ui-extended/permissions-access-control';
+import { PermissionsAccessControlSchema } from '@/components/ui-extended/permissions-access-control/form';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -5,7 +10,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -18,7 +23,7 @@ import * as z from 'zod';
 const editFormSchema = z.object({
   id: z.string(),
   description: z.string(),
-  group: z.string(),
+  accessControl: PermissionsAccessControlSchema
 });
 type FormValues = z.infer<typeof editFormSchema>;
 
@@ -35,8 +40,8 @@ export const EditIndexDialog = (props: IEditIndexProps) => {
     values: {
       id: index?.id ?? '',
       description: index?.description ?? '',
-      group: index?.group ?? '',
-    },
+      accessControl: index?.accessControl ?? permissionsAccessControlDefaultValues
+    }
   });
 
   const onSubmit = async (values: FormValues) => {
@@ -74,12 +79,14 @@ export const EditIndexDialog = (props: IEditIndexProps) => {
 
             <FormField
               control={form.control}
-              name="group"
+              name="accessControl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Group</FormLabel>
+                  <FormLabel>Security Access</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Security group" />
+                    <div>
+                      <PermissionsAccessControl onChange={field.onChange} pac={field.value} hideUsers={true} />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -12,6 +12,7 @@ export interface CosmosFile {
   createdDate: string;
   lastModified: string;
   status: FileStatus;
+  tags: string[];
 }
 
 export enum FileStatus {

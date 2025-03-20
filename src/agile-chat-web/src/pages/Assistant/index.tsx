@@ -23,7 +23,7 @@ const AssistantsPage = () => {
         <div className="flex-1 p-4 overflow-auto">
           <main className="flex-1 space-y-6">
             {/* CTA Buttons */}
-            <PermissionHandler role={UserRole.SystemAdmin}>
+            <PermissionHandler roles={[UserRole.SystemAdmin]}>
               <Button className="bg-black text-white hover:bg-gray-800 h-12" onClick={handleNewAssistant}>
                 New AI Assistant
               </Button>
