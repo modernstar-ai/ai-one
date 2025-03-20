@@ -101,7 +101,7 @@ export function FileViewingDialog(props: FileViewingDialogProps) {
           ) : ['bmp', 'jpg', 'jpeg', 'png', 'tiff'].includes(extension) ? (
             <img src={file} className="w-fit h-fit overflow-auto" />
           ) : (
-            // Default to iframe for other file types
+            // Default to iframe for other file types.
             <iframe title="Source File" src={file} width="100%" height="100%" />
           )}
         </div>
