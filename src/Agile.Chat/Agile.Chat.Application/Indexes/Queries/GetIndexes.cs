@@ -25,7 +25,7 @@ public static class GetIndexes
     {
         public Validator(IRoleService roleService)
         {
-            RuleFor(request => roleService.IsContentManager())
+            RuleFor(request => roleService.IsContentManager() || roleService.IsSystemAdmin())
                 .Must(contentManager => contentManager)
                 .WithMessage("Unauthorized to perform action")
                 .WithErrorCode(HttpStatusCode.Forbidden.ToString());

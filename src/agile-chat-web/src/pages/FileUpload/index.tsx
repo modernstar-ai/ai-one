@@ -19,6 +19,7 @@ import { useIndexes } from '@/hooks/use-indexes';
 import { CosmosFile } from '@/models/filemetadata';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { MultiInput } from '@/components/ui-extended/multi-input';
 
 const maxFileCount = 25; // Maximum number of files allowed
 
@@ -28,7 +29,10 @@ const formSchema = z.object({
   files: z
     .array(z.instanceof(File))
     .refine((files) => files.length > 0, { message: 'No files selected' })
-    .refine((files) => files.length <= maxFileCount, { message: 'Maximum of 25 files can be uploaded at a time' })
+    .refine((files) => files.length <= maxFileCount, { message: 'Maximum of 25 files can be uploaded at a time' }),
+  tags: z.array(z.string()).refine((arr) => arr.every((tag) => tag.trim().length > 0), {
+    message: 'Each tag must contain at least one character'
+  })
 });
 type FormValues = z.infer<typeof formSchema>;
 
@@ -69,7 +73,8 @@ export default function FileUploadComponent() {
     defaultValues: {
       index: '',
       folder: '',
-      files: []
+      files: [],
+      tags: []
     }
   });
 
@@ -95,6 +100,7 @@ export default function FileUploadComponent() {
       formData.append('indexName', values.index);
       formData.append('folderName', values.folder ?? '');
       formData.append('file', file);
+      values.tags.forEach((tag) => formData.append('tags', tag));
 
       uploads.push(uploadFiles(formData));
     });
@@ -194,6 +200,19 @@ export default function FileUploadComponent() {
                 <FormLabel>Folder</FormLabel>
                 <FormControl>
                   <Input {...field} placeholder="Enter folder name (optional)" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="tags"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tags</FormLabel>
+                <FormControl>
+                  <MultiInput {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

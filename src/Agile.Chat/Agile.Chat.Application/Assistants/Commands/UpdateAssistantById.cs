@@ -1,6 +1,7 @@
 ﻿using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Assistants.ValueObjects;
+using Agile.Chat.Domain.Shared.ValueObjects;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -18,7 +19,8 @@ public static class UpdateAssistantById
         AssistantType Type,
         AssistantStatus Status, 
         AssistantFilterOptions FilterOptions, 
-        AssistantPromptOptions PromptOptions) : IRequest<IResult>;
+        AssistantPromptOptions PromptOptions,
+        PermissionsAccessControl AccessControl) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> logger, IAssistantService assistantService) : IRequestHandler<Command, IResult>
     {
@@ -30,6 +32,7 @@ public static class UpdateAssistantById
             
             logger.LogInformation("Updating Assistant old values: {@Assistant}", assistant);
             assistant.Update(request.Name, request.Description, request.Greeting, request.Type, request.Status, request.FilterOptions, request.PromptOptions);
+            assistant.UpdateAccessControl(request.AccessControl);
             await assistantService.UpdateItemByIdAsync(assistant.Id, assistant);
             logger.LogInformation("Updated Assistant Successfully: {@Assistant}", assistant);
             

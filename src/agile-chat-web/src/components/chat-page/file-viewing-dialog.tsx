@@ -6,12 +6,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from '@/components/ui/dialog';
 import { GenerateSharedLinkByUrl } from '@/services/files-service';
 import { Citation } from '@/types/ChatThread';
+import Markdoc from '@markdoc/markdoc';
+import axios from 'axios';
 import { Loader2Icon } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface FileViewingDialogProps {
   citation: Citation;
@@ -19,7 +21,20 @@ interface FileViewingDialogProps {
 }
 export function FileViewingDialog(props: FileViewingDialogProps) {
   const { citation, children } = props;
+  const extension = citation.url.split('.').pop()!;
+
   const [file, setFile] = useState<string | undefined>(undefined);
+  const [fileContent, setFileContent] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (fileContent || !file) return;
+
+    if (['json', 'txt', 'xml'].includes(extension)) {
+      getText().then((text) => setFileContent(text));
+    } else if (extension === 'md') {
+      getMarkdownFromText().then((md) => setFileContent(md));
+    }
+  }, [extension, file]);
 
   const loadFile = async (open: boolean) => {
     if (!file && open) {
@@ -28,9 +43,17 @@ export function FileViewingDialog(props: FileViewingDialogProps) {
     }
   };
 
-  const isHtmlFile = (): boolean => {
-    const extension = citation.url.split('.').pop();
-    return extension === 'html' || extension === 'htm';
+  const getText = async () => {
+    const text = await axios.get<string>(file!, { responseType: 'text' });
+    return text.data.toString();
+  };
+
+  const getMarkdownFromText = async () => {
+    const text = await getText();
+    const ast = Markdoc.parse(text);
+    const content = Markdoc.transform(ast);
+
+    return Markdoc.renderers.html(content);
   };
 
   return (
@@ -50,14 +73,37 @@ export function FileViewingDialog(props: FileViewingDialogProps) {
           <DialogDescription>File preview.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col grow min-h-0 w-full h-full justify-center items-center">
-          {!file && <Loader2Icon className="animate-spin" />}
-          {file && !isHtmlFile() && (
+          {!file ? (
+            <Loader2Icon className="animate-spin" />
+          ) : ['docx', 'xlsx', 'pptx'].includes(extension) ? (
+            // Treat other Office formats like "xlsx" for the Office Online Viewer
             <iframe
-              className="w-full h-full"
-              src={`https://docs.google.com/gview?url=${encodeURIComponent(file)}&embedded=true`}
+              title="Source File"
+              src={
+                'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(file) + '&action=embedview'
+              }
+              width="100%"
+              height="100%"
             />
+          ) : extension === 'pdf' ? (
+            // Use object tag for PDFs because iframe does not support page numbers
+            <iframe title="Source File" src={file} width="100%" height="100%" />
+          ) : extension === 'md' ? (
+            // Render Markdown content using react-markdown
+            <div className="flex w-full h-full overflow-auto prose">
+              <div className="flex w-full h-full" dangerouslySetInnerHTML={{ __html: fileContent! }} />
+            </div>
+          ) : ['json', 'txt', 'xml'].includes(extension) ? (
+            // Render plain text content
+            <div className="w-full h-full overflow-auto">
+              <pre>{fileContent}</pre>
+            </div>
+          ) : ['bmp', 'jpg', 'jpeg', 'png', 'tiff'].includes(extension) ? (
+            <img src={file} className="w-fit h-fit overflow-auto" />
+          ) : (
+            // Default to iframe for other file types.
+            <iframe title="Source File" src={file} width="100%" height="100%" />
           )}
-          {file && isHtmlFile() && <iframe className="w-full h-full" src={file} />}
         </div>
         <DialogFooter>
           <Button type="submit">Close</Button>

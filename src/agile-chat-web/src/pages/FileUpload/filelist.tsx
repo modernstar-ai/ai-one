@@ -1,15 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/data-table';
-import { RefreshCw, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Loader2Icon, RefreshCw, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useFetchFiles } from '@/hooks/use-files';
-import { CosmosFile } from '@/models/filemetadata';
 import { deleteFiles } from '@/services/files-service';
 import SimpleHeading from '@/components/Heading-Simple';
-import { PagedResultsDto } from '@/models/pagedResultsDto';
 import { Badge } from '@/components/ui/badge';
+import { FileEditDialog } from './Edit';
+import { CosmosFile } from '@/models/filemetadata';
 
 export default function FileList() {
   // Using the custom hook to fetch files
@@ -17,7 +17,6 @@ export default function FileList() {
   const { files, refetch, loading, queryDto, setQueryDto } = useFetchFiles();
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false); // Processing state for delete/refresh
-  const [sortedFiles, setSortedFiles] = useState<PagedResultsDto<CosmosFile>>();
   const [currentPage, setCurrentPage] = useState<number>(0); // Track the current page
 
   const totalPages = files?.totalCount ? Math.ceil(files.totalCount / files.pageSize) : 1;
@@ -33,11 +32,6 @@ export default function FileList() {
   const toggleFileSelection = (fileId: string) => {
     setSelectedFiles((prev) => (prev.includes(fileId) ? prev.filter((id) => id !== fileId) : [...prev, fileId]));
   };
-
-  // To remove extensions from File names
-  function removeFileExtension(fileName: string): string {
-    return fileName.replace(/\.[^/.]+$/, '');
-  }
 
   // Size conversion in KB
   function formatBytesToKB(bytes: number): string {
@@ -58,17 +52,6 @@ export default function FileList() {
       'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'application/ppt'
     };
     return mimeTypeMappings[contentType] || contentType;
-  }
-
-  // Helper function to format the date
-  function formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
   }
 
   // Handle Delete Files
@@ -143,13 +126,11 @@ export default function FileList() {
       accessorKey: 'checkbox',
       header: () => (
         <Checkbox
-          checked={
-            sortedFiles?.items && selectedFiles.length === sortedFiles.items.length && sortedFiles.items.length > 0
-          }
+          checked={files?.items && selectedFiles.length === files.items.length && files.items.length > 0}
           onCheckedChange={(checked) => {
             if (checked) {
               // Select all file IDs
-              setSelectedFiles(sortedFiles?.items.map((file) => file.id) || []);
+              setSelectedFiles(files?.items.map((file) => file.id) || []);
             } else {
               // Deselect all
               setSelectedFiles([]);
@@ -169,7 +150,7 @@ export default function FileList() {
     {
       accessorKey: 'name',
       header: 'File Name',
-      cell: ({ row }: { row: any }) => removeFileExtension(row.original.name)
+      cell: ({ row }: { row: any }) => row.original.name
     },
     {
       accessorKey: 'contentType',
@@ -182,11 +163,6 @@ export default function FileList() {
       cell: ({ row }: { row: any }) => formatBytesToKB(row.original.size)
     },
     {
-      accessorKey: 'createdDate',
-      header: 'Submitted On',
-      cell: ({ row }: { row: any }) => formatDate(row.original.createdDate)
-    },
-    {
       accessorKey: 'indexName',
       header: 'Container',
       cell: ({ row }: { row: any }) => row.original.indexName
@@ -197,9 +173,35 @@ export default function FileList() {
       cell: ({ row }: { row: any }) => row.original.folderName
     },
     {
+      accessorKey: 'tags',
+      header: 'Tags',
+      cell: ({ row }: { row: any }) => (
+        <div className="flex flex-col items-start gap-2 max-h-24 overflow-y-scroll max-w-40 overflow-x-auto">
+          {(row.original.tags as string[])?.map((tag, index) => (
+            <Badge className="text-nowrap" key={tag + index}>
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      )
+    },
+    {
       accessorKey: 'status',
       header: 'Status',
-      cell: ({ row }: { row: any }) => <Badge>{row.original.status}</Badge>
+      cell: ({ row }: { row: any }) => (
+        <div className="flex">
+          <Badge>{row.original.status}</Badge>
+        </div>
+      )
+    },
+    {
+      accessorKey: '',
+      header: 'Update',
+      cell: ({ row }: { row: any }) => (
+        <div className="flex items-center justify-center">
+          <FileEditDialog file={row.original as CosmosFile} handleRefresh={handleRefresh} />
+        </div>
+      )
     }
   ];
 
@@ -213,13 +215,6 @@ export default function FileList() {
     setQueryDto({ ...queryDto, page: 0, search: searchValue });
     setCurrentPage(0);
   };
-
-  // Fetch sorted data on every `files` change
-  useEffect(() => {
-    if (files?.items) {
-      setSortedFiles(files); // Update sorted files when new files are fetched
-    }
-  }, [files]);
 
   return (
     <div className="flex h-screen bg-background text-foreground">
@@ -261,7 +256,11 @@ export default function FileList() {
               onBlur={handleGlobalSearchSubmit}
             />
           </div>
-          <DataTable columns={columns} data={sortedFiles?.items || []} />
+          {loading ? (
+            <Loader2Icon className="animate-spin flex justify-center w-full" />
+          ) : (
+            <DataTable columns={columns} data={files.items} />
+          )}
 
           {/* Pagination */}
           <div className="flex mt-4 space-x-2">

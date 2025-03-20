@@ -1,4 +1,5 @@
 // src/services/personaservice.ts
+import { PermissionsAccessControlModel } from '@/components/ui-extended/permissions-access-control';
 import axios from '@/error-handling/axiosSetup';
 import { CreateIndexDto, Index, IndexReportDto } from '@/models/indexmetadata';
 
@@ -25,8 +26,8 @@ export async function createIndex(newIndex: CreateIndexDto): Promise<Index | nul
   try {
     const response = await axios.post<Index>(apiUrl, newIndex, {
       headers: {
-        'Content-Type': 'application/json',
-      },
+        'Content-Type': 'application/json'
+      }
     });
 
     return response.data;
@@ -37,13 +38,17 @@ export async function createIndex(newIndex: CreateIndexDto): Promise<Index | nul
 }
 
 //Update index in cosmos
-export async function updateIndex(body: { id: string; group: string; description: string }): Promise<void> {
+export async function updateIndex(body: {
+  id: string;
+  accessControl: PermissionsAccessControlModel;
+  description: string;
+}): Promise<void> {
   const apiUrl = getApiUrl(body.id);
   try {
     await axios.put(apiUrl, body, {
       headers: {
-        'Content-Type': 'application/json',
-      },
+        'Content-Type': 'application/json'
+      }
     });
   } catch (error) {
     console.error('Error creating index:', error);
@@ -63,9 +68,8 @@ export async function deleteIndex(id: string): Promise<boolean> {
 }
 
 export async function getIndexReport(reportName?: string): Promise<IndexReportDto | null> {
- 
-     const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
-     const apiUrl = `${rootApiUrl}/api/AiSearch/indexreport/${reportName}`;
+  const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
+  const apiUrl = `${rootApiUrl}/api/AiSearch/indexreport/${reportName}`;
   try {
     const response = await axios.get<IndexReportDto>(apiUrl);
     return response.data;

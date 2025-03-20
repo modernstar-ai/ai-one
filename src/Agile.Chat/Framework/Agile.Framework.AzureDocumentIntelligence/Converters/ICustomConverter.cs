@@ -2,5 +2,5 @@
 
 public interface ICustomConverter
 {
-    public Task<string> ExtractDocumentAsync(Stream fileStream);
+    public Task<Stream> ConvertDocumentAsync(Stream fileStream);
 }

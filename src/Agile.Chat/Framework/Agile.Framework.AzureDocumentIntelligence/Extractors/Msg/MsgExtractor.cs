@@ -1,11 +1,10 @@
-﻿using Html2Markdown;
-using MsgReader.Outlook;
+﻿using MsgReader.Outlook;
 
-namespace Agile.Framework.AzureDocumentIntelligence.Converters.Msg;
+namespace Agile.Framework.AzureDocumentIntelligence.Extractors.Msg;
 
-public class MsgConverter : ICustomConverter
+public class MsgExtractor : ICustomExtractor
 {
-    public async Task<string> ExtractDocumentAsync(Stream fileStream)
+    public async Task<string> ExtractTextAsync(Stream fileStream)
     {
         using var memoryStream = new MemoryStream();
         await fileStream.CopyToAsync(memoryStream);

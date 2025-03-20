@@ -33,6 +33,16 @@ export async function uploadFiles(formData: FormData): Promise<CosmosFile | null
   }
 }
 
+export async function updateFile(id: string, tags: string[]): Promise<void> {
+  const apiUrl = getApiUrl('');
+
+  try {
+    await axios.put(apiUrl, { id, tags });
+  } catch (error) {
+    console.error('Error uploading files:', error);
+  }
+}
+
 // Function to fetch all files
 export const getFiles = async (queryDto: QueryDto): Promise<PagedResultsDto<CosmosFile>> => {
   try {
@@ -42,7 +52,6 @@ export const getFiles = async (queryDto: QueryDto): Promise<PagedResultsDto<Cosm
     queryDto.search && params.append('Search', queryDto.search);
     queryDto.orderBy && params.append('OrderBy', queryDto.orderBy);
     queryDto.orderType && params.append('OrderType', queryDto.orderType);
-    console.log(queryDto);
     const url = getApiUrl('');
     const response = await axios.get<PagedResultsDto<CosmosFile>>(url, { params: params });
     return response.data;

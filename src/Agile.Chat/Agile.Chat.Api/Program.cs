@@ -1,6 +1,7 @@
 using Agile.Chat.Api;
 using Agile.Chat.Application;
 using Agile.Framework;
+using Agile.Framework.Authentication;
 using Agile.Framework.Common.EnvironmentVariables;
 using Carter;
 using Serilog;
@@ -29,6 +30,7 @@ if (!app.Environment.IsProduction())
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UsePermissionsHandling();
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.MapCarter();

@@ -1,6 +1,7 @@
-﻿using System.Net;
+using System.Net;
 using Agile.Chat.Application.Indexes.Services;
 using Agile.Chat.Domain.Indexes.Aggregates;
+using Agile.Chat.Domain.Shared.ValueObjects;
 using Agile.Framework.Authentication.Interfaces;
 using Agile.Framework.AzureAiSearch;
 using FluentValidation;
@@ -12,7 +13,7 @@ namespace Agile.Chat.Application.Indexes.Commands;
 
 public static class CreateIndex
 {
-    public record Command(string Name, string Description, int ChunkSize, int ChunkOverlap, string? Group) : IRequest<IResult>;
+    public record Command(string Name, string Description, int ChunkSize, int ChunkOverlap, PermissionsAccessControl AccessControl) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> logger, IIndexService indexService, IAzureAiSearch azureAiSearch) : IRequestHandler<Command, IResult>
     {
@@ -26,7 +27,8 @@ public static class CreateIndex
                 request.Description, 
                 request.ChunkSize,
                 request.ChunkOverlap,
-                request.Group);
+                request.AccessControl,
+                null);
 
             if (await azureAiSearch.IndexExistsAsync(index.Name))
                 return Results.BadRequest("Indexer on Azure AI Search already exists.");

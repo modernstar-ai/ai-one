@@ -1,5 +1,6 @@
 import { hasPermission } from '@/authentication/permission-handler/permission-checker';
 import { UserRole } from '@/authentication/user-roles';
+import { useAuth } from '@/services/auth-helpers';
 import { usePermissionsStore } from '@/stores/permission-store';
 import { InteractionStatus } from '@azure/msal-browser';
 import { useIsAuthenticated, useMsal } from '@azure/msal-react';
@@ -16,8 +17,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }
   const { inProgress } = useMsal();
 
   const isAuthenticated = useIsAuthenticated();
+  const { username } = useAuth();
 
-  if (isAuthenticated && roles && role && !hasPermission(roles, [], role)) {
+  if (isAuthenticated && roles && role && !hasPermission(username, roles, [], [role])) {
     return <Navigate to="/" />;
   }
 

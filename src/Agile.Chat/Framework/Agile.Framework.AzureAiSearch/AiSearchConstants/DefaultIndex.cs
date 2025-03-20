@@ -36,6 +36,13 @@ public static class DefaultIndex
                     IsSearchable = true,
                     IsFilterable = true
                 },
+                new(nameof(AzureSearchDocument.Tags), SearchFieldDataType.Collection(SearchFieldDataType.String))
+                {
+                    IsSearchable = true,
+                    IsFilterable = true,
+                    IsSortable = false,
+                    IsFacetable = true
+                },
                 new(nameof(AzureSearchDocument.ChunkVector), SearchFieldDataType.Collection(SearchFieldDataType.Single))
                 {
                     IsSearchable = true,

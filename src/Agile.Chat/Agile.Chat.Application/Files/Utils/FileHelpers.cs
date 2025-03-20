@@ -1,5 +1,6 @@
 ﻿using Agile.Framework.AzureDocumentIntelligence.Converters;
-using Agile.Framework.AzureDocumentIntelligence.Converters.Msg;
+using Agile.Framework.AzureDocumentIntelligence.Extractors;
+using Agile.Framework.AzureDocumentIntelligence.Extractors.Msg;
 
 namespace Agile.Chat.Application.Files.Utils;
 
@@ -45,15 +46,29 @@ public static class FileHelpers
     
     public static bool HasCustomConverter(string url, out ICustomConverter converter)
     {
-        var extension = Path.GetFileName(url).Split(".").Last();
+        var extension = Path.GetFileName(url).Split(".").Last().ToLower();
+        switch(extension)
+        {
+            case "doc":
+                converter = null!;
+                return false;
+            default:
+                converter = null!;
+                return false;
+        }
+    }
+    
+    public static bool HasCustomExtractor(string url, out ICustomExtractor extractor)
+    {
+        var extension = Path.GetFileName(url).Split(".").Last().ToLower();
         switch(extension)
         {
             case "msg":
                 case "eml":
-            converter = new MsgConverter();
+                    extractor = new MsgExtractor();
             return true;
             default:
-                converter = null!;
+                extractor = null!;
                 return false;
         }
     }

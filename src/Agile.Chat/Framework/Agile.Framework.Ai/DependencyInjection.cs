@@ -28,7 +28,8 @@ public static class DependencyInjection
             
             var httpContext = sp.GetService<IHttpContextAccessor>();
             var httpClient = new HttpClient(); 
-            httpClient.DefaultRequestHeaders.Add("Authorization", httpContext?.HttpContext.Request.Headers["Authorization"].ToString());
+            if(!string.IsNullOrWhiteSpace(httpContext?.HttpContext?.Request?.Headers?["Authorization"].ToString()))
+                httpClient.DefaultRequestHeaders.Add("Authorization", httpContext.HttpContext.Request.Headers["Authorization"].ToString());
             httpClient.DefaultRequestHeaders.Add("api-key", configs.ApiKey);
             
             if (!string.IsNullOrWhiteSpace(configs.Apim.Endpoint))
