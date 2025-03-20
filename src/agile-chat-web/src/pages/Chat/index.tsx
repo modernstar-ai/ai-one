@@ -16,6 +16,7 @@ import { Assistant } from '@/types/Assistant';
 import { fetchAssistantById } from '@/services/assistantservice';
 import useStreamStore from '@/stores/stream-store';
 import { createParser, EventSourceMessage } from 'eventsource-parser';
+import { useSettingsStore } from '@/stores/settings-store';
 
 const ChatPage = () => {
   const { threadId } = useParams();
@@ -35,6 +36,7 @@ const ChatPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const userInputRef = useRef<HTMLTextAreaElement>(null);
+  const { settings } = useSettingsStore();
 
   useEffect(() => {
     setError(null);
@@ -201,7 +203,9 @@ const ChatPage = () => {
             <Button onClick={handleSendMessage} disabled={isSending} aria-label="Send Chat" accessKey="j">
               {isSending ? 'Sending...' : 'Send'}
             </Button>
-            <p className="text-xs mx-auto">AI generated text can have mistakes. Check important info.</p>
+            <p className="text-xs mx-auto">
+              {(settings?.aiDisclaimer && settings.aiDisclaimer != '') ? settings.aiDisclaimer : 'AI generated text can have mistakes. Check important info.'}
+              </p>
           </div>
         </div>
       </div>

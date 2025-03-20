@@ -1,4 +1,4 @@
-﻿using Agile.Chat.Application.Files.Services;
+using Agile.Chat.Application.Files.Services;
 using Agile.Chat.Application.Files.Utils;
 using Agile.Chat.Application.Indexes.Services;
 using Agile.Chat.Domain.Files.Aggregates;
