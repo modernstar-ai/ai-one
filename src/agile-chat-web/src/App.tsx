@@ -13,38 +13,44 @@ import { useSettingsStore } from '@/stores/settings-store';
 
 function App() {
   const isAuthenticated = useIsAuthenticated();
+  const { settings } = useSettingsStore();
+
   useEffect(() => {
     if (isAuthenticated) {
       pca.initialize().then(() => {
         getUserPermissions();
       });
     }
-    getSettings();
-    if (settings?.faviconUrl) {
-      updateFavicon(settings.faviconUrl);
-    }
-    if (settings?.appName) {
-      updateAppTitle(settings.appName);
-    }
   }, [isAuthenticated]);
 
-  const { settings } = useSettingsStore();
+  useEffect(() => {
+    if (!settings) {
+      getSettings();
+      return;
+    }
+
+    if (settings.faviconUrl && settings.faviconUrl !== '') {
+      updateFavicon(settings.faviconUrl);
+    }
+    if (settings.appName && settings.appName !== '') {
+      updateAppTitle(settings.appName);
+    }
+  }, [settings]);
 
   // Function to update favicon
   const updateFavicon = (faviconUrl: string) => {
-    const link = document.getElementById("faviconLink") as HTMLLinkElement;
+    const link = document.getElementById('faviconLink') as HTMLLinkElement;
     if (link) {
       link.href = faviconUrl;
-    } 
+    }
   };
 
   const updateAppTitle = (appTitle: string) => {
-    const title = document.getElementById("appTitle") as HTMLLinkElement;
+    const title = document.getElementById('appTitle') as HTMLLinkElement;
     if (title) {
       title.innerHTML = appTitle;
-    } 
+    }
   };
-  
 
   return (
     <>
