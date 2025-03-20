@@ -75,13 +75,21 @@ public class AzureAiSearch(SearchIndexClient indexClient, ILogger<AzureAiSearch>
         
         var searchClient = indexClient.GetSearchClient(indexName);
 
-        var batch = documents.Select(document => new IndexDocumentsAction<AzureSearchDocument>(
-            IndexActionType.Upload, document)
-        ).ToList();
-
-        var batchRequest = IndexDocumentsBatch.Create([..batch]);
-        await searchClient.IndexDocumentsAsync(batchRequest);
-
+        int skip = 0;
+        int take = 100;
+        
+        while (true)
+        {
+            var batch = documents.Skip(skip).Take(take).Select(document => new IndexDocumentsAction<AzureSearchDocument>(
+                IndexActionType.Upload, document)
+            ).ToList();
+            if (batch.Count == 0) break;
+            
+            var batchRequest = IndexDocumentsBatch.Create([..batch]);
+            await searchClient.IndexDocumentsAsync(batchRequest);
+            skip += take;
+        }
+        
         logger.LogInformation("Added {documentsCount} to index {IndexName}.", documents.Count, indexName);
     }
 

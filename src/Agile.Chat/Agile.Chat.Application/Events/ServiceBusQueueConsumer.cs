@@ -44,6 +44,8 @@ public class ServiceBusQueueConsumer : BackgroundService
     
     private async Task MessageHandler(ProcessMessageEventArgs args)
     {
+        using var cts = new CancellationTokenSource();
+        var autoRenewTask = AutoRenewLockAsync(args, cts.Token);
         try
         {
             var body = await JsonNode.ParseAsync(args.Message.Body.ToStream());
@@ -66,10 +68,38 @@ public class ServiceBusQueueConsumer : BackgroundService
         {
             _logger.LogError(ex, "Error processing queue message");
             // In case of error, abandon the message to retry later
+            await cts.CancelAsync();
+            await autoRenewTask;
             await args.AbandonMessageAsync(args.Message);
+            
+        }
+        finally
+        {
+            // Stop the auto-renewal loop
+            await cts.CancelAsync();
+            await autoRenewTask;
         }
     }
-    
+
+    private async Task AutoRenewLockAsync(ProcessMessageEventArgs args, CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                // Delay should be less than the lock duration
+                await Task.Delay(TimeSpan.FromSeconds(60), cancellationToken);
+                await args.RenewMessageLockAsync(args.Message, cancellationToken);
+                _logger.LogInformation("Lock on queue item renewed successfully. New date of Expiry: {Date}", args.Message.ExpiresAt);
+            }
+        }
+        catch (TaskCanceledException) { } // Expected when cancellationToken is cancelled
+        catch (Exception ex)
+        {
+            _logger.LogInformation($"Error during lock renewal: {ex.Message}");
+        }
+    }
+
     private async Task<IResult> ProcessMessageAsync(JsonNode body)
     {
         var (indexName, folderName) = EventGridHelpers.GetIndexAndFolderName(body);
