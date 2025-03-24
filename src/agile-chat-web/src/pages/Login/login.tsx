@@ -5,10 +5,12 @@ import { InteractionStatus } from '@azure/msal-browser';
 import { useIsAuthenticated, useMsal } from '@azure/msal-react';
 import { Loader2Icon } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
+import { useSettingsStore } from '@/stores/settings-store';
 
 const LoginPage = () => {
   const { instance, inProgress } = useMsal();
   const loggedIn = useIsAuthenticated();
+  const { settings } = useSettingsStore();
 
   if (inProgress === InteractionStatus.Startup || inProgress === InteractionStatus.Logout) {
     return (
@@ -27,7 +29,7 @@ const LoginPage = () => {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">
-            <span className="text-primary">Agile Chat</span>
+            <span className="text-primary">{(settings?.appName && settings.appName != '') ? settings.appName : 'Agile Chat'}</span>
           </CardTitle>
           <CardDescription>Login in with your Microsoft 365 account</CardDescription>
         </CardHeader>

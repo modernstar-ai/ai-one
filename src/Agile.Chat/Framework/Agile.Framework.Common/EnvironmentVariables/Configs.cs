@@ -22,4 +22,5 @@ public static class Configs
     public static CosmosDbConfig CosmosDb => config.GetSection("CosmosDb").Get<CosmosDbConfig>()! ?? throw new NullReferenceException("CosmosDb is null");
     public static AuditConfig Audit => config.GetSection("Audit").Get<AuditConfig>()! ?? throw new NullReferenceException("Audit is null");
     public static List<string> AdminEmailAddresses => config.GetSection("AdminEmailAddresses").Get<List<string>>()!;
+    public static AppSettingsConfig AppSettings => config.GetSection("AppSettings").Get<AppSettingsConfig>()! ?? new AppSettingsConfig();
 }
