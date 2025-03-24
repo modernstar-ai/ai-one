@@ -24,6 +24,7 @@ function App() {
   }, [isAuthenticated]);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     if (!settings) {
       getSettings();
       return;
@@ -35,7 +36,7 @@ function App() {
     if (settings.appName && settings.appName !== '') {
       updateAppTitle(settings.appName);
     }
-  }, [settings]);
+  }, [isAuthenticated, settings]);
 
   // Function to update favicon
   const updateFavicon = (faviconUrl: string) => {
