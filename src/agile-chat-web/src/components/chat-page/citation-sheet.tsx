@@ -66,7 +66,7 @@ export function CitationSheet(props: CitationSheetProps) {
             <Input
               readOnly={true}
               id="name"
-              value={new URL(citation.url).pathname.replace(/\/index-content\/[^/]+\//, '')}
+              value={decodeURI(new URL(citation.url).pathname).replace(/\/index-content\/[^/]+\//, '')}
               className=""
             />
             <Button
@@ -74,7 +74,9 @@ export function CitationSheet(props: CitationSheetProps) {
               variant={'outline'}
               title="Copy"
               onClick={() => {
-                navigator.clipboard.writeText(new URL(citation.url).pathname.replace(/\/index-content\/[^/]+\//, ''));
+                navigator.clipboard.writeText(
+                  decodeURI(new URL(citation.url).pathname).replace(/\/index-content\/[^/]+\//, '')
+                );
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1000);
               }}>
