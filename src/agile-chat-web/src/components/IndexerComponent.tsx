@@ -23,6 +23,7 @@ import { PermissionHandler } from '@/authentication/permission-handler/permissio
 import { UserRole } from '@/authentication/user-roles';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { EditIndexDialog } from '@/pages/Indexes/Edit/EditIndex';
+import { Input } from './ui/input';
 
 const IndexerComponent: React.FC = () => {
   const { indexes, indexesLoading, refreshIndexes } = useIndexes();
@@ -30,6 +31,7 @@ const IndexerComponent: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [indexEditing, setIndexEditing] = useState<Index | undefined>(undefined);
   const navigate = useNavigate();
+  const [deleteText, setDeleteText] = useState<string>('');
 
   if (indexesLoading) {
     return (
@@ -78,6 +80,7 @@ const IndexerComponent: React.FC = () => {
       } finally {
         setIsDeleting(false);
         setIndexToDelete(null);
+        setDeleteText('');
       }
     }
   };
@@ -155,10 +158,20 @@ const IndexerComponent: React.FC = () => {
                                   <AlertDialogDescription>
                                     This action cannot be undone. This will permanently delete the container "
                                     {indexToDelete?.name}" and remove it from our servers.
+                                    <p className="mt-2">
+                                      Please Type "<strong>delete {indexToDelete?.name}</strong>" below to confirm:
+                                    </p>
+                                    <Input
+                                      className="mt-2"
+                                      autoFocus={true}
+                                      onChange={(e) => setDeleteText(e.target.value)}
+                                    />
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter className="flex-col items-stretch sm:flex-row sm:justify-start sm:space-x-2">
-                                  <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
+                                  <AlertDialogAction
+                                    onClick={confirmDelete}
+                                    disabled={deleteText !== `delete ${indexToDelete?.name}` || isDeleting}>
                                     {isDeleting ? (
                                       <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
