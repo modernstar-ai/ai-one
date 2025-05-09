@@ -31,7 +31,15 @@ public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) 
         if(!await blob.ExistsAsync())
             throw new Exception("File doesn't exist");
 
-        var uri = blob.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(1));
+        var sasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = Constants.BlobContainerName,
+            ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(1),
+            ContentDisposition = "inline" // Set this to override on download,
+        };
+        sasBuilder.SetPermissions(BlobContainerSasPermissions.Read);
+        
+        var uri = blob.GenerateSasUri(sasBuilder);
         return uri.ToString();
     }
     
