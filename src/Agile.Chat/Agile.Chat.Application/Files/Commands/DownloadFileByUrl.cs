@@ -18,7 +18,8 @@ public static class DownloadFileByUrl
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             var (stream, details) = await blobStorage.DownloadAsync(request.Url);
-            return Results.File(stream, FileHelpers.GetContentType(request.Url), Path.GetFileName(request.Url));
+            var result = Results.File(stream, FileHelpers.GetContentType(request.Url));
+            return result;
         }
     }
 

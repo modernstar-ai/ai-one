@@ -87,6 +87,13 @@ export const downloadFile = async (blobUrl: string): Promise<AxiosResponse> => {
   }
 };
 
+export const getDownloadFileUrl = (blobUrl: string): string => {
+  const url = new URL(getApiUrl('download'));
+  url.searchParams.append('url', blobUrl);
+
+  return url.toString();
+};
+
 export const GenerateSharedLinkByUrl = async (blobUrl: string): Promise<string> => {
   try {
     const url = getApiUrl('share');

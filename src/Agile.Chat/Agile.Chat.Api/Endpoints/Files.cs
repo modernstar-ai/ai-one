@@ -21,12 +21,18 @@ public class Files() : CarterModule("/api")
             .IncludeInOpenApi()
             .WithTags(nameof(Files))
             .DisableAntiforgery();
+        
+        var filesUnauthed = app
+            .MapGroup(nameof(Files))
+            .IncludeInOpenApi()
+            .WithTags(nameof(Files))
+            .DisableAntiforgery();
 
         //GET
         files.MapGet("/", GetFiles);
         //POST
         files.MapPost("/", UploadFile);
-        files.MapPost("download", DownloadFile);
+        filesUnauthed.MapGet("download", DownloadFile);
         files.MapPost("share", GenerateSharedLinkByUrl);
         //PUT
         files.MapPut("/", UpdateFile);
@@ -52,9 +58,9 @@ public class Files() : CarterModule("/api")
         return await mediator.Send(command);
     }
 
-    private async Task<IResult> DownloadFile([FromServices] IMediator mediator, [FromBody] FileUrlDto dto)
+    private async Task<IResult> DownloadFile([FromServices] IMediator mediator, [FromQuery] string url)
     {
-        var command = new DownloadFileByUrl.Command(dto.Url);
+        var command = new DownloadFileByUrl.Command(url);
         return await mediator.Send(command);
     }
 
