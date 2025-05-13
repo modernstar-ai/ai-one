@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog';
-import { GenerateSharedLinkByUrl } from '@/services/files-service';
+import { getDownloadFileUrl } from '@/services/files-service';
 import { Citation } from '@/types/ChatThread';
 import Markdoc from '@markdoc/markdoc';
 import axios from 'axios';
@@ -23,7 +23,7 @@ export function FileViewingDialog(props: FileViewingDialogProps) {
   const { citation, children } = props;
   const extension = citation.url.split('.').pop()!;
 
-  const [file, setFile] = useState<string | undefined>(undefined);
+  const [file] = useState<string | undefined>(getDownloadFileUrl(citation.url));
   const [fileContent, setFileContent] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -35,13 +35,6 @@ export function FileViewingDialog(props: FileViewingDialogProps) {
       getMarkdownFromText().then((md) => setFileContent(md));
     }
   }, [extension, file]);
-
-  const loadFile = async (open: boolean) => {
-    if (!file && open) {
-      const response = await GenerateSharedLinkByUrl(citation.url);
-      setFile(response);
-    }
-  };
 
   const getText = async () => {
     const text = await axios.get<string>(file!, { responseType: 'text' });
@@ -57,7 +50,7 @@ export function FileViewingDialog(props: FileViewingDialogProps) {
   };
 
   return (
-    <Dialog onOpenChange={loadFile}>
+    <Dialog>
       <DialogTrigger asChild>
         {children ? (
           <div>{children}</div>
