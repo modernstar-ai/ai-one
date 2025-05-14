@@ -26,7 +26,7 @@ const formSchema = z.object({
     }),
   description: z.string(),
   chunkSize: z.number().min(2000).max(5000).default(2300),
-  chunkOverlap: z.number().min(25).max(50).default(25),
+  chunkOverlap: z.number().min(5).max(50).default(25),
   accessControl: PermissionsAccessControlSchema
 });
 type FormValues = z.infer<typeof formSchema>;
@@ -145,7 +145,7 @@ export default function IndexForm() {
                           {...field}
                           onChange={(val) => field.onChange(+val.target.value)}
                           type="number"
-                          min={25}
+                          min={5}
                           max={50}
                         />
                       </FormControl>
