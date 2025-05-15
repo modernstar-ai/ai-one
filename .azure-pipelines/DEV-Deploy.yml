@@ -14,12 +14,12 @@ parameters:
 - name: apiWebAppName
   displayName: 'Enter the name of the Azure Web Api'
   type: string
-  default: 'agile-aione-dev-apiapp'
+  default: 'ag-aione-dev-apiapp'
 
 - name: uiWebAppName
   displayName: 'Azure Web App Name'
   type: string
-  default: 'agile-aione-dev-webapp'
+  default: 'ag-aione-dev-webapp'
 
 variables:
   agileChatApiSrc: './src/Agile.Chat/Agile.Chat.Api'

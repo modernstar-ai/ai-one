@@ -23,7 +23,7 @@ parameters:
 
 - name: project_name
   type: string
-  default: 'agile-aione'
+  default: 'ag-aione'
   displayName: 'Enter the Name of the project'
 
 - name: azure_location
