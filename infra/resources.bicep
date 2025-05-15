@@ -114,7 +114,7 @@ var EventGridSystemTopicSubName = toLower('${resourcePrefix}-folders-blobs-liste
 @description('Event Grid Name')
 var eventGridName = toLower('${resourcePrefix}-blob-eg')
 
-var deployAzueOpenAi = (!empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride)) || (empty(apimAiEndpointOverride) && !empty(apimAiEmbeddingsEndpointOverride)) ||  (empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride))
+var deployAzueOpenAi = (!empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride)) || (empty(apimAiEndpointOverride) && !empty(apimAiEmbeddingsEndpointOverride)) || (empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride))
 
 /* **************************************************** */
 
@@ -314,7 +314,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
               }
             ]
           : [],
-          deployAzueOpenAi
+        deployAzueOpenAi
           ? [
               {
                 name: 'AzureOpenAi__Endpoint'
@@ -510,7 +510,7 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (dep
   }
 }
 
-resource gptllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01'  = if (empty(apimAiEndpointOverride)) {
+resource gptllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = if (empty(apimAiEndpointOverride)) {
   parent: azureopenai
   name: chatGptDeploymentName
   properties: {
@@ -527,8 +527,9 @@ resource gptllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023
   }
 }
 
-resource embeddingsllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01'  = if (empty(apimAiEmbeddingsEndpointOverride)) {
+resource embeddingsllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = if (empty(apimAiEmbeddingsEndpointOverride)) {
   parent: azureopenai
+  dependsOn: [gptllmdeployment]
   name: embeddingDeploymentName
   properties: {
     model: {
