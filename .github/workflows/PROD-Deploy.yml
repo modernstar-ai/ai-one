@@ -16,11 +16,11 @@ on:
       apiWebAppName:
         description: 'Enter the name of the Azure Web Api'
         type: string
-        default: 'agile-aione-prod-apiapp'
+        default: 'ag-aione-prod-apiapp'
       uiWebAppName:
         description: 'Azure Web App Name'
         type: string
-        default: 'agile-aione-prod-webapp'
+        default: 'ag-aione-prod-webapp'
 
 env:
   AGILE_CHAT_API_SRC: './src/Agile.Chat/Agile.Chat.Api'
