@@ -14,12 +14,5 @@ public class ChatContainer
     public IAppKernel AppKernel { get; set; }
     public IAzureAiSearch AzureAiSearch { get; set; }
     public List<Message> Messages { get; set; } = new();
-    public List<ChatContainerCitation> Citations { get; set; } = new();
-}
-
-public class ChatContainerCitation
-{
-    public string Content { get; set; }
-    public string Name { get; set; }
-    public string Url { get; set; }
+    public List<AzureSearchDocument> Citations { get; set; } = new();
 }

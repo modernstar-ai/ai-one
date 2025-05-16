@@ -5,6 +5,7 @@ using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.Audits.Services;
 using Agile.Chat.Application.ChatCompletions.Dtos;
 using Agile.Chat.Application.ChatCompletions.Models;
+using Agile.Chat.Application.ChatCompletions.Plugins;
 using Agile.Chat.Application.ChatCompletions.Utils;
 using Agile.Chat.Application.ChatThreads.Services;
 using Agile.Chat.Domain.Assistants.ValueObjects;
@@ -14,10 +15,13 @@ using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Ai;
 using Agile.Framework.AzureAiSearch;
+using Agile.Framework.AzureAiSearch.Models;
 using FluentValidation;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
@@ -32,18 +36,18 @@ public static class Chat
 {
     public record Command(string UserPrompt, string ThreadId) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, 
-        IAppKernel appKernel, 
-        IHttpContextAccessor contextAccessor, 
-        IAssistantService assistantService, 
-        IChatThreadService chatThreadService, 
+    public class Handler(ILogger<Handler> logger,
+        IAppKernel appKernel,
+        IHttpContextAccessor contextAccessor,
+        IAssistantService assistantService,
+        IChatThreadService chatThreadService,
         IChatMessageService chatMessageService,
         IAzureAiSearch azureAiSearch,
         IAuditService<Message> chatMessageAuditService,
         IAuditService<ChatThread> chatThreadAuditService) : IRequestHandler<Command, IResult>
     {
         private ChatContainer _chatContainer;
-        
+
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             //Fetch what's needed to do chatting
@@ -62,7 +66,14 @@ public static class Chat
                 Messages = chatMessages,
                 AppKernel = appKernel
             };
-            
+
+            var hasIndex = !string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName);
+            var sp = new ServiceCollection()
+                .AddSingleton<ChatContainer>(_ => _chatContainer)
+                .BuildServiceProvider();
+            if (hasIndex)
+                appKernel.AddPlugin<AzureAiSearchRag>(sp);
+
             //Execute Chat Stream
             var chatSettings = ChatUtils.ParseAzureOpenAiPromptExecutionSettings(assistant, thread);
             IResult assistantResult = assistant?.Type switch
@@ -78,11 +89,11 @@ public static class Chat
                 await SaveAuditLogsAsync(userMessage, assistantMessage, citationMessages);
                 return badRequest;
             }
-            
+
             //Get the full response and metadata
-            var (assistantResponse, assistantMetadata) = GetAssistantResponseAndMetadata(assistant?.Type, assistantResult);
+            var (assistantResponse, assistantMetadata) = GetAssistantResponseAndMetadata(assistant?.Type, assistantResult, _chatContainer.Citations);
             await SaveUserAssistantCitationsMessagesAsync(thread.Id, request.UserPrompt, assistantResponse, assistantMetadata);
-            
+
             //If its a new chat, update the threads name, otherwise just update the last modified date
             thread.Update(chatHistory.Count <= 1 ? TruncateUserPrompt(request.UserPrompt) : thread.Name, thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions);
             await chatThreadService.UpdateItemByIdAsync(thread.Id, thread, ChatType.Thread.ToString());
@@ -93,15 +104,15 @@ public static class Chat
                                                                     ? string.Empty
                                                                     : "...");
 
-        private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(AssistantType? assistantType, IResult result)
+        private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(AssistantType? assistantType, IResult result, List<AzureSearchDocument> documents)
         {
             var assistantResponse = string.Empty;
             var metadata = new Dictionary<MetadataType, object>();
-            
+
             switch (assistantType)
             {
                 case AssistantType.Chat or null:
-                    assistantResponse = (result as Ok<string>)!.Value ?? string.Empty;
+                    assistantResponse = (result as Ok<string>)!.Value;
                     break;
                 case AssistantType.Search:
                     var searchResponse = (result as Ok<SearchResponseDto>)!.Value;
@@ -110,20 +121,25 @@ public static class Chat
                     break;
             }
 
-            var citations = new List<ChatContainerCitation>();
-            var docIndex = 1;
-            for (var i = 0; i < _chatContainer.Citations.Count; i++)
+            if (documents.Count > 0)
             {
-                if (!assistantResponse.Contains($"[doc{i + 1}]")) continue;
+                metadata.Add(MetadataType.DocumentsRetrieved, documents.Adapt<List<Citation>>());
 
-                citations.Add(_chatContainer.Citations[i]);
-                assistantResponse = assistantResponse.Replace($"[doc{i + 1}]", $"⁽{ToSuperscript(docIndex)}⁾");
-                docIndex++;
+                var citations = documents
+                    .Where(x => assistantResponse?.Contains("⁽" + ToSuperscript(x.ReferenceNumber) + "⁾") ?? false).ToList();
+
+                if (citations.Count > 0)
+                {
+                    metadata.Add(MetadataType.Citations, citations.Adapt<List<Citation>>());
+
+                    for (var i = 0; i < citations.Count; i++)
+                    {
+                        var citation = citations[i];
+                        assistantResponse = assistantResponse.Replace("⁽" + ToSuperscript(citation.ReferenceNumber) + "⁾", $"⁽{ToSuperscript(i + 1)}⁾");
+                    }
+                }
             }
-            
-            if (citations.Count > 0)
-                metadata.Add(MetadataType.Citations, citations);
-            
+
             return (assistantResponse!, metadata);
         }
 
@@ -161,20 +177,21 @@ public static class Chat
                 {
                     { "assistantSystemPrompt", assistantSystemPrompt },
                     { "userPrompt", userPrompt },
-                    { "chatHistory", chatHistory.TakeLast(14).ToList() }
+                    { "chatHistory", chatHistory.TakeLast(14).ToList() },
+                    { "limitKnowledge", assistantFilterOptions?.LimitKnowledgeToIndex ?? false}
                 });
 
             var assistantFullResponse = await ChatUtils.StreamAndGetAssistantResponseAsync(contextAccessor.HttpContext!, indexStream!, _chatContainer);
             return assistantFullResponse;
         }
-        
+
         private async Task<IResult> GetSearchResultAsync(string userPrompt, string? assistantSystemPrompt, AssistantFilterOptions? assistantFilterOptions, AzureOpenAIPromptExecutionSettings chatSettings)
         {
             try
             {
 #pragma warning disable SKEXP0010
                 chatSettings.ResponseFormat = "json_object";
-                
+
                 var aiResponse = await appKernel.GetPromptFileChat(chatSettings,
                     Constants.ChatCompletionsPromptsPath,
                     Constants.Prompts.ChatWithSearch,
@@ -204,8 +221,8 @@ public static class Chat
 
             // Save messages 
             await Task.WhenAll([
-                chatMessageService.AddItemAsync(userMessage), 
-                chatMessageService.AddItemAsync(assistantMessage), 
+                chatMessageService.AddItemAsync(userMessage),
+                chatMessageService.AddItemAsync(assistantMessage),
                 ..citationMessages.Select(m => chatMessageService.AddItemAsync(m))]);
 
             // Save audit logs
@@ -223,27 +240,12 @@ public static class Chat
             var userMessage = Message.CreateUser(threadId, userPrompt);
             var assistantMessage = Message.CreateAssistant(threadId, assistantResponse);
             var citationMessages = new List<Message>();
-            
+
             if (assistantMetadata != null)
             {
                 foreach (var (key, value) in assistantMetadata)
                 {
-                    if (key == MetadataType.Citations)
-                    {
-                        //Add only the citation message ids to the assistant message metadata for joining later
-                        var citations = value as List<ChatContainerCitation>;
-                        citationMessages = citations!.Select(c => Message.CreateCitation(threadId, c.Content)).ToList();
-                        assistantMessage.AddMetadata(key, citationMessages.Select((c, index) => new Citation
-                        {
-                            Id = c.Id,
-                            Name = citations![index].Name,
-                            Url = citations![index].Url
-                        }).ToList());
-                    }
-                    else
-                    {
-                        assistantMessage.AddMetadata(key, value);
-                    }
+                    assistantMessage.AddMetadata(key, value);
                 }
             }
 
@@ -278,7 +280,7 @@ public static class Chat
         {
             var thread = await chatThreadService.GetItemByIdAsync(threadId, ChatType.Thread.ToString());
             if (thread is null) return false;
-            
+
             var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;
             return thread.UserId.Equals(username, StringComparison.InvariantCultureIgnoreCase);
         }

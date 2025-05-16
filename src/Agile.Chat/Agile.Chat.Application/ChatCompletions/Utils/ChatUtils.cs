@@ -24,15 +24,15 @@ public static class ChatUtils
     public static async Task WriteToResponseStreamAsync(HttpContext context, ResponseType responseType, object payload)
     {
         var bytesEvent = Encoding.UTF8.GetBytes($"event: {responseType.ToString()}\n");
-        var data = responseType == ResponseType.Chat ? 
-            JsonSerializer.Serialize(new {content = payload}) : 
-            JsonSerializer.Serialize(payload, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase});
+        var data = responseType == ResponseType.Chat ?
+            JsonSerializer.Serialize(new { content = payload }) :
+            JsonSerializer.Serialize(payload, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
         var bytesData = Encoding.UTF8.GetBytes($"data: {data}\n\n");
         await context.Response.Body.WriteAsync(bytesEvent);
         await context.Response.Body.WriteAsync(bytesData);
         await context.Response.Body.FlushAsync();
     }
-    
+
     public static async Task<IResult> StreamAndGetAssistantResponseAsync(HttpContext context, IAsyncEnumerable<string> aiStreamChats)
     {
         var assistantFullResponse = new StringBuilder();
@@ -57,10 +57,10 @@ public static class ChatUtils
             Log.Logger.Error(exception, "Error while processing request. ");
             return TypedResults.BadRequest($"Bad Request Error: {exception.Message} {exception.GetRawResponse()?.Content}");
         }
-        
+
         return TypedResults.Ok(assistantFullResponse.ToString());
     }
-    
+
     public static async Task<IResult> StreamAndGetAssistantResponseAsync(HttpContext context, IAsyncEnumerable<StreamingKernelContent> aiStreamChats, ChatContainer chatContainer)
     {
         var assistantFullResponse = new StringBuilder();
@@ -68,19 +68,7 @@ public static class ChatUtils
         {
             await foreach (var tokens in aiStreamChats)
             {
-                var update = tokens.InnerContent as OpenAI.Chat.StreamingChatCompletionUpdate;
-#pragma warning disable AOAI001
-                var messageContext = update.GetMessageContext();
-                if (messageContext is { Citations.Count: > 0 })
-                {
-                    chatContainer.Citations.AddRange(messageContext.Citations.Select(c => new ChatContainerCitation
-                    {
-                        Name = c.Title,
-                        Url = c.Url,
-                        Content = c.Content
-                    }));
-                }
-                
+
                 await WriteToResponseStreamAsync(context, ResponseType.Chat, tokens.ToString());
                 assistantFullResponse.Append(tokens);
             }
@@ -98,16 +86,16 @@ public static class ChatUtils
             Log.Logger.Error(exception, "Error while processing request. ");
             return TypedResults.BadRequest($"Bad Request Error: {exception.Message} {exception.GetRawResponse()?.Content}");
         }
-        
+
         return TypedResults.Ok(assistantFullResponse.ToString());
     }
-    
+
     public static AzureOpenAIPromptExecutionSettings ParseAzureOpenAiPromptExecutionSettings(Assistant? assistant, ChatThread chatThread)
     {
         var options = new AzureOpenAIPromptExecutionSettings()
         {
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
 #pragma warning disable SKEXP0010
-            AzureChatDataSource = !string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName) ? GetAzureSearchDataSource(assistant, chatThread) : null,
             ChatSystemPrompt = string.IsNullOrWhiteSpace(chatThread.PromptOptions.SystemPrompt) ? null : chatThread.PromptOptions.SystemPrompt,
             Temperature = chatThread.PromptOptions.Temperature,
             TopP = chatThread.PromptOptions.TopP,
@@ -115,34 +103,5 @@ public static class ChatUtils
         };
         return options;
     }
-    
-#pragma warning disable AOAI001
-    private static AzureSearchChatDataSource GetAzureSearchDataSource(Assistant assistant, ChatThread chatThread)
-    {
-        return new AzureSearchChatDataSource
-        {
-            Endpoint = new Uri(Configs.AzureSearch.Endpoint),
-            Authentication = DataSourceAuthentication.FromApiKey(Configs.AzureSearch.ApiKey),
-            IndexName = assistant.FilterOptions.IndexName,
-            SemanticConfiguration = SearchConstants.SemanticConfigurationName,
-            Filter = new SearchFilterBuilder(assistant.FilterOptions.IndexName)
-                .AddFolders(assistant.FilterOptions.Folders)
-                .AddFolders(chatThread.FilterOptions.Folders)
-                .AddTags(assistant.FilterOptions.Tags)
-                .AddTags(chatThread.FilterOptions.Tags)
-                .Build(),
-            FieldMappings = new DataSourceFieldMappings()
-            {
-                ContentFieldNames = { nameof(AzureSearchDocument.Chunk) },
-                TitleFieldName = nameof(AzureSearchDocument.Name),
-                UrlFieldName = nameof(AzureSearchDocument.Url),
-                VectorFieldNames = { nameof(AzureSearchDocument.ChunkVector), nameof(AzureSearchDocument.NameVector) },
-            },
-            QueryType = DataSourceQueryType.VectorSemanticHybrid,
-            InScope = assistant.FilterOptions.LimitKnowledgeToIndex,
-            VectorizationSource = DataSourceVectorizer.FromDeploymentName(Configs.AzureOpenAi.EmbeddingsDeploymentName),
-            Strictness = chatThread.FilterOptions.Strictness,
-            TopNDocuments = chatThread.FilterOptions.DocumentLimit,
-        };
-    }
+
 }
