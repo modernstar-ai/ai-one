@@ -22,26 +22,32 @@ public class AzureAiSearchRag(ChatContainer container)
             throw new Exception("Rate limit exceeded");
         }
 
-        var documents = await container.AzureAiSearch.SearchAsync(container.Assistant!.FilterOptions.IndexName,
+        var result = await container.AzureAiSearch.SearchAsync(container.Assistant!.FilterOptions.IndexName,
             new AiSearchOptions(query, embedding)
             {
                 DocumentLimit = container.Thread.FilterOptions.DocumentLimit,
                 Strictness = container.Thread.FilterOptions.Strictness
             });
 
-        UpdateReferenceNumbers(documents);
+        var documents = UpdateReferenceNumbers(result);
 
         container.Citations.AddRange(documents);
         return documents.Select(x => x.ToString()).ToList();
     }
 
-    private void UpdateReferenceNumbers(List<AzureSearchDocument> documents)
+    private List<AzureSearchDocumentExt> UpdateReferenceNumbers(List<AzureSearchDocument> documents)
     {
         var count = container.Citations.Count;
-        documents.ForEach(document =>
+        var result = new List<AzureSearchDocumentExt>();
+
+        foreach (var item in documents)
         {
-            document.ReferenceNumber = count + 1;
+            var doc = new AzureSearchDocumentExt(item.Id, item.FileId, item.Chunk, item.Name, item.Url, item.Tags, item.ChunkVector, item.NameVector);
+            doc.ReferenceNumber = count + 1;
             count++;
-        });
+        }
+
+        return result;
+
     }
 }
