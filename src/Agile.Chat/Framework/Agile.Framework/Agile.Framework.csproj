@@ -17,10 +17,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
-      <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.4" />
-      <PackageReference Include="Serilog.Sinks.ApplicationInsights" Version="4.0.0" />
-      <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+      <PackageReference Include="Serilog.Extensions.Hosting" />
+      <PackageReference Include="Serilog.Settings.Configuration" />
+      <PackageReference Include="Serilog.Sinks.ApplicationInsights" />
+      <PackageReference Include="Serilog.Sinks.Console" />
     </ItemGroup>
 
 </Project>

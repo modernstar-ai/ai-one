@@ -1,5 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agile.Chat.Api", "Agile.Chat.Api\Agile.Chat.Api.csproj", "{FE9E7346-8BBF-45F1-8121-309882BE3B26}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agile.Chat.Application", "Agile.Chat.Application\Agile.Chat.Application.csproj", "{8CC6380E-6D2C-4982-9A0B-CE648490F845}"
@@ -80,6 +83,9 @@ Global
 		{E49AD509-5987-4717-A119-12117D0F4484}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E49AD509-5987-4717-A119-12117D0F4484}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E49AD509-5987-4717-A119-12117D0F4484}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{1672E1EC-F0DE-44F3-93CE-51DD0D4B76EE} = {93608BB2-A304-41B6-A758-8AC30CA002FC}
