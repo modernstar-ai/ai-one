@@ -67,7 +67,7 @@ param searchServiceSkuName string = 'standard'
 param storageServiceSku object
 param storageServiceImageContainerName string
 
-var openai_name = toLower('${resourcePrefix}-aillm')
+var openai_name = toLower('${resourcePrefix}v2-aillm')
 //var openai_dalle_name = toLower('${resourcePrefix}-aidalle')
 
 // @description('Cosmos DB Chat threads container name')
