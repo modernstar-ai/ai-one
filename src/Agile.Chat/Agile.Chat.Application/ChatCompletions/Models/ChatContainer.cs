@@ -14,5 +14,5 @@ public class ChatContainer
     public IAppKernel AppKernel { get; set; }
     public IAzureAiSearch AzureAiSearch { get; set; }
     public List<Message> Messages { get; set; } = new();
-    public List<AzureSearchDocumentExt> Citations { get; set; } = new();
+    public List<ChatContainerCitation> Citations { get; set; } = new();
 }

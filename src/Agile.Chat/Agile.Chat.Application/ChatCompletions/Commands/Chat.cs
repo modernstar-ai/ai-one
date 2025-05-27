@@ -126,10 +126,8 @@ public static class Chat
                     break;
             }
 
-            if (_chatContainer.Citations.Count > 0)
+            if (_chatContainer.Assistant?.RagType == RagType.Plugin && _chatContainer.Citations.Count > 0)
             {
-                metadata.Add(MetadataType.DocumentsRetrieved, _chatContainer.Citations.Adapt<List<Citation>>());
-
                 var citations = _chatContainer.Citations
                     .Where(x => assistantResponse?.Contains("⁽" + ToSuperscript(x.ReferenceNumber) + "⁾") ?? false).ToList();
 
@@ -144,7 +142,45 @@ public static class Chat
                     }
                 }
             }
+            else if (_chatContainer.Assistant?.RagType == RagType.AzureSearchChatDataSource)
+            {
+                var citations = new List<ChatContainerCitation>();
+                var docIndex = 1;
+                for (var i = 0; i < _chatContainer.Citations.Count; i++)
+                {
+                    if (!assistantResponse.Contains($"[doc{i + 1}]")) continue;
 
+                    citations.Add(_chatContainer.Citations[i]);
+                    assistantResponse = assistantResponse.Replace($"[doc{i + 1}]", $"⁽{ToSuperscript(docIndex)}⁾");
+                    docIndex++;
+                }
+            
+                if (citations.Count > 0)
+                    metadata.Add(MetadataType.Citations, citations);
+            }
+
+            return (assistantResponse!, metadata);
+        }
+        
+        private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(AssistantType? assistantType, IResult result)
+        {
+            var assistantResponse = string.Empty;
+            var metadata = new Dictionary<MetadataType, object>();
+            
+            switch (assistantType)
+            {
+                case AssistantType.Chat or null:
+                    assistantResponse = (result as Ok<string>)!.Value ?? string.Empty;
+                    break;
+                case AssistantType.Search:
+                    var searchResponse = (result as Ok<SearchResponseDto>)!.Value;
+                    assistantResponse = searchResponse!.AssistantResponse;
+                    metadata.Add(MetadataType.SearchProcess, searchResponse.SearchProcess);
+                    break;
+            }
+
+
+            
             return (assistantResponse!, metadata);
         }
 
