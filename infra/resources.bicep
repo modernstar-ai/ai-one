@@ -175,7 +175,7 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
+resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
   name: apiapp_name
   location: location
   tags: union(tags, { 'azd-service-name': 'agilechat-api' })
@@ -183,6 +183,7 @@ resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
     serverFarmId: appServicePlan.id
     httpsOnly: true
     clientAffinityEnabled: false
+    keyVaultReferenceIdentity: null
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true
