@@ -1,46 +1,46 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-    <ItemGroup>
-      <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.18.4" />
-      <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
-      <PackageReference Include="Mapster" Version="7.4.0" />
-      <PackageReference Include="MediatR" Version="12.4.1" />
-      <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
-      <PackageReference Include="Polly" Version="8.5.2" />
-    </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.18.4" />
+		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+		<PackageReference Include="Mapster" Version="7.4.0" />
+		<PackageReference Include="MediatR" Version="12.4.1" />
+		<PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+		<PackageReference Include="Polly" Version="8.5.2" />
+	</ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Agile.Chat.Domain\Agile.Chat.Domain.csproj" />
-      <ProjectReference Include="..\Framework\Agile.Framework.Ai\Agile.Framework.Ai.csproj" />
-      <ProjectReference Include="..\Framework\Agile.Framework.Authentication\Agile.Framework.Authentication.csproj" />
-      <ProjectReference Include="..\Framework\Agile.Framework.AzureAiSearch\Agile.Framework.AzureAiSearch.csproj" />
-      <ProjectReference Include="..\Framework\Agile.Framework.AzureDocumentIntelligence\Agile.Framework.AzureDocumentIntelligence.csproj" />
-      <ProjectReference Include="..\Framework\Agile.Framework.BlobStorage\Agile.Framework.BlobStorage.csproj" />
-      <ProjectReference Include="..\Framework\Agile.Framework.CosmosDb\Agile.Framework.CosmosDb.csproj" />
-      <ProjectReference Include="..\Framework\Agile.Framework.Mediator\Agile.Framework.Mediator.csproj" />
-      <ProjectReference Include="..\Framework\Agile.Framework\Agile.Framework.csproj" />
-    </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Agile.Chat.Domain\Agile.Chat.Domain.csproj" />
+		<ProjectReference Include="..\Framework\Agile.Framework.Ai\Agile.Framework.Ai.csproj" />
+		<ProjectReference Include="..\Framework\Agile.Framework.Authentication\Agile.Framework.Authentication.csproj" />
+		<ProjectReference Include="..\Framework\Agile.Framework.AzureAiSearch\Agile.Framework.AzureAiSearch.csproj" />
+		<ProjectReference Include="..\Framework\Agile.Framework.AzureDocumentIntelligence\Agile.Framework.AzureDocumentIntelligence.csproj" />
+		<ProjectReference Include="..\Framework\Agile.Framework.BlobStorage\Agile.Framework.BlobStorage.csproj" />
+		<ProjectReference Include="..\Framework\Agile.Framework.CosmosDb\Agile.Framework.CosmosDb.csproj" />
+		<ProjectReference Include="..\Framework\Agile.Framework.Mediator\Agile.Framework.Mediator.csproj" />
+		<ProjectReference Include="..\Framework\Agile.Framework\Agile.Framework.csproj" />
+	</ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Audits\Commands\" />
-      <Folder Include="ChatCompletions\Plugins\" />
-      <Folder Include="Tools\" />
-    </ItemGroup>
+	<ItemGroup>
+		<Folder Include="Audits\Commands\" />
+		<Folder Include="ChatCompletions\Plugins\" />
+		<Folder Include="Tools\" />
+	</ItemGroup>
 
-    <ItemGroup>
-      <None Update="ChatCompletions\Prompts\chatWithRag.prompt.yaml">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="ChatCompletions\Prompts\chatWithSearch.prompt.yaml">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
+	<ItemGroup>
+		<None Update="ChatCompletions\Prompts\chatWithRag.prompt.yaml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="ChatCompletions\Prompts\chatWithSearch.prompt.yaml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
 </Project>
