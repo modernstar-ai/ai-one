@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Agile.Chat.Application.ChatCompletions.Models;
 using Agile.Chat.Domain.Assistants.Aggregates;
+using Agile.Chat.Domain.Assistants.ValueObjects;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Framework.AzureAiSearch;
 using Agile.Framework.AzureAiSearch.AiSearchConstants;
@@ -89,19 +90,50 @@ public static class ChatUtils
 
         return TypedResults.Ok(assistantFullResponse.ToString());
     }
-
+    
     public static AzureOpenAIPromptExecutionSettings ParseAzureOpenAiPromptExecutionSettings(Assistant? assistant, ChatThread chatThread)
     {
         var options = new AzureOpenAIPromptExecutionSettings()
         {
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
 #pragma warning disable SKEXP0010
+            FunctionChoiceBehavior = assistant?.RagType == RagType.Plugin ? FunctionChoiceBehavior.Auto() : null,
+            AzureChatDataSource = assistant?.RagType == RagType.AzureSearchChatDataSource && !string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName) ? GetAzureSearchDataSource(assistant, chatThread) : null,
             ChatSystemPrompt = string.IsNullOrWhiteSpace(chatThread.PromptOptions.SystemPrompt) ? null : chatThread.PromptOptions.SystemPrompt,
             Temperature = chatThread.PromptOptions.Temperature,
             TopP = chatThread.PromptOptions.TopP,
             MaxTokens = chatThread.PromptOptions.MaxTokens
         };
         return options;
+    }
+    
+#pragma warning disable AOAI001
+    private static AzureSearchChatDataSource GetAzureSearchDataSource(Assistant assistant, ChatThread chatThread)
+    {
+        return new AzureSearchChatDataSource
+        {
+            Endpoint = new Uri(Configs.AzureSearch.Endpoint),
+            Authentication = DataSourceAuthentication.FromApiKey(Configs.AzureSearch.ApiKey),
+            IndexName = assistant.FilterOptions.IndexName,
+            SemanticConfiguration = SearchConstants.SemanticConfigurationName,
+            Filter = new SearchFilterBuilder(assistant.FilterOptions.IndexName)
+                .AddFolders(assistant.FilterOptions.Folders)
+                .AddFolders(chatThread.FilterOptions.Folders)
+                .AddTags(assistant.FilterOptions.Tags)
+                .AddTags(chatThread.FilterOptions.Tags)
+                .Build(),
+            FieldMappings = new DataSourceFieldMappings()
+            {
+                ContentFieldNames = { nameof(AzureSearchDocument.Chunk) },
+                TitleFieldName = nameof(AzureSearchDocument.Name),
+                UrlFieldName = nameof(AzureSearchDocument.Url),
+                VectorFieldNames = { nameof(AzureSearchDocument.ChunkVector), nameof(AzureSearchDocument.NameVector) },
+            },
+            QueryType = DataSourceQueryType.VectorSemanticHybrid,
+            InScope = assistant.FilterOptions.LimitKnowledgeToIndex,
+            VectorizationSource = DataSourceVectorizer.FromDeploymentName(Configs.AzureOpenAi.EmbeddingsDeploymentName),
+            Strictness = chatThread.FilterOptions.Strictness,
+            TopNDocuments = chatThread.FilterOptions.DocumentLimit,
+        };
     }
 
 }

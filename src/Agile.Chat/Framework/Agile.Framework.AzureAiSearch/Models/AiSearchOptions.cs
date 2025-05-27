@@ -4,7 +4,12 @@ using Azure.Search.Documents;
 
 namespace Agile.Framework.AzureAiSearch.Models;
 
-public class AiSearchOptions(string userPrompt, ReadOnlyMemory<float> vector)
+public record AiSearchFilters(List<string> AssistantFolderFilters, 
+    List<string> ChatThreadFolderFilters,
+    List<string> AssistantTagFilters, 
+    List<string> ChatThreadTagFilters);
+
+public class AiSearchOptions(string userPrompt, ReadOnlyMemory<float> vector, string indexName, AiSearchFilters filters)
 {
     public int DocumentLimit { get; init; } = 6;
     public double? Strictness { get; init; }
@@ -46,7 +51,12 @@ public class AiSearchOptions(string userPrompt, ReadOnlyMemory<float> vector)
         searchOptions.SemanticSearch = semanticSearch;
         searchOptions.VectorSearch = vectorSearchOptions;
         searchOptions.Size = DocumentLimit;
-        searchOptions.Filter = "";
+        searchOptions.Filter = new SearchFilterBuilder(indexName)
+            .AddFolders(filters.AssistantFolderFilters)
+            .AddFolders(filters.ChatThreadFolderFilters)
+            .AddTags(filters.AssistantTagFilters)
+            .AddTags(filters.ChatThreadTagFilters)
+            .Build();
 
         return searchOptions;
     }

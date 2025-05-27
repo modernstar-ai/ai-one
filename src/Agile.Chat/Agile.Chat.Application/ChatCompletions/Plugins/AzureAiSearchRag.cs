@@ -22,8 +22,13 @@ public class AzureAiSearchRag(ChatContainer container)
             throw new Exception("Rate limit exceeded");
         }
 
+        var filters = new AiSearchFilters(container.Assistant!.FilterOptions.Folders, 
+            container.Thread.FilterOptions.Folders,
+            container.Assistant!.FilterOptions.Tags,
+            container.Thread.FilterOptions.Tags);
+        
         var result = await container.AzureAiSearch.SearchAsync(container.Assistant!.FilterOptions.IndexName,
-            new AiSearchOptions(query, embedding)
+            new AiSearchOptions(query, embedding, container.Assistant!.FilterOptions.IndexName, filters)
             {
                 DocumentLimit = container.Thread.FilterOptions.DocumentLimit,
                 Strictness = container.Thread.FilterOptions.Strictness
