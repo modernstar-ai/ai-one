@@ -128,29 +128,31 @@ public static class Chat
 
             if (_chatContainer.Assistant?.RagType == RagType.Plugin && _chatContainer.Citations.Count > 0)
             {
-                var citations = _chatContainer.Citations
+                var citations = _chatContainer.Citations.Cast<ChatContainerCitationExt>()
                     .Where(x => assistantResponse?.Contains("⁽" + ToSuperscript(x.ReferenceNumber) + "⁾") ?? false).ToList();
 
                 if (citations.Count > 0)
                 {
-                    metadata.Add(MetadataType.Citations, citations.Adapt<List<Citation>>());
+                    metadata.Add(MetadataType.Citations, citations.Adapt<List<ChatContainerCitation>>());
 
                     for (var i = 0; i < citations.Count; i++)
                     {
                         var citation = citations[i];
-                        assistantResponse = assistantResponse.Replace("⁽" + ToSuperscript(citation.ReferenceNumber) + "⁾", $"⁽{ToSuperscript(i + 1)}⁾");
+                        var updatedCitationNumber = i + 1;
+                        assistantResponse = assistantResponse!.Replace("⁽" + ToSuperscript(citation.ReferenceNumber) + "⁾", $"⁽{ToSuperscript(updatedCitationNumber)}⁾");
                     }
                 }
             }
             else if (_chatContainer.Assistant?.RagType == RagType.AzureSearchChatDataSource)
             {
                 var citations = new List<ChatContainerCitation>();
+                var fetchedCitations = _chatContainer.Citations.Cast<ChatContainerCitation>().ToList();
                 var docIndex = 1;
-                for (var i = 0; i < _chatContainer.Citations.Count; i++)
+                for (var i = 0; i < fetchedCitations.Count; i++)
                 {
-                    if (!assistantResponse.Contains($"[doc{i + 1}]")) continue;
+                    if (!assistantResponse!.Contains($"[doc{i + 1}]")) continue;
 
-                    citations.Add(_chatContainer.Citations[i]);
+                    citations.Add(fetchedCitations[i]);
                     assistantResponse = assistantResponse.Replace($"[doc{i + 1}]", $"⁽{ToSuperscript(docIndex)}⁾");
                     docIndex++;
                 }
@@ -159,28 +161,6 @@ public static class Chat
                     metadata.Add(MetadataType.Citations, citations);
             }
 
-            return (assistantResponse!, metadata);
-        }
-        
-        private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(AssistantType? assistantType, IResult result)
-        {
-            var assistantResponse = string.Empty;
-            var metadata = new Dictionary<MetadataType, object>();
-            
-            switch (assistantType)
-            {
-                case AssistantType.Chat or null:
-                    assistantResponse = (result as Ok<string>)!.Value ?? string.Empty;
-                    break;
-                case AssistantType.Search:
-                    var searchResponse = (result as Ok<SearchResponseDto>)!.Value;
-                    assistantResponse = searchResponse!.AssistantResponse;
-                    metadata.Add(MetadataType.SearchProcess, searchResponse.SearchProcess);
-                    break;
-            }
-
-
-            
             return (assistantResponse!, metadata);
         }
 

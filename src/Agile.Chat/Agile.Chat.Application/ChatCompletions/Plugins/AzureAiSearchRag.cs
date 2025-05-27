@@ -35,15 +35,15 @@ public class AzureAiSearchRag(ChatContainer container)
         return documents.Select(x => x.ToString()).ToList();
     }
 
-    private List<ChatContainerCitation> UpdateReferenceNumbers(List<AzureSearchDocument> documents)
+    private List<ChatContainerCitationExt> UpdateReferenceNumbers(List<AzureSearchDocument> documents)
     {
         var count = container.Citations.Count;
-        var result = new List<ChatContainerCitation>();
+        var result = new List<ChatContainerCitationExt>();
 
         foreach (var item in documents)
         {
-            var doc = new ChatContainerCitation(item.Id, item.FileId, item.Chunk, item.Name, item.Url, item.Tags, item.ChunkVector, item.NameVector);
-            doc.ReferenceNumber = count + 1;
+            var doc = new ChatContainerCitationExt(count + 1, item.Chunk, item.Name, item.Url);
+            result.Add(doc);
             count++;
         }
 
