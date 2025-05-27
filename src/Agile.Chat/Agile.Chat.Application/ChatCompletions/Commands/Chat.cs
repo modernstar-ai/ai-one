@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using ChatType = Agile.Chat.Domain.ChatThreads.ValueObjects.ChatType;
@@ -187,7 +188,7 @@ public static class Chat
             var hasIndex = !string.IsNullOrWhiteSpace(assistantFilterOptions?.IndexName);
             if (!hasIndex)
             {
-                var assistantResp = await ChatUtils.StreamAndGetAssistantResponseAsync(contextAccessor.HttpContext!, appKernel.GetChatStream(chatHistory, chatSettings));
+                var assistantResp = await ChatUtils.StreamAndGetAssistantResponseAsync(contextAccessor.HttpContext!, appKernel.GetChatStream(chatHistory, chatSettings), _chatContainer);
                 return assistantResp;
             }
 
@@ -208,11 +209,14 @@ public static class Chat
 
         private async Task<IResult> GetSearchResultAsync(string userPrompt, string? assistantSystemPrompt, AssistantFilterOptions? assistantFilterOptions, AzureOpenAIPromptExecutionSettings chatSettings)
         {
+            if (_chatContainer.Assistant?.RagType == RagType.AzureSearchChatDataSource) 
+                throw new Exception("Azure Search Chat Data Source is currently not supported with Search type Assistants.");
+            
             try
             {
 #pragma warning disable SKEXP0010
                 chatSettings.ResponseFormat = "json_object";
-
+                
                 var aiResponse = await appKernel.GetPromptFileChat(chatSettings,
                     Constants.ChatCompletionsPromptsPath,
                     Constants.Prompts.ChatWithSearch,
@@ -222,7 +226,8 @@ public static class Chat
                         { "userPrompt", userPrompt },
                         { "limitKnowledge", assistantFilterOptions?.LimitKnowledgeToIndex ?? false}
                     });
-                var searchResponse = JsonSerializer.Deserialize<SearchResponseDto>(aiResponse);
+                ChatUtils.CheckForInnerCitations(aiResponse.GetValue<ChatMessageContent>()!, _chatContainer);
+                var searchResponse = JsonSerializer.Deserialize<SearchResponseDto>(aiResponse.ToString());
                 return TypedResults.Ok(searchResponse);
             }
             catch (Exception ex) when (ex is ClientResultException exception && exception.Status == 429)

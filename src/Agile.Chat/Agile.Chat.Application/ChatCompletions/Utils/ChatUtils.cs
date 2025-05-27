@@ -34,14 +34,16 @@ public static class ChatUtils
         await context.Response.Body.FlushAsync();
     }
 
-    public static async Task<IResult> StreamAndGetAssistantResponseAsync(HttpContext context, IAsyncEnumerable<string> aiStreamChats)
+    public static async Task<IResult> StreamAndGetAssistantResponseAsync(HttpContext context, IAsyncEnumerable<StreamingKernelContent> aiStreamChats, ChatContainer chatContainer)
     {
         var assistantFullResponse = new StringBuilder();
         try
         {
             await foreach (var tokens in aiStreamChats)
             {
-                await WriteToResponseStreamAsync(context, ResponseType.Chat, tokens);
+                CheckForInnerCitations((tokens.InnerContent as OpenAI.Chat.StreamingChatCompletionUpdate)!, chatContainer);
+                
+                await WriteToResponseStreamAsync(context, ResponseType.Chat, tokens.ToString());
                 assistantFullResponse.Append(tokens);
             }
         }
@@ -62,33 +64,34 @@ public static class ChatUtils
         return TypedResults.Ok(assistantFullResponse.ToString());
     }
 
-    public static async Task<IResult> StreamAndGetAssistantResponseAsync(HttpContext context, IAsyncEnumerable<StreamingKernelContent> aiStreamChats, ChatContainer chatContainer)
+    public static void CheckForInnerCitations(OpenAI.Chat.StreamingChatCompletionUpdate update, ChatContainer chatContainer)
     {
-        var assistantFullResponse = new StringBuilder();
-        try
+#pragma warning disable AOAI001
+        var messageContext = update.GetMessageContext();
+        if (messageContext is { Citations.Count: > 0 })
         {
-            await foreach (var tokens in aiStreamChats)
+            chatContainer.Citations.AddRange(messageContext.Citations.Select(c => new ChatContainerCitation
             {
-
-                await WriteToResponseStreamAsync(context, ResponseType.Chat, tokens.ToString());
-                assistantFullResponse.Append(tokens);
-            }
+                Name = c.Title,
+                Url = c.Url,
+                Content = c.Content
+            }));
         }
-        catch (Exception ex) when (ex is ClientResultException exception && exception.GetRawResponse()?.Status == 429)
+    }
+    
+    public static void CheckForInnerCitations(ChatMessageContent update, ChatContainer chatContainer)
+    {
+#pragma warning disable AOAI001
+        var messageContext = (update.InnerContent as OpenAI.Chat.ChatCompletion).GetMessageContext();
+        if (messageContext is { Citations.Count: > 0 })
         {
-            return TypedResults.BadRequest("Rate limit exceeded");
+            chatContainer.Citations.AddRange(messageContext.Citations.Select(c => new ChatContainerCitation
+            {
+                Name = c.Title,
+                Url = c.Url,
+                Content = c.Content
+            }));
         }
-        catch (Exception ex) when (ex is ClientResultException exception && JsonNode.Parse(exception.GetRawResponse()?.Content.ToString() ?? "{}")?["error"]?["message"]?.ToString().Contains("content_filter") == true)
-        {
-            return TypedResults.BadRequest("High likelyhood of adult content. Response denied.");
-        }
-        catch (Exception ex) when (ex is ClientResultException exception)
-        {
-            Log.Logger.Error(exception, "Error while processing request. ");
-            return TypedResults.BadRequest($"Bad Request Error: {exception.Message} {exception.GetRawResponse()?.Content}");
-        }
-
-        return TypedResults.Ok(assistantFullResponse.ToString());
     }
     
     public static AzureOpenAIPromptExecutionSettings ParseAzureOpenAiPromptExecutionSettings(Assistant? assistant, ChatThread chatThread)
