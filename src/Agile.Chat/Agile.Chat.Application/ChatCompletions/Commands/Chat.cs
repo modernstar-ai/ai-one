@@ -193,7 +193,7 @@ public static class Chat
 
             var indexStream = appKernel.GetPromptFileChatStream(chatSettings,
                 Constants.ChatCompletionsPromptsPath,
-                Constants.Prompts.ChatWithRag,
+                _chatContainer.Assistant?.RagType == RagType.Plugin ? Constants.Prompts.ChatWithRag : Constants.Prompts.ChatWithAzureSearchDataSource,
                 new Dictionary<string, object?>
                 {
                     { "assistantSystemPrompt", assistantSystemPrompt },
