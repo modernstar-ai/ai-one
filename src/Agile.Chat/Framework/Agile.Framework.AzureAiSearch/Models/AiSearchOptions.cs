@@ -30,7 +30,7 @@ public class AiSearchOptions(string userPrompt, ReadOnlyMemory<float> vector)
             5 => 0.9,
             _ => 0
         };
-
+        
         if (Strictness is not null)
             vectorizedQuery.Threshold = new VectorSimilarityThreshold(strictness);
 
@@ -46,6 +46,7 @@ public class AiSearchOptions(string userPrompt, ReadOnlyMemory<float> vector)
         searchOptions.SemanticSearch = semanticSearch;
         searchOptions.VectorSearch = vectorSearchOptions;
         searchOptions.Size = DocumentLimit;
+        searchOptions.Filter = "";
 
         return searchOptions;
     }

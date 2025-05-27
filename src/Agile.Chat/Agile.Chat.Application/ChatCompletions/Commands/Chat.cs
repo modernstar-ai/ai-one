@@ -68,11 +68,16 @@ public static class Chat
             };
 
             var hasIndex = !string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName);
-            var sp = new ServiceCollection()
-                .AddSingleton<ChatContainer>(_ => _chatContainer)
-                .BuildServiceProvider();
-            if (hasIndex)
-                appKernel.AddPlugin<AzureAiSearchRag>(sp);
+
+            if (assistant?.RagType == RagType.Plugin)
+            {
+                var sp = new ServiceCollection()
+                    .AddSingleton<ChatContainer>(_ => _chatContainer)
+                    .BuildServiceProvider();
+                if (hasIndex)
+                    appKernel.AddPlugin<AzureAiSearchRag>(sp);
+            }
+
 
             //Execute Chat Stream
             var chatSettings = ChatUtils.ParseAzureOpenAiPromptExecutionSettings(assistant, thread);
@@ -91,7 +96,7 @@ public static class Chat
             }
 
             //Get the full response and metadata
-            var (assistantResponse, assistantMetadata) = GetAssistantResponseAndMetadata(assistant?.Type, assistantResult, _chatContainer.Citations);
+            var (assistantResponse, assistantMetadata) = GetAssistantResponseAndMetadata(assistant?.Type, assistantResult);
             await SaveUserAssistantCitationsMessagesAsync(thread.Id, request.UserPrompt, assistantResponse, assistantMetadata);
 
             //If its a new chat, update the threads name, otherwise just update the last modified date
@@ -104,7 +109,7 @@ public static class Chat
                                                                     ? string.Empty
                                                                     : "...");
 
-        private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(AssistantType? assistantType, IResult result, List<AzureSearchDocumentExt> documents)
+        private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(AssistantType? assistantType, IResult result)
         {
             var assistantResponse = string.Empty;
             var metadata = new Dictionary<MetadataType, object>();
@@ -121,11 +126,11 @@ public static class Chat
                     break;
             }
 
-            if (documents.Count > 0)
+            if (_chatContainer.Citations.Count > 0)
             {
-                metadata.Add(MetadataType.DocumentsRetrieved, documents.Adapt<List<Citation>>());
+                metadata.Add(MetadataType.DocumentsRetrieved, _chatContainer.Citations.Adapt<List<Citation>>());
 
-                var citations = documents
+                var citations = _chatContainer.Citations
                     .Where(x => assistantResponse?.Contains("⁽" + ToSuperscript(x.ReferenceNumber) + "⁾") ?? false).ToList();
 
                 if (citations.Count > 0)
