@@ -67,7 +67,7 @@ param searchServiceSkuName string = 'standard'
 param storageServiceSku object
 param storageServiceImageContainerName string
 
-var openai_name = toLower('${resourcePrefix}v2-aillm')
+var openai_name = toLower('${resourcePrefix}-aillm')
 //var openai_dalle_name = toLower('${resourcePrefix}-aidalle')
 
 // @description('Cosmos DB Chat threads container name')
@@ -175,7 +175,7 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
+resource apiApp 'Microsoft.Web/sites@2020-06-01' = {
   name: apiapp_name
   location: location
   tags: union(tags, { 'azd-service-name': 'agilechat-api' })
@@ -183,7 +183,6 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
     serverFarmId: appServicePlan.id
     httpsOnly: true
     clientAffinityEnabled: false
-    keyVaultReferenceIdentity: null
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true
