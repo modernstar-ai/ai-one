@@ -1,20 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Framework\Agile.Framework.Ai\Agile.Framework.Ai.csproj" />
-      <ProjectReference Include="..\Framework\Agile.Framework.AzureAiSearch\Agile.Framework.AzureAiSearch.csproj" />
-      <ProjectReference Include="..\Framework\Agile.Framework.Common\Agile.Framework.Common.csproj" />
-    </ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
 	<ItemGroup>
-	<PackageReference Include="MediatR.Contracts" />
-      <PackageReference Include="Microsoft.SemanticKernel.Abstractions" Version="1.54.0" />
+		<ProjectReference Include="..\Framework\Agile.Framework.Ai\Agile.Framework.Ai.csproj" />
+		<ProjectReference Include="..\Framework\Agile.Framework.AzureAiSearch\Agile.Framework.AzureAiSearch.csproj" />
+		<ProjectReference Include="..\Framework\Agile.Framework.Common\Agile.Framework.Common.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="MediatR.Contracts" Version="2.0.1" />
+		<PackageReference Include="Microsoft.SemanticKernel.Abstractions" Version="1.31.0" />
 	</ItemGroup>
 
 </Project>
