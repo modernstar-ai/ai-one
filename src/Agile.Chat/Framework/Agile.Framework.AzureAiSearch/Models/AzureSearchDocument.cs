@@ -1,6 +1,4 @@
-﻿using System.Text.RegularExpressions;
-
-namespace Agile.Framework.AzureAiSearch.Models;
+﻿namespace Agile.Framework.AzureAiSearch.Models;
 
 public class AzureSearchDocument
 {

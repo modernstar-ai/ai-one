@@ -15,12 +15,12 @@ public interface IAppKernel
 {
     Task<ReadOnlyMemory<float>> GenerateEmbeddingAsync(string text);
     Task<IList<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(IList<string> texts);
-    IAsyncEnumerable<string> GetChatStream(ChatHistory chatHistory, AzureOpenAIPromptExecutionSettings settings);
+    IAsyncEnumerable<StreamingKernelContent> GetChatStream(ChatHistory chatHistory, AzureOpenAIPromptExecutionSettings settings);
     IAsyncEnumerable<StreamingKernelContent>? GetPromptFileChatStream(AzureOpenAIPromptExecutionSettings settings, 
         string promptRelativeDirectory,
         string promptFile,
         Dictionary<string, object?>? kernelArguments = null!);
-    Task<string> GetPromptFileChat(AzureOpenAIPromptExecutionSettings settings,
+    Task<FunctionResult> GetPromptFileChat(AzureOpenAIPromptExecutionSettings settings,
         string promptRelativeDirectory,
         string promptFile,
         Dictionary<string, object?>? kernelArguments = null!);
@@ -54,13 +54,10 @@ public class AppKernel : IAppKernel
      public async Task<IList<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(IList<string> texts) =>
          await _textEmbedding.GenerateEmbeddingsAsync(texts);
 
-     public async IAsyncEnumerable<string> GetChatStream(ChatHistory chatHistory, AzureOpenAIPromptExecutionSettings settings)
+     public IAsyncEnumerable<StreamingKernelContent> GetChatStream(ChatHistory chatHistory, AzureOpenAIPromptExecutionSettings settings)
      {
          var responses = _chatCompletion.GetStreamingChatMessageContentsAsync(chatHistory, settings, _kernel);
-         await foreach (var tokens in responses)
-         {
-             yield return tokens.ToString();
-         }
+         return responses;
      }
      
      public IAsyncEnumerable<StreamingKernelContent>? GetPromptFileChatStream(
@@ -84,7 +81,7 @@ public class AppKernel : IAppKernel
          return responses;
      }
      
-     public async Task<string> GetPromptFileChat(
+     public async Task<FunctionResult> GetPromptFileChat(
          AzureOpenAIPromptExecutionSettings settings,
          string promptRelativeDirectory,
          string promptFile,
@@ -101,7 +98,7 @@ public class AppKernel : IAppKernel
          foreach (var kvp in kernelArguments ?? new Dictionary<string, object?>())
              arguments[kvp.Key] = kvp.Value;
          
-         var response = await kernelFunction.InvokeAsync<string>(_kernel, arguments);
+         var response = await kernelFunction.InvokeAsync(_kernel, arguments);
          return response!;
      }
 }
