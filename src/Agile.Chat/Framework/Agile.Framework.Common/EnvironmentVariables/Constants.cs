@@ -42,6 +42,7 @@ public static class Constants
     public static class Prompts
     {
         public const string ChatWithRag = "chatWithRag.prompt.yaml";
+        public const string ChatWithAzureSearchDataSource = "chatWithAzureSearchDataSource.prompt.yaml";
         public const string ChatWithSearch = "chatWithSearch.prompt.yaml";
     }
 

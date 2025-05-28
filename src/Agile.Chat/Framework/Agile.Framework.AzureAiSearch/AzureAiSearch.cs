@@ -7,8 +7,6 @@ using Azure.Search.Documents.Indexes;
 using Azure.Search.Documents.Indexes.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Reflection;
-using System.Text.Json.Serialization;
 using Azure.Search.Documents.Models;
 
 namespace Agile.Framework.AzureAiSearch;
@@ -16,6 +14,7 @@ namespace Agile.Framework.AzureAiSearch;
 public interface IAzureAiSearch
 {
     Task<AzureSearchDocument?> GetChunkByIdAsync(string indexName, string chunkId);
+    Task<List<AzureSearchDocument>> SearchAsync(string indexName, AiSearchOptions aiSearchOptions);
     Task IndexDocumentsAsync(List<AzureSearchDocument> documents, string indexName);
     Task CreateIndexIfNotExistsAsync(string indexName);
     Task SyncIndexAsync(string indexName);
@@ -28,6 +27,29 @@ public interface IAzureAiSearch
 [Export(typeof(IAzureAiSearch), ServiceLifetime.Singleton)]
 public class AzureAiSearch(SearchIndexClient indexClient, ILogger<AzureAiSearch> logger) : IAzureAiSearch
 {
+    public async Task<List<AzureSearchDocument>> SearchAsync(string indexName, AiSearchOptions aiSearchOptions)
+    {
+        try
+        {
+            var searchClient = indexClient.GetSearchClient(indexName);
+
+            var searchResults = await searchClient.SearchAsync<AzureSearchDocument>(aiSearchOptions.ParseSearchOptions());
+
+            if (!searchResults.HasValue) return [];
+
+            var results = searchResults.Value.GetResultsAsync();
+            return results
+                .ToBlockingEnumerable()
+                .Select(x => x.Document)
+                .ToList();
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error searching index {IndexName}: {Message}", indexName, e.Message);
+            throw;
+        }
+    }
+
     public async Task<AzureSearchDocument?> GetChunkByIdAsync(string indexName, string chunkId)
     {
         var searchClient = indexClient.GetSearchClient(indexName);
@@ -38,7 +60,7 @@ public class AzureAiSearch(SearchIndexClient indexClient, ILogger<AzureAiSearch>
     public async Task DeleteFileContentsByIdAsync(string fileId, string indexName)
     {
         var searchClient = indexClient.GetSearchClient(indexName);
-        
+
         while (true)
         {
             int batchSize = 1000; // Adjust batch size based on your needs
@@ -58,7 +80,7 @@ public class AzureAiSearch(SearchIndexClient indexClient, ILogger<AzureAiSearch>
 
             // Create document objects with just the ID property
             var documents = documentIds.Select(id => new AzureSearchDocument { Id = id });
-        
+
             // Create the batch with the document objects
             var batch = IndexDocumentsBatch.Delete(documents);
             await searchClient.IndexDocumentsAsync(batch);
@@ -66,30 +88,30 @@ public class AzureAiSearch(SearchIndexClient indexClient, ILogger<AzureAiSearch>
             logger.LogInformation($"Deleted {documentIds.Count} documents where {nameof(AzureSearchDocument.FileId)} = '{fileId}'.");
         }
     }
-    
+
     #region Indexes
 
     public async Task IndexDocumentsAsync(List<AzureSearchDocument> documents, string indexName)
     {
         if (documents.Count == 0) return;
-        
+
         var searchClient = indexClient.GetSearchClient(indexName);
 
         int skip = 0;
         int take = 100;
-        
+
         while (true)
         {
             var batch = documents.Skip(skip).Take(take).Select(document => new IndexDocumentsAction<AzureSearchDocument>(
                 IndexActionType.Upload, document)
             ).ToList();
             if (batch.Count == 0) break;
-            
-            var batchRequest = IndexDocumentsBatch.Create([..batch]);
+
+            var batchRequest = IndexDocumentsBatch.Create([.. batch]);
             await searchClient.IndexDocumentsAsync(batchRequest);
             skip += take;
         }
-        
+
         logger.LogInformation("Added {documentsCount} to index {IndexName}.", documents.Count, indexName);
     }
 
@@ -105,7 +127,7 @@ public class AzureAiSearch(SearchIndexClient indexClient, ILogger<AzureAiSearch>
             return false;
         }
     }
-    
+
     public async Task CreateIndexIfNotExistsAsync(string indexName)
     {
         try
@@ -116,7 +138,7 @@ public class AzureAiSearch(SearchIndexClient indexClient, ILogger<AzureAiSearch>
         {
             var newIndex = DefaultIndex.Create(indexName);
             var resp = await indexClient.CreateIndexAsync(newIndex);
-            if(!resp.HasValue)
+            if (!resp.HasValue)
                 throw new Exception($"Error creating new index name: {newIndex} response: {resp.GetRawResponse().ReasonPhrase}");
         }
     }
