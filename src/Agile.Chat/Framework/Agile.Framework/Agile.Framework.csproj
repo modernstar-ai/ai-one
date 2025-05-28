@@ -1,26 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Agile.Framework.Ai\Agile.Framework.Ai.csproj" />
-      <ProjectReference Include="..\Agile.Framework.Authentication\Agile.Framework.Authentication.csproj" />
-      <ProjectReference Include="..\Agile.Framework.AzureAiSearch\Agile.Framework.AzureAiSearch.csproj" />
-      <ProjectReference Include="..\Agile.Framework.AzureDocumentIntelligence\Agile.Framework.AzureDocumentIntelligence.csproj" />
-      <ProjectReference Include="..\Agile.Framework.BlobStorage\Agile.Framework.BlobStorage.csproj" />
-      <ProjectReference Include="..\Agile.Framework.Common\Agile.Framework.Common.csproj" />
-      <ProjectReference Include="..\Agile.Framework.CosmosDb\Agile.Framework.CosmosDb.csproj" />
-    </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Agile.Framework.Ai\Agile.Framework.Ai.csproj" />
+		<ProjectReference Include="..\Agile.Framework.Authentication\Agile.Framework.Authentication.csproj" />
+		<ProjectReference Include="..\Agile.Framework.AzureAiSearch\Agile.Framework.AzureAiSearch.csproj" />
+		<ProjectReference Include="..\Agile.Framework.AzureDocumentIntelligence\Agile.Framework.AzureDocumentIntelligence.csproj" />
+		<ProjectReference Include="..\Agile.Framework.BlobStorage\Agile.Framework.BlobStorage.csproj" />
+		<ProjectReference Include="..\Agile.Framework.Common\Agile.Framework.Common.csproj" />
+		<ProjectReference Include="..\Agile.Framework.CosmosDb\Agile.Framework.CosmosDb.csproj" />
+	</ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="Serilog.Extensions.Hosting" />
-      <PackageReference Include="Serilog.Settings.Configuration" />
-      <PackageReference Include="Serilog.Sinks.ApplicationInsights" />
-      <PackageReference Include="Serilog.Sinks.Console" />
-    </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
+		<PackageReference Include="Serilog.Settings.Configuration" Version="8.0.4" />
+		<PackageReference Include="Serilog.Sinks.ApplicationInsights" Version="4.0.0" />
+		<PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+	</ItemGroup>
 
 </Project>
