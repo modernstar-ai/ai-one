@@ -25,7 +25,7 @@ public class AiSearchOptions(string userPrompt, ReadOnlyMemory<float> vector, st
             },
         };
 
-        var strictness = Strictness.Value switch
+        var strictness = Strictness switch
         {
             0 => 0,
             1 => 0.2,
