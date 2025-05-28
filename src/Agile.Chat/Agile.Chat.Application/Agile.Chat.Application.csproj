@@ -35,6 +35,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Update="ChatCompletions\Prompts\chatWithAzureSearchDataSource.prompt.yaml">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 		<None Update="ChatCompletions\Prompts\chatWithRag.prompt.yaml">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
