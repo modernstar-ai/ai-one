@@ -33,7 +33,7 @@ public static class DependencyInjection
             
             builder = builder
                 .AddAzureOpenAITextEmbeddingGeneration(configs.EmbeddingsDeploymentName!, embeddingsEndpoint,
-                    configs.ApiKey!, apiVersion: configs.ApiVersion);
+                    configs.ApiKey!);
             
             return builder.Build();
         });

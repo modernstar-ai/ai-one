@@ -6,14 +6,14 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.18.4" />
-		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
-		<PackageReference Include="Mapster" Version="7.4.0" />
-		<PackageReference Include="MediatR" Version="12.4.1" />
-		<PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
-		<PackageReference Include="Polly" Version="8.5.2" />
+    <ItemGroup>
+		<PackageReference Include="Azure.Messaging.ServiceBus" />
+		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+		<PackageReference Include="Mapster" />
+		<PackageReference Include="MediatR" />
+		<PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+		<PackageReference Include="Polly" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -34,13 +34,16 @@
 		<Folder Include="Tools\" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<None Update="ChatCompletions\Prompts\chatWithRag.prompt.yaml">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
-		<None Update="ChatCompletions\Prompts\chatWithSearch.prompt.yaml">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
+    <ItemGroup>
+      <None Update="ChatCompletions\Prompts\chatWithRag.prompt.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="ChatCompletions\Prompts\chatWithSearch.prompt.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="ChatCompletions\Prompts\chatWithAzureSearchDataSource.prompt.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
 
 </Project>

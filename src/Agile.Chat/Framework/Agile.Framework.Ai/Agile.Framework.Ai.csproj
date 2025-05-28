@@ -6,14 +6,14 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
-		<PackageReference Include="Microsoft.SemanticKernel" Version="1.31.0" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" Version="1.31.0" />
-		<PackageReference Include="Microsoft.SemanticKernel.PromptTemplates.Handlebars" Version="1.31.0" />
-		<PackageReference Include="Microsoft.SemanticKernel.Yaml" Version="1.31.0" />
-	</ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Http" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+      <PackageReference Include="Microsoft.SemanticKernel" />
+      <PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" />
+      <PackageReference Include="Microsoft.SemanticKernel.PromptTemplates.Handlebars" />
+      <PackageReference Include="Microsoft.SemanticKernel.Yaml" />
+    </ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Agile.Framework.Common\Agile.Framework.Common.csproj" />
