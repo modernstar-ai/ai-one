@@ -112,14 +112,6 @@ param agileChatDatabaseName string = 'AgileChat'
 // @description('The optional APIM Gateway URL to override the azure open AI embedding instance')
 // param apimAiEmbeddingsEndpointOverride string = ''
 
-var validStorageServiceImageContainerName = toLower(replace(storageServiceImageContainerName, '-', ''))
-
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
-  name: logAnalyticsWorkspaceName
-  tags: tags
-  location: location
-}
-
 resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   name: searchServiceName
   location: location
@@ -136,104 +128,6 @@ resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   identity: {
     type: 'SystemAssigned'
   }
-}
-
-resource kv 'Microsoft.KeyVault/vaults@2024-11-01' = {
-  name: keyVaultName
-  location: location
-  tags: tags
-  properties: {
-    sku: {
-      family: 'A'
-      name: 'standard'
-    }
-    tenantId: subscription().tenantId
-    enableRbacAuthorization: true
-    enabledForDeployment: false
-    enabledForDiskEncryption: true
-    enabledForTemplateDeployment: false
-  }
-
-  resource AZURE_SEARCH_API_KEY 'secrets' = {
-    name: 'AZURE-SEARCH-API-KEY'
-    properties: {
-      contentType: 'text/plain'
-      value: searchService.listAdminKeys().secondaryKey
-    }
-  }
-
-  resource AZURE_CLIENT_ID 'secrets' = {
-    name: 'AZURE-CLIENT-ID'
-    properties: {
-      contentType: 'text/plain'
-      value: azureClientId
-    }
-  }
-
-  resource AZURE_TENANT_ID 'secrets' = {
-    name: 'AZURE-TENANT-ID'
-    properties: {
-      contentType: 'text/plain'
-      value: azureTenantId
-    }
-  }
-
-  resource AZURE_COSMOSDB_KEY 'secrets' = {
-    name: 'AZURE-COSMOSDB-KEY'
-    properties: {
-      contentType: 'text/plain'
-      value: cosmosDbAccount.listKeys().secondaryMasterKey
-    }
-  }
-}
-
-resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: storageAccountName
-  location: location
-  tags: tags
-  kind: 'StorageV2'
-  sku: storageServiceSku
-}
-
-resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
-  parent: storage
-  name: 'default'
-  properties: {
-    deleteRetentionPolicy: {
-      enabled: true
-      days: 7
-    }
-  }
-}
-
-resource imagesContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
-  parent: blobServices
-  name: validStorageServiceImageContainerName
-}
-
-resource indexContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
-  parent: blobServices
-  name: storageServiceFoldersContainerName
-  properties: {
-    publicAccess: 'None'
-  }
-}
-
-resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
-  name: appServicePlanName
-  location: location
-  tags: tags
-  properties: {
-    reserved: true
-  }
-  sku: {
-    name: 'P0v3'
-    tier: 'Premium0V3'
-    size: 'P0v3'
-    family: 'Pv3'
-    capacity: 1
-  }
-  kind: 'linux'
 }
 
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
@@ -263,31 +157,6 @@ resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   }
   sku: {
     name: 'S0'
-  }
-}
-
-resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' = {
-  location: location
-  name: serviceBusName
-
-  resource queue 'queues' = {
-    name: serviceBusQueueName
-    properties: {
-      maxMessageSizeInKilobytes: 256
-      lockDuration: 'PT5M'
-      maxSizeInMegabytes: 5120
-      requiresDuplicateDetection: false
-      requiresSession: false
-      defaultMessageTimeToLive: 'P14D'
-      deadLetteringOnMessageExpiration: true
-      enableBatchedOperations: true
-      duplicateDetectionHistoryTimeWindow: 'PT10M'
-      maxDeliveryCount: 5
-      status: 'Active'
-      autoDeleteOnIdle: 'P10675199DT2H48M5.4775807S'
-      enablePartitioning: false
-      enableExpress: false
-    }
   }
 }
 
@@ -372,31 +241,96 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15
   }
 }
 
-output logAnalyticsWorkspaceName string = logAnalyticsWorkspace.name
-output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
+module serviceBusModule './modules/serviceBus.bicep' = {
+  name: 'serviceBusModule'
+  params: {
+    location: location
+    serviceBusName: serviceBusName
+    serviceBusQueueName: serviceBusQueueName
+  }
+}
+
+module keyVaultModule './modules/keyVault.bicep' = {
+  name: 'keyVaultModule'
+  params: {
+    keyVaultName: keyVaultName
+    location: location
+    tags: tags
+    keyVaultSecrets: [
+      {
+        name: 'AZURE-SEARCH-API-KEY'
+        contentType: 'text/plain'
+        value: searchService.listAdminKeys().secondaryKey
+      }
+      {
+        name: 'AZURE-CLIENT-ID'
+        contentType: 'text/plain'
+        value: azureClientId
+      }
+      {
+        name: 'AZURE-TENANT-ID'
+        contentType: 'text/plain'
+        value: azureTenantId
+      }
+      {
+        name: 'AZURE-COSMOSDB-KEY'
+        contentType: 'text/plain'
+        value: cosmosDbAccount.listKeys().secondaryMasterKey
+      }
+    ]
+  }
+}
+
+module appServicePlanModule './modules/appServicePlan.bicep' = {
+  name: 'appServicePlanModule'
+  params: {
+    appServicePlanName: appServicePlanName
+    location: location
+    tags: tags
+  }
+}
+
+module logAnalyticsWorkspaceModule './modules/logAnalyticsWorkspace.bicep' = {
+  name: 'logAnalyticsWorkspaceModule'
+  params: {
+    logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
+    location: location
+    tags: tags
+  }
+}
+
+module storageModule './modules/storage.bicep' = {
+  name: 'storageModule'
+  params: {
+    storageAccountName: storageAccountName
+    location: location
+    tags: tags
+    storageServiceSku: storageServiceSku
+    storageServiceFoldersContainerName: storageServiceFoldersContainerName
+    storageServiceImageContainerName: storageServiceImageContainerName
+  }
+}
+
+output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
+output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
 output searchServiceName string = searchService.name
 output searchServiceId string = searchService.id
-output keyVaultName string = kv.name
-output keyVaultId string = kv.id
-output storageAccountName string = storage.name
-output storageAccountId string = storage.id
-output blobServicesId string = blobServices.id
-output imagesContainerId string = imagesContainer.id
-output indexContainerId string = indexContainer.id
-output appServicePlanName string = appServicePlan.name
-output appServicePlanId string = appServicePlan.id
+output keyVaultName string = keyVaultModule.outputs.keyVaultName
+output keyVaultId string = keyVaultModule.outputs.keyVaultId
+output storageAccountName string = storageModule.outputs.storageAccountName
+output storageAccountId string = storageModule.outputs.storageAccountId
+output blobServicesId string = storageModule.outputs.blobServicesId
+output appServicePlanName string = appServicePlanModule.outputs.appServicePlanName
+output appServicePlanId string = appServicePlanModule.outputs.appServicePlanId
 output cosmosDbAccountName string = cosmosDbAccount.name
 output cosmosDbAccountId string = cosmosDbAccount.id
 output cosmosDbAccountEndpoint string = cosmosDbAccount.properties.documentEndpoint
 output formRecognizerName string = formRecognizer.name
 output formRecognizerId string = formRecognizer.id
-output serviceBusName string = serviceBus.name
-output serviceBusId string = serviceBus.id
-output serviceBusQueueName string = serviceBus::queue.name
-output serviceBusQueueId string = serviceBus::queue.id
-output storageServiceFoldersContainerName string = indexContainer.name
-output storageServiceImageContainerName string = imagesContainer.name
 output openAiName string = azureopenai.name
 output openAiEndpoint string = azureopenai.properties.endpoint
 output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbAccountDataPlaneCustomRole.id
 output agileChatDatabaseName string = database.name
+output serviceBusQueueName string = serviceBusModule.outputs.serviceBusQueueName
+output serviceBusName string = serviceBusModule.outputs.serviceBusName
+output storageServiceFoldersContainerName string = storageServiceFoldersContainerName
