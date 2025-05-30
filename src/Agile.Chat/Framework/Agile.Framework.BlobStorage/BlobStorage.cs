@@ -1,6 +1,8 @@
 ﻿using Agile.Framework.BlobStorage.Interfaces;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.EnvironmentVariables;
+using Azure.Core;
+using Azure.Identity;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -17,18 +19,40 @@ public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) 
 
     public async Task<(Stream, BlobDownloadDetails)> DownloadAsync(string url)
     {
-        var blob = new BlobClient(new Uri(url), credential: new StorageSharedKeyCredential(Configs.BlobStorage.Name, Configs.BlobStorage.Key));
-        if(!await blob.ExistsAsync())
+        BlobClient blob;
+        if (!string.IsNullOrEmpty(Configs.BlobStorage.Key))
+        {
+            var credential = new StorageSharedKeyCredential(Configs.BlobStorage.AccountName, Configs.BlobStorage.Key);
+            blob = new BlobClient(new Uri(url), credential);
+        }
+        else
+        {
+            var credential = new DefaultAzureCredential();
+            blob = new BlobClient(new Uri(url), credential);
+        }
+
+        if (!await blob.ExistsAsync())
             throw new Exception("File doesn't exist");
-        
+
         var resp = await blob.DownloadStreamingAsync();
         return (resp.Value.Content, resp.Value.Details);
     }
 
     public async Task<string> GetShareableLinkByUrlAsync(string url)
     {
-        var blob = new BlobClient(new Uri(url), credential: new StorageSharedKeyCredential(Configs.BlobStorage.Name, Configs.BlobStorage.Key));
-        if(!await blob.ExistsAsync())
+        BlobClient blob;
+        if (!string.IsNullOrEmpty(Configs.BlobStorage.Key))
+        {
+            var credential = new StorageSharedKeyCredential(Configs.BlobStorage.AccountName, Configs.BlobStorage.Key);
+            blob = new BlobClient(new Uri(url), credential: credential);
+        }
+        else
+        {
+            var credential = new DefaultAzureCredential();
+            blob = new BlobClient(new Uri(url), credential);
+        }
+
+        if (!await blob.ExistsAsync())
             throw new Exception("File doesn't exist");
 
         var sasBuilder = new BlobSasBuilder
@@ -38,20 +62,20 @@ public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) 
             ContentDisposition = "inline" // Set this to override on download,
         };
         sasBuilder.SetPermissions(BlobContainerSasPermissions.Read);
-        
+
         var uri = blob.GenerateSasUri(sasBuilder);
         return uri.ToString();
     }
-    
+
     public async Task<string> UploadAsync(Stream stream, string contentType, string fileName, string indexName, string? folderName = null)
     {
         var folderPath = string.IsNullOrWhiteSpace(folderName) ? fileName : $"{folderName}/{fileName}";
         var fullPath = $"{indexName}/{folderPath}";
-        
+
         BlobClient blobClient = _container.GetBlobClient(fullPath);
-        
+
         logger.LogInformation("Uploading {FileName} to Index {IndexName} with folder {FolderName}", fileName, indexName, folderName);
-        var resp = await blobClient.UploadAsync(stream, new BlobHttpHeaders(){ContentType = contentType});
+        var resp = await blobClient.UploadAsync(stream, new BlobHttpHeaders() { ContentType = contentType });
         logger.LogInformation("Finished upload with response {@Response}", resp.Value);
         return $"https://{blobClient.Uri.Host}{blobClient.Uri.LocalPath}";
     }
@@ -60,12 +84,12 @@ public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) 
     {
         var folderPath = string.IsNullOrWhiteSpace(folderName) ? fileName : $"{folderName}/{fileName}";
         var fullPath = $"{indexName}/{folderPath}";
-        
+
         logger.LogInformation("Deleting file: {FileName} with Index: {IndexName} with folder: {FolderName}", fileName, indexName, folderName);
         var resp = await _container.DeleteBlobIfExistsAsync(fullPath, DeleteSnapshotsOption.IncludeSnapshots);
         logger.LogInformation("Finished deleting file with response: {Response}", resp.Value);
     }
-    
+
     public async Task DeleteIndexFilesAsync(string indexName)
     {
         await foreach (var blobItem in _container.GetBlobsAsync(prefix: indexName))

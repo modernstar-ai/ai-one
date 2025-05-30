@@ -1,49 +1,39 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-      "projectName": {
-        "value": "agilechat"
-      },
-      "environmentName": {
-        "value": "prd"
-      },
-      "location": {
-        "value": "australiaeast"
-      },
-      "openAILocation": {
-        "value": "australiaeast"
-      },
-      "azureClientID": {
-        "value": ""
-      },
-      "azureClientSecret": {
-        "value": ""
-      },
-      "azureTenantId": {
-        "value": ""
-      },
-      "azureADAppIdOrUri": {
-          "value": ""
-      },
-      "UtsRoleApiEndpoint": {
-          "value": ""
-      },
-      "UtsXApiKey": {
-        "value": ""
-      },
-       "aspCoreEnvironment": {
-        "value": "Production"
-      },
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "projectName": {
+      "value": "agilechat"
+    },
+    "environmentName": {
+      "value": "prd"
+    },
+    "location": {
+      "value": "australiaeast"
+    },
+    "openAILocation": {
+      "value": "australiaeast"
+    },
+    "azureClientID": {
+      "value": ""
+    },
+    "azureClientSecret": {
+      "value": ""
+    },
+    "azureTenantId": {
+      "value": ""
+    },
+    "azureADAppIdOrUri": {
+      "value": ""
+    },
+    "aspCoreEnvironment": {
+      "value": "Production"
+    },
     "deployEventGrid": {
-        "value": false
-    },  
-    "kvSetFunctionAppPermissions": {
-        "value": false
+      "value": false
     },
     "semanticSearchSku": {
-        "value": "standard"
-    }  
-
+      "value": "standard"
     }
   }
+}

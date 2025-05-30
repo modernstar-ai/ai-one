@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "projectName": {
-     "value": "agilechat"
+      "value": "agilechat"
     },
     "environmentName": {
       "value": "tst"
@@ -24,12 +24,6 @@
       "value": ""
     },
     "azureADAppIdOrUri": {
-        "value": ""
-    },
-    "UtsRoleApiEndpoint": {
-        "value": ""
-    },
-    "UtsXApiKey": {
       "value": ""
     },
     "aspCoreEnvironment": {
@@ -37,12 +31,9 @@
     },
     "deployEventGrid": {
       "value": false
-  },  
-  "kvSetFunctionAppPermissions": {
-      "value": false
-  },
+    },
     "semanticSearchSku": {
-        "value": "standard"
-    }     
+      "value": "standard"
+    }
   }
 }

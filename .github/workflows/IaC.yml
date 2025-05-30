@@ -26,7 +26,7 @@ on:
       project_name:
         description: 'Enter the Name of the project'
         type: string
-        default: 'ag-aione'
+        default: 'ag-aione-v2'
         required: true
       azure_location:
         description: 'Select the Azure deployment location'
@@ -35,11 +35,6 @@ on:
         options:
           - 'australiaeast'
           - 'australiasoutheast'
-        required: true
-      set_kv_function_app_permissions:
-        description: 'Deploy and Assign Keyvault Web App Permissions?'
-        type: boolean
-        default: false
         required: true
       semantic_search_sku:
         description: 'Select the Azure Search AI Semantic Search Sku'
@@ -95,7 +90,6 @@ jobs:
             azureClientID="${{ vars.AZURE_CLIENT_ID }}"
             azureTenantId="${{ vars.AZURE_TENANT_ID }}"
             aspCoreEnvironment="${{ inputs.asp_core_environment }}"
-            kvSetFunctionAppPermissions=${{ inputs.set_kv_function_app_permissions }}
             semanticSearchSku="${{ inputs.semantic_search_sku }}"
             apimAiEndpointOverride="${{ vars.APIM_ENDPOINT_OVERRIDE }}"
             apimAiEmbeddingsEndpointOverride="${{ vars.APIM_EMBEDDINGS_ENDPOINT_OVERRIDE }}"

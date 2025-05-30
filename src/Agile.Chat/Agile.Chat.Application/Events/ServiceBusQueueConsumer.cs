@@ -2,6 +2,7 @@
 using Agile.Chat.Application.Files.Commands;
 using Agile.Chat.Application.Files.Utils;
 using Agile.Framework.Common.EnvironmentVariables;
+using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -17,15 +18,27 @@ public class ServiceBusQueueConsumer : BackgroundService
     private readonly ServiceBusProcessor _processor;
     private readonly ILogger<ServiceBusQueueConsumer> _logger;
     private readonly IServiceProvider _sp;
-    
+
     public ServiceBusQueueConsumer(ILogger<ServiceBusQueueConsumer> logger, IServiceProvider sp)
     {
         _logger = logger;
         _sp = sp;
-        _client = new ServiceBusClient(Configs.AzureServiceBus.ConnectionString, new ServiceBusClientOptions()
+        if (!string.IsNullOrEmpty(Configs.AzureServiceBus.ConnectionString))
         {
-            TransportType = ServiceBusTransportType.AmqpWebSockets
-        });
+            _client = new ServiceBusClient(Configs.AzureServiceBus.ConnectionString, new ServiceBusClientOptions()
+            {
+                TransportType = ServiceBusTransportType.AmqpWebSockets
+            });
+        }
+        else
+        {
+            _client = new ServiceBusClient(Configs.AzureServiceBus.FullyQualifiedNamespace,
+                new DefaultAzureCredential(), new ServiceBusClientOptions()
+                {
+                    TransportType = ServiceBusTransportType.AmqpWebSockets
+                });
+        }
+
         _processor = _client.CreateProcessor(Configs.AzureServiceBus.BlobQueueName, new ServiceBusProcessorOptions()
         {
             MaxConcurrentCalls = 1,
@@ -33,15 +46,15 @@ public class ServiceBusQueueConsumer : BackgroundService
             ReceiveMode = ServiceBusReceiveMode.PeekLock
         });
     }
-    
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _processor.ProcessMessageAsync += MessageHandler;
         _processor.ProcessErrorAsync += ErrorHandler;
-        
+
         await _processor.StartProcessingAsync(stoppingToken);
     }
-    
+
     private async Task MessageHandler(ProcessMessageEventArgs args)
     {
         using var cts = new CancellationTokenSource();
@@ -71,7 +84,7 @@ public class ServiceBusQueueConsumer : BackgroundService
             await cts.CancelAsync();
             await autoRenewTask;
             await args.AbandonMessageAsync(args.Message);
-            
+
         }
         finally
         {
@@ -107,7 +120,7 @@ public class ServiceBusQueueConsumer : BackgroundService
         var fileMetadata = EventGridHelpers.GetFileCreatedMetaData(body);
         _logger.LogInformation("Fetched index name {IndexName} folder name {FolderName}", indexName, folderName);
         _logger.LogInformation("Fetched file name {FileName} event type {EventType}", fileName, eventType);
-            
+
         //Skip processing files not uploaded to a folder (aka container)
         if (string.IsNullOrWhiteSpace(indexName))
             return Results.Ok();
@@ -116,13 +129,13 @@ public class ServiceBusQueueConsumer : BackgroundService
         var mediator = _sp.CreateScope().ServiceProvider.GetService<IMediator>();
         return await mediator!.Send(command);
     }
-    
+
     private Task ErrorHandler(ProcessErrorEventArgs args)
     {
         _logger.LogError(args.Exception, "Message processing error");
         return Task.CompletedTask;
     }
-    
+
     public override async Task StopAsync(CancellationToken stoppingToken)
     {
         await _processor.StopProcessingAsync(stoppingToken);

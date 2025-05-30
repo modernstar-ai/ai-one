@@ -1,5 +1,6 @@
 ﻿using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.EnvironmentVariables;
+using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -16,14 +17,25 @@ public class ServiceBusQueue : IServiceBusQueue
 {
     private readonly ServiceBusClient _client;
     private readonly ILogger<ServiceBusQueue> _logger;
-    
+
     public ServiceBusQueue(ILogger<ServiceBusQueue> logger)
     {
         _logger = logger;
-        _client = new ServiceBusClient(Configs.AzureServiceBus.ConnectionString, new ServiceBusClientOptions()
+        if (!string.IsNullOrEmpty(Configs.AzureServiceBus.ConnectionString))
         {
-            TransportType = ServiceBusTransportType.AmqpWebSockets
-        });
+            _client = new ServiceBusClient(Configs.AzureServiceBus.ConnectionString, new ServiceBusClientOptions()
+            {
+                TransportType = ServiceBusTransportType.AmqpWebSockets
+            });
+        }
+        else
+        {
+            _client = new ServiceBusClient(Configs.AzureServiceBus.FullyQualifiedNamespace,
+                new DefaultAzureCredential(), new ServiceBusClientOptions()
+                {
+                    TransportType = ServiceBusTransportType.AmqpWebSockets
+                });
+        }
     }
 
     public async Task AddToQueueAsync(string body)

@@ -1,54 +1,42 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-      "projectName": {
-        "value": "agilechat"
-      },
-      "environmentName": {
-        "value": "prd"
-      },
-      "location": {
-        "value": "australiaeast"
-      },
-      "openAILocation": {
-        "value": "australiaeast"
-      },
-      "dalleLocation": {
-        "value": "australiaeast"
-      },
-      "azureClientID": {
-        "value": ""
-      },
-      "azureClientSecret": {
-        "value": ""
-      },
-      "azureTenantId": {
-        "value": ""
-      },
-      "aspCoreEnvironment": {
-        "value": "Development"
-      } ,
-      "azureADAppIdOrUri": {
-          "value": ""
-      },
-      "UtsRoleApiEndpoint": {
-          "value": ""
-      },
-      "UtsXApiKey": {
-        "value": ""
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "projectName": {
+      "value": "agilechat"
     },
-      "aspCoreEnvironment": {
-        "value": "Development" //'Development', 'Test', 'UAT', 'Production'
-      },
-      "deployEventGrid": {
-        "value": false
-    },  
-    "kvSetFunctionAppPermissions": {
-        "value": false
-    } ,
-    
-    "semanticSearchSku": { //disabled', free', 'standard'
-        "value": "free"
-    } 
+    "environmentName": {
+      "value": "prd"
+    },
+    "location": {
+      "value": "australiaeast"
+    },
+    "openAILocation": {
+      "value": "australiaeast"
+    },
+    "dalleLocation": {
+      "value": "australiaeast"
+    },
+    "azureClientID": {
+      "value": ""
+    },
+    "azureClientSecret": {
+      "value": ""
+    },
+    "azureTenantId": {
+      "value": ""
+    },
+    "azureADAppIdOrUri": {
+      "value": ""
+    },
+    "aspCoreEnvironment": {
+      "value": "Development"
+    },
+    "deployEventGrid": {
+      "value": false
+    },
+    "semanticSearchSku": {
+      "value": "free"
     }
+  }
+}

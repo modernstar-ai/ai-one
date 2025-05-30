@@ -42,7 +42,7 @@ public static class ChatUtils
             await foreach (var tokens in aiStreamChats)
             {
                 CheckForInnerCitations((tokens.InnerContent as OpenAI.Chat.StreamingChatCompletionUpdate)!, chatContainer);
-                
+
                 await WriteToResponseStreamAsync(context, ResponseType.Chat, tokens.ToString());
                 assistantFullResponse.Append(tokens);
             }
@@ -78,7 +78,7 @@ public static class ChatUtils
             }));
         }
     }
-    
+
     public static void CheckForInnerCitations(ChatMessageContent update, ChatContainer chatContainer)
     {
 #pragma warning disable AOAI001
@@ -93,7 +93,7 @@ public static class ChatUtils
             }));
         }
     }
-    
+
     public static AzureOpenAIPromptExecutionSettings ParseAzureOpenAiPromptExecutionSettings(Assistant? assistant, ChatThread chatThread)
     {
         var options = new AzureOpenAIPromptExecutionSettings()
@@ -108,7 +108,7 @@ public static class ChatUtils
         };
         return options;
     }
-    
+
 #pragma warning disable AOAI001
     private static AzureSearchChatDataSource GetAzureSearchDataSource(Assistant assistant, ChatThread chatThread)
     {

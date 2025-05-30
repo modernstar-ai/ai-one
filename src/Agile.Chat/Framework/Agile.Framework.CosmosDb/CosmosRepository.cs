@@ -1,7 +1,5 @@
 ﻿using System.Linq.Dynamic.Core;
 using System.Net;
-using System.Text.Json.Nodes;
-using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.DomainAbstractions;
 using Agile.Framework.Common.Dtos;
 using Agile.Framework.Common.EnvironmentVariables;
@@ -20,10 +18,10 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
     public CosmosRepository(string containerId, CosmosClient cosmosClient)
     {
         CosmosClient = cosmosClient;
-        Database = cosmosClient.GetDatabase(Constants.Cosmos.DatabaseName);
+        Database = cosmosClient.GetDatabase(Configs.CosmosDb.DatabaseName);
         Container = Database.GetContainer(containerId);
     }
-    
+
     //All the supported LINQ operations ref: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/linq-to-sql#supported-linq-operators
     protected IOrderedQueryable<T> LinqQuery() => Container.GetItemLinqQueryable<T>(allowSynchronousQueryExecution: true);
 
@@ -40,7 +38,7 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
 
         return results;
     }
-    
+
     protected async Task<PagedResultsDto<T>> CollectResultsAsync(IQueryable<T> query, QueryDto queryDto)
     {
         //Ordering by
@@ -49,7 +47,7 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
         {
             query = query.OrderBy(queryDto.OrderBy + " " + queryDto.OrderType);
         }
-        
+
         var countResponse = await query.Select(x => x.Id).CountAsync();
         //paging
         query = query.Skip((queryDto.Page ?? 0) * (queryDto.PageSize ?? 10)).Take(queryDto.PageSize ?? 10);
@@ -62,7 +60,7 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
         else
         {
             var queryText = query.ToQueryDefinition().QueryText;
-            
+
             var isString = typeof(T).GetProperty(queryDto.OrderBy!)?.PropertyType == typeof(string);
             if (isString)
             {
@@ -70,7 +68,7 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
                 queryText = queryText.Replace($"\"{System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(queryDto.OrderBy!)}\"",
                     $"\"{fieldName}\"");
             }
-            
+
             feed = Container.GetItemQueryIterator<T>(new QueryDefinition(queryText));
         }
 

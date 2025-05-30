@@ -90,7 +90,6 @@ stages:
           -azureClientID "$(AZURE_CLIENT_ID)"
           -azureTenantId "$(AZURE_TENANT_ID)"
           -aspCoreEnvironment "${{ parameters.asp_core_environment }}"
-          -kvSetFunctionAppPermissions ${{ lower(parameters.set_kv_function_app_permissions) }}
           -semanticSearchSku "${{ parameters.semantic_search_sku }}"
           -apimAiEndpointOverride "$(APIM_ENDPOINT_OVERRIDE)"
           -apimAiEmbeddingsEndpointOverride "$(APIM_EMBEDDINGS_ENDPOINT_OVERRIDE)"

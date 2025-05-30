@@ -9,7 +9,7 @@ public static class DefaultIndex
     public static SearchIndex Create(string indexName)
     {
         var newIndex = new SearchIndex(indexName);
-            newIndex.Fields = new List<SearchField>()
+        newIndex.Fields = new List<SearchField>()
             {
                 new(nameof(AzureSearchDocument.Id), SearchFieldDataType.String)
                 {
@@ -65,41 +65,41 @@ public static class DefaultIndex
                     IsFilterable = true
                 },
             };
-            
-            newIndex.SemanticSearch = new SemanticSearch();
-            newIndex.SemanticSearch.Configurations.Add(new SemanticConfiguration("semantic-configuration", new SemanticPrioritizedFields()
-            {
-                TitleField = new SemanticField(nameof(AzureSearchDocument.Name)),
-                ContentFields = { new SemanticField(nameof(AzureSearchDocument.Chunk)) }
-            }));
-            newIndex.SemanticSearch.DefaultConfigurationName = "semantic-configuration";
-            
-            newIndex.VectorSearch = new VectorSearch();
-            newIndex.VectorSearch.Algorithms.Add(new HnswAlgorithmConfiguration("algorithm")
-            {
-                Parameters = new HnswParameters()
-                {
-                    Metric = VectorSearchAlgorithmMetric.Cosine,
-                    M = 4,
-                    EfConstruction = 400,
-                    EfSearch = 500
-                }
-            });
-            newIndex.VectorSearch.Vectorizers.Add(new AzureOpenAIVectorizer("azureOpenAi-text-vectorizer")
-            {
-                Parameters = new AzureOpenAIVectorizerParameters()
-                {
-                    ResourceUri = new Uri(Configs.AzureOpenAi.Endpoint),
-                    DeploymentName = Configs.AzureOpenAi.EmbeddingsDeploymentName,
-                    ApiKey = Configs.AzureOpenAi.ApiKey,
-                    ModelName = Configs.AzureOpenAi.EmbeddingsModelName
-                }
-            });
-            newIndex.VectorSearch.Profiles.Add(new VectorSearchProfile("azureOpenAi-text-profile", "algorithm")
-            {
-                VectorizerName = "azureOpenAi-text-vectorizer"
-            });
 
-            return newIndex;
+        newIndex.SemanticSearch = new SemanticSearch();
+        newIndex.SemanticSearch.Configurations.Add(new SemanticConfiguration("semantic-configuration", new SemanticPrioritizedFields()
+        {
+            TitleField = new SemanticField(nameof(AzureSearchDocument.Name)),
+            ContentFields = { new SemanticField(nameof(AzureSearchDocument.Chunk)) }
+        }));
+        newIndex.SemanticSearch.DefaultConfigurationName = "semantic-configuration";
+
+        newIndex.VectorSearch = new VectorSearch();
+        newIndex.VectorSearch.Algorithms.Add(new HnswAlgorithmConfiguration("algorithm")
+        {
+            Parameters = new HnswParameters()
+            {
+                Metric = VectorSearchAlgorithmMetric.Cosine,
+                M = 4,
+                EfConstruction = 400,
+                EfSearch = 500
+            }
+        });
+        newIndex.VectorSearch.Vectorizers.Add(new AzureOpenAIVectorizer("azureOpenAi-text-vectorizer")
+        {
+            Parameters = new AzureOpenAIVectorizerParameters()
+            {
+                ResourceUri = new Uri(Configs.AzureOpenAi.Endpoint),
+                DeploymentName = Configs.AzureOpenAi.EmbeddingsDeploymentName,
+                ApiKey = Configs.AzureOpenAi.ApiKey,
+                ModelName = Configs.AzureOpenAi.EmbeddingsModelName
+            }
+        });
+        newIndex.VectorSearch.Profiles.Add(new VectorSearchProfile("azureOpenAi-text-profile", "algorithm")
+        {
+            VectorizerName = "azureOpenAi-text-vectorizer"
+        });
+
+        return newIndex;
     }
 }

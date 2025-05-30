@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Serialization;
 using Agile.Framework.Common.EnvironmentVariables;
 using Azure;
+using Azure.Identity;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,8 +20,12 @@ public static class DependencyInjection
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
-            
-            var client = new CosmosClient(cosmosConfigs.Endpoint, new AzureKeyCredential(cosmosConfigs.Key), cosmosClientOptions);
-            return client;
+
+            if (!string.IsNullOrEmpty(cosmosConfigs.Key))
+            {
+                return new CosmosClient(cosmosConfigs.Endpoint, new AzureKeyCredential(cosmosConfigs.Key), cosmosClientOptions);
+            }
+
+            return new CosmosClient(cosmosConfigs.Endpoint, new DefaultAzureCredential(), cosmosClientOptions);
         });
 }

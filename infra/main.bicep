@@ -1,16 +1,15 @@
 targetScope = 'resourceGroup'
 
+@description('The name of the solution.')
 @minLength(1)
 @maxLength(12)
-@description('The name of the solution.')
 param projectName string
 
+@description('The type of environment. e.g. local, dev, uat, prod.')
 @minLength(1)
 @maxLength(4)
-@description('The type of environment. e.g. local, dev, uat, prod.')
 param environmentName string
 
-@minLength(1)
 @description('Primary location for all resources')
 param location string = resourceGroup().location
 
@@ -47,30 +46,16 @@ param location string = resourceGroup().location
 })
 param openAILocation string
 
-param openAISku string = 'S0'
-param openAIApiVersion string = '2024-08-01-preview'
-param chatGptDeploymentCapacity int = 8 //30
-param chatGptDeploymentName string = 'gpt-4o'
-param chatGptModelName string = 'gpt-4o'
-param chatGptModelVersion string = '2024-05-13'
-param embeddingDeploymentName string = 'embedding'
-param embeddingDeploymentCapacity int = 350
-param embeddingModelName string = 'text-embedding-3-small'
-
-@description('The optional APIM Gateway URL to override the azure open AI instance')
-param apimAiEndpointOverride string = ''
-@description('The optional APIM Gateway URL to override the azure open AI embedding instance')
-param apimAiEmbeddingsEndpointOverride string = ''
-
-param searchServiceSkuName string = 'standard'
-
-// TODO: define good default Sku and settings for storage account
-param storageServiceSku object = { name: 'Standard_LRS' }
-param storageServiceImageContainerName string = 'images'
+@description('Resource prefix for naming resources')
+param resourcePrefix string = toLower('${projectName}-${environmentName}')
 
 @description('Deployment Environment')
 @allowed(['Development', 'Test', 'UAT', 'Production'])
 param aspCoreEnvironment string = 'Development'
+
+@description('ets options that control the availability of semantic search')
+@allowed(['disabled', 'free', 'standard'])
+param semanticSearchSku string = 'free'
 
 @description('AZURE_CLIENT_ID')
 @secure()
@@ -80,47 +65,133 @@ param azureClientID string = ''
 @secure()
 param azureTenantId string = ''
 
-@description('Conditionally deploy key vault Api app permissions')
-param kvSetFunctionAppPermissions bool = false
+@description('API App name')
+param apiAppName string = toLower('${resourcePrefix}-apiapp')
 
-@description('ets options that control the availability of semantic search')
-@allowed(['disabled', 'free', 'standard'])
-param semanticSearchSku string = 'free'
+@description('APIM Azure OpenAI Endpoint')
+param apimAiEndpointOverride string = ''
+
+@description('APIM Azure OpenAI Embedding Endpoint')
+param apimAiEmbeddingsEndpointOverride string = ''
 
 @description('Shared variables pattern for loading tags')
 var tagsFilePath = './tags.json'
 var tags = loadJsonContent(tagsFilePath)
 
-module resources 'resources.bicep' = {
-  name: 'all-resources'
+@description('Admin email addresses array')
+param AdminEmailAddresses array = [
+  'adam-stephensen@agile-analytics.com.au'
+]
+
+@description('SKU for Azure OpenAI resource')
+param openAISku string = 'S0'
+
+@description('API version for Azure OpenAI')
+param openAIApiVersion string = '2024-08-01-preview'
+
+@description('Capacity for ChatGPT deployment')
+param chatGptDeploymentCapacity int = 8
+
+@description('Name for ChatGPT deployment')
+param chatGptDeploymentName string = 'gpt-4o'
+
+@description('Model name for ChatGPT')
+param chatGptModelName string = 'gpt-4o'
+
+@description('Model version for ChatGPT')
+param chatGptModelVersion string = '2024-05-13'
+
+@description('Name for embedding deployment')
+param embeddingDeploymentName string = 'embedding'
+
+@description('Capacity for embedding deployment')
+param embeddingDeploymentCapacity int = 350
+
+@description('Model name for embedding')
+param embeddingModelName string = 'text-embedding-3-small'
+
+@description('Database name for AgileChat')
+param agileChatDatabaseName string = 'AgileChat'
+
+var deployAzueOpenAi = (!empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride)) || (empty(apimAiEndpointOverride) && !empty(apimAiEmbeddingsEndpointOverride)) || (empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride))
+
+module platform 'platform.bicep' = {
+  name: 'platform'
   params: {
     projectName: projectName
     environmentName: environmentName
-    tags: union(tags, { 'azd-env-name': environmentName })
-    openai_api_version: openAIApiVersion
+    location: location
+    tags: tags
+    resourcePrefix: resourcePrefix
+    semanticSearchSku: semanticSearchSku
+    azureClientId: azureClientID
+    azureTenantId: azureTenantId
     openAiLocation: openAILocation
     openAiSkuName: openAISku
-    chatGptDeploymentCapacity: chatGptDeploymentCapacity
     chatGptDeploymentName: chatGptDeploymentName
+    chatGptDeploymentCapacity: chatGptDeploymentCapacity
     chatGptModelName: chatGptModelName
     chatGptModelVersion: chatGptModelVersion
     embeddingDeploymentName: embeddingDeploymentName
     embeddingDeploymentCapacity: embeddingDeploymentCapacity
     embeddingModelName: embeddingModelName
-    searchServiceSkuName: searchServiceSkuName
-    storageServiceSku: storageServiceSku
-    storageServiceImageContainerName: storageServiceImageContainerName
-    location: location
-    aspCoreEnvironment: aspCoreEnvironment
-    azureClientID: azureClientID
-    azureTenantId: azureTenantId
-    apimAiEndpointOverride: apimAiEndpointOverride
-    apimAiEmbeddingsEndpointOverride: apimAiEmbeddingsEndpointOverride
-    kvSetFunctionAppPermissions: kvSetFunctionAppPermissions
-    semanticSearchSku: semanticSearchSku
+    deployAzueOpenAi: deployAzueOpenAi
+    agileChatDatabaseName: agileChatDatabaseName
   }
 }
 
-output APP_URL string = resources.outputs.url
-output AZURE_LOCATION string = location
-output AZURE_TENANT_ID string = tenant().tenantId
+module webApp 'webapp.bicep' = {
+  name: 'webapp'
+  params: {
+    projectName: projectName
+    environmentName: environmentName
+    location: location
+    tags: tags
+    resourcePrefix: resourcePrefix
+    appServicePlanName: platform.outputs.appServicePlanName
+    apiAppName: apiAppName
+    logAnalyticsWorkspaceName: platform.outputs.logAnalyticsWorkspaceName
+  }
+}
+
+module apiApp 'apiapp.bicep' = {
+  name: 'apiapp'
+  params: {
+    projectName: projectName
+    environmentName: environmentName
+    location: location
+    tags: tags
+    resourcePrefix: resourcePrefix
+    apiAppName: apiAppName
+    aspCoreEnvironment: aspCoreEnvironment
+    azureTenantId: azureTenantId
+    webAppDefaultHostName: webApp.outputs.webAppDefaultHostName
+    storageName: platform.outputs.storageAccountName
+    formRecognizerName: platform.outputs.formRecognizerName
+    serviceBusQueueName: platform.outputs.serviceBusQueueName
+    serviceBusName: platform.outputs.serviceBusName
+    searchServiceName: platform.outputs.searchServiceName
+    keyVaultName: platform.outputs.keyVaultName
+    appServicePlanName: platform.outputs.appServicePlanName
+    logAnalyticsWorkspaceName: platform.outputs.logAnalyticsWorkspaceName
+    storageAccountName: platform.outputs.storageAccountName
+    cosmosDbAccountName: platform.outputs.cosmosDbAccountName
+    cosmosDbAccountEndpoint: platform.outputs.cosmosDbAccountEndpoint
+    auditIncludePII: 'true'
+    openAiApiVersion: openAIApiVersion
+    openAiName: platform.outputs.openAiName
+    chatGptDeploymentName: chatGptDeploymentName
+    embeddingDeploymentName: embeddingDeploymentName
+    embeddingModelName: embeddingModelName
+    apimAiEndpointOverride: apimAiEndpointOverride
+    apimAiEmbeddingsEndpointOverride: apimAiEmbeddingsEndpointOverride
+    adminEmailAddresses: AdminEmailAddresses
+    storageServiceFoldersContainerName: platform.outputs.storageServiceFoldersContainerName
+    cosmosDbAccountDataPlaneCustomRoleId: platform.outputs.cosmosDbAccountDataPlaneCustomRoleId
+    agileChatDatabaseName: platform.outputs.agileChatDatabaseName
+  }
+}
+
+output url string = 'https://${webApp.outputs.webAppDefaultHostName}'
+output api_url string = 'https://${apiApp.outputs.apiAppDefaultHostName}'
+

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Agile.Framework.Common.EnvironmentVariables.Models;
+﻿using Agile.Framework.Common.EnvironmentVariables.Models;
 using Microsoft.Extensions.Configuration;
 
 namespace Agile.Framework.Common.EnvironmentVariables;
@@ -9,7 +7,7 @@ public static class Configs
 {
     public static void InitializeConfigs(IConfiguration configuration) => config = configuration;
     private static IConfiguration config;
-    
+
     public static BlobConfig BlobStorage => config.GetSection("BlobStorage").Get<BlobConfig>() ?? throw new NullReferenceException("BlobStorage is null");
     public static string AppInsightsConnectionString => config.GetConnectionString("APPLICATIONINSIGHTS_CONNECTION_STRING") ?? throw new NullReferenceException("APPLICATIONINSIGHTS_CONNECTION_STRING is null");
     public static AzureAdConfig AzureAd => config.GetSection("AzureAd").Get<AzureAdConfig>()! ?? throw new NullReferenceException("AzureAd is null");

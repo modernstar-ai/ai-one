@@ -157,7 +157,7 @@ public static class Chat
                     assistantResponse = assistantResponse.Replace($"[doc{i + 1}]", $"⁽{ToSuperscript(docIndex)}⁾");
                     docIndex++;
                 }
-            
+
                 if (citations.Count > 0)
                     metadata.Add(MetadataType.Citations, citations);
             }
@@ -209,14 +209,14 @@ public static class Chat
 
         private async Task<IResult> GetSearchResultAsync(string userPrompt, string? assistantSystemPrompt, AssistantFilterOptions? assistantFilterOptions, AzureOpenAIPromptExecutionSettings chatSettings)
         {
-            if (_chatContainer.Assistant?.RagType == RagType.AzureSearchChatDataSource) 
+            if (_chatContainer.Assistant?.RagType == RagType.AzureSearchChatDataSource)
                 throw new Exception("Azure Search Chat Data Source is currently not supported with Search type Assistants.");
-            
+
             try
             {
 #pragma warning disable SKEXP0010
                 chatSettings.ResponseFormat = "json_object";
-                
+
                 var aiResponse = await appKernel.GetPromptFileChat(chatSettings,
                     Constants.ChatCompletionsPromptsPath,
                     Constants.Prompts.ChatWithSearch,

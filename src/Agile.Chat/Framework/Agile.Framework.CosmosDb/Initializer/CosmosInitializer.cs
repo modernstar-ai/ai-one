@@ -1,5 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using System.Net;
+﻿using System.Net;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.EnvironmentVariables;
 using Agile.Framework.Common.Interfaces;
@@ -14,8 +13,8 @@ public class CosmosInitializer(CosmosClient client) : IAsyncInitializer
     private Database Db { get; set; }
     public async Task InitializeAsync()
     {
-        await client.CreateDatabaseIfNotExistsAsync(Constants.Cosmos.DatabaseName);
-        Db = client.GetDatabase(Constants.Cosmos.DatabaseName);
+        await client.CreateDatabaseIfNotExistsAsync(Configs.CosmosDb.DatabaseName );
+        Db = client.GetDatabase(Configs.CosmosDb.DatabaseName);
         
         await CreateOrUpdateContainerAsync(Constants.CosmosChatsContainerName, Constants.CosmosChatsPartitionKeyPath);
         await CreateOrUpdateContainerAsync(Constants.Cosmos.Files.ContainerName, Constants.Cosmos.Files.PartitionKeyPath, Constants.Cosmos.Files.SortableTextProperties);
