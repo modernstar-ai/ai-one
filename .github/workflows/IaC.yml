@@ -36,15 +36,6 @@ on:
           - "australiaeast"
           - "australiasoutheast"
         required: true
-      # semantic_search_sku:
-      #   description: "Select the Azure Search AI Semantic Search Sku"
-      #   type: choice
-      #   default: "standard"
-      #   options:
-      #     - "disabled"
-      #     - "free"
-      #     - "standard"
-      #   required: true
 
 env:
   AZURE_BICEP_MAIN: "./infra/main.bicep"
