@@ -231,7 +231,7 @@ module openAiModule './modules/openai.bicep' = if (deployAzueOpenAi) {
     location: openAiLocation
     tags: tags
     skuName: openAiSkuName
-    //deployments: openAiSampleModels
+    deployments: openAiSampleModels
   }
 }
 
