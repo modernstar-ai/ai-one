@@ -8,7 +8,7 @@ param location string
 param tags object = {}
 
 @description('Optional. List of Cosmos DB databases to deploy.')
-param databases array= []
+param databases array = []
 
 @description('Cosmos DB custom role definition name')
 param cosmosDbAccountDataPlaneCustomRoleName string = 'Custom Cosmos DB for NoSQL Data Plane Contributor'

@@ -206,7 +206,6 @@ module cosmosDbModule './modules/cosmosDb.bicep' = {
     location: location
     tags: tags
     databases: [
-      agileChatDatabaseName
     ]
     cosmosDbAccountDataPlaneCustomRoleName: cosmosDbAccountDataPlaneCustomRoleName
   }
