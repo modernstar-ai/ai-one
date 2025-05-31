@@ -145,7 +145,7 @@ module keyVaultModule './modules/keyVault.bicep' = {
     location: location
     tags: tags
     logWorkspaceName: logAnalyticsWorkspaceName
-     userObjectId: ''
+    userObjectId: ''
     keyVaultSecrets: [
       {
         name: 'AZURE-SEARCH-API-KEY'
@@ -172,7 +172,6 @@ module keyVaultModule './modules/keyVault.bicep' = {
   }
 }
 
-
 module logAnalyticsWorkspaceModule './modules/logAnalyticsWorkspace.bicep' = {
   name: 'logAnalyticsWorkspaceModule'
   params: {
@@ -192,7 +191,7 @@ module storageModule './modules/storage.bicep' = {
     skuName: storageServiceSku
     blobContainerCollection: [
       storageServiceFoldersContainerName
-      storageServiceImageContainerName
+      validStorageServiceImageContainerName
     ]
   }
 }
@@ -356,8 +355,8 @@ output searchServiceName string = searchService.name
 output searchServiceId string = searchService.id
 output keyVaultName string = keyVaultModule.outputs.name
 output keyVaultId string = keyVaultModule.outputs.resourceId
-output storageAccountName string =storageModule.outputs.name
-output storageAccountId string =  storageModule.outputs.resourceId
+output storageAccountName string = storageModule.outputs.name
+output storageAccountId string = storageModule.outputs.resourceId
 output imagesContainerId string = storageServiceImageContainerName
 output appServicePlanName string = appServicePlan.name
 output appServicePlanId string = appServicePlan.id
