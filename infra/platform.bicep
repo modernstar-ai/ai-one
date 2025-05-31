@@ -267,8 +267,8 @@ module storageModule './modules/storage.bicep' = {
   }
 }
 
-module searchServiceModule './modules/searchService.bicep' = {
-  name: 'searchServiceModule'
+module aisearchModule './modules/aisearch.bicep' = {
+  name: 'aisearchModule'
   params: {
     name: searchServiceName
     location: location
@@ -286,7 +286,7 @@ output cosmosDbAccountName string = cosmosDbModule.outputs.cosmosDbAccountName
 output cosmosDbAccountEndpoint string = cosmosDbModule.outputs.cosmosDbAccountEndpoint
 output appServicePlanName string = appServicePlanModule.outputs.name
 output appServicePlanId string = appServicePlanModule.outputs.resourceId
-output searchServiceName string = searchServiceModule.outputs.searchServiceName
+output searchServiceName string = aisearchModule.outputs.name
 output formRecognizerName string = formRecognizer.name
 output openAiName string = azureopenai.name
 output openAiEndpoint string = azureopenai.properties.endpoint
