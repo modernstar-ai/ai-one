@@ -88,7 +88,7 @@ var blobContainersArray = loadJsonContent('./blob-storage-containers.json')
 
 var blobContainers = [
   for name in blobContainersArray: {
-    name: toLower(replace(name, '-', ''))
+    name: toLower(name)
     publicAccess: 'None'
   }
 ]
