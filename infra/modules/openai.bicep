@@ -8,7 +8,7 @@ param location string
 param tags object = {}
 
 @description('SKU for Azure OpenAI resource')
-param openAiSkuName string = 'S0'
+param skuName string = 'S0'
 
 resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   name: name
@@ -20,7 +20,7 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
     publicNetworkAccess: 'Enabled'
   }
   sku: {
-    name: openAiSkuName
+    name: skuName
   }
 }
 
