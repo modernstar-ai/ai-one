@@ -34,7 +34,8 @@ resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' = {
     enabledForDeployment: true
     enabledForDiskEncryption: true
     enabledForTemplateDeployment: false
-    // enableSoftDelete: true
+    enableSoftDelete: true
+    softDeleteRetentionInDays: 90
     // enablePurgeProtection: true
     //publicNetworkAccess: 'Disabled'
   }
