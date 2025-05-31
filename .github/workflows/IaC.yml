@@ -63,12 +63,12 @@ jobs:
           resourceGroupName: ${{ vars.AZURE_RESOURCE_GROUP }}
           template: ${{ env.AZURE_BICEP_MAIN }}
           parameters: |
-            ./infra/dev.parameters.json \
-            projectName="${{ inputs.project_name }}" \
-            location="${{ inputs.azure_location }}" \
-            azureClientID="${{ vars.AZURE_CLIENT_ID }}" \
-            azureTenantId="${{ vars.AZURE_TENANT_ID }}" \
-            apimAiEndpointOverride="${{ vars.APIM_ENDPOINT_OVERRIDE }}" \
+            ./infra/dev.parameters.json
+            projectName="${{ inputs.project_name }}"
+            location="${{ inputs.azure_location }}"
+            azureClientID="${{ vars.AZURE_CLIENT_ID }}"
+            azureTenantId="${{ vars.AZURE_TENANT_ID }}"
+            apimAiEndpointOverride="${{ vars.APIM_ENDPOINT_OVERRIDE }}"
             apimAiEmbeddingsEndpointOverride="${{ vars.APIM_EMBEDDINGS_ENDPOINT_OVERRIDE }}"
           includeAdditionalFiles: |
             ./infra/blob-storage-containers.json
