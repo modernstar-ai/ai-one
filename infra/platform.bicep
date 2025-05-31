@@ -138,55 +138,6 @@ resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   }
 }
 
-// resource kv 'Microsoft.KeyVault/vaults@2024-11-01' = {
-//   name: keyVaultName
-//   location: location
-//   tags: tags
-//   properties: {
-//     sku: {
-//       family: 'A'
-//       name: 'standard'
-//     }
-//     tenantId: subscription().tenantId
-//     enableRbacAuthorization: true
-//     enabledForDeployment: false
-//     enabledForDiskEncryption: true
-//     enabledForTemplateDeployment: false
-//   }
-
-//   resource AZURE_SEARCH_API_KEY 'secrets' = {
-//     name: 'AZURE-SEARCH-API-KEY'
-//     properties: {
-//       contentType: 'text/plain'
-//       value: searchService.listAdminKeys().secondaryKey
-//     }
-//   }
-
-//   resource AZURE_CLIENT_ID 'secrets' = {
-//     name: 'AZURE-CLIENT-ID'
-//     properties: {
-//       contentType: 'text/plain'
-//       value: azureClientId
-//     }
-//   }
-
-//   resource AZURE_TENANT_ID 'secrets' = {
-//     name: 'AZURE-TENANT-ID'
-//     properties: {
-//       contentType: 'text/plain'
-//       value: azureTenantId
-//     }
-//   }
-
-//   resource AZURE_COSMOSDB_KEY 'secrets' = {
-//     name: 'AZURE-COSMOSDB-KEY'
-//     properties: {
-//       contentType: 'text/plain'
-//       value: cosmosDbAccount.listKeys().secondaryMasterKey
-//     }
-//   }
-// }
-
 module keyVaultModule './modules/keyVault.bicep' = {
   name: 'keyVaultModule'
   params: {
@@ -222,35 +173,27 @@ module keyVaultModule './modules/keyVault.bicep' = {
 }
 
 
-resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: storageAccountName
-  location: location
-  tags: tags
-  kind: 'StorageV2'
-  sku: storageServiceSku
-}
-
-resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
-  parent: storage
-  name: 'default'
-  properties: {
-    deleteRetentionPolicy: {
-      enabled: true
-      days: 7
-    }
+module logAnalyticsWorkspaceModule './modules/logAnalyticsWorkspace.bicep' = {
+  name: 'logAnalyticsWorkspaceModule'
+  params: {
+    logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
+    location: location
+    tags: tags
   }
 }
 
-resource imagesContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
-  parent: blobServices
-  name: validStorageServiceImageContainerName
-}
-
-resource indexContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
-  parent: blobServices
-  name: storageServiceFoldersContainerName
-  properties: {
-    publicAccess: 'None'
+module storageModule './modules/storage.bicep' = {
+  name: 'storageModule'
+  params: {
+    name: storageAccountName
+    location: location
+    tags: tags
+    logWorkspaceName: logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
+    skuName: storageServiceSku
+    blobContainerCollection: [
+      storageServiceFoldersContainerName
+      storageServiceImageContainerName
+    ]
   }
 }
 
@@ -413,11 +356,9 @@ output searchServiceName string = searchService.name
 output searchServiceId string = searchService.id
 output keyVaultName string = keyVaultModule.outputs.name
 output keyVaultId string = keyVaultModule.outputs.resourceId
-output storageAccountName string = storage.name
-output storageAccountId string = storage.id
-output blobServicesId string = blobServices.id
-output imagesContainerId string = imagesContainer.id
-output indexContainerId string = indexContainer.id
+output storageAccountName string =storageModule.outputs.name
+output storageAccountId string =  storageModule.outputs.resourceId
+output imagesContainerId string = storageServiceImageContainerName
 output appServicePlanName string = appServicePlan.name
 output appServicePlanId string = appServicePlan.id
 output cosmosDbAccountName string = cosmosDbAccount.name
@@ -429,8 +370,7 @@ output serviceBusName string = serviceBus.name
 output serviceBusId string = serviceBus.id
 output serviceBusQueueName string = serviceBus::queue.name
 output serviceBusQueueId string = serviceBus::queue.id
-output storageServiceFoldersContainerName string = indexContainer.name
-output storageServiceImageContainerName string = imagesContainer.name
+output storageServiceFoldersContainerName string = storageServiceFoldersContainerName
 output openAiName string = azureopenai.name
 output openAiEndpoint string = azureopenai.properties.endpoint
 output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbAccountDataPlaneCustomRole.id

@@ -14,7 +14,7 @@ param logWorkspaceName string
 param skuName object
 
 @description('Array of blob container names to be created')
-param blobContainerCollection array
+param blobContainerCollection array = []
 
 resource logWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
   name: logWorkspaceName
