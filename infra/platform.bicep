@@ -138,7 +138,6 @@ module searchService './modules/aiSearchService.bicep' = {
     semanticSearchSku: semanticSearchSku
   }
 }
-
 module keyVaultModule './modules/keyVault.bicep' = {
   name: 'keyVaultModule'
   params: {
@@ -311,7 +310,7 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15
 
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
-output searchServiceName string = searchService.name
+output searchServiceName string = searchService.outputs.name
 output keyVaultName string = keyVaultModule.outputs.name
 output keyVaultId string = keyVaultModule.outputs.resourceId
 output storageAccountName string = storageModule.outputs.name
@@ -326,7 +325,7 @@ output formRecognizerName string = documentIntelligenceModule.outputs.name
 output serviceBusName string = serviceBusModule.outputs.name
 output serviceBusQueueName string = serviceBusModule.outputs.serviceBusQueueName
 output storageServiceFoldersContainerName string = storageServiceFoldersContainerName
-output openAiName string = azureopenai.name
-output openAiEndpoint string = azureopenai.properties.endpoint
+output openAiName string = openAiModule.outputs.name
+output openAiEndpoint string = openAiModule.outputs.endpoint
 output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbAccountDataPlaneCustomRole.id
 output agileChatDatabaseName string = database.name
