@@ -84,7 +84,7 @@ param cosmosDbAccountDataPlaneCustomRoleName string = 'Custom Cosmos DB for NoSQ
 param agileChatDatabaseName string = 'AgileChat'
 
 var blobContainersArray = loadJsonContent('./blob-storage-containers.json')
-var openAiSampleModelsArray = loadJsonContent('./openai-models.json')
+//var openAiSampleModelsArray = loadJsonContent('./openai-models.json')
 
 var blobContainers = [
   for name in blobContainersArray: {
@@ -93,20 +93,20 @@ var blobContainers = [
   }
 ]
 
-var openAiSampleModels = [
-  for record in openAiSampleModelsArray: {
-    name: record.name
-    model: {
-      name: record.model.name
-      version: record.model.version
-      format: record.model.format
-    }
-    sku: {
-      name: record.sku.name
-      capacity: record.sku.capacity
-    }
-  }
-]
+// var openAiSampleModels = [
+//   for record in openAiSampleModelsArray: {
+//     name: record.name
+//     model: {
+//       name: record.model.name
+//       version: record.model.version
+//       format: record.model.format
+//     }
+//     sku: {
+//       name: record.sku.name
+//       capacity: record.sku.capacity
+//     }
+//   }
+// ]
 
 // @description('The optional APIM Gateway URL to override the azure open AI instance')
 // param apimAiEndpointOverride string = ''
@@ -230,7 +230,7 @@ module openAiModule './modules/openai.bicep' = if (deployAzueOpenAi) {
     location: openAiLocation
     tags: tags
     skuName: openAiSkuName
-    deployments: openAiSampleModels
+    // deployments: openAiSampleModels
   }
 }
 
