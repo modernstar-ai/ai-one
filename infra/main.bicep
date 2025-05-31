@@ -3,12 +3,12 @@ targetScope = 'resourceGroup'
 @description('The name of the solution.')
 @minLength(1)
 @maxLength(12)
-param projectName string = 'ag-aione-v2'
+param projectName string
 
 @description('The type of environment. e.g. local, dev, uat, prod.')
 @minLength(1)
 @maxLength(4)
-param environmentName string = 'dev'
+param environmentName string
 
 @description('Primary location for all resources')
 param location string = resourceGroup().location
