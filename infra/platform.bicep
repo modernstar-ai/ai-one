@@ -128,16 +128,24 @@ module logAnalyticsWorkspaceModule './modules/logAnalyticsWorkspace.bicep' = {
   }
 }
 
-module searchService './modules/aiSearchService.bicep' = {
-  name: 'searchService'
-  params: {
-    name: searchServiceName
-    location: location
-    tags: tags
-    skuName: searchServiceSkuName
-    semanticSearchSku: semanticSearchSku
+resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
+  name: searchServiceName
+  location: location
+  tags: tags
+  properties: {
+    partitionCount: 1
+    publicNetworkAccess: 'enabled'
+    replicaCount: 1
+    semanticSearch: semanticSearchSku
+  }
+  sku: {
+    name: searchServiceSkuName
+  }
+  identity: {
+    type: 'SystemAssigned'
   }
 }
+
 module keyVaultModule './modules/keyVault.bicep' = {
   name: 'keyVaultModule'
   params: {
@@ -310,7 +318,7 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15
 
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
-output searchServiceName string = searchService.outputs.name
+output searchServiceName string = searchService.name
 output keyVaultName string = keyVaultModule.outputs.name
 output keyVaultId string = keyVaultModule.outputs.resourceId
 output storageAccountName string = storageModule.outputs.name
