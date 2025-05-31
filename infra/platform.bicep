@@ -205,19 +205,16 @@ module appServicePlanModule './modules/appServicePlan.bicep' = {
   }
 }
 
-resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
-  name: cosmosDbAccountName
-  location: location
-  tags: tags
-  kind: 'GlobalDocumentDB'
-  properties: {
-    databaseAccountOfferType: 'Standard'
-    locations: [
-      {
-        locationName: location
-        failoverPriority: 0
-      }
+module cosmosDbModule './modules/cosmosDb.bicep' = {
+  name: 'cosmosDbModule'
+  params: {
+    name: cosmosDbAccountName
+    location: location
+    tags: tags
+    databases: [
+      agileChatDatabaseName
     ]
+    cosmosDbAccountDataPlaneCustomRoleName: cosmosDbAccountDataPlaneCustomRoleName
   }
 }
 
@@ -292,39 +289,6 @@ resource embeddingsllmdeployment 'Microsoft.CognitiveServices/accounts/deploymen
   }
 }
 
-// Cosmos DB Custom Role Definition
-//https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/how-to-grant-data-plane-access?tabs=built-in-definition%2Ccsharp&pivots=azure-interface-bicep
-resource cosmosDbAccountDataPlaneCustomRole 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-05-15' = {
-  name: guid(resourceGroup().id, cosmosDbAccount.id, cosmosDbAccountDataPlaneCustomRoleName)
-  parent: cosmosDbAccount
-  properties: {
-    roleName: cosmosDbAccountDataPlaneCustomRoleName
-    type: 'CustomRole'
-    assignableScopes: [
-      cosmosDbAccount.id
-    ]
-    permissions: [
-      {
-        dataActions: [
-          'Microsoft.DocumentDB/databaseAccounts/readMetadata'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*'
-        ]
-      }
-    ]
-  }
-}
-
-resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15' = {
-  name: agileChatDatabaseName
-  parent: cosmosDbAccount
-  properties: {
-    resource: {
-      id: agileChatDatabaseName
-    }
-  }
-}
-
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspace.name
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
 output searchServiceName string = searchService.name
@@ -336,9 +300,8 @@ output storageAccountId string = storageModule.outputs.resourceId
 output imagesContainerId string = storageServiceImageContainerName
 output appServicePlanName string = appServicePlanModule.outputs.name
 output appServicePlanId string = appServicePlanModule.outputs.resourceId
-output cosmosDbAccountName string = cosmosDbAccount.name
-output cosmosDbAccountId string = cosmosDbAccount.id
-output cosmosDbAccountEndpoint string = cosmosDbAccount.properties.documentEndpoint
+output cosmosDbAccountName string = cosmosDbModule.outputs.name
+output cosmosDbAccountEndpoint string = cosmosDbModule.outputs.endpoint
 output formRecognizerName string = formRecognizer.name
 output formRecognizerId string = formRecognizer.id
 output serviceBusName string = serviceBusModule.outputs.name
@@ -346,5 +309,4 @@ output serviceBusQueueName string = serviceBusModule.outputs.serviceBusQueueName
 output storageServiceFoldersContainerName string = storageServiceFoldersContainerName
 output openAiName string = azureopenai.name
 output openAiEndpoint string = azureopenai.properties.endpoint
-output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbAccountDataPlaneCustomRole.id
-output agileChatDatabaseName string = database.name
+output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbModule.outputs.cosmosDbAccountDataPlaneCustomRoleId

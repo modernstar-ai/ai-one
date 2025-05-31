@@ -62,6 +62,6 @@ resource sqlDatabases 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-0
   }
 ]
 
-output cosmosDbAccountName string = cosmosDbAccount.name
-output cosmosDbAccountEndpoint string = cosmosDbAccount.properties.documentEndpoint
+output name string = cosmosDbAccount.name
+output endpoint string = cosmosDbAccount.properties.documentEndpoint
 output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbAccountDataPlaneCustomRole.id

@@ -188,7 +188,7 @@ module apiApp 'apiapp.bicep' = {
     adminEmailAddresses: AdminEmailAddresses
     storageServiceFoldersContainerName: platform.outputs.storageServiceFoldersContainerName
     cosmosDbAccountDataPlaneCustomRoleId: platform.outputs.cosmosDbAccountDataPlaneCustomRoleId
-    agileChatDatabaseName: platform.outputs.agileChatDatabaseName
+    agileChatDatabaseName: agileChatDatabaseName
   }
 }
 
