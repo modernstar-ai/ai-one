@@ -188,24 +188,6 @@ module aiSearchService './modules/aiSearch.bicep' = {
   }
 }
 
-// resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
-//   name: searchServiceName
-//   location: location
-//   tags: tags
-//   properties: {
-//     partitionCount: 1
-//     publicNetworkAccess: 'enabled'
-//     replicaCount: 1
-//     semanticSearch: semanticSearchSku
-//   }
-//   sku: {
-//     name: searchServiceSkuName
-//   }
-//   identity: {
-//     type: 'SystemAssigned'
-//   }
-// }
-
 module appServicePlanModule './modules/appServicePlan.bicep' = {
   name: 'appServicePlanModule'
   params: {
