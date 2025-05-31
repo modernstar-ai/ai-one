@@ -107,6 +107,9 @@ param cosmosDbAccountDataPlaneCustomRoleName string = 'Custom Cosmos DB for NoSQ
 @description('Database name for AgileChat')
 param agileChatDatabaseName string = 'AgileChat'
 
+@description('Specifies the object id of a Microsoft Entra ID user. In general, this the object id of the system administrator who deploys the Azure resources. This defaults to the deploying user.')
+param userObjectId string = ''
+
 // @description('The optional APIM Gateway URL to override the azure open AI instance')
 // param apimAiEndpointOverride string = ''
 // @description('The optional APIM Gateway URL to override the azure open AI embedding instance')
@@ -253,9 +256,11 @@ module serviceBusModule './modules/serviceBus.bicep' = {
 module keyVaultModule './modules/keyVault.bicep' = {
   name: 'keyVaultModule'
   params: {
-    keyVaultName: keyVaultName
+    name: keyVaultName
     location: location
     tags: tags
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
+    userObjectId: userObjectId
     keyVaultSecrets: [
       {
         name: 'AZURE-SEARCH-API-KEY'
@@ -315,8 +320,8 @@ output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.lo
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
 output searchServiceName string = searchService.name
 output searchServiceId string = searchService.id
-output keyVaultName string = keyVaultModule.outputs.keyVaultName
-output keyVaultId string = keyVaultModule.outputs.keyVaultId
+output keyVaultName string = keyVaultModule.outputs.name
+output keyVaultId string = keyVaultModule.outputs.resourceId
 output storageAccountName string = storageModule.outputs.storageAccountName
 output storageAccountId string = storageModule.outputs.storageAccountId
 output blobServicesId string = storageModule.outputs.blobServicesId
