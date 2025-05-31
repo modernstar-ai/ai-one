@@ -3,6 +3,11 @@ name: IaC
 on:
   workflow_dispatch:
     inputs:
+      project_name:
+        description: "Enter the Name of the project"
+        type: string
+        default: "ag-aione-v2"
+        required: true
       environment_name:
         description: "Select the application environment name - used to name resources"
         type: choice
@@ -13,21 +18,6 @@ on:
           - "uat"
           - "prod"
         required: true
-      # asp_core_environment:
-      #   description: "Select the ASP Core deployment environment"
-      #   type: choice
-      #   default: "Development"
-      #   options:
-      #     - "Development"
-      #     - "Test"
-      #     - "UAT"
-      #     - "Production"
-      #   required: true
-      project_name:
-        description: "Enter the Name of the project"
-        type: string
-        default: "ag-aione-v2"
-        required: true
       azure_location:
         description: "Select the Azure deployment location"
         type: choice
@@ -36,7 +26,6 @@ on:
           - "australiaeast"
           - "australiasoutheast"
         required: true
-
 env:
   AZURE_BICEP_MAIN: "./infra/main.bicep"
   # AZURE_SUBSCRIPTION_ID
@@ -78,7 +67,7 @@ jobs:
           #   aspCoreEnvironment="${{ inputs.asp_core_environment }}"
           #   semanticSearchSku="${{ inputs.semantic_search_sku }}"
 
-          parametersFile: infra/${{ inputs.environment_name }}.parameters.json
+          parametersFile: infra/dev.parameters.json
           parameters: |
             projectName="${{ inputs.project_name }}"
             location="${{ inputs.azure_location }}"
