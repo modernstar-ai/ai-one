@@ -120,16 +120,16 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
   location: location
 }
 
-module aiSearchModule './modules/aiSearchService.bicep' = {
-  name: 'aiSearchServiceModule'
-  params: {
-    name: searchServiceName
-    location: location
-    tags: tags
-    skuName: searchServiceSkuName
-    semanticSearchSku: semanticSearchSku
-  }
-}
+// module aiSearchModule './modules/aiSearchService.bicep' = {
+//   name: 'aiSearchServiceModule'
+//   params: {
+//     name: searchServiceName
+//     location: location
+//     tags: tags
+//     skuName: searchServiceSkuName
+//     semanticSearchSku: semanticSearchSku
+//   }
+// }
 
 module keyVaultModule './modules/keyVault.bicep' = {
   name: 'keyVaultModule'
@@ -321,8 +321,8 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15
 
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspace.name
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
-output searchServiceName string = aiSearchModule.outputs.name
-output searchServiceId string = aiSearchModule.outputs.resourceId
+// output searchServiceName string = aiSearchModule.outputs.name
+// output searchServiceId string = aiSearchModule.outputs.resourceId
 output keyVaultName string = keyVaultModule.outputs.name
 output keyVaultId string = keyVaultModule.outputs.resourceId
 output storageAccountName string = storageModule.outputs.name
