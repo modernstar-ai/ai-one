@@ -77,26 +77,26 @@ param openAiLocation string
 @description('SKU for Azure OpenAI resource')
 param openAiSkuName string = 'S0'
 
-@description('Capacity for ChatGPT deployment')
-param chatGptDeploymentCapacity int = 8
+// @description('Capacity for ChatGPT deployment')
+// param chatGptDeploymentCapacity int = 8
 
-@description('ChatGPT deployment name')
-param chatGptDeploymentName string = 'gpt-4o'
+// @description('ChatGPT deployment name')
+// param chatGptDeploymentName string = 'gpt-4o'
 
-@description('ChatGPT model name')
-param chatGptModelName string = 'gpt-4o'
+// @description('ChatGPT model name')
+// param chatGptModelName string = 'gpt-4o'
 
-@description('ChatGPT model version')
-param chatGptModelVersion string = '2024-05-13'
+// @description('ChatGPT model version')
+// param chatGptModelVersion string = '2024-05-13'
 
-@description('Embedding deployment name')
-param embeddingDeploymentName string = 'embedding'
+// @description('Embedding deployment name')
+// param embeddingDeploymentName string = 'embedding'
 
-@description('Capacity for embedding deployment')
-param embeddingDeploymentCapacity int = 350
+// @description('Capacity for embedding deployment')
+// param embeddingDeploymentCapacity int = 350
 
-@description('Embedding model name')
-param embeddingModelName string = 'text-embedding-3-small'
+// @description('Embedding model name')
+// param embeddingModelName string = 'text-embedding-3-small'
 
 @description('Cosmos DB custom role definition name')
 param cosmosDbAccountDataPlaneCustomRoleName string = 'Custom Cosmos DB for NoSQL Data Plane Contributor'
@@ -104,12 +104,28 @@ param cosmosDbAccountDataPlaneCustomRoleName string = 'Custom Cosmos DB for NoSQ
 @description('Database name for AgileChat')
 param agileChatDatabaseName string = 'AgileChat'
 
-var blobContainersArray = loadJsonContent('./data-containers.json')
+var blobContainersArray = loadJsonContent('./blob-storage-containers.json')
+var openAiSampleModelsArray = loadJsonContent('./openai-models.json')
 
 var blobContainers = [
   for name in blobContainersArray: {
     name: toLower(replace(name, '-', ''))
     publicAccess: 'None'
+  }
+]
+
+var openAiSampleModels = [
+  for record in openAiSampleModelsArray: {
+    name: record.name
+    model: {
+      name: record.model.name
+      version: record.model.version
+      format: record.model.format
+    }
+    sku: {
+      name: record.sku.name
+      capacity: record.sku.capacity
+    }
   }
 ]
 
@@ -240,42 +256,43 @@ module openAiModule './modules/openai.bicep' = {
     location: openAiLocation
     tags: tags
     skuName: openAiSkuName
+    deployments: deployAzueOpenAi ? openAiSampleModels : []
   }
 }
 
-resource gptllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = if (deployAzueOpenAi) {
-  parent: azureopenai
-  name: chatGptDeploymentName
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: chatGptModelName
-      version: chatGptModelVersion
-    }
-  }
-  #disable-next-line use-safe-access
-  sku: {
-    name: 'GlobalStandard'
-    capacity: chatGptDeploymentCapacity
-  }
-}
+// resource gptllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = if (deployAzueOpenAi) {
+//   parent: azureopenai
+//   name: chatGptDeploymentName
+//   properties: {
+//     model: {
+//       format: 'OpenAI'
+//       name: chatGptModelName
+//       version: chatGptModelVersion
+//     }
+//   }
+//   #disable-next-line use-safe-access
+//   sku: {
+//     name: 'GlobalStandard'
+//     capacity: chatGptDeploymentCapacity
+//   }
+// }
 
-resource embeddingsllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = if (deployAzueOpenAi) {
-  parent: azureopenai
-  dependsOn: [gptllmdeployment]
-  name: embeddingDeploymentName
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: embeddingModelName
-      version: '1'
-    }
-  }
-  sku: {
-    name: 'Standard'
-    capacity: embeddingDeploymentCapacity
-  }
-}
+// resource embeddingsllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = if (deployAzueOpenAi) {
+//   parent: azureopenai
+//   dependsOn: [gptllmdeployment]
+//   name: embeddingDeploymentName
+//   properties: {
+//     model: {
+//       format: 'OpenAI'
+//       name: embeddingModelName
+//       version: '1'
+//     }
+//   }
+//   sku: {
+//     name: 'Standard'
+//     capacity: embeddingDeploymentCapacity
+//   }
+// }
 
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId

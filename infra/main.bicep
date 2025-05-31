@@ -89,27 +89,6 @@ param openAISku string = 'S0'
 @description('API version for Azure OpenAI')
 param openAIApiVersion string = '2024-08-01-preview'
 
-@description('Capacity for ChatGPT deployment')
-param chatGptDeploymentCapacity int = 8
-
-@description('Name for ChatGPT deployment')
-param chatGptDeploymentName string = 'gpt-4o'
-
-@description('Model name for ChatGPT')
-param chatGptModelName string = 'gpt-4o'
-
-@description('Model version for ChatGPT')
-param chatGptModelVersion string = '2024-05-13'
-
-@description('Name for embedding deployment')
-param embeddingDeploymentName string = 'embedding'
-
-@description('Capacity for embedding deployment')
-param embeddingDeploymentCapacity int = 350
-
-@description('Model name for embedding')
-param embeddingModelName string = 'text-embedding-3-small'
-
 @description('Database name for AgileChat')
 param agileChatDatabaseName string = 'AgileChat'
 
@@ -128,13 +107,6 @@ module platform 'platform.bicep' = {
     azureTenantId: azureTenantId
     openAiLocation: openAILocation
     openAiSkuName: openAISku
-    chatGptDeploymentName: chatGptDeploymentName
-    chatGptDeploymentCapacity: chatGptDeploymentCapacity
-    chatGptModelName: chatGptModelName
-    chatGptModelVersion: chatGptModelVersion
-    embeddingDeploymentName: embeddingDeploymentName
-    embeddingDeploymentCapacity: embeddingDeploymentCapacity
-    embeddingModelName: embeddingModelName
     deployAzueOpenAi: deployAzueOpenAi
     agileChatDatabaseName: agileChatDatabaseName
   }
@@ -180,9 +152,6 @@ module apiApp 'apiapp.bicep' = {
     auditIncludePII: 'true'
     openAiApiVersion: openAIApiVersion
     openAiName: platform.outputs.openAiName
-    chatGptDeploymentName: chatGptDeploymentName
-    embeddingDeploymentName: embeddingDeploymentName
-    embeddingModelName: embeddingModelName
     apimAiEndpointOverride: apimAiEndpointOverride
     apimAiEmbeddingsEndpointOverride: apimAiEmbeddingsEndpointOverride
     adminEmailAddresses: AdminEmailAddresses

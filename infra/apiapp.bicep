@@ -58,13 +58,13 @@ param apimAiEndpointOverride string = ''
 param apimAiEmbeddingsEndpointOverride string = ''
 
 @description('ChatGPT deployment name')
-param chatGptDeploymentName string
+param chatGptDeploymentName string = 'gpt-4o'
 
 @description('Embedding deployment name')
-param embeddingDeploymentName string
+param embeddingDeploymentName string = 'text-embedding-3-small'
 
 @description('Embedding model name')
-param embeddingModelName string
+param embeddingModelName string = 'text-embedding-3-small'
 
 @description('Azure Search Service name')
 param searchServiceName string
