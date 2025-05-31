@@ -177,15 +177,15 @@ resource apiAppManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities
   location: location
 }
 
-resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
-  name: apiAppName
-  location: location
-  tags: union(tags, { 'azd-service-name': 'agilechat-api' })
-  properties: {
+module apiAppModule './modules/site.bicep' = {
+  name: 'apiAppModule'
+  params: {
+    name: apiAppName
+    location: location
+    tags: union(tags, { 'azd-service-name': 'agilechat-api' })
     serverFarmId: appServicePlan.id
-    httpsOnly: true
-    clientAffinityEnabled: false
-    keyVaultReferenceIdentity: apiAppManagedIdentity.id
+    logWorkspaceName: logAnalyticsWorkspaceName
+    userAssignedIdentityId: apiAppManagedIdentity.id
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true
@@ -207,145 +207,141 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
       defaultDocuments: [
         'string'
       ]
-      appSettings: concat(
-        [
-          {
-            name: 'BlobStorage__AccountName'
-            value: storageName
-          }
-          {
-            name: 'Audit__IncludePII'
-            value: auditIncludePII
-          }
-          {
-            name: 'AzureDocumentIntelligence__Endpoint'
-            value: 'https://${formRecognizerName}.cognitiveservices.azure.com/'
-          }
-          {
-            name: 'AzureServiceBus__BlobQueueName'
-            value: serviceBusQueueName
-          }
-          {
-            name: 'AzureServiceBus__Namespace'
-            value: serviceBusName
-          }
-          {
-            name: 'AZURE_CLIENT_ID'
-            value: apiAppManagedIdentity.properties.clientId
-          }
-          {
-            name: 'AZURE_TENANT_ID'
-            value: azureTenantId
-          }
-          {
-            name: 'AzureAd__ClientId'
-            value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-CLIENT-ID)'
-          }
-          {
-            name: 'AzureAd__TenantId'
-            value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-TENANT-ID)'
-          }
-          {
-            name: 'AzureOpenAi__ApiVersion'
-            value: openAiApiVersion
-          }
-          {
-            name: 'AzureOpenAi__Endpoint'
-            value: 'https://${openAiName}.openai.azure.com/'
-          }
-          {
-            name: 'AzureOpenAi__InstanceName'
-            value: openAiName
-          }
-          {
-            name: 'AzureOpenAi__DeploymentName'
-            value: chatGptDeploymentName
-          }
-          {
-            name: 'AzureOpenAi__EmbeddingsDeploymentName'
-            value: embeddingDeploymentName
-          }
-          {
-            name: 'AzureOpenAi__EmbeddingsModelName'
-            value: embeddingModelName
-          }
-          {
-            name: 'AzureSearch__Endpoint'
-            value: 'https://${searchServiceName}.search.windows.net'
-          }
-          {
-            name: 'AzureSearch__ApiKey'
-            value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-SEARCH-API-KEY)'
-          }
-          {
-            name: 'CosmosDb__Endpoint'
-            value: cosmosDbAccountEndpoint
-          }
-          {
-            name: 'CosmosDb__DatabaseName'
-            value: agileChatDatabaseName
-          }
-          {
-            name: 'CosmosDb__Key'
-            value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-COSMOSDB-KEY)'
-          }
-          {
-            name: 'KeyVault__Name'
-            value: keyVaultName
-          }
-          {
-            name: 'KeyVault__ClientId'
-            value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-CLIENT-ID)'
-          }
-          {
-            name: 'KeyVault__TenantId'
-            value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-TENANT-ID)'
-          }
-          {
-            name: 'ApplicationInsights__InstrumentationKey'
-            value: applicationInsights.properties.InstrumentationKey
-          }
-          {
-            name: 'AdminEmailAddresses'
-            value: join(adminEmailAddresses, ',')
-          }
-          {
-            name: 'ASPNETCORE_ENVIRONMENT'
-            value: aspCoreEnvironment
-          }
-          {
-            name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
-            value: 'false'
-          }
-        ],
-        !empty(apimAiEndpointOverride)
-          ? [
-              {
-                name: 'AzureOpenAi__Apim__Endpoint'
-                value: apimAiEndpointOverride
-              }
-            ]
-          : [],
-        !empty(apimAiEmbeddingsEndpointOverride)
-          ? [
-              {
-                name: 'AzureOpenAi__Apim__EmbeddingsEndpoint'
-                value: apimAiEmbeddingsEndpointOverride
-              }
-            ]
-          : []
-      )
     }
-  }
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${apiAppManagedIdentity.id}': {}
-    }
+    appSettings: concat(
+      [
+        {
+          name: 'BlobStorage__AccountName'
+          value: storageName
+        }
+        {
+          name: 'Audit__IncludePII'
+          value: auditIncludePII
+        }
+        {
+          name: 'AzureDocumentIntelligence__Endpoint'
+          value: 'https://${formRecognizerName}.cognitiveservices.azure.com/'
+        }
+        {
+          name: 'AzureServiceBus__BlobQueueName'
+          value: serviceBusQueueName
+        }
+        {
+          name: 'AzureServiceBus__Namespace'
+          value: serviceBusName
+        }
+        {
+          name: 'AZURE_CLIENT_ID'
+          value: apiAppManagedIdentity.properties.clientId
+        }
+        {
+          name: 'AZURE_TENANT_ID'
+          value: azureTenantId
+        }
+        {
+          name: 'AzureAd__ClientId'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-CLIENT-ID)'
+        }
+        {
+          name: 'AzureAd__TenantId'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-TENANT-ID)'
+        }
+        {
+          name: 'CosmosDb__Endpoint'
+          value: cosmosDbAccountEndpoint
+        }
+        {
+          name: 'CosmosDb__DatabaseName'
+          value: agileChatDatabaseName
+        }
+        {
+          name: 'CosmosDb__Key'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-COSMOSDB-KEY)'
+        }
+        {
+          name: 'KeyVault__Name'
+          value: keyVaultName
+        }
+        {
+          name: 'KeyVault__ClientId'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-CLIENT-ID)'
+        }
+        {
+          name: 'KeyVault__TenantId'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-TENANT-ID)'
+        }
+        {
+          name: 'ApplicationInsights__InstrumentationKey'
+          value: applicationInsights.properties.InstrumentationKey
+        }
+        {
+          name: 'AdminEmailAddresses'
+          value: join(adminEmailAddresses, ',')
+        }
+        {
+          name: 'ASPNETCORE_ENVIRONMENT'
+          value: aspCoreEnvironment
+        }
+        {
+          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+          value: 'false'
+        }
+      ],
+      !empty(apimAiEndpointOverride)
+        ? [
+            {
+              name: 'AzureOpenAi__Apim__Endpoint'
+              value: apimAiEndpointOverride
+            }
+          ]
+        : [],
+      !empty(apimAiEmbeddingsEndpointOverride)
+        ? [
+            {
+              name: 'AzureOpenAi__Apim__EmbeddingsEndpoint'
+              value: apimAiEmbeddingsEndpointOverride
+            }
+          ]
+        : [],
+      [
+        {
+          name: 'AzureOpenAi__ApiVersion'
+          value: openAiApiVersion
+        }
+        {
+          name: 'AzureOpenAi__Endpoint'
+          value: 'https://${openAiName}.openai.azure.com/'
+        }
+        {
+          name: 'AzureOpenAi__InstanceName'
+          value: openAiName
+        }
+        {
+          name: 'AzureOpenAi__DeploymentName'
+          value: chatGptDeploymentName
+        }
+        {
+          name: 'AzureOpenAi__EmbeddingsDeploymentName'
+          value: embeddingDeploymentName
+        }
+        {
+          name: 'AzureOpenAi__EmbeddingsModelName'
+          value: embeddingModelName
+        }
+        {
+          name: 'AzureSearch__Endpoint'
+          value: 'https://${searchServiceName}.search.windows.net'
+        }
+        {
+          name: 'AzureSearch__ApiKey'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-SEARCH-API-KEY)'
+        }
+      ]
+    )
+    diagnosticSettingsName: 'AppServiceConsoleLogs'
   }
 }
 
-// Role assignments for API app managed identity
 resource apiAppOpenAiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroup().id, apiAppManagedIdentity.id, azureopenai.id, openAiUserRole.id)
   scope: azureopenai
@@ -475,9 +471,9 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
     }
   }
   dependsOn: [
-    apiApp
+    apiAppModule
   ]
 }
 
-output apiAppDefaultHostName string = apiApp.properties.defaultHostName
+output apiAppDefaultHostName string = apiAppModule.outputs.defaultHostName
 output apiAppManagedIdentityId string = apiAppManagedIdentity.id
