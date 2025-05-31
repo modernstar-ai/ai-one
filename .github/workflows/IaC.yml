@@ -13,16 +13,16 @@ on:
           - "uat"
           - "prod"
         required: true
-      asp_core_environment:
-        description: "Select the ASP Core deployment environment"
-        type: choice
-        default: "Development"
-        options:
-          - "Development"
-          - "Test"
-          - "UAT"
-          - "Production"
-        required: true
+      # asp_core_environment:
+      #   description: "Select the ASP Core deployment environment"
+      #   type: choice
+      #   default: "Development"
+      #   options:
+      #     - "Development"
+      #     - "Test"
+      #     - "UAT"
+      #     - "Production"
+      #   required: true
       project_name:
         description: "Enter the Name of the project"
         type: string
@@ -63,7 +63,7 @@ permissions:
 
 jobs:
   deploy-infrastructure:
-    environment: ${{ inputs.asp_core_environment }}
+    environment: ${{ inputs.environment_name }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
