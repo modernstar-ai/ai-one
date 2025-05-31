@@ -84,7 +84,7 @@ param cosmosDbAccountDataPlaneCustomRoleName string = 'Custom Cosmos DB for NoSQ
 param agileChatDatabaseName string = 'AgileChat'
 
 var blobContainersArray = loadJsonContent('./blob-storage-containers.json')
-// var openAiSampleModelsArray = loadJsonContent('./openai-models.json')
+var openAiSampleModelsArray = loadJsonContent('./openai-models.json')
 
 var blobContainers = [
   for name in blobContainersArray: {
@@ -93,20 +93,20 @@ var blobContainers = [
   }
 ]
 
-// var openAiSampleModels = [
-//   for record in openAiSampleModelsArray: {
-//     name: record.name
-//     model: {
-//       name: record.model.name
-//       version: record.model.version
-//       format: record.model.format
-//     }
-//     sku: {
-//       name: record.sku.name
-//       capacity: record.sku.capacity
-//     }
-//   }
-// ]
+var openAiSampleModels = [
+  for record in openAiSampleModelsArray: {
+    name: record.name
+    model: {
+      name: record.model.name
+      version: record.model.version
+      format: record.model.format
+    }
+    sku: {
+      name: record.sku.name
+      capacity: record.sku.capacity
+    }
+  }
+]
 
 // @description('The optional APIM Gateway URL to override the azure open AI instance')
 // param apimAiEndpointOverride string = ''
@@ -223,14 +223,14 @@ module serviceBusModule './modules/serviceBus.bicep' = {
   }
 }
 
-module openAiModule './modules/openai.bicep' = {
+module openAiModule './modules/openai.bicep' = if (deployAzueOpenAi) {
   name: 'openAiModule'
   params: {
     name: openAiName
     location: openAiLocation
     tags: tags
     skuName: openAiSkuName
-    // deployments: deployAzueOpenAi ? openAiSampleModels : []
+    deployments: openAiSampleModels
   }
 }
 
@@ -248,6 +248,6 @@ output cosmosDbAccountEndpoint string = cosmosDbAccountModule.outputs.endpoint
 output formRecognizerName string = documentIntelligenceModule.outputs.name
 output serviceBusName string = serviceBusModule.outputs.name
 output serviceBusQueueName string = serviceBusModule.outputs.serviceBusQueueName
-output openAiName string = openAiModule.outputs.name
-output openAiEndpoint string = openAiModule.outputs.endpoint
+output openAiName string = deployAzueOpenAi ? openAiModule.outputs.name : ''
+output openAiEndpoint string = deployAzueOpenAi ? openAiModule.outputs.endpoint : ''
 output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbAccountModule.outputs.cosmosDbAccountDataPlaneCustomRoleId
