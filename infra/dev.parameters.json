@@ -3,16 +3,16 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "projectName": {
-      "value": "agilechat"
+      "value": "${AZURE_PROJECT_NAME}"
     },
     "environmentName": {
-      "value": "dev"
+      "value": "${AZURE_ENVIRONMENT_NAME}"
     },
     "location": {
-      "value": "australiaeast"
+      "value": "${AZURE_LOCATION}"
     },
     "openAILocation": {
-      "value": "australiaeast"
+      "value": "${AZURE_OPENAI_LOCATION}"
     },
     "aspCoreEnvironment": {
       "value": "Development"
