@@ -114,10 +114,13 @@ param agileChatDatabaseName string = 'AgileChat'
 
 var validStorageServiceImageContainerName = toLower(replace(storageServiceImageContainerName, '-', ''))
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
-  name: logAnalyticsWorkspaceName
-  tags: tags
-  location: location
+module logAnalyticsWorkspaceModule './modules/logAnalyticsWorkspace.bicep' = {
+  name: 'logAnalyticsWorkspaceModule'
+  params: {
+    logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
+    location: location
+    tags: tags
+  }
 }
 
 resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
@@ -169,15 +172,6 @@ module keyVaultModule './modules/keyVault.bicep' = {
         value: listKeys(cosmosDbAccountName, '2023-04-15').secondaryMasterKey
       }
     ]
-  }
-}
-
-module logAnalyticsWorkspaceModule './modules/logAnalyticsWorkspace.bicep' = {
-  name: 'logAnalyticsWorkspaceModule'
-  params: {
-    logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
-    location: location
-    tags: tags
   }
 }
 
@@ -289,8 +283,8 @@ resource embeddingsllmdeployment 'Microsoft.CognitiveServices/accounts/deploymen
   }
 }
 
-output logAnalyticsWorkspaceName string = logAnalyticsWorkspace.name
-output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
+output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
+output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
 output searchServiceName string = searchService.name
 output searchServiceId string = searchService.id
 output keyVaultName string = keyVaultModule.outputs.name
