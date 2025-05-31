@@ -19,7 +19,7 @@ param cosmosDbAccountApiSecretName string
 @description('Cosmos DB custom role definition name')
 param cosmosDbAccountDataPlaneCustomRoleName string = 'Custom Cosmos DB for NoSQL Data Plane Contributor'
 
-resource keyVault 'Microsoft.KeyVault/vaults@2023-10-01' existing = {
+resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
   name: keyVaultName
 }
 
@@ -72,11 +72,11 @@ resource sqlDatabases 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-0
   }
 ]
 
-resource cosmosDbAccountApiSecret 'Microsoft.KeyVault/vaults/secrets@2023-10-01' = {
+resource cosmosDbAccountApiSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
   name: cosmosDbAccountApiSecretName
   parent: keyVault
   properties: {
-    value: listKeys(cosmosDbAccount.name, '2023-04-15').primaryMasterKey
+    value: 'test'//listKeys(cosmosDbAccount.name, '2023-04-15').primaryMasterKey
   }
 }
 

@@ -20,7 +20,7 @@ param keyVaultName string
 @description('Key Vault secret name for AI Search API Key')
 param searchServiceApiKeySecretName string = 'searchServiceApiKey'
 
-resource keyVault 'Microsoft.KeyVault/vaults@2023-10-01' existing = {
+resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
   name: keyVaultName
 }
 
@@ -42,11 +42,12 @@ resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   }
 }
 
-resource searchServiceApiKey 'Microsoft.KeyVault/vaults/secrets@2023-10-01' = {
-  name: '${searchServiceApiKeySecretName}'
+resource searchServiceApiKey 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
+  name: searchServiceApiKeySecretName
   parent: keyVault
   properties: {
-    value: searchService.properties.primaryKey
+    value: 'test'
+    //value: searchService.properties.primaryKey
     contentType: 'text/plain'
   }
 }
