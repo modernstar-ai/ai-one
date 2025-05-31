@@ -115,24 +115,6 @@ param userObjectId string = ''
 // @description('The optional APIM Gateway URL to override the azure open AI embedding instance')
 // param apimAiEmbeddingsEndpointOverride string = ''
 
-resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
-  name: searchServiceName
-  location: location
-  tags: tags
-  properties: {
-    partitionCount: 1
-    publicNetworkAccess: 'enabled'
-    replicaCount: 1
-    semanticSearch: semanticSearchSku
-  }
-  sku: {
-    name: searchServiceSkuName
-  }
-  identity: {
-    type: 'SystemAssigned'
-  }
-}
-
 resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   name: formRecognizerName
   location: location
@@ -230,7 +212,7 @@ module keyVaultModule './modules/keyVault.bicep' = {
       {
         name: 'AZURE-SEARCH-API-KEY'
         contentType: 'text/plain'
-        value: searchService.listAdminKeys().secondaryKey
+        value: listAdminKeys(searchServiceName, '2024-06-01-preview').secondaryKey
       }
       {
         name: 'AZURE-CLIENT-ID'
@@ -285,6 +267,17 @@ module storageModule './modules/storage.bicep' = {
   }
 }
 
+module searchServiceModule './modules/searchService.bicep' = {
+  name: 'searchServiceModule'
+  params: {
+    name: searchServiceName
+    location: location
+    tags: tags
+    searchServiceSkuName: searchServiceSkuName
+    semanticSearchSku: semanticSearchSku
+  }
+}
+
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
 output keyVaultName string = keyVaultModule.outputs.name
@@ -293,7 +286,7 @@ output cosmosDbAccountName string = cosmosDbModule.outputs.cosmosDbAccountName
 output cosmosDbAccountEndpoint string = cosmosDbModule.outputs.cosmosDbAccountEndpoint
 output appServicePlanName string = appServicePlanModule.outputs.name
 output appServicePlanId string = appServicePlanModule.outputs.resourceId
-output searchServiceName string = searchService.name
+output searchServiceName string = searchServiceModule.outputs.searchServiceName
 output formRecognizerName string = formRecognizer.name
 output openAiName string = azureopenai.name
 output openAiEndpoint string = azureopenai.properties.endpoint
