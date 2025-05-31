@@ -213,17 +213,12 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
   }
 }
 
-resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-  name: formRecognizerName
-  location: location
-  tags: tags
-  kind: 'FormRecognizer'
-  properties: {
-    customSubDomainName: formRecognizerName
-    publicNetworkAccess: 'Enabled'
-  }
-  sku: {
-    name: 'S0'
+module documentIntelligenceModule './modules/documentIntelligence.bicep' = {
+  name: 'documentIntelligenceModule'
+  params: {
+    name: formRecognizerName
+    location: location
+    tags: tags
   }
 }
 
@@ -317,7 +312,6 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
 output searchServiceName string = searchService.name
-output searchServiceId string = searchService.id
 output keyVaultName string = keyVaultModule.outputs.name
 output keyVaultId string = keyVaultModule.outputs.resourceId
 output storageAccountName string = storageModule.outputs.name
@@ -328,8 +322,7 @@ output appServicePlanId string = appServicePlanModule.outputs.resourceId
 output cosmosDbAccountName string = cosmosDbAccount.name
 output cosmosDbAccountId string = cosmosDbAccount.id
 output cosmosDbAccountEndpoint string = cosmosDbAccount.properties.documentEndpoint
-output formRecognizerName string = formRecognizer.name
-output formRecognizerId string = formRecognizer.id
+output formRecognizerName string = documentIntelligenceModule.outputs.name
 output serviceBusName string = serviceBusModule.outputs.name
 output serviceBusQueueName string = serviceBusModule.outputs.serviceBusQueueName
 output storageServiceFoldersContainerName string = storageServiceFoldersContainerName
