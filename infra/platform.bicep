@@ -228,28 +228,13 @@ resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   }
 }
 
-resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' = {
-  location: location
-  name: serviceBusName
-
-  resource queue 'queues' = {
-    name: serviceBusQueueName
-    properties: {
-      maxMessageSizeInKilobytes: 256
-      lockDuration: 'PT5M'
-      maxSizeInMegabytes: 5120
-      requiresDuplicateDetection: false
-      requiresSession: false
-      defaultMessageTimeToLive: 'P14D'
-      deadLetteringOnMessageExpiration: true
-      enableBatchedOperations: true
-      duplicateDetectionHistoryTimeWindow: 'PT10M'
-      maxDeliveryCount: 5
-      status: 'Active'
-      autoDeleteOnIdle: 'P10675199DT2H48M5.4775807S'
-      enablePartitioning: false
-      enableExpress: false
-    }
+module serviceBusModule './modules/serviceBus.bicep' = {
+  name: 'serviceBusModule'
+  params: {
+    name: serviceBusName
+    location: location
+    tags: tags
+    serviceBusQueueName: serviceBusQueueName
   }
 }
 
@@ -336,8 +321,8 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15
 
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspace.name
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
-output searchServiceName string = searchService.name
-output searchServiceId string = searchService.id
+output searchServiceName string = aiSearchModule.outputs.name
+output searchServiceId string = aiSearchModule.outputs.resourceId
 output keyVaultName string = keyVaultModule.outputs.name
 output keyVaultId string = keyVaultModule.outputs.resourceId
 output storageAccountName string = storageModule.outputs.name
@@ -350,10 +335,9 @@ output cosmosDbAccountId string = cosmosDbAccount.id
 output cosmosDbAccountEndpoint string = cosmosDbAccount.properties.documentEndpoint
 output formRecognizerName string = formRecognizer.name
 output formRecognizerId string = formRecognizer.id
-output serviceBusName string = serviceBus.name
-output serviceBusId string = serviceBus.id
-output serviceBusQueueName string = serviceBus::queue.name
-output serviceBusQueueId string = serviceBus::queue.id
+output serviceBusName string = serviceBusModule.outputs.name
+output serviceBusId string = serviceBusModule.outputs.resourceId
+output serviceBusQueueName string = serviceBusModule.outputs.serviceBusQueueName
 output storageServiceFoldersContainerName string = storageServiceFoldersContainerName
 output openAiName string = azureopenai.name
 output openAiEndpoint string = azureopenai.properties.endpoint
