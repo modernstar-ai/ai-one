@@ -4,50 +4,50 @@ on:
   workflow_dispatch:
     inputs:
       environment_name:
-        description: 'Select the application environment name - used to name resources'
+        description: "Select the application environment name - used to name resources"
         type: choice
-        default: 'dev'
+        default: "dev"
         options:
-          - 'dev'
-          - 'tst'
-          - 'uat'
-          - 'prod'
+          - "dev"
+          - "tst"
+          - "uat"
+          - "prod"
         required: true
       asp_core_environment:
-        description: 'Select the ASP Core deployment environment'
+        description: "Select the ASP Core deployment environment"
         type: choice
-        default: 'Development'
+        default: "Development"
         options:
-          - 'Development'
-          - 'Test'
-          - 'UAT'
-          - 'Production'
+          - "Development"
+          - "Test"
+          - "UAT"
+          - "Production"
         required: true
       project_name:
-        description: 'Enter the Name of the project'
+        description: "Enter the Name of the project"
         type: string
-        default: 'ag-aione-v2'
+        default: "ag-aione-v2"
         required: true
       azure_location:
-        description: 'Select the Azure deployment location'
+        description: "Select the Azure deployment location"
         type: choice
-        default: 'australiaeast'
+        default: "australiaeast"
         options:
-          - 'australiaeast'
-          - 'australiasoutheast'
+          - "australiaeast"
+          - "australiasoutheast"
         required: true
       semantic_search_sku:
-        description: 'Select the Azure Search AI Semantic Search Sku'
+        description: "Select the Azure Search AI Semantic Search Sku"
         type: choice
-        default: 'standard'
+        default: "standard"
         options:
-          - 'disabled'
-          - 'free'
-          - 'standard'
+          - "disabled"
+          - "free"
+          - "standard"
         required: true
 
 env:
-  AZURE_BICEP_MAIN: './infra/main.bicep'
+  AZURE_BICEP_MAIN: "./infra/main.bicep"
   # AZURE_SUBSCRIPTION_ID
   # AZURE_CLIENT_ID
   # AZURE_TENANT_ID
@@ -60,7 +60,7 @@ env:
 permissions:
   id-token: write
   contents: read
-  
+
 jobs:
   deploy-infrastructure:
     environment: ${{ inputs.asp_core_environment }}
@@ -93,3 +93,6 @@ jobs:
             semanticSearchSku="${{ inputs.semantic_search_sku }}"
             apimAiEndpointOverride="${{ vars.APIM_ENDPOINT_OVERRIDE }}"
             apimAiEmbeddingsEndpointOverride="${{ vars.APIM_EMBEDDINGS_ENDPOINT_OVERRIDE }}"
+          includeAdditionalFiles: |
+            ./infra/blob-storage-containers.json
+            ./infra/openai-models.json
