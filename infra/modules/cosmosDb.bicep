@@ -76,7 +76,7 @@ resource cosmosDbAccountApiSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01'
   name: cosmosDbAccountApiSecretName
   parent: keyVault
   properties: {
-    value: 'test'//listKeys(cosmosDbAccount.name, '2023-04-15').primaryMasterKey
+    value: cosmosDbAccount.listKeys().secondaryMasterKey
   }
 }
 

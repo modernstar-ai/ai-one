@@ -46,8 +46,7 @@ resource searchServiceApiKey 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
   name: searchServiceApiKeySecretName
   parent: keyVault
   properties: {
-    value: 'test'
-    //value: searchService.properties.primaryKey
+    value:searchService.listAdminKeys().secondaryKey
     contentType: 'text/plain'
   }
 }
