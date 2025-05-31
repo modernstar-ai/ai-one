@@ -133,22 +133,6 @@ resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   }
 }
 
-resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
-  name: cosmosDbAccountName
-  location: location
-  tags: tags
-  kind: 'GlobalDocumentDB'
-  properties: {
-    databaseAccountOfferType: 'Standard'
-    locations: [
-      {
-        locationName: location
-        failoverPriority: 0
-      }
-    ]
-  }
-}
-
 resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   name: formRecognizerName
   location: location
@@ -211,36 +195,16 @@ resource embeddingsllmdeployment 'Microsoft.CognitiveServices/accounts/deploymen
   }
 }
 
-// Cosmos DB Custom Role Definition
-//https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/how-to-grant-data-plane-access?tabs=built-in-definition%2Ccsharp&pivots=azure-interface-bicep
-resource cosmosDbAccountDataPlaneCustomRole 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-05-15' = {
-  name: guid(resourceGroup().id, cosmosDbAccount.id, cosmosDbAccountDataPlaneCustomRoleName)
-  parent: cosmosDbAccount
-  properties: {
-    roleName: cosmosDbAccountDataPlaneCustomRoleName
-    type: 'CustomRole'
-    assignableScopes: [
-      cosmosDbAccount.id
+module cosmosDbModule './modules/cosmosDb.bicep' = {
+  name: 'cosmosDbModule'
+  params: {
+    name: cosmosDbAccountName
+    location: location
+    tags: tags
+    databases: [
+      agileChatDatabaseName
     ]
-    permissions: [
-      {
-        dataActions: [
-          'Microsoft.DocumentDB/databaseAccounts/readMetadata'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*'
-        ]
-      }
-    ]
-  }
-}
-
-resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15' = {
-  name: agileChatDatabaseName
-  parent: cosmosDbAccount
-  properties: {
-    resource: {
-      id: agileChatDatabaseName
-    }
+    cosmosDbAccountDataPlaneCustomRoleName: cosmosDbAccountDataPlaneCustomRoleName
   }
 }
 
@@ -279,9 +243,10 @@ module keyVaultModule './modules/keyVault.bicep' = {
         value: azureTenantId
       }
       {
+        //TODO: Remove this secret after refactoring the API to use managed identity
         name: 'AZURE-COSMOSDB-KEY'
         contentType: 'text/plain'
-        value: cosmosDbAccount.listKeys().secondaryMasterKey
+        value: listKeys(cosmosDbAccountName, '2023-04-15').secondaryMasterKey
       }
     ]
   }
@@ -324,16 +289,16 @@ output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.lo
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
 output keyVaultName string = keyVaultModule.outputs.name
 output storageAccountName string = storageModule.outputs.name
-output cosmosDbAccountName string = cosmosDbAccount.name
-output cosmosDbAccountEndpoint string = cosmosDbAccount.properties.documentEndpoint
+output cosmosDbAccountName string = cosmosDbModule.outputs.cosmosDbAccountName
+output cosmosDbAccountEndpoint string = cosmosDbModule.outputs.cosmosDbAccountEndpoint
 output appServicePlanName string = appServicePlanModule.outputs.name
 output appServicePlanId string = appServicePlanModule.outputs.resourceId
 output searchServiceName string = searchService.name
 output formRecognizerName string = formRecognizer.name
 output openAiName string = azureopenai.name
 output openAiEndpoint string = azureopenai.properties.endpoint
-output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbAccountDataPlaneCustomRole.id
-output agileChatDatabaseName string = database.name
+output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbModule.outputs.cosmosDbAccountDataPlaneCustomRoleId
+output agileChatDatabaseName string = agileChatDatabaseName
 output serviceBusQueueName string = serviceBusModule.outputs.serviceBusQueueName
 output serviceBusName string = serviceBusModule.outputs.name
 output storageServiceFoldersContainerName string = storageServiceFoldersContainerName
