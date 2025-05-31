@@ -120,8 +120,8 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
   location: location
 }
 
-module aiSearchModule './modules/aiSearch.bicep' = {
-  name: 'aiSearchModule'
+module aiSearchModule './modules/aiSearchService.bicep' = {
+  name: 'aiSearchServiceModule'
   params: {
     name: searchServiceName
     location: location
