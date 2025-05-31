@@ -48,7 +48,6 @@ resource keyvault 'Microsoft.KeyVault/vaults@2024-11-01' = {
   }
 }
 
-// Create secrets dynamically from the array
 resource keyVaultSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = [
   for secret in keyVaultSecrets: {
     parent: keyvault
@@ -66,24 +65,24 @@ resource keyVaultDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-
   properties: {
     workspaceId: logAnalyticsWorkspaceResourceId
     logs: [
-      {
-        category: 'AuditEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
+      // {
+      //   category: 'AuditEvent'
+      //   enabled: true
+      //   retentionPolicy: {
+      //     enabled: false
+      //     days: 0
+      //   }
+      // }
     ]
     metrics: [
-      {
-        category: 'AllMetrics'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
+      // {
+      //   category: 'AllMetrics'
+      //   enabled: true
+      //   retentionPolicy: {
+      //     enabled: false
+      //     days: 0
+      //   }
+      // }
     ]
   }
 }

@@ -307,35 +307,17 @@ module logAnalyticsWorkspaceModule './modules/logAnalyticsWorkspace.bicep' = {
 module storageModule './modules/storage.bicep' = {
   name: 'storageModule'
   params: {
-    storageAccountName: storageAccountName
+    name: storageAccountName
     location: location
     tags: tags
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
     storageServiceSku: storageServiceSku
     storageServiceFoldersContainerName: storageServiceFoldersContainerName
     storageServiceImageContainerName: storageServiceImageContainerName
   }
 }
 
-output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
-output searchServiceName string = searchService.name
-output searchServiceId string = searchService.id
-output keyVaultName string = keyVaultModule.outputs.name
-output keyVaultId string = keyVaultModule.outputs.resourceId
-output storageAccountName string = storageModule.outputs.storageAccountName
-output storageAccountId string = storageModule.outputs.storageAccountId
-output blobServicesId string = storageModule.outputs.blobServicesId
-output appServicePlanName string = appServicePlanModule.outputs.appServicePlanName
-output appServicePlanId string = appServicePlanModule.outputs.appServicePlanId
-output cosmosDbAccountName string = cosmosDbAccount.name
-output cosmosDbAccountId string = cosmosDbAccount.id
 output cosmosDbAccountEndpoint string = cosmosDbAccount.properties.documentEndpoint
-output formRecognizerName string = formRecognizer.name
-output formRecognizerId string = formRecognizer.id
-output openAiName string = azureopenai.name
 output openAiEndpoint string = azureopenai.properties.endpoint
-output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbAccountDataPlaneCustomRole.id
-output agileChatDatabaseName string = database.name
-output serviceBusQueueName string = serviceBusModule.outputs.serviceBusQueueName
-output serviceBusName string = serviceBusModule.outputs.serviceBusName
-output storageServiceFoldersContainerName string = storageServiceFoldersContainerName
+output formRecognizerEndpoint string = formRecognizer.properties.endpoint

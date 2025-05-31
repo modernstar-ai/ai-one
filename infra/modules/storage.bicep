@@ -1,11 +1,14 @@
-@description('Storage account name')
-param storageAccountName string
+@description('Name of the Storage Account.')
+param name string
 
-@description('Azure region for resource deployment')
+@description('Specifies the location for all the Azure resources.')
 param location string
 
-@description('Resource tags')
-param tags object
+@description('Optional. Tags to be applied to the resources.')
+param tags object = {}
+
+@description('Resource ID of the Log Analytics workspace to use for diagnostic settings.')
+param logAnalyticsWorkspaceResourceId string
 
 @description('SKU for Storage Account')
 param storageServiceSku object
@@ -19,7 +22,7 @@ param storageServiceImageContainerName string
 var validStorageServiceImageContainerName = toLower(replace(storageServiceImageContainerName, '-', ''))
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: storageAccountName
+  name: name
   location: location
   tags: tags
   kind: 'StorageV2'
@@ -50,8 +53,57 @@ resource indexContainer 'Microsoft.Storage/storageAccounts/blobServices/containe
   }
 }
 
+resource storageDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (!empty(logAnalyticsWorkspaceResourceId)) {
+  name: '${storage.name}-diagnostic'
+  scope: storage
+  properties: {
+    workspaceId: logAnalyticsWorkspaceResourceId
+    logs: [
+    //   {
+    //     category: 'StorageRead'
+    //     enabled: true
+    //     retentionPolicy: {
+    //       enabled: false
+    //       days: 0
+    //     }
+    //   }
+    //   {
+    //     category: 'StorageWrite'
+    //     enabled: true
+    //     retentionPolicy: {
+    //       enabled: false
+    //       days: 0
+    //     }
+    //   }
+    //   {
+    //     category: 'StorageDelete'
+    //     enabled: true
+    //     retentionPolicy: {
+    //       enabled: false
+    //       days: 0
+    //     }
+    //   }
+    // ]
+    // metrics: [
+    //   {
+    //     category: 'Transaction'
+    //     enabled: true
+    //     retentionPolicy: {
+    //       enabled: false
+    //       days: 0
+    //     }
+    //   }
+    //   {
+    //     category: 'Capacity'
+    //     enabled: true
+    //     retentionPolicy: {
+    //       enabled: false
+    //       days: 0
+    //     }
+    //   }
+    ]
+  }
+}
+
 output storageAccountName string = storage.name
 output storageAccountId string = storage.id
-output blobServicesId string = blobServices.id
-output imagesContainerId string = imagesContainer.id
-output indexContainerId string = indexContainer.id
