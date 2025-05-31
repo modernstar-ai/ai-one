@@ -14,7 +14,7 @@ param skuName string = 'standard'
 @allowed(['disabled', 'free', 'standard'])
 param semanticSearchSku string = 'free'
 
-resource aiSearch 'Microsoft.Search/searchServices@2024-06-01-preview' = {
+resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   name: name
   location: location
   tags: tags
@@ -32,5 +32,5 @@ resource aiSearch 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   }
 }
 
-output name string = aiSearch.name
-output resourceId string = aiSearch.id
+output name string = searchService.name
+output resourceId string = searchService.id
