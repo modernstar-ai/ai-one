@@ -114,6 +114,11 @@ param agileChatDatabaseName string = 'AgileChat'
 
 var validStorageServiceImageContainerName = toLower(replace(storageServiceImageContainerName, '-', ''))
 
+resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
+  name: openAiName
+  scope: resourceGroup()
+}
+
 module logAnalyticsWorkspaceModule './modules/logAnalyticsWorkspace.bicep' = {
   name: 'logAnalyticsWorkspaceModule'
   params: {
@@ -122,7 +127,6 @@ module logAnalyticsWorkspaceModule './modules/logAnalyticsWorkspace.bicep' = {
     tags: tags
   }
 }
-
 
 resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   name: searchServiceName
@@ -174,7 +178,7 @@ module keyVaultModule './modules/keyVault.bicep' = {
       }
     ]
   }
-} 
+}
 
 module storageModule './modules/storage.bicep' = {
   name: 'storageModule'
@@ -239,17 +243,13 @@ module serviceBusModule './modules/serviceBus.bicep' = {
   }
 }
 
-resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (deployAzueOpenAi) {
-  name: openAiName
-  location: openAiLocation
-  tags: tags
-  kind: 'OpenAI'
-  properties: {
-    customSubDomainName: openAiName
-    publicNetworkAccess: 'Enabled'
-  }
-  sku: {
-    name: openAiSkuName
+module openAiModule './modules/openai.bicep' = {
+  name: 'openAiModule'
+  params: {
+    name: openAiName
+    location: openAiLocation
+    tags: tags
+    skuName: openAiSkuName
   }
 }
 
