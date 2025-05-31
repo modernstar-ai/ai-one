@@ -107,36 +107,85 @@ param cosmosDbAccountDataPlaneCustomRoleName string = 'Custom Cosmos DB for NoSQ
 @description('Database name for AgileChat')
 param agileChatDatabaseName string = 'AgileChat'
 
-@description('Specifies the object id of a Microsoft Entra ID user. In general, this the object id of the system administrator who deploys the Azure resources. This defaults to the deploying user.')
-param userObjectId string = ''
-
 // @description('The optional APIM Gateway URL to override the azure open AI instance')
 // param apimAiEndpointOverride string = ''
 // @description('The optional APIM Gateway URL to override the azure open AI embedding instance')
 // param apimAiEmbeddingsEndpointOverride string = ''
 
-module cosmosDbModule './modules/cosmosDb.bicep' = {
-  name: 'cosmosDbModule'
-  params: {
-    name: cosmosDbAccountName
-    location: location
-    tags: tags
-    // databases: [
-    //   agileChatDatabaseName
-    // ]
-    cosmosDbAccountDataPlaneCustomRoleName: cosmosDbAccountDataPlaneCustomRoleName
+var validStorageServiceImageContainerName = toLower(replace(storageServiceImageContainerName, '-', ''))
+
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
+  name: logAnalyticsWorkspaceName
+  tags: tags
+  location: location
+}
+
+resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
+  name: searchServiceName
+  location: location
+  tags: tags
+  properties: {
+    partitionCount: 1
+    publicNetworkAccess: 'enabled'
+    replicaCount: 1
+    semanticSearch: semanticSearchSku
+  }
+  sku: {
+    name: searchServiceSkuName
+  }
+  identity: {
+    type: 'SystemAssigned'
   }
 }
 
-module serviceBusModule './modules/serviceBus.bicep' = {
-  name: 'serviceBusModule'
-  params: {
-    location: location
-    name: serviceBusName
-    tags: tags
-    serviceBusQueueName: serviceBusQueueName
-  }
-}
+// resource kv 'Microsoft.KeyVault/vaults@2024-11-01' = {
+//   name: keyVaultName
+//   location: location
+//   tags: tags
+//   properties: {
+//     sku: {
+//       family: 'A'
+//       name: 'standard'
+//     }
+//     tenantId: subscription().tenantId
+//     enableRbacAuthorization: true
+//     enabledForDeployment: false
+//     enabledForDiskEncryption: true
+//     enabledForTemplateDeployment: false
+//   }
+
+//   resource AZURE_SEARCH_API_KEY 'secrets' = {
+//     name: 'AZURE-SEARCH-API-KEY'
+//     properties: {
+//       contentType: 'text/plain'
+//       value: searchService.listAdminKeys().secondaryKey
+//     }
+//   }
+
+//   resource AZURE_CLIENT_ID 'secrets' = {
+//     name: 'AZURE-CLIENT-ID'
+//     properties: {
+//       contentType: 'text/plain'
+//       value: azureClientId
+//     }
+//   }
+
+//   resource AZURE_TENANT_ID 'secrets' = {
+//     name: 'AZURE-TENANT-ID'
+//     properties: {
+//       contentType: 'text/plain'
+//       value: azureTenantId
+//     }
+//   }
+
+//   resource AZURE_COSMOSDB_KEY 'secrets' = {
+//     name: 'AZURE-COSMOSDB-KEY'
+//     properties: {
+//       contentType: 'text/plain'
+//       value: cosmosDbAccount.listKeys().secondaryMasterKey
+//     }
+//   }
+// }
 
 module keyVaultModule './modules/keyVault.bicep' = {
   name: 'keyVaultModule'
@@ -144,8 +193,8 @@ module keyVaultModule './modules/keyVault.bicep' = {
     name: keyVaultName
     location: location
     tags: tags
-    logWorkspaceName: logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
-    userObjectId: userObjectId
+    logWorkspaceName: logAnalyticsWorkspaceName
+     userObjectId: ''
     keyVaultSecrets: [
       {
         name: 'AZURE-SEARCH-API-KEY'
@@ -172,71 +221,123 @@ module keyVaultModule './modules/keyVault.bicep' = {
   }
 }
 
-module appServicePlanModule './modules/appServicePlan.bicep' = {
-  name: 'appServicePlanModule'
-  params: {
-    name: appServicePlanName
-    location: location
-    tags: tags
+
+resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: storageAccountName
+  location: location
+  tags: tags
+  kind: 'StorageV2'
+  sku: storageServiceSku
+}
+
+resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
+  parent: storage
+  name: 'default'
+  properties: {
+    deleteRetentionPolicy: {
+      enabled: true
+      days: 7
+    }
   }
 }
 
-module logAnalyticsWorkspaceModule './modules/logAnalyticsWorkspace.bicep' = {
-  name: 'logAnalyticsWorkspaceModule'
-  params: {
-    logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
-    location: location
-    tags: tags
+resource imagesContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobServices
+  name: validStorageServiceImageContainerName
+}
+
+resource indexContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobServices
+  name: storageServiceFoldersContainerName
+  properties: {
+    publicAccess: 'None'
   }
 }
 
-module storageModule './modules/storage.bicep' = {
-  name: 'storageModule'
-  params: {
-    name: storageAccountName
-    location: location
-    tags: tags
-    logWorkspaceName: logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
-    skuName: storageServiceSku
-    blobContainerCollection: [
-      storageServiceFoldersContainerName
-      storageServiceImageContainerName
+resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
+  name: appServicePlanName
+  location: location
+  tags: tags
+  properties: {
+    reserved: true
+  }
+  sku: {
+    name: 'P0v3'
+    tier: 'Premium0V3'
+    size: 'P0v3'
+    family: 'Pv3'
+    capacity: 1
+  }
+  kind: 'linux'
+}
+
+resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
+  name: cosmosDbAccountName
+  location: location
+  tags: tags
+  kind: 'GlobalDocumentDB'
+  properties: {
+    databaseAccountOfferType: 'Standard'
+    locations: [
+      {
+        locationName: location
+        failoverPriority: 0
+      }
     ]
   }
 }
 
-module aisearchModule './modules/aisearch.bicep' = {
-  name: 'aisearchModule'
-  params: {
-    name: searchServiceName
-    location: location
-    tags: tags
-    searchServiceSkuName: searchServiceSkuName
-    semanticSearchSku: semanticSearchSku
+resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+  name: formRecognizerName
+  location: location
+  tags: tags
+  kind: 'FormRecognizer'
+  properties: {
+    customSubDomainName: formRecognizerName
+    publicNetworkAccess: 'Enabled'
+  }
+  sku: {
+    name: 'S0'
   }
 }
 
-module documentIntelligenceModule './modules/documentIntelligence.bicep' = {
-  name: 'documentIntelligenceModule'
-  params: {
-    name: formRecognizerName
-    location: location
-    tags: tags
+resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' = {
+  location: location
+  name: serviceBusName
+
+  resource queue 'queues' = {
+    name: serviceBusQueueName
+    properties: {
+      maxMessageSizeInKilobytes: 256
+      lockDuration: 'PT5M'
+      maxSizeInMegabytes: 5120
+      requiresDuplicateDetection: false
+      requiresSession: false
+      defaultMessageTimeToLive: 'P14D'
+      deadLetteringOnMessageExpiration: true
+      enableBatchedOperations: true
+      duplicateDetectionHistoryTimeWindow: 'PT10M'
+      maxDeliveryCount: 5
+      status: 'Active'
+      autoDeleteOnIdle: 'P10675199DT2H48M5.4775807S'
+      enablePartitioning: false
+      enableExpress: false
+    }
   }
 }
 
-module openAiModule './modules/openai.bicep' = if (deployAzueOpenAi) {
-  name: 'openAiModule'
-  params: {
-    name: openAiName
-    location: openAiLocation
-    tags: tags
-    skuName: openAiSkuName
-  }
-}
-
-resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = if (deployAzueOpenAi) {
+resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (deployAzueOpenAi) {
   name: openAiName
+  location: openAiLocation
+  tags: tags
+  kind: 'OpenAI'
+  properties: {
+    customSubDomainName: openAiName
+    publicNetworkAccess: 'Enabled'
+  }
+  sku: {
+    name: openAiSkuName
+  }
 }
 
 resource gptllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = if (deployAzueOpenAi) {
@@ -273,20 +374,64 @@ resource embeddingsllmdeployment 'Microsoft.CognitiveServices/accounts/deploymen
   }
 }
 
-output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
-output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
-output keyVaultName string = keyVaultModule.outputs.name
-output storageAccountName string = storageModule.outputs.name
-output cosmosDbAccountName string = cosmosDbModule.outputs.cosmosDbAccountName
-output cosmosDbAccountEndpoint string = cosmosDbModule.outputs.cosmosDbAccountEndpoint
-output appServicePlanName string = appServicePlanModule.outputs.name
-output appServicePlanId string = appServicePlanModule.outputs.resourceId
-output searchServiceName string = aisearchModule.outputs.name
-output formRecognizerName string = documentIntelligenceModule.outputs.name
-output openAiName string = openAiModule.outputs.name
-output openAiEndpoint string = openAiModule.outputs.endpoint
-output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbModule.outputs.cosmosDbAccountDataPlaneCustomRoleId
-output agileChatDatabaseName string = agileChatDatabaseName
-output serviceBusQueueName string = serviceBusModule.outputs.serviceBusQueueName
-output serviceBusName string = serviceBusModule.outputs.name
-output storageServiceFoldersContainerName string = storageServiceFoldersContainerName
+// Cosmos DB Custom Role Definition
+//https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/how-to-grant-data-plane-access?tabs=built-in-definition%2Ccsharp&pivots=azure-interface-bicep
+resource cosmosDbAccountDataPlaneCustomRole 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-05-15' = {
+  name: guid(resourceGroup().id, cosmosDbAccount.id, cosmosDbAccountDataPlaneCustomRoleName)
+  parent: cosmosDbAccount
+  properties: {
+    roleName: cosmosDbAccountDataPlaneCustomRoleName
+    type: 'CustomRole'
+    assignableScopes: [
+      cosmosDbAccount.id
+    ]
+    permissions: [
+      {
+        dataActions: [
+          'Microsoft.DocumentDB/databaseAccounts/readMetadata'
+          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*'
+          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*'
+        ]
+      }
+    ]
+  }
+}
+
+resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15' = {
+  name: agileChatDatabaseName
+  parent: cosmosDbAccount
+  properties: {
+    resource: {
+      id: agileChatDatabaseName
+    }
+  }
+}
+
+output logAnalyticsWorkspaceName string = logAnalyticsWorkspace.name
+output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
+output searchServiceName string = searchService.name
+output searchServiceId string = searchService.id
+output keyVaultName string = kv.name
+output keyVaultId string = kv.id
+output storageAccountName string = storage.name
+output storageAccountId string = storage.id
+output blobServicesId string = blobServices.id
+output imagesContainerId string = imagesContainer.id
+output indexContainerId string = indexContainer.id
+output appServicePlanName string = appServicePlan.name
+output appServicePlanId string = appServicePlan.id
+output cosmosDbAccountName string = cosmosDbAccount.name
+output cosmosDbAccountId string = cosmosDbAccount.id
+output cosmosDbAccountEndpoint string = cosmosDbAccount.properties.documentEndpoint
+output formRecognizerName string = formRecognizer.name
+output formRecognizerId string = formRecognizer.id
+output serviceBusName string = serviceBus.name
+output serviceBusId string = serviceBus.id
+output serviceBusQueueName string = serviceBus::queue.name
+output serviceBusQueueId string = serviceBus::queue.id
+output storageServiceFoldersContainerName string = indexContainer.name
+output storageServiceImageContainerName string = imagesContainer.name
+output openAiName string = azureopenai.name
+output openAiEndpoint string = azureopenai.properties.endpoint
+output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbAccountDataPlaneCustomRole.id
+output agileChatDatabaseName string = database.name

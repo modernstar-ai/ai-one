@@ -11,7 +11,7 @@ param tags object = {}
 param logWorkspaceName string
 
 @description('Specifies the object id of a Microsoft Entra ID user. In general, this the object id of the system administrator who deploys the Azure resources. This defaults to the deploying user.')
-param userObjectId string
+param userObjectId string = ''
 
 @description('List of secrets to create in Key Vault')
 param keyVaultSecrets array
