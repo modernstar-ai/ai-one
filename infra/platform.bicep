@@ -121,9 +121,9 @@ module cosmosDbModule './modules/cosmosDb.bicep' = {
     name: cosmosDbAccountName
     location: location
     tags: tags
-    databases: [
-      agileChatDatabaseName
-    ]
+    // databases: [
+    //   agileChatDatabaseName
+    // ]
     cosmosDbAccountDataPlaneCustomRoleName: cosmosDbAccountDataPlaneCustomRoleName
   }
 }
