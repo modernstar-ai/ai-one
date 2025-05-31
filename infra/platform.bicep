@@ -168,9 +168,6 @@ module storageModule './modules/storage.bicep' = {
 
 module aiSearchService './modules/aiSearch.bicep' = {
   name: 'aiSearchService'
-  dependsOn: [
-    keyVaultModule
-  ]
   params: {
     name: searchServiceName
     location: location
@@ -193,9 +190,6 @@ module appServicePlanModule './modules/appServicePlan.bicep' = {
 
 module cosmosDbAccountModule './modules/cosmosDb.bicep' = {
   name: 'cosmosDbAccount'
-  dependsOn: [
-    keyVaultModule
-  ]
   params: {
     name: cosmosDbAccountName
     location: location
