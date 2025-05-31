@@ -115,68 +115,6 @@ param userObjectId string = ''
 // @description('The optional APIM Gateway URL to override the azure open AI embedding instance')
 // param apimAiEmbeddingsEndpointOverride string = ''
 
-resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-  name: formRecognizerName
-  location: location
-  tags: tags
-  kind: 'FormRecognizer'
-  properties: {
-    customSubDomainName: formRecognizerName
-    publicNetworkAccess: 'Enabled'
-  }
-  sku: {
-    name: 'S0'
-  }
-}
-
-resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (deployAzueOpenAi) {
-  name: openAiName
-  location: openAiLocation
-  tags: tags
-  kind: 'OpenAI'
-  properties: {
-    customSubDomainName: openAiName
-    publicNetworkAccess: 'Enabled'
-  }
-  sku: {
-    name: openAiSkuName
-  }
-}
-
-resource gptllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = if (deployAzueOpenAi) {
-  parent: azureopenai
-  name: chatGptDeploymentName
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: chatGptModelName
-      version: chatGptModelVersion
-    }
-  }
-  #disable-next-line use-safe-access
-  sku: {
-    name: 'GlobalStandard'
-    capacity: chatGptDeploymentCapacity
-  }
-}
-
-resource embeddingsllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = if (deployAzueOpenAi) {
-  parent: azureopenai
-  dependsOn: [gptllmdeployment]
-  name: embeddingDeploymentName
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: embeddingModelName
-      version: '1'
-    }
-  }
-  sku: {
-    name: 'Standard'
-    capacity: embeddingDeploymentCapacity
-  }
-}
-
 module cosmosDbModule './modules/cosmosDb.bicep' = {
   name: 'cosmosDbModule'
   params: {
@@ -278,6 +216,63 @@ module aisearchModule './modules/aisearch.bicep' = {
   }
 }
 
+module documentIntelligenceModule './modules/documentIntelligence.bicep' = {
+  name: 'documentIntelligenceModule'
+  params: {
+    name: formRecognizerName
+    location: location
+    tags: tags
+  }
+}
+
+module openAiModule './modules/openai.bicep' = if (deployAzueOpenAi) {
+  name: 'openAiModule'
+  params: {
+    name: openAiName
+    location: openAiLocation
+    tags: tags
+    openAiSkuName: openAiSkuName
+  }
+}
+
+resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = if (deployAzueOpenAi) {
+  name: openAiName
+}
+
+resource gptllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = if (deployAzueOpenAi) {
+  parent: azureopenai
+  name: chatGptDeploymentName
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: chatGptModelName
+      version: chatGptModelVersion
+    }
+  }
+  #disable-next-line use-safe-access
+  sku: {
+    name: 'GlobalStandard'
+    capacity: chatGptDeploymentCapacity
+  }
+}
+
+resource embeddingsllmdeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = if (deployAzueOpenAi) {
+  parent: azureopenai
+  dependsOn: [gptllmdeployment]
+  name: embeddingDeploymentName
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: embeddingModelName
+      version: '1'
+    }
+  }
+  sku: {
+    name: 'Standard'
+    capacity: embeddingDeploymentCapacity
+  }
+}
+
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
 output keyVaultName string = keyVaultModule.outputs.name
@@ -287,9 +282,9 @@ output cosmosDbAccountEndpoint string = cosmosDbModule.outputs.cosmosDbAccountEn
 output appServicePlanName string = appServicePlanModule.outputs.name
 output appServicePlanId string = appServicePlanModule.outputs.resourceId
 output searchServiceName string = aisearchModule.outputs.name
-output formRecognizerName string = formRecognizer.name
-output openAiName string = azureopenai.name
-output openAiEndpoint string = azureopenai.properties.endpoint
+output formRecognizerName string = documentIntelligenceModule.outputs.name
+output openAiName string = openAiModule.outputs.name
+output openAiEndpoint string = openAiModule.outputs.endpoint
 output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbModule.outputs.cosmosDbAccountDataPlaneCustomRoleId
 output agileChatDatabaseName string = agileChatDatabaseName
 output serviceBusQueueName string = serviceBusModule.outputs.serviceBusQueueName
