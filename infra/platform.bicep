@@ -128,21 +128,14 @@ module logAnalyticsWorkspaceModule './modules/logAnalyticsWorkspace.bicep' = {
   }
 }
 
-resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
-  name: searchServiceName
-  location: location
-  tags: tags
-  properties: {
-    partitionCount: 1
-    publicNetworkAccess: 'enabled'
-    replicaCount: 1
-    semanticSearch: semanticSearchSku
-  }
-  sku: {
-    name: searchServiceSkuName
-  }
-  identity: {
-    type: 'SystemAssigned'
+module searchService './modules/aiSearchService.bicep' = {
+  name: 'searchService'
+  params: {
+    name: searchServiceName
+    location: location
+    tags: tags
+    skuName: searchServiceSkuName
+    semanticSearchSku: semanticSearchSku
   }
 }
 
@@ -233,6 +226,7 @@ resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
     name: 'S0'
   }
 }
+
 module serviceBusModule './modules/serviceBus.bicep' = {
   name: 'serviceBusModule'
   params: {
