@@ -93,6 +93,7 @@ var blobContainers = [
   }
 ]
 
+#disable-next-line no-unused-vars
 var openAiSampleModels = [
   for record in openAiSampleModelsArray: {
     name: record.name

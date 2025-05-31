@@ -5,12 +5,11 @@
         "core": {
             "rules": {
                 "no-unused-params": {
-                    "level": "warning"
+                    "level": "none"
                 }
             }
         }
     },
-    "experimentalFeaturesEnabled": {
-    },
+    "experimentalFeaturesEnabled": {},
     "extensions": {}
 }
