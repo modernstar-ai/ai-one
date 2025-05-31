@@ -63,7 +63,7 @@ jobs:
           resourceGroupName: ${{ vars.AZURE_RESOURCE_GROUP }}
           template: ${{ env.AZURE_BICEP_MAIN }}
           parameters: |
-            ./infra/dev.parameters.json
+            infra/dev.parameters.json
             projectName="${{ inputs.project_name }}"
             location="${{ inputs.azure_location }}"
             azureClientID="${{ vars.AZURE_CLIENT_ID }}"
