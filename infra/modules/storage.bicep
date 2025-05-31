@@ -7,30 +7,33 @@ param location string
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
-@description('Resource ID of the Log Analytics workspace to use for diagnostic settings.')
-param logAnalyticsWorkspaceResourceId string
+@description('The name of the workload\'s existing Log Analytics workspace.')
+param logWorkspaceName string
 
 @description('SKU for Storage Account')
-param storageServiceSku object
+param skuName object
 
-@description('The container name where files will be stored for folder search')
-param storageServiceFoldersContainerName string
+@description('Array of blob container names to be created')
+param blobContainerCollection array
 
-@description('The container name for images')
-param storageServiceImageContainerName string
+resource logWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
+  name: logWorkspaceName
+}
 
-var validStorageServiceImageContainerName = toLower(replace(storageServiceImageContainerName, '-', ''))
-
-resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   name: name
   location: location
   tags: tags
   kind: 'StorageV2'
-  sku: storageServiceSku
+  sku: skuName
+  properties: {
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+  }
 }
 
 resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
-  parent: storage
+  parent: storageAccount
   name: 'default'
   properties: {
     deleteRetentionPolicy: {
@@ -40,70 +43,50 @@ resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01
   }
 }
 
-resource imagesContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
-  parent: blobServices
-  name: validStorageServiceImageContainerName
-}
-
-resource indexContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
-  parent: blobServices
-  name: storageServiceFoldersContainerName
+resource storageDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: '${storageAccount.name}-diagnostic'
+  scope: storageAccount
   properties: {
-    publicAccess: 'None'
-  }
-}
-
-resource storageDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (!empty(logAnalyticsWorkspaceResourceId)) {
-  name: '${storage.name}-diagnostic'
-  scope: storage
-  properties: {
-    workspaceId: logAnalyticsWorkspaceResourceId
+    workspaceId: logWorkspace.id
     logs: [
-    //   {
-    //     category: 'StorageRead'
-    //     enabled: true
-    //     retentionPolicy: {
-    //       enabled: false
-    //       days: 0
-    //     }
-    //   }
-    //   {
-    //     category: 'StorageWrite'
-    //     enabled: true
-    //     retentionPolicy: {
-    //       enabled: false
-    //       days: 0
-    //     }
-    //   }
-    //   {
-    //     category: 'StorageDelete'
-    //     enabled: true
-    //     retentionPolicy: {
-    //       enabled: false
-    //       days: 0
-    //     }
-    //   }
-    // ]
-    // metrics: [
-    //   {
-    //     category: 'Transaction'
-    //     enabled: true
-    //     retentionPolicy: {
-    //       enabled: false
-    //       days: 0
-    //     }
-    //   }
-    //   {
-    //     category: 'Capacity'
-    //     enabled: true
-    //     retentionPolicy: {
-    //       enabled: false
-    //       days: 0
-    //     }
-    //   }
+      //   {
+      //     category: 'StorageRead'
+      //     enabled: true
+      //     retentionPolicy: {
+      //       enabled: false
+      //       days: 0
+      //     }
+      //   }
+      //   {
+      //     category: 'StorageWrite'
+      //     enabled: true
+      //     retentionPolicy: {
+      //       enabled: false
+      //       days: 0
+      //     }
+      //   }
+      //   {
+      //     category: 'StorageDelete'
+      //     enabled: true
+      //     retentionPolicy: {
+      //       enabled: false
+      //       days: 0
+      //     }
+      //   }
+      // ]
     ]
   }
 }
 
-output storageAccountName string = storage.name
-output storageAccountId string = storage.id
+resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = [
+  for containerName in blobContainerCollection: {
+    parent: blobServices
+    name: containerName
+    properties: {
+      publicAccess: 'None'
+    }
+  }
+]
+
+output name string = storageAccount.name
+output resourceId string = storageAccount.id

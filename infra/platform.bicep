@@ -310,10 +310,12 @@ module storageModule './modules/storage.bicep' = {
     name: storageAccountName
     location: location
     tags: tags
-    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
-    storageServiceSku: storageServiceSku
-    storageServiceFoldersContainerName: storageServiceFoldersContainerName
-    storageServiceImageContainerName: storageServiceImageContainerName
+    logWorkspaceName: logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
+    skuName: storageServiceSku
+    blobContainerCollection: [
+      storageServiceFoldersContainerName
+      storageServiceImageContainerName
+    ]
   }
 }
 
