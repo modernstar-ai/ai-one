@@ -1,14 +1,14 @@
-@description('App Service Plan name')
-param appServicePlanName string
+@description('Name of the App Service Plan.')
+param name string
 
-@description('Azure region for resource deployment')
+@description('Specifies the location for all the Azure resources.')
 param location string
 
-@description('Resource tags')
-param tags object
+@description('Optional. Tags to be applied to the resources.')
+param tags object = {}
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
-  name: appServicePlanName
+  name: name
   location: location
   tags: tags
   properties: {
@@ -24,5 +24,5 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   kind: 'linux'
 }
 
-output appServicePlanName string = appServicePlan.name
-output appServicePlanId string = appServicePlan.id
+output resourceId string = appServicePlan.id
+output name string = appServicePlan.name
