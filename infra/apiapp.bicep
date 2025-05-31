@@ -479,15 +479,5 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
   ]
 }
 
-resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15' = {
-  name: agileChatDatabaseName
-  parent: cosmosDbAccount
-  properties: {
-    resource: {
-      id: agileChatDatabaseName
-    }
-  }
-}
-
 output apiAppDefaultHostName string = apiApp.properties.defaultHostName
 output apiAppManagedIdentityId string = apiAppManagedIdentity.id
