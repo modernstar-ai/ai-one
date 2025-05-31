@@ -8,7 +8,7 @@
     "name": "gpt-4o",
     "sku": {
       "name": "GlobalStandard",
-      "capacity": 50
+      "capacity": 2000
     }
   },
   {
@@ -20,7 +20,7 @@
     "name": "o3-mini",
     "sku": {
       "name": "GlobalStandard",
-      "capacity": 100
+      "capacity": 2000
     }
   },
   {
@@ -32,7 +32,7 @@
     "name": "text-embedding-3-small",
     "sku": {
       "name": "GlobalStandard",
-      "capacity": 120
+      "capacity": 250
     }
   }
 ]
