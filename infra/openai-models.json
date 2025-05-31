@@ -5,10 +5,10 @@
       "name": "gpt-4o",
       "version": "2024-05-13"
     },
-    "name": "gpt-4o",
+    "name": "gpt-4o-2",
     "sku": {
       "name": "GlobalStandard",
       "capacity": 50
     }
-  }
+  },
 ]
