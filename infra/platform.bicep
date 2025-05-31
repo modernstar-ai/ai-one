@@ -45,7 +45,7 @@ param storageAccountName string = replace(('${projectName}${environmentName}sto'
 param keyVaultName string = toLower('${resourcePrefix}2-kv')
 
 @description('Azure Container Registry name')
-param acrName string = toLower('${resourcePrefix}-acr')
+param acrName string = toLower(replace('${resourcePrefix}acr', '-', ''))
 
 @description('Log Analytics Workspace name')
 param logAnalyticsWorkspaceName string = toLower('${resourcePrefix}-la')
