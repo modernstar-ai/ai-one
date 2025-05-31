@@ -1,16 +1,19 @@
-@description('Azure region for resource deployment')
+@description('Name of the Service Bus')
+param name string
+
+@description('Specifies the location for all the Azure resources.')
 param location string
 
-@description('Service Bus namespace name')
-param serviceBusName string
+@description('Optional. Tags to be applied to the resources.')
+param tags object = {}
 
 @description('Service Bus queue name')
 param serviceBusQueueName string
 
 resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' = {
   location: location
-  name: serviceBusName
-
+  name: name
+  tags: tags
   resource queue 'queues' = {
     name: serviceBusQueueName
     properties: {
@@ -32,7 +35,7 @@ resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' = {
   }
 }
 
-output serviceBusName string = serviceBus.name
-output serviceBusId string = serviceBus.id
+output name string = serviceBus.name
+output resourceId string = serviceBus.id
 output serviceBusQueueName string = serviceBus::queue.name
-output serviceBusQueueId string = serviceBus::queue.id
+output serviceBusQueueResourceId string = serviceBus::queue.id

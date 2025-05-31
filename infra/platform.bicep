@@ -248,7 +248,8 @@ module serviceBusModule './modules/serviceBus.bicep' = {
   name: 'serviceBusModule'
   params: {
     location: location
-    serviceBusName: serviceBusName
+    name: serviceBusName
+    tags: tags
     serviceBusQueueName: serviceBusQueueName
   }
 }
@@ -259,7 +260,7 @@ module keyVaultModule './modules/keyVault.bicep' = {
     name: keyVaultName
     location: location
     tags: tags
-    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
+    logWorkspaceName: logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
     userObjectId: userObjectId
     keyVaultSecrets: [
       {
@@ -319,7 +320,20 @@ module storageModule './modules/storage.bicep' = {
   }
 }
 
+output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
+output keyVaultName string = keyVaultModule.outputs.name
+output storageAccountName string = storageModule.outputs.name
+output cosmosDbAccountName string = cosmosDbAccount.name
 output cosmosDbAccountEndpoint string = cosmosDbAccount.properties.documentEndpoint
+output appServicePlanName string = appServicePlanModule.outputs.appServicePlanName
+output appServicePlanId string = appServicePlanModule.outputs.appServicePlanId
+output searchServiceName string = searchService.name
+output formRecognizerName string = formRecognizer.name
+output openAiName string = azureopenai.name
 output openAiEndpoint string = azureopenai.properties.endpoint
-output formRecognizerEndpoint string = formRecognizer.properties.endpoint
+output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbAccountDataPlaneCustomRole.id
+output agileChatDatabaseName string = database.name
+output serviceBusQueueName string = serviceBusModule.outputs.serviceBusQueueName
+output serviceBusName string = serviceBusModule.outputs.name
+output storageServiceFoldersContainerName string = storageServiceFoldersContainerName
