@@ -23,4 +23,17 @@
       "capacity": 100
     }
   }
+  ,
+    {
+      "model": {
+        "format": "OpenAI",
+        "name": "text-embedding-3-small",
+        "version": "1"
+      },
+      "name": "text-embedding-3-small",
+      "sku": {
+        "name": "GlobalStandard",
+        "capacity": 120
+      }
+    }
 ]
