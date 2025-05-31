@@ -34,10 +34,10 @@ resource cognitiveService_deployments 'Microsoft.CognitiveServices/accounts/depl
     name: deployment.?name ?? '${name}-deployments'
     properties: {
       model: deployment.model
-      raiPolicyName: deployment.?raiPolicyName
-      versionUpgradeOption: deployment.?versionUpgradeOption
+      // raiPolicyName: deployment.?raiPolicyName
+      // versionUpgradeOption: deployment.?versionUpgradeOption
     }
-    sku: deployment.?sku
+    sku: deployment.sku
   }
 ]
 
