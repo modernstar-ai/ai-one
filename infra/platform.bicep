@@ -196,21 +196,13 @@ module storageModule './modules/storage.bicep' = {
   }
 }
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
-  name: appServicePlanName
-  location: location
-  tags: tags
-  properties: {
-    reserved: true
+module appServicePlanModule './modules/appServicePlan.bicep' = {
+  name: 'appServicePlanModule'
+  params: {
+    name: appServicePlanName
+    location: location
+    tags: tags
   }
-  sku: {
-    name: 'P0v3'
-    tier: 'Premium0V3'
-    size: 'P0v3'
-    family: 'Pv3'
-    capacity: 1
-  }
-  kind: 'linux'
 }
 
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
@@ -358,8 +350,8 @@ output keyVaultId string = keyVaultModule.outputs.resourceId
 output storageAccountName string = storageModule.outputs.name
 output storageAccountId string = storageModule.outputs.resourceId
 output imagesContainerId string = storageServiceImageContainerName
-output appServicePlanName string = appServicePlan.name
-output appServicePlanId string = appServicePlan.id
+output appServicePlanName string = appServicePlanModule.outputs.name
+output appServicePlanId string = appServicePlanModule.outputs.resourceId
 output cosmosDbAccountName string = cosmosDbAccount.name
 output cosmosDbAccountId string = cosmosDbAccount.id
 output cosmosDbAccountEndpoint string = cosmosDbAccount.properties.documentEndpoint
