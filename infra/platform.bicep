@@ -28,12 +28,6 @@ param storageServiceSku object = {
   name: 'Standard_LRS'
 }
 
-@description('The container name where files will be stored for folder search')
-param storageServiceFoldersContainerName string = 'index-content'
-
-@description('The container name for images')
-param storageServiceImageContainerName string = 'images'
-
 @description('SKU for Azure Search Service')
 param searchServiceSkuName string = 'standard'
 
@@ -110,12 +104,19 @@ param cosmosDbAccountDataPlaneCustomRoleName string = 'Custom Cosmos DB for NoSQ
 @description('Database name for AgileChat')
 param agileChatDatabaseName string = 'AgileChat'
 
+var blobContainersArray = loadJsonContent('./data-containers.json')
+
+var blobContainers = [
+  for name in blobContainersArray: {
+    name: toLower(replace(name, '-', ''))
+    publicAccess: 'None'
+  }
+]
+
 // @description('The optional APIM Gateway URL to override the azure open AI instance')
 // param apimAiEndpointOverride string = ''
 // @description('The optional APIM Gateway URL to override the azure open AI embedding instance')
-// param apimAiEmbeddingsEndpointOverride string = ''
-
-var validStorageServiceImageContainerName = toLower(replace(storageServiceImageContainerName, '-', ''))
+// param apimAiEmbeddingsEndpointOverride string = '' 
 
 resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
   name: openAiName
@@ -172,10 +173,7 @@ module storageModule './modules/storage.bicep' = {
     tags: tags
     logWorkspaceName: logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
     skuName: storageServiceSku
-    blobContainerCollection: [
-      storageServiceFoldersContainerName
-      validStorageServiceImageContainerName
-    ]
+    blobContainerCollection: blobContainers
   }
 }
 
@@ -286,7 +284,6 @@ output keyVaultName string = keyVaultModule.outputs.name
 output keyVaultId string = keyVaultModule.outputs.resourceId
 output storageAccountName string = storageModule.outputs.name
 output storageAccountId string = storageModule.outputs.resourceId
-output imagesContainerId string = storageServiceImageContainerName
 output appServicePlanName string = appServicePlanModule.outputs.name
 output appServicePlanId string = appServicePlanModule.outputs.resourceId
 output cosmosDbAccountName string = cosmosDbAccountModule.outputs.name
@@ -294,7 +291,6 @@ output cosmosDbAccountEndpoint string = cosmosDbAccountModule.outputs.endpoint
 output formRecognizerName string = documentIntelligenceModule.outputs.name
 output serviceBusName string = serviceBusModule.outputs.name
 output serviceBusQueueName string = serviceBusModule.outputs.serviceBusQueueName
-output storageServiceFoldersContainerName string = storageServiceFoldersContainerName
 output openAiName string = openAiModule.outputs.name
 output openAiEndpoint string = openAiModule.outputs.endpoint
 output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbAccountModule.outputs.cosmosDbAccountDataPlaneCustomRoleId

@@ -79,11 +79,11 @@ resource storageDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-0
 }
 
 resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = [
-  for containerName in blobContainerCollection: {
+  for container in blobContainerCollection: {
     parent: blobServices
-    name: containerName
+    name: container.name
     properties: {
-      publicAccess: 'None'
+      publicAccess: container.publicAccess
     }
   }
 ]

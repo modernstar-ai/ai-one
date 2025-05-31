@@ -99,7 +99,7 @@ param auditIncludePII string = 'true'
 @description('Cosmos DB Account endpoint (document endpoint)')
 param cosmosDbAccountEndpoint string
 
-param storageServiceFoldersContainerName string
+param storageServiceFoldersContainerName string = 'index-content'
 
 param eventGridSystemTopicSubName string = toLower('${resourcePrefix}-folders-blobs-listener')
 

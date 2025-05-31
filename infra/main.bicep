@@ -186,7 +186,6 @@ module apiApp 'apiapp.bicep' = {
     apimAiEndpointOverride: apimAiEndpointOverride
     apimAiEmbeddingsEndpointOverride: apimAiEmbeddingsEndpointOverride
     adminEmailAddresses: AdminEmailAddresses
-    storageServiceFoldersContainerName: platform.outputs.storageServiceFoldersContainerName
     cosmosDbAccountDataPlaneCustomRoleId: platform.outputs.cosmosDbAccountDataPlaneCustomRoleId
     agileChatDatabaseName: agileChatDatabaseName
   }
@@ -194,4 +193,3 @@ module apiApp 'apiapp.bicep' = {
 
 output url string = 'https://${webApp.outputs.webAppDefaultHostName}'
 output api_url string = 'https://${apiApp.outputs.apiAppDefaultHostName}'
-
