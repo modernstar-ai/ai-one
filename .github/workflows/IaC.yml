@@ -67,7 +67,7 @@ jobs:
           #   aspCoreEnvironment="${{ inputs.asp_core_environment }}"
           #   semanticSearchSku="${{ inputs.semantic_search_sku }}"
 
-          parametersFile: infra/dev.parameters.json
+          parametersFile: ./infra/dev.parameters.json
           parameters: |
             projectName="${{ inputs.project_name }}"
             location="${{ inputs.azure_location }}"
