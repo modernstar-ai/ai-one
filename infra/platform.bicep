@@ -50,6 +50,9 @@ param storageAccountName string = replace(('${projectName}${environmentName}sto'
 @description('Key Vault name')
 param keyVaultName string = toLower('${resourcePrefix}2-kv')
 
+@description('Azure Container Registry name'))
+param acrName string = toLower('${resourcePrefix}-acr')
+
 @description('Log Analytics Workspace name')
 param logAnalyticsWorkspaceName string = toLower('${resourcePrefix}-la')
 
@@ -148,6 +151,16 @@ module keyVaultModule './modules/keyVault.bicep' = {
         value: azureTenantId
       }
     ]
+  }
+}
+
+module acrModule './modules/acr.bicep' = {
+  name: 'acrModule'
+  params: {
+    name: acrName
+    location: location
+    tags: tags
+    logWorkspaceName: logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
   }
 }
 
