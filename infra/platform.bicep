@@ -120,21 +120,14 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
   location: location
 }
 
-resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
-  name: searchServiceName
-  location: location
-  tags: tags
-  properties: {
-    partitionCount: 1
-    publicNetworkAccess: 'enabled'
-    replicaCount: 1
-    semanticSearch: semanticSearchSku
-  }
-  sku: {
-    name: searchServiceSkuName
-  }
-  identity: {
-    type: 'SystemAssigned'
+module aiSearchModule './modules/aiSearch.bicep' = {
+  name: 'aiSearchModule'
+  params: {
+    name: searchServiceName
+    location: location
+    tags: tags
+    skuName: searchServiceSkuName
+    semanticSearchSku: semanticSearchSku
   }
 }
 

@@ -8,7 +8,7 @@ param location string
 param tags object = {}
 
 @description('SKU for Azure Search Service')
-param searchServiceSkuName string = 'standard'
+param skuName string = 'standard'
 
 @description('SKU for semantic search')
 @allowed(['disabled', 'free', 'standard'])
@@ -25,7 +25,7 @@ resource aiSearch 'Microsoft.Search/searchServices@2024-06-01-preview' = {
     semanticSearch: semanticSearchSku
   }
   sku: {
-    name: searchServiceSkuName
+    name: skuName
   }
   identity: {
     type: 'SystemAssigned'
