@@ -137,11 +137,6 @@ module keyVaultModule './modules/keyVault.bicep' = {
     logWorkspaceName: logAnalyticsWorkspaceName
     userObjectId: ''
     keyVaultSecrets: [
-      // {
-      //   name: 'AZURE-SEARCH-API-KEY'
-      //   contentType: 'text/plain'
-      //   value: listAdminKeys(searchServiceName, '2024-06-01-preview').secondaryKey
-      // }
       {
         name: 'AZURE-CLIENT-ID'
         contentType: 'text/plain'
@@ -152,12 +147,6 @@ module keyVaultModule './modules/keyVault.bicep' = {
         contentType: 'text/plain'
         value: azureTenantId
       }
-      // {
-      //   //TODO: Remove this secret after refactoring the API to use managed identity
-      //   name: 'AZURE-COSMOSDB-KEY'
-      //   contentType: 'text/plain'
-      //   value: listKeys(cosmosDbAccountName, '2023-04-15').secondaryMasterKey
-      // }
     ]
   }
 }
@@ -179,10 +168,15 @@ module storageModule './modules/storage.bicep' = {
 
 module aiSearchService './modules/aiSearch.bicep' = {
   name: 'aiSearchService'
+  dependsOn: [
+    keyVaultModule
+  ]
   params: {
     name: searchServiceName
     location: location
     tags: tags
+    keyVaultName: keyVaultModule.outputs.name
+    searchServiceApiKeySecretName: 'AZURE-SEARCH-API-KEY' //TODO: Remove this secret after refactoring the API to use managed identity
     skuName: searchServiceSkuName
     semanticSearchSku: semanticSearchSku
   }
@@ -199,10 +193,15 @@ module appServicePlanModule './modules/appServicePlan.bicep' = {
 
 module cosmosDbAccountModule './modules/cosmosDb.bicep' = {
   name: 'cosmosDbAccount'
+  dependsOn: [
+    keyVaultModule
+  ]
   params: {
     name: cosmosDbAccountName
     location: location
     tags: tags
+    keyVaultName: keyVaultModule.outputs.name
+    cosmosDbAccountApiSecretName: 'AZURE-COSMOSDB-KEY' //TODO: Remove this secret after refactoring the API to use managed identity
     cosmosDbAccountDataPlaneCustomRoleName: cosmosDbAccountDataPlaneCustomRoleName
     databases: [
       agileChatDatabaseName

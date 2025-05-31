@@ -10,8 +10,18 @@ param tags object = {}
 @description('Optional. List of Cosmos DB databases to deploy.')
 param databases array = []
 
+@description('Key Vault name for storing secrets related to Cosmos DB.')
+param keyVaultName string
+
+@description('Cosmos DD Account API Secret Name')
+param cosmosDbAccountApiSecretName string
+
 @description('Cosmos DB custom role definition name')
 param cosmosDbAccountDataPlaneCustomRoleName string = 'Custom Cosmos DB for NoSQL Data Plane Contributor'
+
+resource keyVault 'Microsoft.KeyVault/vaults@2023-10-01' existing = {
+  name: keyVaultName
+}
 
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
   name: name
@@ -61,6 +71,14 @@ resource sqlDatabases 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-0
     }
   }
 ]
+
+resource cosmosDbAccountApiSecret 'Microsoft.KeyVault/vaults/secrets@2023-10-01' = {
+  name: cosmosDbAccountApiSecretName
+  parent: keyVault
+  properties: {
+    value: listKeys(cosmosDbAccount.name, '2023-04-15').primaryMasterKey
+  }
+}
 
 output name string = cosmosDbAccount.name
 output endpoint string = cosmosDbAccount.properties.documentEndpoint

@@ -14,6 +14,16 @@ param skuName string = 'standard'
 @allowed(['disabled', 'free', 'standard'])
 param semanticSearchSku string = 'free'
 
+@description('Key Vault name for storing secrets related to AI Search.')
+param keyVaultName string
+
+@description('Key Vault secret name for AI Search API Key')
+param searchServiceApiKeySecretName string = 'searchServiceApiKey'
+
+resource keyVault 'Microsoft.KeyVault/vaults@2023-10-01' existing = {
+  name: keyVaultName
+}
+
 resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   name: name
   location: location
@@ -29,6 +39,15 @@ resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   }
   identity: {
     type: 'SystemAssigned'
+  }
+}
+
+resource searchServiceApiKey 'Microsoft.KeyVault/vaults/secrets@2023-10-01' = {
+  name: '${searchServiceApiKeySecretName}'
+  parent: keyVault
+  properties: {
+    value: searchService.properties.primaryKey
+    contentType: 'text/plain'
   }
 }
 
