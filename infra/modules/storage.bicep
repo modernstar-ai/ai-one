@@ -78,15 +78,15 @@ resource storageDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-0
   }
 }
 
-resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = [
-  for containerName in blobContainerCollection: {
-    parent: blobServices
-    name: containerName
-    properties: {
-      publicAccess: 'None'
-    }
-  }
-]
+// resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = [
+//   for containerName in blobContainerCollection: {
+//     parent: blobServices
+//     name: containerName
+//     properties: {
+//       publicAccess: 'None'
+//     }
+//   }
+// ]
 
 output name string = storageAccount.name
 output resourceId string = storageAccount.id
