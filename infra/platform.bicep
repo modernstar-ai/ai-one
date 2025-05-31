@@ -290,7 +290,7 @@ module keyVaultModule './modules/keyVault.bicep' = {
 module appServicePlanModule './modules/appServicePlan.bicep' = {
   name: 'appServicePlanModule'
   params: {
-    appServicePlanName: appServicePlanName
+    name: appServicePlanName
     location: location
     tags: tags
   }
@@ -326,8 +326,8 @@ output keyVaultName string = keyVaultModule.outputs.name
 output storageAccountName string = storageModule.outputs.name
 output cosmosDbAccountName string = cosmosDbAccount.name
 output cosmosDbAccountEndpoint string = cosmosDbAccount.properties.documentEndpoint
-output appServicePlanName string = appServicePlanModule.outputs.appServicePlanName
-output appServicePlanId string = appServicePlanModule.outputs.appServicePlanId
+output appServicePlanName string = appServicePlanModule.outputs.name
+output appServicePlanId string = appServicePlanModule.outputs.resourceId
 output searchServiceName string = searchService.name
 output formRecognizerName string = formRecognizer.name
 output openAiName string = azureopenai.name

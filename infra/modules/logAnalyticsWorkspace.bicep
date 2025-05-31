@@ -11,6 +11,14 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
   name: logAnalyticsWorkspaceName
   tags: tags
   location: location
+  properties: {
+    retentionInDays: 30
+    // publicNetworkAccessForIngestion: 'Disabled'
+    // publicNetworkAccessForQuery: 'Disabled'
+    workspaceCapping: {
+      dailyQuotaGb: 10
+    }
+  }
 }
 
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspace.name
