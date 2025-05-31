@@ -14,32 +14,11 @@
     "openAILocation": {
       "value": "australiaeast"
     },
-    "azureClientID": {
-      "value": ""
-    },
-    "azureClientSecret": {
-      "value": ""
-    },
-    "azureTenantId": {
-      "value": ""
-    },
-    "azureADAppIdOrUri": {
-      "value": ""
-    },
-    "UtsRoleApiEndpoint": {
-      "value": ""
-    },
-    "UtsXApiKey": {
-      "value": ""
-    },
     "aspCoreEnvironment": {
       "value": "Development"
     },
-    "deployEventGrid": {
-      "value": false
-    },
     "semanticSearchSku": {
-      "value": "free"
+      "value": "Standard"
     }
   }
 }

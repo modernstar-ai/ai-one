@@ -13,16 +13,16 @@ on:
           - "uat"
           - "prod"
         required: true
-      asp_core_environment:
-        description: "Select the ASP Core deployment environment"
-        type: choice
-        default: "Development"
-        options:
-          - "Development"
-          - "Test"
-          - "UAT"
-          - "Production"
-        required: true
+      # asp_core_environment:
+      #   description: "Select the ASP Core deployment environment"
+      #   type: choice
+      #   default: "Development"
+      #   options:
+      #     - "Development"
+      #     - "Test"
+      #     - "UAT"
+      #     - "Production"
+      #   required: true
       project_name:
         description: "Enter the Name of the project"
         type: string
@@ -36,15 +36,15 @@ on:
           - "australiaeast"
           - "australiasoutheast"
         required: true
-      semantic_search_sku:
-        description: "Select the Azure Search AI Semantic Search Sku"
-        type: choice
-        default: "standard"
-        options:
-          - "disabled"
-          - "free"
-          - "standard"
-        required: true
+      # semantic_search_sku:
+      #   description: "Select the Azure Search AI Semantic Search Sku"
+      #   type: choice
+      #   default: "standard"
+      #   options:
+      #     - "disabled"
+      #     - "free"
+      #     - "standard"
+      #   required: true
 
 env:
   AZURE_BICEP_MAIN: "./infra/main.bicep"
@@ -82,15 +82,17 @@ jobs:
           subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ vars.AZURE_RESOURCE_GROUP }}
           template: ${{ env.AZURE_BICEP_MAIN }}
-          parameters: >
+          # parameters: >
+          #   openAILocation="${{ inputs.azure_location }}"
+          #   aspCoreEnvironment="${{ inputs.asp_core_environment }}"
+          #   semanticSearchSku="${{ inputs.semantic_search_sku }}"
+
+          parametersFile: infra/${{ inputs.environment_name }}.parameters.json
+          parameters: |
             projectName="${{ inputs.project_name }}"
-            environmentName="${{ inputs.environment_name }}"
             location="${{ inputs.azure_location }}"
-            openAILocation="${{ inputs.azure_location }}"
             azureClientID="${{ vars.AZURE_CLIENT_ID }}"
             azureTenantId="${{ vars.AZURE_TENANT_ID }}"
-            aspCoreEnvironment="${{ inputs.asp_core_environment }}"
-            semanticSearchSku="${{ inputs.semantic_search_sku }}"
             apimAiEndpointOverride="${{ vars.APIM_ENDPOINT_OVERRIDE }}"
             apimAiEmbeddingsEndpointOverride="${{ vars.APIM_EMBEDDINGS_ENDPOINT_OVERRIDE }}"
           includeAdditionalFiles: |

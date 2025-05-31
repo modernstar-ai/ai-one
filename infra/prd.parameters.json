@@ -14,23 +14,8 @@
     "openAILocation": {
       "value": "australiaeast"
     },
-    "azureClientID": {
-      "value": ""
-    },
-    "azureClientSecret": {
-      "value": ""
-    },
-    "azureTenantId": {
-      "value": ""
-    },
-    "azureADAppIdOrUri": {
-      "value": ""
-    },
     "aspCoreEnvironment": {
       "value": "Production"
-    },
-    "deployEventGrid": {
-      "value": false
     },
     "semanticSearchSku": {
       "value": "standard"
