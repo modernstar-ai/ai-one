@@ -5,10 +5,22 @@
       "name": "gpt-4o",
       "version": "2024-05-13"
     },
-    "name": "gpt-4o-2",
+    "name": "gpt-4o",
     "sku": {
       "name": "GlobalStandard",
       "capacity": 50
     }
   },
+  {
+    "model": {
+      "format": "OpenAI",
+      "name": "o3-mini",
+      "version": "2025-01-31"
+    },
+    "name": "o3-mini",
+    "sku": {
+      "name": "GlobalStandard",
+      "capacity": 100
+    }
+  }
 ]
