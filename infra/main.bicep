@@ -3,12 +3,12 @@ targetScope = 'resourceGroup'
 @description('The name of the solution.')
 @minLength(1)
 @maxLength(12)
-param projectName string
+param projectName string = 'ag-aione-v2'
 
 @description('The type of environment. e.g. local, dev, uat, prod.')
 @minLength(1)
 @maxLength(4)
-param environmentName string
+param environmentName string = 'dev'
 
 @description('Primary location for all resources')
 param location string = resourceGroup().location
@@ -44,7 +44,7 @@ param location string = resourceGroup().location
     type: 'location'
   }
 })
-param openAILocation string
+param openAILocation string = 'australiaeast'
 
 @description('Resource prefix for naming resources')
 param resourcePrefix string = toLower('${projectName}-${environmentName}')
