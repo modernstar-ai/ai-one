@@ -170,7 +170,7 @@ module apiApp 'apiapp.bicep' = {
     formRecognizerName: platform.outputs.formRecognizerName
     serviceBusQueueName: platform.outputs.serviceBusQueueName
     serviceBusName: platform.outputs.serviceBusName
-    searchServiceName:  'temp'
+    searchServiceName: platform.outputs.searchServiceName
     keyVaultName: platform.outputs.keyVaultName
     appServicePlanName: platform.outputs.appServicePlanName
     logAnalyticsWorkspaceName: platform.outputs.logAnalyticsWorkspaceName
