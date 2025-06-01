@@ -28,7 +28,6 @@ on:
         required: true
 env:
   AZURE_BICEP_MAIN: "./infra/main.bicep"
-  # AZURE_SUBSCRIPTION_ID
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
   PROJECT_NAME: ${{ inputs.project_name }}
