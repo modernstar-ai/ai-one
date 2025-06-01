@@ -29,8 +29,9 @@ on:
 env:
   AZURE_BICEP_MAIN: "./infra/main.bicep"
   # AZURE_SUBSCRIPTION_ID
-  # AZURE_CLIENT_ID
-  # AZURE_TENANT_ID
+  AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  PROJECT_NAME: ${{ inputs.project_name }}
   # AZURE_RESOURCE_GROUP
   # APIM_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
   # APIM_EMBEDDINGS_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
@@ -64,7 +65,7 @@ jobs:
           template: ${{ env.AZURE_BICEP_MAIN }}
           deploymentName: github-deploy-${{ github.run_number }}
           parameters: >
-            infra/${{ inputs.environment_name }}.parameters.json
+            infra/${{ inputs.environment_name }}.bicepparam
             projectName="${{ inputs.project_name }}"
             environmentName="${{ inputs.environment_name }}"
             location="${{ inputs.azure_location }}"
