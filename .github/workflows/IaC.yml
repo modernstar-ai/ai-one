@@ -79,7 +79,7 @@ jobs:
             environmentName="${{ inputs.environment_name }}"
             location="${{ inputs.azure_location }}"
             openAILocation="${{ inputs.azure_location }}"
-            azureClientID="${{ vars.AZURE_CLIENT_ID }}"
+            azureClientId="${{ vars.AZURE_CLIENT_ID }}"
             azureTenantId="${{ vars.AZURE_TENANT_ID }}"
           includeAdditionalFiles: |
             ./infra/blob-storage-containers.json
