@@ -58,7 +58,7 @@ param aspCoreEnvironment string = 'Development'
 param semanticSearchSku string = 'standard'
 
 @description('AZURE_CLIENT_ID')
-param azureClientID string
+param azureClientId string
 
 @description('AZURE_TENANT_ID')
 param azureTenantId string
@@ -101,7 +101,7 @@ module platform 'platform.bicep' = {
     tags: tags
     resourcePrefix: resourcePrefix
     semanticSearchSku: semanticSearchSku
-    azureClientId: azureClientID
+    azureClientId: azureClientId
     azureTenantId: azureTenantId
     openAiLocation: openAILocation
     openAiSkuName: openAISku
