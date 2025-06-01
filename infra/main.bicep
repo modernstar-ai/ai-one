@@ -51,7 +51,7 @@ param resourcePrefix string = toLower('${projectName}-${environmentName}')
 
 @description('Deployment Environment')
 @allowed(['Development', 'Test', 'UAT', 'Production'])
-param aspCoreEnvironment string = 'Development'
+param aspCoreEnvironment string
 
 @description('ets options that control the availability of semantic search')
 param semanticSearchSku string = 'standard'
