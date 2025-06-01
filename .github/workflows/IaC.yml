@@ -75,6 +75,7 @@ jobs:
           #   azureClientId="${{ vars.AZURE_CLIENT_ID }}"
           #   azureTenantId="${{ vars.AZURE_TENANT_ID }}"
           parameters: >
+            infra/dev.parameters.json
             projectName="${{ inputs.project_name }}"
             environmentName="${{ inputs.environment_name }}"
             location="${{ inputs.azure_location }}"
