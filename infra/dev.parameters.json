@@ -7,9 +7,6 @@
     },
     "aspCoreEnvironment": {
       "value": "Development"
-    },
-    "semanticSearchSku": {
-      "value": "Standard"
     }
   }
 }
