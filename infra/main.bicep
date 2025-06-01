@@ -44,7 +44,7 @@ param location string = resourceGroup().location
     type: 'location'
   }
 })
-param openAILocation string = 'australiaeast'
+param openAILocation string
 
 @description('Resource prefix for naming resources')
 param resourcePrefix string = toLower('${projectName}-${environmentName}')
