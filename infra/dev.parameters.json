@@ -4,12 +4,6 @@
   "parameters": {
     "openAILocation": {
       "value": "australiaeast"
-    },
-    "aspCoreEnvironment": {
-      "value": "Development"
-    },
-    "semanticSearchSku": {
-      "value": "Standard"
     }
   }
 }
