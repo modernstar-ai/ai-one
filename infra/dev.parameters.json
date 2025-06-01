@@ -4,9 +4,6 @@
   "parameters": {
     "openAILocation": {
       "value": "australiaeast"
-    },
-    "aspCoreEnvironment": {
-      "value": "Development"
     }
   }
 }
