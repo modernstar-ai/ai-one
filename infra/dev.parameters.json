@@ -4,21 +4,6 @@
   "parameters": {
     "projectName": {
       "value": "ag-aione-v2"
-    },
-    "environmentName": {
-      "value": "${AZURE_ENVIRONMENT_NAME}"
-    },
-    "location": {
-      "value": "${AZURE_LOCATION}"
-    },
-    "openAILocation": {
-      "value": "${AZURE_OPENAI_LOCATION}"
-    },
-    "aspCoreEnvironment": {
-      "value": "Development"
-    },
-    "semanticSearchSku": {
-      "value": "Standard"
     }
   }
 }
