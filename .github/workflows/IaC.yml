@@ -27,10 +27,10 @@ on:
           - "australiasoutheast"
         required: true
 env:
-  AZURE_PROJECT_NAME: ag-aione-v2
-  AZURE_ENVIRONMENT_NAME: dev
-  AZURE_LOCATION: australiaeast
-  AZURE_OPENAI_LOCATION: australiaeast
+  # AZURE_PROJECT_NAME: ag-aione-v2
+  # AZURE_ENVIRONMENT_NAME: dev
+  # AZURE_LOCATION: australiaeast
+  # AZURE_OPENAI_LOCATION: australiaeast
   AZURE_BICEP_MAIN: "./infra/main.bicep"
   # AZURE_SUBSCRIPTION_ID
   # AZURE_CLIENT_ID

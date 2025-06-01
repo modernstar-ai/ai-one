@@ -57,10 +57,10 @@ param aspCoreEnvironment string = 'Development'
 param semanticSearchSku string = 'standard'
 
 @description('AZURE_CLIENT_ID')
-param azureClientId string = '26064e0e-149c-417e-bf91-56c189c1815e'
+param azureClientId string
 
 @description('AZURE_TENANT_ID')
-param azureTenantId string = '036f815c-3d92-42f2-a595-d69e17a03194'
+param azureTenantId string
 
 @description('API App name')
 param apiAppName string = toLower('${resourcePrefix}-apiapp')
