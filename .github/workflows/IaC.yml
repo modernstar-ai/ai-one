@@ -67,10 +67,6 @@ jobs:
           parameters: >
             infra/${{ inputs.environment_name }}.bicepparam
             environmentName="${{ inputs.environment_name }}"
-            projectName="${{ env.PROJECT_NAME }}"
-            azureClientId="${{ env.AZURE_CLIENT_ID }}"
-            azureTenantId="${{ env.AZURE_TENANT_ID }}"
-            location="${{ env.AZURE_LOCATION }}"
           includeAdditionalFiles: |
             ./infra/blob-storage-containers.json
             ./infra/openai-models.json
