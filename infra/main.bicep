@@ -3,7 +3,7 @@ targetScope = 'resourceGroup'
 @description('The name of the solution.')
 @minLength(1)
 @maxLength(12)
-param projectName string
+param projectName string = 'ag-aione-v2'
 
 @description('The type of environment. e.g. local, dev, uat, prod.')
 @minLength(1)
@@ -51,7 +51,7 @@ param resourcePrefix string = toLower('${projectName}-${environmentName}')
 
 @description('Deployment Environment')
 @allowed(['Development', 'Test', 'UAT', 'Production'])
-param aspCoreEnvironment string = 'Development'
+param aspCoreEnvironment string
 
 @description('ets options that control the availability of semantic search')
 param semanticSearchSku string = 'standard'
