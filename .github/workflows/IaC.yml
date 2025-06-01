@@ -58,7 +58,7 @@ jobs:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-
+  `
       - name: Deploy Bicep Infrastructure
         uses: azure/arm-deploy@v2
         with:
@@ -79,7 +79,6 @@ jobs:
             projectName="${{ inputs.project_name }}"
             environmentName="${{ inputs.environment_name }}"
             location="${{ inputs.azure_location }}"
-            openAILocation="${{ inputs.azure_location }}"
             azureClientId="${{ vars.AZURE_CLIENT_ID }}"
             azureTenantId="${{ vars.AZURE_TENANT_ID }}"
           includeAdditionalFiles: |
