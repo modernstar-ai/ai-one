@@ -4,34 +4,30 @@ on:
   workflow_dispatch:
     inputs:
       project_name:
-        description: "Enter the Name of the project"
+        description: 'Enter the Name of the project'
         type: string
-        default: "ag-aione-v2"
+        default: 'ag-aione'
         required: true
       environment_name:
-        description: "Select the application environment name - used to name resources"
+        description: 'Select the application environment name - used to name resources'
         type: choice
-        default: "dev"
+        default: 'dev'
         options:
-          - "dev"
-          - "tst"
-          - "uat"
-          - "prod"
+          - 'dev'
+          - 'tst'
+          - 'uat'
+          - 'prod'
         required: true
       azure_location:
-        description: "Select the Azure deployment location"
+        description: 'Select the Azure deployment location'
         type: choice
-        default: "australiaeast"
+        default: 'australiaeast'
         options:
-          - "australiaeast"
-          - "australiasoutheast"
+          - 'australiaeast'
+          - 'australiasoutheast'
         required: true
 env:
-  # AZURE_PROJECT_NAME: ag-aione-v2
-  # AZURE_ENVIRONMENT_NAME: dev
-  # AZURE_LOCATION: australiaeast
-  # AZURE_OPENAI_LOCATION: australiaeast
-  AZURE_BICEP_MAIN: "./infra/main.bicep"
+  AZURE_BICEP_MAIN: './infra/main.bicep'
   # AZURE_SUBSCRIPTION_ID
   # AZURE_CLIENT_ID
   # AZURE_TENANT_ID
