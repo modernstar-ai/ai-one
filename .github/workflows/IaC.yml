@@ -83,8 +83,7 @@ jobs:
           subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ vars.AZURE_RESOURCE_GROUP }}
           template: ${{ env.AZURE_BICEP_MAIN }}
-          # parameters: infra/dev.parameters.json azureClientId=${{ vars.AZURE_CLIENT_ID }} azureTenantId=${{ vars.AZURE_TENANT_ID }}
-          parameters: infra/dev.parameters.json
+          parameters: infra/dev.bicepparam
           includeAdditionalFiles: |
             ./infra/blob-storage-containers.json
             ./infra/openai-models.json
