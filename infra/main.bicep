@@ -54,14 +54,13 @@ param resourcePrefix string = toLower('${projectName}-${environmentName}')
 param aspCoreEnvironment string = 'Development'
 
 @description('ets options that control the availability of semantic search')
-@allowed(['disabled', 'free', 'standard'])
-param semanticSearchSku string = 'standard'
+param semanticSearchSku string = 'Standard'
 
 @description('AZURE_CLIENT_ID')
-param azureClientId string
+param azureClientId string = ''
 
 @description('AZURE_TENANT_ID')
-param azureTenantId string
+param azureTenantId string= ''
 
 @description('API App name')
 param apiAppName string = toLower('${resourcePrefix}-apiapp')
