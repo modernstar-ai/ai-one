@@ -6,7 +6,19 @@
       "value": "ag-aione-v2"
     },
     "environmentName": {
-      "value": "${AZURE_ENVIRONMENT_NAME}"
+      "value": "dev"
+    },
+    "location": {
+      "value": "australiaeast"
+    },
+    "openAILocation": {
+      "value": "australiaeast"
+    },
+    "aspCoreEnvironment": {
+      "value": "Development"
+    },
+    "semanticSearchSku": {
+      "value": "Standard"
     }
   }
 }
