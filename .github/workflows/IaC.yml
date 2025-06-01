@@ -32,6 +32,7 @@ env:
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
   PROJECT_NAME: ${{ inputs.project_name }}
+  AZURE_LOCATION: ${{ inputs.azure_location }}
   # AZURE_RESOURCE_GROUP
   # APIM_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
   # APIM_EMBEDDINGS_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
@@ -66,11 +67,7 @@ jobs:
           deploymentName: github-deploy-${{ github.run_number }}
           parameters: >
             infra/${{ inputs.environment_name }}.bicepparam
-            projectName="${{ inputs.project_name }}"
             environmentName="${{ inputs.environment_name }}"
-            location="${{ inputs.azure_location }}"
-            azureClientId="${{ vars.AZURE_CLIENT_ID }}"
-            azureTenantId="${{ vars.AZURE_TENANT_ID }}"
           includeAdditionalFiles: |
             ./infra/blob-storage-containers.json
             ./infra/openai-models.json
