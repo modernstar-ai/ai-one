@@ -6,7 +6,7 @@ on:
       project_name:
         description: "Enter the Name of the project"
         type: string
-        default: "ag-aione-v2"
+        default: "ag-aione"
         required: true
       environment_name:
         description: "Select the application environment name - used to name resources"
@@ -30,8 +30,8 @@ env:
   AZURE_BICEP_MAIN: "./infra/main.bicep"
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-  PROJECT_NAME: ${{ inputs.project_name }}
   AZURE_LOCATION: ${{ inputs.azure_location }}
+  PROJECT_NAME: ${{ inputs.project_name }}
   # AZURE_RESOURCE_GROUP
   # APIM_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
   # APIM_EMBEDDINGS_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
@@ -67,6 +67,10 @@ jobs:
           parameters: >
             infra/${{ inputs.environment_name }}.bicepparam
             environmentName="${{ inputs.environment_name }}"
+            projectName="${{ env.PROJECT_NAME }}"
+            azureClientId="${{ env.AZURE_CLIENT_ID }}"
+            azureTenantId="${{ env.AZURE_TENANT_ID }}"
+            location="${{ env.AZURE_LOCATION }}"
           includeAdditionalFiles: |
             ./infra/blob-storage-containers.json
             ./infra/openai-models.json
