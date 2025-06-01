@@ -66,6 +66,7 @@ jobs:
           subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ vars.AZURE_RESOURCE_GROUP }}
           template: ${{ env.AZURE_BICEP_MAIN }}
+          deploymentName: github-deploy-${{ github.run_number }}
           # parameters: infra/dev.bicepparam
           # parameters: >
           #   infra/dev.parameters.json
