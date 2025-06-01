@@ -94,14 +94,8 @@ jobs:
             projectName="${{ inputs.project_name }}"
             environmentName="${{ inputs.environment_name }}"
             location="${{ inputs.azure_location }}"
-            openAILocation="${{ inputs.azure_location }}"
-            azureClientID="${{ vars.AZURE_CLIENT_ID }}"
+            azureClientId="${{ vars.AZURE_CLIENT_ID }}"
             azureTenantId="${{ vars.AZURE_TENANT_ID }}"
-            aspCoreEnvironment="${{ inputs.asp_core_environment }}"
-            kvSetFunctionAppPermissions=${{ inputs.set_kv_function_app_permissions }}
-            semanticSearchSku="${{ inputs.semantic_search_sku }}"
-            apimAiEndpointOverride="${{ vars.APIM_ENDPOINT_OVERRIDE }}"
-            apimAiEmbeddingsEndpointOverride="${{ vars.APIM_EMBEDDINGS_ENDPOINT_OVERRIDE }}"
           includeAdditionalFiles: |
             ./infra/blob-storage-containers.json
             ./infra/openai-models.json
