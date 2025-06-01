@@ -27,10 +27,6 @@ on:
           - "australiasoutheast"
         required: true
 env:
-  # AZURE_PROJECT_NAME: ag-aione-v2
-  # AZURE_ENVIRONMENT_NAME: dev
-  # AZURE_LOCATION: australiaeast
-  # AZURE_OPENAI_LOCATION: australiaeast
   AZURE_BICEP_MAIN: "./infra/main.bicep"
   # AZURE_SUBSCRIPTION_ID
   # AZURE_CLIENT_ID
@@ -47,7 +43,7 @@ permissions:
 
 jobs:
   deploy-infrastructure:
-    environment: dev
+    environment: ${{ inputs.environment_name }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -67,16 +63,8 @@ jobs:
           resourceGroupName: ${{ vars.AZURE_RESOURCE_GROUP }}
           template: ${{ env.AZURE_BICEP_MAIN }}
           deploymentName: github-deploy-${{ github.run_number }}
-          # parameters: infra/dev.bicepparam
-          # parameters: >
-          #   infra/dev.parameters.json
-          #   projectName="${{ inputs.project_name }}"
-          #   environmentName="${{ inputs.environment_name }}"
-          #   location="${{ inputs.azure_location }}"
-          #   azureClientId="${{ vars.AZURE_CLIENT_ID }}"
-          #   azureTenantId="${{ vars.AZURE_TENANT_ID }}"
           parameters: >
-            infra/dev.parameters.json
+            infra/${{ inputs.environment_name }}.parameters.json
             projectName="${{ inputs.project_name }}"
             environmentName="${{ inputs.environment_name }}"
             location="${{ inputs.azure_location }}"
