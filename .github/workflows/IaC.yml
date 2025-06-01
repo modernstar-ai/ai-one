@@ -59,28 +59,6 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      # - name: Replace values in bicepparam file
-      #   run: |
-      #     sed -i "s/REPLACEME/${vars.AZURE_CLIENT_ID}/g" infra/dev.bicepparam
-      #     sed -i "s/REPLACEME/${vars.AZURE_TENANT_ID}/g" infra/dev.bicepparam
-
-      - name: Print environment variables
-        run: |
-          echo "AZURE_PROJECT_NAME=$AZURE_PROJECT_NAME"
-          echo "AZURE_ENVIRONMENT_NAME=$AZURE_ENVIRONMENT_NAME"
-          echo "AZURE_LOCATION=$AZURE_LOCATION"
-          echo "AZURE_OPENAI_LOCATION=$AZURE_OPENAI_LOCATION"
-          echo "AZURE_BICEP_MAIN=$AZURE_BICEP_MAIN"
-          echo "AZURE_ASP_CORE_ENVIRONMENT=$AZURE_ASP_CORE_ENVIRONMENT"
-          echo "AZURE_SEMANTIC_SEARCH_SKU=$AZURE_SEMANTIC_SEARCH_SKU"
-          echo "AZURE_SUBSCRIPTION_ID=$AZURE_SUBSCRIPTION_ID"
-          echo "AZURE_CLIENT_ID=$AZURE_CLIENT_ID"
-          echo "AZURE_TENANT_ID=$AZURE_TENANT_ID"
-          echo "AZURE_RESOURCE_GROUP=$AZURE_RESOURCE_GROUP"
-          echo "APIM_ENDPOINT_OVERRIDE=$APIM_ENDPOINT_OVERRIDE"
-          echo "APIM_EMBEDDINGS_ENDPOINT_OVERRIDE=$APIM_EMBEDDINGS_ENDPOINT_OVERRIDE"
-        shell: bash
-
       - name: Deploy Bicep Infrastructure
         uses: azure/arm-deploy@v2
         with:
@@ -89,12 +67,19 @@ jobs:
           resourceGroupName: ${{ vars.AZURE_RESOURCE_GROUP }}
           template: ${{ env.AZURE_BICEP_MAIN }}
           # parameters: infra/dev.bicepparam
+          # parameters: >
+          #   infra/dev.parameters.json
+          #   projectName="${{ inputs.project_name }}"
+          #   environmentName="${{ inputs.environment_name }}"
+          #   location="${{ inputs.azure_location }}"
+          #   azureClientId="${{ vars.AZURE_CLIENT_ID }}"
+          #   azureTenantId="${{ vars.AZURE_TENANT_ID }}"
           parameters: >
-            infra/dev.parameters.json
             projectName="${{ inputs.project_name }}"
             environmentName="${{ inputs.environment_name }}"
             location="${{ inputs.azure_location }}"
-            azureClientId="${{ vars.AZURE_CLIENT_ID }}"
+            openAILocation="${{ inputs.azure_location }}"
+            azureClientID="${{ vars.AZURE_CLIENT_ID }}"
             azureTenantId="${{ vars.AZURE_TENANT_ID }}"
           includeAdditionalFiles: |
             ./infra/blob-storage-containers.json
