@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "projectName": {
-      "value": "${AZURE_PROJECT_NAME}"
+      "value": "ag-aione-v2"
     },
     "environmentName": {
       "value": "${AZURE_ENVIRONMENT_NAME}"
