@@ -6,7 +6,7 @@
       "value": "ag-aione-v2"
     },
     "environmentName": {
-      "value": "dev"
+      "value": "${AZURE_ENVIRONMENT_NAME}"
     }
   }
 }
