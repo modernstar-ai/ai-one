@@ -61,7 +61,7 @@ param apimAiEmbeddingsEndpointOverride string = ''
 param chatGptDeploymentName string = 'gpt-4o'
 
 @description('Embedding deployment name')
-param embeddingDeploymentName string = 'text-embedding-3-small'
+param embeddingDeploymentName string = 'embedding'
 
 @description('Embedding model name')
 param embeddingModelName string = 'text-embedding-3-small'
