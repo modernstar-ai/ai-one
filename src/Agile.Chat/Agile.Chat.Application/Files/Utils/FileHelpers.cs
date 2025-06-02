@@ -9,7 +9,7 @@ public static class FileHelpers
     public static HashSet<string> TextFormats = ["text/plain", "application/json", "text/markdown"];
     public static string GetContentType(string url)
     {
-        var file = Path.GetFileName(url).Split(".").Last();
+        var file = Path.GetFileName(url).Split(".").Last().ToLower();
         return file switch
         {
             // IMAGES
