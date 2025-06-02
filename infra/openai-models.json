@@ -29,7 +29,7 @@
       "name": "text-embedding-3-small",
       "version": "1"
     },
-    "name": "text-embedding-3-small",
+    "name": "embedding",
     "sku": {
       "name": "GlobalStandard",
       "capacity": 250
