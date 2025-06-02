@@ -402,15 +402,15 @@ resource apiAppServiceBusSenderRoleAssignment 'Microsoft.Authorization/roleAssig
   }
 }
 
-resource apiAppCosmosDbCustomRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-05-15' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, cosmosDbAccount.id, cosmosDbAccountDataPlaneCustomRoleId)
-  parent: cosmosDbAccount
-  properties: {
-    principalId: apiAppManagedIdentity.properties.principalId
-    roleDefinitionId: cosmosDbAccountDataPlaneCustomRoleId
-    scope: cosmosDbAccount.id
-  }
-}
+// resource apiAppCosmosDbCustomRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-05-15' = {
+//   name: guid(resourceGroup().id, apiAppManagedIdentity.id, cosmosDbAccount.id, cosmosDbAccountDataPlaneCustomRoleId)
+//   parent: cosmosDbAccount
+//   properties: {
+//     principalId: apiAppManagedIdentity.properties.principalId
+//     roleDefinitionId: cosmosDbAccountDataPlaneCustomRoleId
+//     scope: cosmosDbAccount.id
+//   }
+// }
 
 module appServiceSecretsUserRoleAssignmentModule './modules/keyvaultRoleAssignment.bicep' = {
   name: 'appServiceSecretsUserRoleAssignmentDeploy'
