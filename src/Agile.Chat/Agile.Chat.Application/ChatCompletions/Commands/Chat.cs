@@ -265,7 +265,8 @@ public static class Chat
         {
             var userMessage = Message.CreateUser(threadId, userPrompt);
             var assistantMessage = Message.CreateAssistant(threadId, assistantResponse);
-            var citationMessages = new List<Message>();
+            var citationMessages = assistantMetadata?.TryGetValue(MetadataType.Citations, out var citations) ?? false ?
+                (citations as List<ChatContainerCitation>)!.Select(c => Message.CreateCitation(threadId, c.Content)).ToList() : [];
 
             if (assistantMetadata != null)
             {
