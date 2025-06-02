@@ -35,6 +35,7 @@ resource site 'Microsoft.Web/sites@2023-12-01' = {
   tags: tags
   properties: {
     serverFarmId: serverFarmId
+    keyVaultReferenceIdentity: !empty(userAssignedIdentityId) ? userAssignedIdentityId : null
     httpsOnly: true
     clientAffinityEnabled: false
     siteConfig: union(siteConfig, {
