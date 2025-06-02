@@ -56,18 +56,33 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy Bicep Infrastructure
-        uses: azure/arm-deploy@v2
+      - name: Bicep What-If Analysis
+        uses: azure/bicep-deploy@v2
         with:
-          scope: resourcegroup
-          subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-          resourceGroupName: ${{ vars.AZURE_RESOURCE_GROUP }}
-          template: ${{ env.AZURE_BICEP_MAIN }}
-          deploymentName: github-deploy-${{ github.run_number }}
-          parameters: >
-            infra/${{ inputs.environment_name }}.bicepparam
-            environmentName="${{ inputs.environment_name }}"
-          includeAdditionalFiles: |
-            ./infra/blob-storage-containers.json
-            ./infra/openai-models.json
-          debug: true
+          type: deployment
+          name: bicep-deployment-validation
+          operation: validate
+          scope: resourceGroup
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ${{ env.AZURE_BICEP_MAIN }}
+          parameters-file: infra/${{ inputs.environment_name }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
+
+      - name: Deploy Bicep Infrastructure
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: create
+          name: bicep-deployment
+          scope: resourceGroup
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ${{ env.AZURE_BICEP_MAIN }}
+          parameters-file: infra/${{ inputs.environment_name }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
+
+      - name: Print Deployment Outputs
+        run: |
+          echo "intOutput: ${{ steps.deployment.outputs.intOutput }}"
+          echo "stringOutput: ${{ steps.deployment.outputs.stringOutput }}"
