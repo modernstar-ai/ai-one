@@ -82,7 +82,3 @@ jobs:
           parameters-file: infra/${{ inputs.environment_name }}.bicepparam
           parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
 
-      - name: Print Deployment Outputs
-        run: |
-          echo "intOutput: ${{ steps.deployment.outputs.intOutput }}"
-          echo "stringOutput: ${{ steps.deployment.outputs.stringOutput }}"
