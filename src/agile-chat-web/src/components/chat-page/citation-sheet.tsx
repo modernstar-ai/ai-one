@@ -17,7 +17,6 @@ import { Textarea } from '../ui/textarea';
 import { FileViewingDialog } from './file-viewing-dialog';
 import { useState } from 'react';
 import { Check, CopyIcon, Loader2Icon } from 'lucide-react';
-import { getCitationChunkById } from '@/services/chatthreadservice';
 
 interface CitationSheetProps {
   citation: Citation;
@@ -30,8 +29,7 @@ export function CitationSheet(props: CitationSheetProps) {
 
   const onOpen = async () => {
     if (!chunk) {
-      const chunk = await getCitationChunkById(citation.id);
-      setChunk(chunk);
+      setChunk(citation.content);
     }
   };
 

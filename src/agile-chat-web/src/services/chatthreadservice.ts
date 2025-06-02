@@ -92,14 +92,3 @@ export async function GetChatThreadMessages(chatThreadId: string): Promise<Messa
     return [];
   }
 }
-
-export async function getCitationChunkById(chunkId: string): Promise<string> {
-  const apiUrl = getApiUrl(`/Chunk/${chunkId}`);
-  try {
-    const response = await axios.get<string>(apiUrl);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching chunk:', error);
-    return '';
-  }
-}

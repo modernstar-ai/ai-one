@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { Separator } from '../ui/separator';
 import { FileViewingDialog } from './file-viewing-dialog';
 import { Badge } from '../ui/badge';
-import { getCitationChunkById } from '@/services/chatthreadservice';
 
 interface ChatSearchResponseProps {
   message: Message;
@@ -27,7 +26,7 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
 
       const chunkReqs: Promise<string>[] = [];
       searchProcess.Citations.forEach((citation) => {
-        chunkReqs.push(getCitationChunkById(citation.id));
+        chunkReqs.push(citation.content);
       });
 
       const chunks = await Promise.all(chunkReqs);
