@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using Agile.Chat.Domain.Assistants.ValueObjects;
+using Agile.Chat.Domain.Shared.DomainHelpers;
 using Agile.Chat.Domain.Shared.Interfaces;
 using Agile.Chat.Domain.Shared.ValueObjects;
 using Agile.Framework.Common.DomainAbstractions;
@@ -43,6 +44,7 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
         AssistantPromptOptions promptOptions,
         PermissionsAccessControl? accessControl = null)
     {
+        DomainHelpers.NormalizeAccessControl(accessControl);
         return new Assistant(name, description, type, ragType, status, greeting, filterOptions, promptOptions, accessControl ?? new PermissionsAccessControl());
     }
 
@@ -51,7 +53,7 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
         string greeting,
         AssistantType type,
         RagType ragType,
-        AssistantStatus status, 
+        AssistantStatus status,
         AssistantFilterOptions filterOptions,
         AssistantPromptOptions promptOptions)
     {
@@ -63,37 +65,15 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
         Status = status;
         Greeting = greeting;
         FilterOptions = filterOptions;
-        PromptOptions = promptOptions; 
+        PromptOptions = promptOptions;
         LastModified = DateTime.UtcNow;
     }
 
     public void UpdateAccessControl(PermissionsAccessControl accessControl)
     {
-        NormalizeAccessControl(accessControl);
+        DomainHelpers.NormalizeAccessControl(accessControl);
         AccessControl = accessControl;
         LastModified = DateTime.UtcNow;
     }
 
-    private static void NormalizeAccessControl(PermissionsAccessControl? accessControl)
-    {
-        if (accessControl == null)
-            return;
-
-        // Normalize all user IDs and group names to lowercase so that cosmos DB queries are case-insensitive
-        accessControl.Users.UserIds = accessControl.Users.UserIds
-            .Select(id => id.ToLowerInvariant())
-            .ToList();
-
-        accessControl.Users.Groups = accessControl.Users.Groups
-            .Select(g => g.ToLowerInvariant())
-            .ToList();
-
-        accessControl.ContentManagers.UserIds = accessControl.ContentManagers.UserIds
-            .Select(id => id.ToLowerInvariant())
-            .ToList();
-
-        accessControl.ContentManagers.Groups = accessControl.ContentManagers.Groups
-            .Select(g => g.ToLowerInvariant())
-            .ToList();
-    }
 }

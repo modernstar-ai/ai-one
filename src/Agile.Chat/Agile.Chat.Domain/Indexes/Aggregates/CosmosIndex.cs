@@ -3,6 +3,7 @@ using Agile.Chat.Domain.Shared.Interfaces;
 using Agile.Chat.Domain.Shared.ValueObjects;
 using Agile.Chat.Domain.Indexes.ValueObjects;
 using Agile.Framework.Common.DomainAbstractions;
+using Agile.Chat.Domain.Shared.DomainHelpers;
 
 namespace Agile.Chat.Domain.Indexes.Aggregates;
 
@@ -32,7 +33,7 @@ public class CosmosIndex : AuditableAggregateRoot, IAccessControllable
         PermissionsAccessControl? accessControl,
         List<TaggingSettings>? taggingSettings)
     {
-        NormalizeAccessControl(accessControl);
+        DomainHelpers.NormalizeAccessControl(accessControl);
         //Do validation logic and throw domain level exceptions if fails
         return new CosmosIndex(name, description, chunkSize, chunkOverlap, accessControl ?? new PermissionsAccessControl(), taggingSettings ?? new List<TaggingSettings>());
     }
@@ -44,33 +45,9 @@ public class CosmosIndex : AuditableAggregateRoot, IAccessControllable
         LastModified = DateTime.UtcNow;
         TaggingSettings = taggingSettings ?? new List<TaggingSettings>();
     }
-
-    private static void NormalizeAccessControl(PermissionsAccessControl? accessControl)
-    {
-        if (accessControl == null)
-            return;
-
-        // Normalize all user IDs and group names to lowercase so that cosmos DB queries are case-insensitive
-        accessControl.Users.UserIds = accessControl.Users.UserIds
-        .Select(id => id.ToLowerInvariant())
-        .ToList();
-
-        accessControl.Users.Groups = accessControl.Users.Groups
-            .Select(g => g.ToLowerInvariant())
-            .ToList();
-
-        accessControl.ContentManagers.UserIds = accessControl.ContentManagers.UserIds
-            .Select(id => id.ToLowerInvariant())
-            .ToList();
-
-        accessControl.ContentManagers.Groups = accessControl.ContentManagers.Groups
-            .Select(g => g.ToLowerInvariant())
-            .ToList();
-    }
-
     public void UpdateAccessControl(PermissionsAccessControl accessControl)
     {
-        NormalizeAccessControl(accessControl);
+        DomainHelpers.NormalizeAccessControl(accessControl);
         AccessControl = accessControl;
         LastModified = DateTime.UtcNow;
     }

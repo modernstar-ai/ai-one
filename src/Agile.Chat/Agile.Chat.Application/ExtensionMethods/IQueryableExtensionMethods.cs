@@ -17,7 +17,7 @@ public static class IQueryableExtensionMethods
             x.AccessControl.Users.UserIds.Contains(userId) ||
             x.AccessControl.ContentManagers.UserIds.Contains(userId) ||
             x.AccessControl.Users.Groups.Any((group) => groupClaims.Contains(group.ToLowerInvariant())) ||
-            x.AccessControl.ContentManagers.Groups.Any((group) => groupClaims.Contains(group)) ||
+            x.AccessControl.ContentManagers.Groups.Any((group) => groupClaims.Contains(group.ToLowerInvariant())) ||
             (roleClaims.Contains(UserRole.ContentManager.ToString()) && x.AccessControl.ContentManagers.AllowAccessToAll)
         );
     }
