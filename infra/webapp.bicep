@@ -44,63 +44,35 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-12
   name: logAnalyticsWorkspaceName
 }
 
-resource webApp 'Microsoft.Web/sites@2023-12-01' = {
-  name: webappName
-  location: location
-  tags: union(tags, { 'azd-service-name': 'agilechat-web' })
-  properties: {
+module webAppModule './modules/site.bicep' = {
+  name: 'webAppModule'
+  params: {
+    name: webappName
+    location: location
+    tags: union(tags, { 'azd-service-name': 'agilechat-web' })
     serverFarmId: appServicePlan.id
-    httpsOnly: true
-    clientAffinityEnabled: false
+    logWorkspaceName: logAnalyticsWorkspace.name
+    userAssignedIdentityId: webAppManagedIdentity.id
     siteConfig: {
       linuxFxVersion: 'node|18-lts'
       alwaysOn: true
       appCommandLine: 'npx serve -s dist'
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
-      appSettings: [
-        {
-          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
-          value: 'false'
-        }
-        {
-          name: 'ALLOWED_ORIGINS'
-          value: 'https://${apiAppName}.azurewebsites.net'
-        }
-      ]
     }
-  }
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${webAppManagedIdentity.id}': {}
-    }
-  }
-  resource configLogs 'config' = {
-    name: 'logs'
-    properties: {
-      applicationLogs: { fileSystem: { level: 'Verbose' } }
-      detailedErrorMessages: { enabled: true }
-      failedRequestsTracing: { enabled: true }
-      httpLogs: { fileSystem: { enabled: true, retentionInDays: 1, retentionInMb: 35 } }
-    }
-  }
-}
-
-resource webDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
-  name: diagnosticSettingsName
-  scope: webApp
-  properties: {
-    workspaceId: logAnalyticsWorkspace.id
-    logs: [
+    appSettings: [
       {
-        category: 'AppServiceConsoleLogs'
-        enabled: true
+        name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+        value: 'false'
+      }
+      {
+        name: 'ALLOWED_ORIGINS'
+        value: 'https://${apiAppName}.azurewebsites.net'
       }
     ]
-    metrics: []
+    diagnosticSettingsName: diagnosticSettingsName
   }
 }
 
-output webAppDefaultHostName string = webApp.properties.defaultHostName
+output webAppDefaultHostName string = webAppModule.outputs.defaultHostName
 output webAppManagedIdentityId string = webAppManagedIdentity.id

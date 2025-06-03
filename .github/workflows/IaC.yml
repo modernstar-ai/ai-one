@@ -3,54 +3,35 @@ name: IaC
 on:
   workflow_dispatch:
     inputs:
-      environment_name:
-        description: 'Select the application environment name - used to name resources'
-        type: choice
-        default: 'dev'
-        options:
-          - 'dev'
-          - 'tst'
-          - 'uat'
-          - 'prod'
-        required: true
-      asp_core_environment:
-        description: 'Select the ASP Core deployment environment'
-        type: choice
-        default: 'Development'
-        options:
-          - 'Development'
-          - 'Test'
-          - 'UAT'
-          - 'Production'
-        required: true
       project_name:
-        description: 'Enter the Name of the project'
+        description: "Enter the Name of the project"
         type: string
-        default: 'ag-aione-v2'
+        default: "ag-aione-v2"
+        required: true
+      environment_name:
+        description: "Select the application environment name - used to name resources"
+        type: choice
+        default: "dev"
+        options:
+          - "dev"
+          - "tst"
+          - "uat"
+          - "prod"
         required: true
       azure_location:
-        description: 'Select the Azure deployment location'
+        description: "Select the Azure deployment location"
         type: choice
-        default: 'australiaeast'
+        default: "australiaeast"
         options:
-          - 'australiaeast'
-          - 'australiasoutheast'
+          - "australiaeast"
+          - "australiasoutheast"
         required: true
-      semantic_search_sku:
-        description: 'Select the Azure Search AI Semantic Search Sku'
-        type: choice
-        default: 'standard'
-        options:
-          - 'disabled'
-          - 'free'
-          - 'standard'
-        required: true
-
 env:
-  AZURE_BICEP_MAIN: './infra/main.bicep'
-  # AZURE_SUBSCRIPTION_ID
-  # AZURE_CLIENT_ID
-  # AZURE_TENANT_ID
+  AZURE_BICEP_MAIN: "./infra/main.bicep"
+  AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  PROJECT_NAME: ${{ inputs.project_name }}
+  AZURE_LOCATION: ${{ inputs.azure_location }}
   # AZURE_RESOURCE_GROUP
   # APIM_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
   # APIM_EMBEDDINGS_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
@@ -60,10 +41,10 @@ env:
 permissions:
   id-token: write
   contents: read
-  
+
 jobs:
   deploy-infrastructure:
-    environment: ${{ inputs.asp_core_environment }}
+    environment: ${{ inputs.environment_name }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -75,21 +56,29 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy Bicep Infrastructure
-        uses: azure/arm-deploy@v1
+      - name: Bicep What-If Analysis
+        uses: azure/bicep-deploy@v2
         with:
-          scope: resourcegroup
-          subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-          resourceGroupName: ${{ vars.AZURE_RESOURCE_GROUP }}
-          template: ${{ env.AZURE_BICEP_MAIN }}
-          parameters: >
-            projectName="${{ inputs.project_name }}"
-            environmentName="${{ inputs.environment_name }}"
-            location="${{ inputs.azure_location }}"
-            openAILocation="${{ inputs.azure_location }}"
-            azureClientID="${{ vars.AZURE_CLIENT_ID }}"
-            azureTenantId="${{ vars.AZURE_TENANT_ID }}"
-            aspCoreEnvironment="${{ inputs.asp_core_environment }}"
-            semanticSearchSku="${{ inputs.semantic_search_sku }}"
-            apimAiEndpointOverride="${{ vars.APIM_ENDPOINT_OVERRIDE }}"
-            apimAiEmbeddingsEndpointOverride="${{ vars.APIM_EMBEDDINGS_ENDPOINT_OVERRIDE }}"
+          type: deployment
+          name: bicep-deployment-validation
+          operation: validate
+          scope: resourceGroup
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ${{ env.AZURE_BICEP_MAIN }}
+          parameters-file: infra/${{ inputs.environment_name }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
+
+      - name: Deploy Bicep Infrastructure
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: create
+          name: bicep-deployment
+          scope: resourceGroup
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ${{ env.AZURE_BICEP_MAIN }}
+          parameters-file: infra/${{ inputs.environment_name }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
+

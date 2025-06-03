@@ -4,28 +4,29 @@ name: PROD-Deploy
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: 'Select the Azure Deployment Environment'
+      environment_name:
+        description: "Select the application environment name - used to name resources"
         type: choice
-        default: 'Production'
+        default: "dev"
         options:
-          - Development
-          - Test
-          - UAT
-          - Production
+          - "dev"
+          - "tst"
+          - "uat"
+          - "prod"
+        required: true
       apiWebAppName:
-        description: 'Enter the name of the Azure Web Api'
+        description: "Enter the name of the Azure Web Api"
         type: string
-        default: 'ag-aione-prod-apiapp'
+        default: "ag-aione-prod-apiapp"
       uiWebAppName:
-        description: 'Azure Web App Name'
+        description: "Azure Web App Name"
         type: string
-        default: 'ag-aione-prod-webapp'
+        default: "ag-aione-prod-webapp"
 
 env:
-  AGILE_CHAT_API_SRC: './src/Agile.Chat/Agile.Chat.Api'
-  AGILE_CHAT_API_PUB: './publish/Agile.Chat/Agile.Chat.Api'
-  AGILE_WEB_SRC: './src/agile-chat-web'
+  AGILE_CHAT_API_SRC: "./src/Agile.Chat/Agile.Chat.Api"
+  AGILE_CHAT_API_PUB: "./publish/Agile.Chat/Agile.Chat.Api"
+  AGILE_WEB_SRC: "./src/agile-chat-web"
   VITE_AGILECHAT_API_URL: ${{ vars.VITE_AGILECHAT_API_URL }}
   VITE_AZURE_AD_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   VITE_AZURE_AD_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
@@ -38,85 +39,85 @@ env:
 permissions:
   id-token: write
   contents: read
-  
+
 jobs:
   build-and-deploy-api:
-    environment: Production
+    environment: ${{ inputs.environment_name }}
     name: Build and Deploy AgileChat Web API
     runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
-        persist-credentials: true
-        
-    - uses: azure/login@v1
-      with:
-        client-id: ${{ vars.AZURE_CLIENT_ID }}
-        tenant-id: ${{ vars.AZURE_TENANT_ID }}
-        subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Setup .NET 8
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.0.x'
-        
-    - name: Agile-Chat-Api - dotnet build and publish
-      run: |
-        dotnet restore ${{ env.AGILE_CHAT_API_SRC }}
-        dotnet build ${{ env.AGILE_CHAT_API_SRC }} --no-restore --configuration Release
-        dotnet publish ${{ env.AGILE_CHAT_API_SRC }} -c Release -o ${{ env.AGILE_CHAT_API_PUB }}
-      env:
-        ENVIRONMENT: ${{ github.event.inputs.environment }}
-      
-    - name: Deploy - Agile-Chat-Api
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: ${{ github.event.inputs.apiWebAppName }}
-        package: ${{ env.AGILE_CHAT_API_PUB }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: true
+
+      - uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Agile-Chat-Api - dotnet build and publish
+        run: |
+          dotnet restore ${{ env.AGILE_CHAT_API_SRC }}
+          dotnet build ${{ env.AGILE_CHAT_API_SRC }} --no-restore --configuration Release
+          dotnet publish ${{ env.AGILE_CHAT_API_SRC }} -c Release -o ${{ env.AGILE_CHAT_API_PUB }}
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+
+      - name: Deploy - Agile-Chat-Api
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ github.event.inputs.apiWebAppName }}
+          package: ${{ env.AGILE_CHAT_API_PUB }}
 
   build-and-deploy-web:
-    environment: Production
+    environment: ${{ inputs.environment_name }}
     name: Build and Deploy AgileChat Web UI
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
-        persist-credentials: true
-        
-    - uses: azure/login@v1
-      with:
-        client-id: ${{ vars.AZURE_CLIENT_ID }}
-        tenant-id: ${{ vars.AZURE_TENANT_ID }}
-        subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: true
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18.x'
+      - uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Build Agile Chat Web App
-      run: |
-        cd ${{ env.AGILE_WEB_SRC }}
-        npm install
-        npm run build
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
 
-    - name: Agile-Chat-Web - Zip artifact for deployment
-      run: |
-        cd ${{ env.AGILE_WEB_SRC }}
-        zip -r ../../release.zip dist
+      - name: Build Agile Chat Web App
+        run: |
+          cd ${{ env.AGILE_WEB_SRC }}
+          npm install
+          npm run build
 
-    - name: Agile-Chat-Web - Upload artifact for deployment job
-      uses: actions/upload-artifact@v4
-      with:
-        name: node-app
-        path: release.zip
-        
-    - name: Deploy Agile Chat Web App
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: ${{ github.event.inputs.uiWebAppName }}
-        package: ./release.zip
+      - name: Agile-Chat-Web - Zip artifact for deployment
+        run: |
+          cd ${{ env.AGILE_WEB_SRC }}
+          zip -r ../../release.zip dist
+
+      - name: Agile-Chat-Web - Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app
+          path: release.zip
+
+      - name: Deploy Agile Chat Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ github.event.inputs.uiWebAppName }}
+          package: ./release.zip

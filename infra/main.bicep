@@ -44,7 +44,7 @@ param location string = resourceGroup().location
     type: 'location'
   }
 })
-param openAILocation string
+param openAILocation string = 'australiaeast'
 
 @description('Resource prefix for naming resources')
 param resourcePrefix string = toLower('${projectName}-${environmentName}')
@@ -55,15 +55,13 @@ param aspCoreEnvironment string = 'Development'
 
 @description('ets options that control the availability of semantic search')
 @allowed(['disabled', 'free', 'standard'])
-param semanticSearchSku string = 'free'
+param semanticSearchSku string = 'standard'
 
 @description('AZURE_CLIENT_ID')
-@secure()
-param azureClientID string = ''
+param azureClientId string
 
 @description('AZURE_TENANT_ID')
-@secure()
-param azureTenantId string = ''
+param azureTenantId string
 
 @description('API App name')
 param apiAppName string = toLower('${resourcePrefix}-apiapp')
@@ -89,27 +87,6 @@ param openAISku string = 'S0'
 @description('API version for Azure OpenAI')
 param openAIApiVersion string = '2024-08-01-preview'
 
-@description('Capacity for ChatGPT deployment')
-param chatGptDeploymentCapacity int = 8
-
-@description('Name for ChatGPT deployment')
-param chatGptDeploymentName string = 'gpt-4o'
-
-@description('Model name for ChatGPT')
-param chatGptModelName string = 'gpt-4o'
-
-@description('Model version for ChatGPT')
-param chatGptModelVersion string = '2024-05-13'
-
-@description('Name for embedding deployment')
-param embeddingDeploymentName string = 'embedding'
-
-@description('Capacity for embedding deployment')
-param embeddingDeploymentCapacity int = 350
-
-@description('Model name for embedding')
-param embeddingModelName string = 'text-embedding-3-small'
-
 @description('Database name for AgileChat')
 param agileChatDatabaseName string = 'AgileChat'
 
@@ -124,17 +101,10 @@ module platform 'platform.bicep' = {
     tags: tags
     resourcePrefix: resourcePrefix
     semanticSearchSku: semanticSearchSku
-    azureClientId: azureClientID
+    azureClientId: azureClientId
     azureTenantId: azureTenantId
     openAiLocation: openAILocation
     openAiSkuName: openAISku
-    chatGptDeploymentName: chatGptDeploymentName
-    chatGptDeploymentCapacity: chatGptDeploymentCapacity
-    chatGptModelName: chatGptModelName
-    chatGptModelVersion: chatGptModelVersion
-    embeddingDeploymentName: embeddingDeploymentName
-    embeddingDeploymentCapacity: embeddingDeploymentCapacity
-    embeddingModelName: embeddingModelName
     deployAzueOpenAi: deployAzueOpenAi
     agileChatDatabaseName: agileChatDatabaseName
   }
@@ -180,18 +150,13 @@ module apiApp 'apiapp.bicep' = {
     auditIncludePII: 'true'
     openAiApiVersion: openAIApiVersion
     openAiName: platform.outputs.openAiName
-    chatGptDeploymentName: chatGptDeploymentName
-    embeddingDeploymentName: embeddingDeploymentName
-    embeddingModelName: embeddingModelName
     apimAiEndpointOverride: apimAiEndpointOverride
     apimAiEmbeddingsEndpointOverride: apimAiEmbeddingsEndpointOverride
     adminEmailAddresses: AdminEmailAddresses
-    storageServiceFoldersContainerName: platform.outputs.storageServiceFoldersContainerName
     cosmosDbAccountDataPlaneCustomRoleId: platform.outputs.cosmosDbAccountDataPlaneCustomRoleId
-    agileChatDatabaseName: platform.outputs.agileChatDatabaseName
+    agileChatDatabaseName: agileChatDatabaseName
   }
 }
 
 output url string = 'https://${webApp.outputs.webAppDefaultHostName}'
 output api_url string = 'https://${apiApp.outputs.apiAppDefaultHostName}'
-
