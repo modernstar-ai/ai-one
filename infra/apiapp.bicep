@@ -40,7 +40,7 @@ param storageName string
 param formRecognizerName string
 
 @description('Service Bus queue name')
-param serviceBusQueueName string
+param serviceBusQueueName string = toLower('${resourcePrefix}-folders-queue')
 
 @description('Service Bus namespace name')
 param serviceBusName string
@@ -78,9 +78,6 @@ param logAnalyticsWorkspaceName string
 @description('Storage Account name (for existing resource)')
 param storageAccountName string
 
-@description('Cosmos DB Account name (for existing resource)')
-param cosmosDbAccountName string
-
 param agileChatDatabaseName string = 'AgileChat'
 
 @description('Event Grid system topic name')
@@ -103,9 +100,6 @@ param storageServiceFoldersContainerName string = 'index-content'
 
 param eventGridSystemTopicSubName string = toLower('${resourcePrefix}-folders-blobs-listener')
 
-@description('Cosmos DB Account Data Plane Custom Role ID')
-param cosmosDbAccountDataPlaneCustomRoleId string
-
 var serviceBusQueueId = resourceId('Microsoft.ServiceBus/namespaces/queues', serviceBusName, serviceBusQueueName)
 
 resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
@@ -114,10 +108,6 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' existing 
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: storageAccountName
-}
-
-resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' existing = {
-  name: cosmosDbAccountName
 }
 
 resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
@@ -183,8 +173,8 @@ module apiAppModule './modules/site.bicep' = {
     name: apiAppName
     location: location
     tags: union(tags, { 'azd-service-name': 'agilechat-api' })
-    serverFarmId: appServicePlan.id
-    logWorkspaceName: logAnalyticsWorkspaceName
+    serverFarmResourceId: appServicePlan.id
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspace.id
     userAssignedIdentityId: apiAppManagedIdentity.id
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
@@ -338,7 +328,6 @@ module apiAppModule './modules/site.bicep' = {
         }
       ]
     )
-    diagnosticSettingsName: 'AppServiceConsoleLogs'
   }
 }
 
@@ -401,16 +390,6 @@ resource apiAppServiceBusSenderRoleAssignment 'Microsoft.Authorization/roleAssig
     principalType: 'ServicePrincipal'
   }
 }
-
-// resource apiAppCosmosDbCustomRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-05-15' = {
-//   name: guid(resourceGroup().id, apiAppManagedIdentity.id, cosmosDbAccount.id, cosmosDbAccountDataPlaneCustomRoleId)
-//   parent: cosmosDbAccount
-//   properties: {
-//     principalId: apiAppManagedIdentity.properties.principalId
-//     roleDefinitionId: cosmosDbAccountDataPlaneCustomRoleId
-//     scope: cosmosDbAccount.id
-//   }
-// }
 
 module appServiceSecretsUserRoleAssignmentModule './modules/keyvaultRoleAssignment.bicep' = {
   name: 'appServiceSecretsUserRoleAssignmentDeploy'

@@ -10,32 +10,90 @@ param tags object = {}
 @description('Service Bus queue name')
 param serviceBusQueueName string
 
-resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' = {
-  location: location
-  name: name
-  tags: tags
-  resource queue 'queues' = {
-    name: serviceBusQueueName
-    properties: {
-      maxMessageSizeInKilobytes: 256
-      lockDuration: 'PT5M'
-      maxSizeInMegabytes: 5120
-      requiresDuplicateDetection: false
-      requiresSession: false
-      defaultMessageTimeToLive: 'P14D'
-      deadLetteringOnMessageExpiration: true
-      enableBatchedOperations: true
-      duplicateDetectionHistoryTimeWindow: 'PT10M'
-      maxDeliveryCount: 5
-      status: 'Active'
-      autoDeleteOnIdle: 'P10675199DT2H48M5.4775807S'
-      enablePartitioning: false
-      enableExpress: false
-    }
+@description('Resource ID of the virtual network to link the private DNS zones.')
+param virtualNetworkResourceId string = ''
+
+@description('Resource ID of the subnet for the private endpoint.')
+param virtualNetworkSubnetResourceId string = ''
+
+@description('Resource ID of the Log Analytics workspace to use for diagnostic settings.')
+param logAnalyticsWorkspaceResourceId string
+
+@description('Specifies whether network isolation is enabled. This will create a private endpoint for the Service Bus and link the private DNS zone.')
+param networkIsolation bool = false
+
+@description('Optional. Array of role assignments to create.')
+param roleAssignments roleAssignmentType[] = []
+
+import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
+
+module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
+  name: 'private-dns-servicebus-deployment'
+  params: {
+    name: 'privatelink.servicebus.windows.net'
+    virtualNetworkLinks: [
+      {
+        virtualNetworkResourceId: virtualNetworkResourceId
+      }
+    ]
+    tags: tags
   }
 }
 
-output name string = serviceBus.name
-output resourceId string = serviceBus.id
-output serviceBusQueueName string = serviceBus::queue.name
-output serviceBusQueueResourceId string = serviceBus::queue.id
+module serviceBus 'br/public:avm/res/service-bus/namespace:0.9.0' = {
+  name: take('${take(toLower(name), 50)}-servicebus-deployment', 64)
+  params: {
+    name: name
+    location: location
+    tags: tags
+    publicNetworkAccess: networkIsolation ? 'Disabled' : 'Enabled'
+    skuObject: {
+      name: 'Standard'
+    }
+    managedIdentities: {
+      systemAssigned: true
+    }
+    roleAssignments: roleAssignments
+    diagnosticSettings: [
+      {
+        workspaceResourceId: logAnalyticsWorkspaceResourceId
+      }
+    ]
+    privateEndpoints: networkIsolation
+      ? [
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                {
+                  privateDnsZoneResourceId: privateDnsZone.outputs.resourceId
+                }
+              ]
+            }
+            subnetResourceId: virtualNetworkSubnetResourceId
+          }
+        ]
+      : []
+    queues: [
+      {
+        name: serviceBusQueueName
+        maxMessageSizeInKilobytes: 2048
+        lockDuration: 'PT5M'
+        maxSizeInMegabytes: 5120
+        requiresDuplicateDetection: false
+        requiresSession: false
+        defaultMessageTimeToLive: 'P14D'
+        deadLetteringOnMessageExpiration: true
+        enableBatchedOperations: true
+        duplicateDetectionHistoryTimeWindow: 'PT10M'
+        maxDeliveryCount: 5
+        status: 'Active'
+        autoDeleteOnIdle: 'PT5M'
+        enablePartitioning: false
+        enableExpress: false
+      }
+    ]
+  }
+}
+
+output name string = serviceBus.outputs.name
+output resourceId string = serviceBus.outputs.resourceId

@@ -7,11 +7,20 @@ param location string
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
-@description('App Service Plan resource ID')
-param serverFarmId string
+@description('Resource ID of the Log Analytics workspace to use for diagnostic settings.')
+param logAnalyticsWorkspaceResourceId string
 
-@description('The name of the workload\'s existing Log Analytics workspace.')
-param logWorkspaceName string
+@description('Resource ID of the virtual network to link the private DNS zones.')
+param virtualNetworkResourceId string = ''
+
+@description('Resource ID of the subnet for the private endpoint.')
+param virtualNetworkSubnetResourceId string = ''
+
+@description('Specifies whether network isolation is enabled. This will create a private endpoint for the Service Bus and link the private DNS zone.')
+param networkIsolation bool = false
+
+@description('App Service Plan resource ID')
+param serverFarmResourceId string
 
 @description('User Assigned Managed Identity resource ID (optional)')
 param userAssignedIdentityId string = ''
@@ -22,53 +31,60 @@ param siteConfig object
 @description('App settings array')
 param appSettings array = []
 
-@description('Diagnostic settings name')
-param diagnosticSettingsName string = 'AppServiceConsoleLogs'
-
-resource logWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
-  name: logWorkspaceName
+module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
+  name: 'private-dns-site-deployment'
+  params: {
+    name: 'privatelink.azurewebsites.net'
+    virtualNetworkLinks: [
+      {
+        virtualNetworkResourceId: virtualNetworkResourceId
+      }
+    ]
+    tags: tags
+  }
 }
 
-resource site 'Microsoft.Web/sites@2023-12-01' = {
-  name: name
-  location: location
-  tags: tags
-  properties: {
-    serverFarmId: serverFarmId
-    keyVaultReferenceIdentity: !empty(userAssignedIdentityId) ? userAssignedIdentityId : null
+module site 'br/public:avm/res/web/site:0.16.0' = {
+  name: take('${take(toLower(name), 24)}-site-deployment', 64)
+  params: {
+    name: name
+    location: location
+    tags: tags
+    kind: 'app,linux'
+    serverFarmResourceId: serverFarmResourceId
+    keyVaultAccessIdentityResourceId: !empty(userAssignedIdentityId) ? userAssignedIdentityId : null
     httpsOnly: true
     clientAffinityEnabled: false
     siteConfig: union(siteConfig, {
       appSettings: appSettings
     })
-  }
-  identity: !empty(userAssignedIdentityId)
-    ? {
-        type: 'UserAssigned'
-        userAssignedIdentities: {
-          '${userAssignedIdentityId}': {}
-        }
-      }
-    : {
-        type: 'SystemAssigned'
-      }
-}
-
-resource diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
-  name: diagnosticSettingsName
-  scope: site
-  properties: {
-    workspaceId: logWorkspace.id
-    logs: [
+    diagnosticSettings: [
       {
-        category: 'AppServiceConsoleLogs'
-        enabled: true
+        workspaceResourceId: logAnalyticsWorkspaceResourceId
       }
     ]
-    metrics: []
+    managedIdentities: {
+      systemAssigned: !empty(userAssignedIdentityId) ? false : true
+      userAssignedResourceIds: !empty(userAssignedIdentityId) ? [userAssignedIdentityId] : []
+    }
+    privateEndpoints: networkIsolation
+      ? [
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                {
+                  name: 'privatelink.azurewebsites.net'
+                  privateDnsZoneResourceId: privateDnsZone.outputs.resourceId
+                }
+              ]
+            }
+            subnetResourceId: virtualNetworkSubnetResourceId
+          }
+        ]
+      : []
   }
 }
 
-output defaultHostName string = site.properties.defaultHostName
-output name string = site.name
-output resourceId string = site.id
+output defaultHostName string = site.outputs.defaultHostname
+output name string = site.outputs.name
+output resourceId string = site.outputs.resourceId

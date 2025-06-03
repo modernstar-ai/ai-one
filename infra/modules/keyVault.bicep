@@ -7,90 +7,92 @@ param location string
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
-@description('The name of the workload\'s existing Log Analytics workspace.')
-param logWorkspaceName string
+@description('Resource ID of the virtual network to link the private DNS zones.')
+param virtualNetworkResourceId string = ''
 
-@description('Specifies the object id of a Microsoft Entra ID user. In general, this the object id of the system administrator who deploys the Azure resources. This defaults to the deploying user.')
-param userObjectId string = ''
+@description('Resource ID of the subnet for the private endpoint.')
+param virtualNetworkSubnetResourceId string = ''
 
-@description('List of secrets to create in Key Vault')
-param keyVaultSecrets array
+@description('Resource ID of the Log Analytics workspace to use for diagnostic settings.')
+param logAnalyticsWorkspaceResourceId string
 
-resource logWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
-  name: logWorkspaceName
-}
+@description('Specifies whether network isolation is enabled. This will create a private endpoint for the Key Vault and link the private DNS zone.')
+param networkIsolation bool = false
 
-resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' = {
-  name: name
-  location: location
-  tags: tags
-  properties: {
-    sku: {
-      family: 'A'
-      name: 'standard'
-    }
-    tenantId: subscription().tenantId
-    enableRbacAuthorization: true
-    enabledForDeployment: true
-    enabledForDiskEncryption: true
-    enabledForTemplateDeployment: false
-    enableSoftDelete: true
-    softDeleteRetentionInDays: 90
-    enablePurgeProtection: true
-    //publicNetworkAccess: 'Disabled'
-  }
-}
+@description('Role assignments to be applied to the Key Vault.')
+import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
+@description('Optional. Array of role assignments to create.')
+param roleAssignments roleAssignmentType[] = []
 
-resource keyVaultSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = [
-  for secret in keyVaultSecrets: {
-    parent: keyVault
-    name: secret.name
-    properties: {
-      value: secret.value
-      contentType: secret.contentType
-    }
-  }
-]
+@description('Optional. Array of secrets to create in the Key Vault.')
+param secrets object[] = []
 
-resource keyVaultDiagSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
-  name: 'default'
-  scope: keyVault
-  properties: {
-    workspaceId: logWorkspace.id
-    logs: [
+module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
+  name: 'private-dns-keyvault-deployment'
+  params: {
+    name: 'privatelink.${toLower(environment().name) == 'azureusgovernment' ? 'vaultcore.usgovcloudapi.net' : 'vaultcore.azure.net'}'
+    virtualNetworkLinks: [
       {
-        category: 'AuditEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'AzurePolicyEvaluationDetails'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
+        virtualNetworkResourceId: virtualNetworkResourceId
       }
     ]
-    logAnalyticsDestinationType: null
+    tags: tags
   }
 }
 
-resource keyVaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(userObjectId)) {
-  name: guid(keyVault.id, userObjectId, 'Key Vault Secrets User')
-  scope: keyVault
-  properties: {
-    principalId: userObjectId
-    roleDefinitionId: subscriptionResourceId(
-      'Microsoft.Authorization/roleDefinitions',
-      '4633458b-17de-408a-b874-0445c86b69e6'
-    ) // Key Vault Secrets User
-    principalType: 'User'
+module keyvault 'br/public:avm/res/key-vault/vault:0.11.0' = {
+  name: take('${take(toLower(name), 24)}-keyvault-deployment', 64)
+  params: {
+    name: name
+    location: location
+    tags: tags
+    publicNetworkAccess: networkIsolation ? 'Disabled' : 'Enabled'
+    networkAcls: {
+      defaultAction: 'Allow'
+    }
+    enableVaultForDeployment: true
+    enableVaultForDiskEncryption: true
+    enableVaultForTemplateDeployment: true
+    enablePurgeProtection: true
+    enableRbacAuthorization: true
+    enableSoftDelete: true
+    softDeleteRetentionInDays: 90
+    diagnosticSettings: [
+      {
+        workspaceResourceId: logAnalyticsWorkspaceResourceId
+      }
+    ]
+    privateEndpoints: networkIsolation
+      ? [
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                {
+                  privateDnsZoneResourceId: privateDnsZone.outputs.resourceId
+                }
+              ]
+            }
+            service: 'vault'
+            subnetResourceId: virtualNetworkSubnetResourceId
+          }
+        ]
+      : []
+    roleAssignments: roleAssignments
+    secrets: secrets
   }
 }
 
-output resourceId string = keyVault.id
-output name string = keyVault.name
+// module keyvaultSecret 'br/public:avm/res/key-vault/secret:0.11.0' = {
+//   name: '${name}-secret'
+//   params: {
+//     name: 'example-secret'
+//     value: 'example-value'
+//     keyVaultResourceId: keyvault.outputs.resourceId
+//     tags: tags
+//   }
+//   dependsOn: [
+//     keyvault
+//   ]
+
+output resourceId string = keyvault.outputs.resourceId
+output name string = keyvault.outputs.name

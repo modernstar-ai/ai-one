@@ -138,14 +138,12 @@ module apiApp 'apiapp.bicep' = {
     webAppDefaultHostName: webApp.outputs.webAppDefaultHostName
     storageName: platform.outputs.storageAccountName
     formRecognizerName: platform.outputs.formRecognizerName
-    serviceBusQueueName: platform.outputs.serviceBusQueueName
     serviceBusName: platform.outputs.serviceBusName
     searchServiceName: platform.outputs.searchServiceName
     keyVaultName: platform.outputs.keyVaultName
     appServicePlanName: platform.outputs.appServicePlanName
     logAnalyticsWorkspaceName: platform.outputs.logAnalyticsWorkspaceName
     storageAccountName: platform.outputs.storageAccountName
-    cosmosDbAccountName: platform.outputs.cosmosDbAccountName
     cosmosDbAccountEndpoint: platform.outputs.cosmosDbAccountEndpoint
     auditIncludePII: 'true'
     openAiApiVersion: openAIApiVersion
@@ -153,7 +151,6 @@ module apiApp 'apiapp.bicep' = {
     apimAiEndpointOverride: apimAiEndpointOverride
     apimAiEmbeddingsEndpointOverride: apimAiEmbeddingsEndpointOverride
     adminEmailAddresses: AdminEmailAddresses
-    cosmosDbAccountDataPlaneCustomRoleId: platform.outputs.cosmosDbAccountDataPlaneCustomRoleId
     agileChatDatabaseName: agileChatDatabaseName
   }
 }

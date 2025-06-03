@@ -1,4 +1,5 @@
-@description('Name of the Azure Container Registry instance.')
+@minLength(5)
+@description('Name of the Container Registry.')
 param name string
 
 @description('Specifies the location for all the Azure resources.')
@@ -7,67 +8,71 @@ param location string
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
-@description('The name of the workload\'s existing Log Analytics workspace.')
-param logWorkspaceName string
-resource logWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
-  name: logWorkspaceName
-}
+@description('Resource ID of the virtual network to link the private DNS zones.')
+param virtualNetworkResourceId string = ''
 
-resource acrResource 'Microsoft.ContainerRegistry/registries@2024-11-01-preview' = {
-  name: name
-  location: location
-  tags: tags
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    // adminUserEnabled: false
-    // dataEndpointEnabled: false
-    // networkRuleBypassOptions: 'AzureServices' // This allows support for ACR tasks to push the build image and bypass network restrictions - https://learn.microsoft.com/en-us/azure/container-registry/allow-access-trusted-services#trusted-services-workflow
-    // networkRuleSet: {
-    //   defaultAction: 'Deny'
-    //   ipRules: []
-    // }
-    // policies: {
-    //   exportPolicy: {
-    //     status: 'disabled'
-    //   }
-    //   azureADAuthenticationAsArmPolicy: {
-    //     status: 'disabled'
-    //   }
-    // }
-    // publicNetworkAccess: 'Disabled'
-    // zoneRedundancy: 'Enabled'
-    // metadataSearch: 'Disabled'
-  }
-}
+@description('Resource ID of the subnet for the private endpoint.')
+param virtualNetworkSubnetResourceId string = ''
 
-@description('Diagnostic settings for the Azure Container Registry instance.')
-resource acrResourceDiagSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
-  name: 'default'
-  scope: acrResource
-  properties: {
-    workspaceId: logWorkspace.id
-    logs: [
+@description('Resource ID of the Log Analytics workspace to use for diagnostic settings.')
+param logAnalyticsWorkspaceResourceId string
+
+@description('Specifies whether network isolation is enabled. This will create a private endpoint for the Container Registry and link the private DNS zone.')
+param networkIsolation bool = false
+
+module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
+  name: 'private-dns-acr-deployment'
+  params: {
+    name: 'privatelink.${toLower(environment().name) == 'azureusgovernment' ? 'azurecr.us' : 'azurecr.io'}'
+    virtualNetworkLinks: [
       {
-        category: 'ContainerRegistryRepositoryEvents'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'ContainerRegistryLoginEvents'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
+        virtualNetworkResourceId: virtualNetworkResourceId
       }
     ]
-    logAnalyticsDestinationType: null
+    tags: tags
   }
 }
 
-output acrName string = acrResource.name
+module containerRegistry 'br/public:avm/res/container-registry/registry:0.8.4' = {
+  name: take('${take(toLower(name), 50)}-container-registry-deployment', 64)
+  params: {
+    name: name
+    location: location
+    tags: tags
+    acrSku: 'Standard'
+    // acrAdminUserEnabled: false
+    // anonymousPullEnabled: false
+    // dataEndpointEnabled: false
+    // networkRuleBypassOptions: 'AzureServices'
+    networkRuleSetDefaultAction: networkIsolation ? 'Deny' : 'Allow'
+    exportPolicyStatus: networkIsolation ? 'disabled' : 'enabled'
+    publicNetworkAccess: networkIsolation ? 'Disabled' : 'Enabled'
+    zoneRedundancy: 'Disabled'
+    managedIdentities: {
+      systemAssigned: true
+    }
+    diagnosticSettings: [
+      {
+        workspaceResourceId: logAnalyticsWorkspaceResourceId
+      }
+    ]
+    privateEndpoints: networkIsolation
+      ? [
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                {
+                  privateDnsZoneResourceId: privateDnsZone.outputs.resourceId
+                }
+              ]
+            }
+            subnetResourceId: virtualNetworkSubnetResourceId
+          }
+        ]
+      : []
+  }
+}
+
+output resourceId string = containerRegistry.outputs.resourceId
+output loginServer string = containerRegistry.outputs.loginServer
+output name string = containerRegistry.outputs.name
