@@ -1,0 +1,34 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [main, development]
+  schedule:
+    - cron: "0 0 * * 0"
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      matrix:
+        language: ["csharp"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+      - name: Build .NET Solution
+        run: |
+          dotnet restore ./src/Agile.Chat/Agile.Chat.sln
+          dotnet build ./src/Agile.Chat/Agile.Chat.sln --configuration Release --no-restore
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
