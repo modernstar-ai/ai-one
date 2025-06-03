@@ -1,0 +1,60 @@
+name: Continuous Integration (CI) Workflow
+# This workflow builds and tests the .NET API and the frontend, and validates Bicep files.
+
+on:
+  pull_request:
+    branches: [main, development]
+
+jobs:
+  build-dotnet:
+    runs-on: ubuntu-latest
+    name: Build & Test .NET API
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/src/Agile.Chat/Agile.Chat.sln', '**/global.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+      - name: Restore dependencies
+        run: dotnet restore src/Agile.Chat/Agile.Chat.sln
+      - name: Build
+        run: dotnet build src/Agile.Chat/Agile.Chat.sln --configuration Release --no-restore
+      - name: Test
+        run: dotnet test src/Agile.Chat/Agile.Chat.sln --no-build --verbosity normal
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    name: Build & Test Frontend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: npm install
+        working-directory: src/agile-chat-web
+      - name: Build
+        run: npm run build
+        working-directory: src/agile-chat-web
+
+  validate-bicep:
+    runs-on: ubuntu-latest
+    name: Validate Bicep
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Azure CLI to build Bicep files
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az bicep install
+            az bicep build --file ./infra/main.bicep

@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # Frontend: npm (JavaScript/TypeScript)
+  - package-ecosystem: "npm"
+    directory: "/src/agile-chat-web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Backend: NuGet (.NET)
+  - package-ecosystem: "nuget"
+    directory: "/src/Agile.Chat"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
