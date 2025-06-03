@@ -22,7 +22,7 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
         PromptOptions = promptOptions;
         AccessControl = accessControl;
     }
-    
+
     public string Name { get; private set; }
     public string Description { get; private set; }
     public string Greeting { get; private set; }
@@ -34,25 +34,25 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
     public PermissionsAccessControl AccessControl { get; private set; }
 
     public static Assistant Create(string name,
-        string description, 
-        string greeting, 
+        string description,
+        string greeting,
         AssistantType type,
         RagType ragType,
-        AssistantStatus status, 
+        AssistantStatus status,
         AssistantFilterOptions filterOptions,
         AssistantPromptOptions promptOptions,
         PermissionsAccessControl? accessControl = null)
     {
         return new Assistant(name, description, type, ragType, status, greeting, filterOptions, promptOptions, accessControl ?? new PermissionsAccessControl());
     }
-    
-    public void Update(string name, 
-        string description, 
+
+    public void Update(string name,
+        string description,
         string greeting,
         AssistantType type,
         RagType ragType,
         AssistantStatus status, 
-        AssistantFilterOptions filterOptions, 
+        AssistantFilterOptions filterOptions,
         AssistantPromptOptions promptOptions)
     {
         //Do validation logic and throw domain level exceptions if fails
@@ -63,13 +63,37 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
         Status = status;
         Greeting = greeting;
         FilterOptions = filterOptions;
-        PromptOptions = promptOptions;
+        PromptOptions = promptOptions; 
         LastModified = DateTime.UtcNow;
     }
 
     public void UpdateAccessControl(PermissionsAccessControl accessControl)
     {
+        NormalizeAccessControl(accessControl);
         AccessControl = accessControl;
         LastModified = DateTime.UtcNow;
+    }
+
+    private static void NormalizeAccessControl(PermissionsAccessControl? accessControl)
+    {
+        if (accessControl == null)
+            return;
+
+        // Normalize all user IDs and group names to lowercase so that cosmos DB queries are case-insensitive
+        accessControl.Users.UserIds = accessControl.Users.UserIds
+            .Select(id => id.ToLowerInvariant())
+            .ToList();
+
+        accessControl.Users.Groups = accessControl.Users.Groups
+            .Select(g => g.ToLowerInvariant())
+            .ToList();
+
+        accessControl.ContentManagers.UserIds = accessControl.ContentManagers.UserIds
+            .Select(id => id.ToLowerInvariant())
+            .ToList();
+
+        accessControl.ContentManagers.Groups = accessControl.ContentManagers.Groups
+            .Select(g => g.ToLowerInvariant())
+            .ToList();
     }
 }
