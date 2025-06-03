@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using Agile.Chat.Domain.Assistants.ValueObjects;
+using Agile.Chat.Domain.Shared.DomainHelpers;
 using Agile.Chat.Domain.Shared.Interfaces;
 using Agile.Chat.Domain.Shared.ValueObjects;
 using Agile.Framework.Common.DomainAbstractions;
@@ -22,7 +23,7 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
         PromptOptions = promptOptions;
         AccessControl = accessControl;
     }
-    
+
     public string Name { get; private set; }
     public string Description { get; private set; }
     public string Greeting { get; private set; }
@@ -34,25 +35,26 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
     public PermissionsAccessControl AccessControl { get; private set; }
 
     public static Assistant Create(string name,
-        string description, 
-        string greeting, 
+        string description,
+        string greeting,
         AssistantType type,
         RagType ragType,
-        AssistantStatus status, 
+        AssistantStatus status,
         AssistantFilterOptions filterOptions,
         AssistantPromptOptions promptOptions,
         PermissionsAccessControl? accessControl = null)
     {
+        DomainHelpers.NormalizeAccessControl(accessControl);
         return new Assistant(name, description, type, ragType, status, greeting, filterOptions, promptOptions, accessControl ?? new PermissionsAccessControl());
     }
-    
-    public void Update(string name, 
-        string description, 
+
+    public void Update(string name,
+        string description,
         string greeting,
         AssistantType type,
         RagType ragType,
-        AssistantStatus status, 
-        AssistantFilterOptions filterOptions, 
+        AssistantStatus status,
+        AssistantFilterOptions filterOptions,
         AssistantPromptOptions promptOptions)
     {
         //Do validation logic and throw domain level exceptions if fails
@@ -69,7 +71,9 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
 
     public void UpdateAccessControl(PermissionsAccessControl accessControl)
     {
+        DomainHelpers.NormalizeAccessControl(accessControl);
         AccessControl = accessControl;
         LastModified = DateTime.UtcNow;
     }
+
 }
