@@ -7,7 +7,7 @@ param location string
 @description('Resource tags')
 param tags object
 
-module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.0' = {
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = {
   name: take('${name}-log-analytics-deployment', 64)
   params: {
     name: name

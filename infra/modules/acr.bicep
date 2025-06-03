@@ -33,7 +33,7 @@ module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (n
   }
 }
 
-module containerRegistry 'br/public:avm/res/container-registry/registry:0.8.4' = {
+module containerRegistry 'br/public:avm/res/container-registry/registry:0.9.1' = {
   name: take('${take(toLower(name), 50)}-container-registry-deployment', 64)
   params: {
     name: name

@@ -53,7 +53,7 @@ module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (n
   }
 }
 
-module aiSearch 'br/public:avm/res/search/search-service:0.9.2' = {
+module aiSearch 'br/public:avm/res/search/search-service:0.10.0' = {
   name: take('${take(toLower(name), 60)}-search-services-deployment', 64)
   dependsOn: [privateDnsZone] // required due to optional flags that could change dependency
   params: {

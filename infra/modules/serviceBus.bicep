@@ -40,7 +40,7 @@ module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (n
   }
 }
 
-module serviceBus 'br/public:avm/res/service-bus/namespace:0.9.0' = {
+module serviceBus 'br/public:avm/res/service-bus/namespace:0.14.0' = {
   name: take('${take(toLower(name), 50)}-servicebus-deployment', 64)
   params: {
     name: name

@@ -36,7 +36,7 @@ module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (n
   }
 }
 
-module documentIntelligence 'br/public:avm/res/cognitive-services/account:0.10.1' = {
+module documentIntelligence 'br/public:avm/res/cognitive-services/account:0.10.2' = {
   name: take('${take(toLower(name), 24)}-documentintelligence-deployment', 64)
   dependsOn: [privateDnsZone]
   params: {

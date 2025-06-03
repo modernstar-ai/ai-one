@@ -40,7 +40,7 @@ module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (n
   }
 }
 
-module keyvault 'br/public:avm/res/key-vault/vault:0.11.0' = {
+module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
   name: take('${take(toLower(name), 24)}-keyvault-deployment', 64)
   params: {
     name: name
