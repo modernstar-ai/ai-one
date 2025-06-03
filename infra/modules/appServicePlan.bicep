@@ -16,6 +16,7 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
     kind: 'linux'
     skuCapacity: 1
     skuName: 'P1v3'
+    zoneRedundant: false
   }
 }
 
