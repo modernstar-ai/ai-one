@@ -65,6 +65,7 @@ export enum MetadataType {
 export interface Citation {
   id: string;
   name: string;
+  content: string;
   url: string;
 }
 

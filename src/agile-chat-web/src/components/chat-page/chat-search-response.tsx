@@ -24,13 +24,7 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
         setChunks([]);
       }
 
-      const chunkReqs: Promise<string>[] = [];
-      searchProcess.Citations.forEach((citation) => {
-        chunkReqs.push(citation.content);
-      });
-
-      const chunks = await Promise.all(chunkReqs);
-      setChunks(chunks);
+      setChunks(searchProcess.Citations.map((citation) => citation.content));
     }
   };
 
