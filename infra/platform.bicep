@@ -247,7 +247,37 @@ module serviceBusModule './modules/serviceBus.bicep' = {
     tags: tags
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
     networkIsolation: networkIsolation
-    serviceBusQueueName: serviceBusQueueName
+  }
+}
+
+resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2024-01-01' existing = {
+  name: serviceBusName
+  dependsOn: [
+    serviceBusModule
+  ]
+}
+
+resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2024-01-01' = {
+  name: serviceBusQueueName
+  dependsOn: [
+    serviceBusModule
+  ]
+  parent: serviceBusNamespace
+  properties: {
+    maxMessageSizeInKilobytes: 2048
+    lockDuration: 'PT5M'
+    maxSizeInMegabytes: 5120
+    requiresDuplicateDetection: false
+    requiresSession: false
+    defaultMessageTimeToLive: 'P14D'
+    deadLetteringOnMessageExpiration: true
+    enableBatchedOperations: true
+    duplicateDetectionHistoryTimeWindow: 'PT10M'
+    maxDeliveryCount: 5
+    status: 'Active'
+    autoDeleteOnIdle: 'PT5M'
+    enablePartitioning: false
+    enableExpress: false
   }
 }
 

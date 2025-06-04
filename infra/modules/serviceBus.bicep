@@ -7,9 +7,6 @@ param location string
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
-@description('Service Bus queue name')
-param serviceBusQueueName string
-
 @description('Resource ID of the virtual network to link the private DNS zones.')
 param virtualNetworkResourceId string = ''
 
@@ -74,25 +71,6 @@ module serviceBus 'br/public:avm/res/service-bus/namespace:0.14.0' = {
           }
         ]
       : []
-    queues: [
-      {
-        name: serviceBusQueueName
-        maxMessageSizeInKilobytes: 2048
-        lockDuration: 'PT5M'
-        maxSizeInMegabytes: 5120
-        requiresDuplicateDetection: false
-        requiresSession: false
-        defaultMessageTimeToLive: 'P14D'
-        deadLetteringOnMessageExpiration: true
-        enableBatchedOperations: true
-        duplicateDetectionHistoryTimeWindow: 'PT10M'
-        maxDeliveryCount: 5
-        status: 'Active'
-        autoDeleteOnIdle: 'PT5M'
-        enablePartitioning: false
-        enableExpress: false
-      }
-    ]
   }
 }
 
