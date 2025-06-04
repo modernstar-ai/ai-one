@@ -10,14 +10,14 @@ public static class IQueryableExtensionMethods
     {
         var roleClaims = roleService.GetRoleClaims();
         var groupClaims = roleService.GetGroupClaims();
-        var userId = roleService.UserId.ToLowerInvariant();
+        var userId = roleService.UserId.ToLower();
 
         return queryable.Where(x =>
             x.AccessControl.Users.AllowAccessToAll ||
             x.AccessControl.Users.UserIds.Contains(userId) ||
             x.AccessControl.ContentManagers.UserIds.Contains(userId) ||
-            x.AccessControl.Users.Groups.Any((group) => groupClaims.Contains(group.ToLowerInvariant())) ||
-            x.AccessControl.ContentManagers.Groups.Any((group) => groupClaims.Contains(group.ToLowerInvariant())) ||
+            x.AccessControl.Users.Groups.Any((group) => groupClaims.Contains(group.ToLower())) ||
+            x.AccessControl.ContentManagers.Groups.Any((group) => groupClaims.Contains(group.ToLower())) ||
             (roleClaims.Contains(UserRole.ContentManager.ToString()) && x.AccessControl.ContentManagers.AllowAccessToAll)
         );
     }
