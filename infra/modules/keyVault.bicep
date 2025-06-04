@@ -82,17 +82,5 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
   }
 }
 
-// module keyvaultSecret 'br/public:avm/res/key-vault/secret:0.11.0' = {
-//   name: '${name}-secret'
-//   params: {
-//     name: 'example-secret'
-//     value: 'example-value'
-//     keyVaultResourceId: keyvault.outputs.resourceId
-//     tags: tags
-//   }
-//   dependsOn: [
-//     keyvault
-//   ]
-
 output resourceId string = keyvault.outputs.resourceId
 output name string = keyvault.outputs.name
