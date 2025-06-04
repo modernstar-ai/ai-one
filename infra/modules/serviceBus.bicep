@@ -51,9 +51,9 @@ module serviceBus 'br/public:avm/res/service-bus/namespace:0.14.0' = {
     skuObject: {
       name: 'Standard'
     }
-    managedIdentities: {
-      systemAssigned: true
-    }
+    // managedIdentities: {
+    //   systemAssigned: true
+    // }
     roleAssignments: roleAssignments
     diagnosticSettings: [
       {
