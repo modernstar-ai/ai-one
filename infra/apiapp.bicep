@@ -186,6 +186,9 @@ resource apiAppManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities
 
 module apiAppModule './modules/site.bicep' = {
   name: 'apiAppModule'
+  dependsOn: [
+    serviceBusQueue
+  ]
   params: {
     name: apiAppName
     location: location
