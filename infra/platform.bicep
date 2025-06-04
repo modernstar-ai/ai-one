@@ -60,9 +60,6 @@ param searchServiceName string = toLower('${resourcePrefix}-search')
 @description('Service Bus namespace name')
 param serviceBusName string = toLower('${resourcePrefix}-service-bus')
 
-@description('Service Bus queue name')
-param serviceBusQueueName string = toLower('${resourcePrefix}-folders-queue')
-
 @description('Whether to deploy Azure OpenAI resources')
 param deployAzueOpenAi bool = true
 
@@ -78,18 +75,7 @@ param openAiSkuName string = 'S0'
 @description('Whether to enable network isolation for resources')
 param networkIsolation bool = false
 
-@description('Database name for AgileChat')
-param agileChatDatabaseName string = 'AgileChat'
-
-var blobContainersArray = loadJsonContent('./blob-storage-containers.json')
 var openAiModelsArray = loadJsonContent('./openai-models.json')
-
-var blobContainers = [
-  for name in blobContainersArray: {
-    name: toLower(name)
-    publicAccess: 'None'
-  }
-]
 
 #disable-next-line no-unused-vars
 var openAiSampleModels = [
@@ -164,7 +150,6 @@ module storageModule './modules/storage.bicep' = {
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
     networkIsolation: networkIsolation
     skuName: storageServiceSku
-    blobContainerCollection: blobContainers
   }
 }
 
@@ -205,29 +190,6 @@ module cosmosDbAccountModule './modules/cosmosDb.bicep' = {
   }
 }
 
-resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' existing = {
-  dependsOn: [
-    cosmosDbAccountModule
-  ]
-  name: cosmosDbAccountName
-}
-
-resource cosmosDbDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-04-15' = {
-  name: agileChatDatabaseName
-  dependsOn: [
-    cosmosDbAccount
-  ]
-  location: location
-  tags: tags
-  parent: cosmosDbAccount
-  properties: {
-    resource: {
-      id: agileChatDatabaseName
-    }
-    options: {}
-  }
-}
-
 module documentIntelligenceModule './modules/documentIntelligence.bicep' = {
   name: 'documentIntelligenceModule'
   params: {
@@ -247,37 +209,6 @@ module serviceBusModule './modules/serviceBus.bicep' = {
     tags: tags
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
     networkIsolation: networkIsolation
-  }
-}
-
-resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2024-01-01' existing = {
-  name: serviceBusName
-  dependsOn: [
-    serviceBusModule
-  ]
-}
-
-resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2024-01-01' = {
-  name: serviceBusQueueName
-  dependsOn: [
-    serviceBusModule
-  ]
-  parent: serviceBusNamespace
-  properties: {
-    maxMessageSizeInKilobytes: 256
-    lockDuration: 'PT5M'
-    maxSizeInMegabytes: 5120
-    requiresDuplicateDetection: false
-    requiresSession: false
-    defaultMessageTimeToLive: 'P14D'
-    deadLetteringOnMessageExpiration: true
-    enableBatchedOperations: true
-    duplicateDetectionHistoryTimeWindow: 'PT10M'
-    maxDeliveryCount: 5
-    status: 'Active'
-    autoDeleteOnIdle: 'PT5M'
-    enablePartitioning: false
-    enableExpress: false
   }
 }
 

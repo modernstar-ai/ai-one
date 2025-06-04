@@ -80,9 +80,6 @@ param storageAccountName string
 
 param agileChatDatabaseName string = 'AgileChat'
 
-@description('Event Grid system topic name')
-param eventGridName string = toLower('${resourcePrefix}-blob-eg')
-
 @description('Web App default host name')
 param webAppDefaultHostName string
 
@@ -96,11 +93,23 @@ param auditIncludePII string = 'true'
 @description('Cosmos DB Account endpoint (document endpoint)')
 param cosmosDbAccountEndpoint string
 
+@description('Cosmos DB Account name')
+param cosmosDbAccountName string
+
 param storageServiceFoldersContainerName string = 'index-content'
 
 param eventGridSystemTopicSubName string = toLower('${resourcePrefix}-folders-blobs-listener')
 
-var serviceBusQueueId = resourceId('Microsoft.ServiceBus/namespaces/queues', serviceBusName, serviceBusQueueName)
+@description('Event Grid system topic name')
+param eventGridName string = toLower('${resourcePrefix}-blob-eg')
+
+var blobContainersArray = loadJsonContent('./blob-storage-containers.json')
+var blobContainers = [
+  for name in blobContainersArray: {
+    name: toLower(name)
+    publicAccess: 'None'
+  }
+]
 
 resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
   name: openAiName
@@ -160,6 +169,14 @@ resource serviceBusDataReceiverRole 'Microsoft.Authorization/roleDefinitions@202
 resource serviceBusDataSenderRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
   name: '69a216fc-b8fb-44d8-bc22-1f3c2cd27a39'
   scope: subscription()
+}
+
+resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2024-01-01' existing = {
+  name: serviceBusName
+}
+
+resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' existing = {
+  name: cosmosDbAccountName
 }
 
 resource apiAppManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
@@ -331,6 +348,97 @@ module apiAppModule './modules/site.bicep' = {
   }
 }
 
+resource cosmosDbDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-04-15' = {
+  name: agileChatDatabaseName
+  dependsOn: [
+    cosmosDbAccount
+  ]
+  location: location
+  tags: tags
+  parent: cosmosDbAccount
+  properties: {
+    resource: {
+      id: agileChatDatabaseName
+    }
+    options: {}
+  }
+}
+
+resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2024-01-01' = {
+  name: serviceBusQueueName
+  parent: serviceBusNamespace
+  properties: {
+    maxMessageSizeInKilobytes: 256
+    lockDuration: 'PT5M'
+    maxSizeInMegabytes: 5120
+    requiresDuplicateDetection: false
+    requiresSession: false
+    defaultMessageTimeToLive: 'P14D'
+    deadLetteringOnMessageExpiration: true
+    enableBatchedOperations: true
+    duplicateDetectionHistoryTimeWindow: 'PT10M'
+    maxDeliveryCount: 5
+    status: 'Active'
+    autoDeleteOnIdle: 'PT5M'
+    enablePartitioning: false
+    enableExpress: false
+  }
+}
+
+resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = {
+  name: eventGridName
+  location: location
+  tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    source: storage.id
+    topicType: 'Microsoft.Storage.StorageAccounts'
+  }
+}
+
+resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-01-preview' = {
+  name: eventGridSystemTopicSubName
+  parent: eventGridSystemTopic
+  properties: {
+    destination: {
+      endpointType: 'ServiceBusQueue'
+      properties: {
+        resourceId: serviceBusQueue.id
+      }
+    }
+    filter: {
+      includedEventTypes: [
+        'Microsoft.Storage.BlobCreated'
+        'Microsoft.Storage.BlobDeleted'
+      ]
+      isSubjectCaseSensitive: false
+      enableAdvancedFilteringOnArrays: true
+      subjectBeginsWith: '/blobServices/default/containers/${storageServiceFoldersContainerName}/'
+    }
+    eventDeliverySchema: 'EventGridSchema'
+    retryPolicy: {
+      maxDeliveryAttempts: 30
+      eventTimeToLiveInMinutes: 1440
+    }
+  }
+  dependsOn: [
+    apiAppModule
+  ]
+}
+
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: applicationInsightsName
+  location: location
+  tags: tags
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalyticsWorkspace.id
+  }
+}
+
 resource apiAppOpenAiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroup().id, apiAppManagedIdentity.id, azureopenai.id, openAiUserRole.id)
   scope: azureopenai
@@ -400,59 +508,20 @@ module appServiceSecretsUserRoleAssignmentModule './modules/keyvaultRoleAssignme
   }
 }
 
-resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: applicationInsightsName
-  location: location
-  tags: tags
-  kind: 'web'
-  properties: {
-    Application_Type: 'web'
-    WorkspaceResourceId: logAnalyticsWorkspace.id
-  }
+resource storageAccount 'Microsoft.Storage/storageAccounts/blobServices@2024-01-01' existing = {
+  name: storageName
+  parent: storage
 }
 
-resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = {
-  name: eventGridName
-  location: location
-  tags: tags
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    source: storage.id
-    topicType: 'Microsoft.Storage.StorageAccounts'
-  }
-}
-
-resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-01-preview' = {
-  name: eventGridSystemTopicSubName
-  parent: eventGridSystemTopic
-  properties: {
-    destination: {
-      endpointType: 'ServiceBusQueue'
-      properties: {
-        resourceId: serviceBusQueueId
-      }
-    }
-    filter: {
-      includedEventTypes: [
-        'Microsoft.Storage.BlobCreated'
-        'Microsoft.Storage.BlobDeleted'
-      ]
-      isSubjectCaseSensitive: false
-      enableAdvancedFilteringOnArrays: true
-      subjectBeginsWith: '/blobServices/default/containers/${storageServiceFoldersContainerName}/'
-    }
-    eventDeliverySchema: 'EventGridSchema'
-    retryPolicy: {
-      maxDeliveryAttempts: 30
-      eventTimeToLiveInMinutes: 1440
+resource blobContainersResource 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = [
+  for container in blobContainers: {
+    name: container.name
+    parent: storageAccount
+    properties: {
+      publicAccess: container.publicAccess
     }
   }
-  dependsOn: [
-    apiAppModule
-  ]
-}
+]
 
 output apiAppDefaultHostName string = apiAppModule.outputs.defaultHostName
 output apiAppManagedIdentityId string = apiAppManagedIdentity.id

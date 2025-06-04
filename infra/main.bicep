@@ -106,7 +106,6 @@ module platform 'platform.bicep' = {
     openAiLocation: openAILocation
     openAiSkuName: openAISku
     deployAzueOpenAi: deployAzueOpenAi
-    agileChatDatabaseName: agileChatDatabaseName
   }
 }
 
@@ -144,6 +143,7 @@ module apiApp 'apiapp.bicep' = {
     appServicePlanName: platform.outputs.appServicePlanName
     logAnalyticsWorkspaceName: platform.outputs.logAnalyticsWorkspaceName
     storageAccountName: platform.outputs.storageAccountName
+    cosmosDbAccountName: platform.outputs.cosmosDbAccountName
     cosmosDbAccountEndpoint: platform.outputs.cosmosDbAccountEndpoint
     auditIncludePII: 'true'
     openAiApiVersion: openAIApiVersion
@@ -152,6 +152,7 @@ module apiApp 'apiapp.bicep' = {
     apimAiEmbeddingsEndpointOverride: apimAiEmbeddingsEndpointOverride
     adminEmailAddresses: AdminEmailAddresses
     agileChatDatabaseName: agileChatDatabaseName
+    serviceBusQueueName: 'agilechat-queue'
   }
 }
 
