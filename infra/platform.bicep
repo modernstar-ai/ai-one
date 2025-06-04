@@ -264,7 +264,7 @@ resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2024-01-01' = {
   ]
   parent: serviceBusNamespace
   properties: {
-    maxMessageSizeInKilobytes: 2048
+    maxMessageSizeInKilobytes: 256
     lockDuration: 'PT5M'
     maxSizeInMegabytes: 5120
     requiresDuplicateDetection: false
