@@ -509,7 +509,7 @@ module appServiceSecretsUserRoleAssignmentModule './modules/keyvaultRoleAssignme
 }
 
 resource storageAccount 'Microsoft.Storage/storageAccounts/blobServices@2024-01-01' existing = {
-  name: storageName
+  name: 'default'
   parent: storage
 }
 
