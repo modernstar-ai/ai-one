@@ -152,7 +152,6 @@ module apiApp 'apiapp.bicep' = {
     apimAiEmbeddingsEndpointOverride: apimAiEmbeddingsEndpointOverride
     adminEmailAddresses: AdminEmailAddresses
     agileChatDatabaseName: agileChatDatabaseName
-    serviceBusQueueName: 'agilechat-queue'
   }
 }
 

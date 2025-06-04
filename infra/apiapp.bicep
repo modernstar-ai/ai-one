@@ -387,6 +387,9 @@ resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2024-01-01' = {
 
 resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = {
   name: eventGridName
+  dependsOn: [
+    serviceBusQueue
+  ]
   location: location
   tags: tags
   identity: {
