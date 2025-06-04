@@ -46,6 +46,7 @@ module serviceBus 'br/public:avm/res/service-bus/namespace:0.14.0' = {
     name: name
     location: location
     tags: tags
+    disableLocalAuth: false
     publicNetworkAccess: networkIsolation ? 'Disabled' : 'Enabled'
     skuObject: {
       name: 'Standard'
