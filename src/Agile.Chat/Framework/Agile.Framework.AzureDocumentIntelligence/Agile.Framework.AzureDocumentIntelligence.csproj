@@ -9,11 +9,11 @@
 	<ItemGroup>
 		<PackageReference Include="Azure.Identity" Version="1.11.4" />
 		<PackageReference Include="Azure.AI.DocumentIntelligence" Version="1.0.0" />
-		<PackageReference Include="Html2Markdown" Version="7.0.2.10" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
-		<PackageReference Include="MsgReader" Version="5.7.0" />
-		<PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.2" />
+		<PackageReference Include="Html2Markdown" Version="7.0.5.14" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.5" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.5" />
+		<PackageReference Include="MsgReader" Version="5.7.2" />
+		<PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.5" />
 	</ItemGroup>
 
 	<ItemGroup>
