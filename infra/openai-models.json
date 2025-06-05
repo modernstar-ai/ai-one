@@ -1,38 +1,38 @@
 [
-  {
-    "model": {
-      "format": "OpenAI",
-      "name": "gpt-4o",
-      "version": "2024-05-13"
+    {
+        "model": {
+            "format": "OpenAI",
+            "name": "gpt-4o",
+            "version": "2024-05-13"
+        },
+        "name": "gpt-4o",
+        "sku": {
+            "name": "GlobalStandard",
+            "capacity": 50
+        }
     },
-    "name": "gpt-4o",
-    "sku": {
-      "name": "GlobalStandard",
-      "capacity": 2000
-    }
-  },
-  {
-    "model": {
-      "format": "OpenAI",
-      "name": "o3-mini",
-      "version": "2025-01-31"
+    {
+        "model": {
+            "format": "OpenAI",
+            "name": "text-embedding-3-small",
+            "version": "2024-11-20"
+        },
+        "name": "text-embedding-3-small",
+        "sku": {
+            "name": "GlobalStandard",
+            "capacity": 350
+        }
     },
-    "name": "o3-mini",
-    "sku": {
-      "name": "GlobalStandard",
-      "capacity": 2000
+    {
+        "model": {
+            "format": "OpenAI",
+            "name": "o3-mini",
+            "version": "2024-06-01"
+        },
+        "name": "o3-mini",
+        "sku": {
+            "name": "GlobalStandard",
+            "capacity": 100
+        }
     }
-  },
-  {
-    "model": {
-      "format": "OpenAI",
-      "name": "text-embedding-3-small",
-      "version": "1"
-    },
-    "name": "embedding",
-    "sku": {
-      "name": "GlobalStandard",
-      "capacity": 250
-    }
-  }
 ]

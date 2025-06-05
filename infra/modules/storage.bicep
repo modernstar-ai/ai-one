@@ -7,86 +7,121 @@ param location string
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
-@description('The name of the workload\'s existing Log Analytics workspace.')
-param logWorkspaceName string
+@description('Resource ID of the virtual network to link the private DNS zones.')
+param virtualNetworkResourceId string = ''
+
+@description('Resource ID of the subnet for the private endpoint.')
+param virtualNetworkSubnetResourceId string = ''
+
+@description('Resource ID of the Log Analytics workspace to use for diagnostic settings.')
+param logAnalyticsWorkspaceResourceId string = ''
+
+@description('Specifies whether network isolation is enabled. This will create a private endpoint for the Storage Account and link the private DNS zone.')
+param networkIsolation bool = false
+
+import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
+@description('Optional. Array of role assignments to create.')
+param roleAssignments roleAssignmentType[] = []
 
 @description('SKU for Storage Account')
-param skuName object
+param skuName string = 'Standard_LRS'
 
 @description('Array of blob container names to be created')
 param blobContainerCollection array = []
 
-resource logWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
-  name: logWorkspaceName
-}
-
-resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
-  name: name
-  location: location
-  tags: tags
-  kind: 'StorageV2'
-  sku: skuName
-  properties: {
-    minimumTlsVersion: 'TLS1_2'
-    supportsHttpsTrafficOnly: true
-  }
-}
-
-resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
-  parent: storageAccount
-  name: 'default'
-  properties: {
-    deleteRetentionPolicy: {
-      enabled: true
-      days: 7
-    }
-  }
-}
-
-resource storageDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
-  name: '${storageAccount.name}-diagnostic'
-  scope: storageAccount
-  properties: {
-    workspaceId: logWorkspace.id
-    logs: [
-      //   {
-      //     category: 'StorageRead'
-      //     enabled: true
-      //     retentionPolicy: {
-      //       enabled: false
-      //       days: 0
-      //     }
-      //   }
-      //   {
-      //     category: 'StorageWrite'
-      //     enabled: true
-      //     retentionPolicy: {
-      //       enabled: false
-      //       days: 0
-      //     }
-      //   }
-      //   {
-      //     category: 'StorageDelete'
-      //     enabled: true
-      //     retentionPolicy: {
-      //       enabled: false
-      //       days: 0
-      //     }
-      //   }
-      // ]
+module blobPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
+  name: 'private-dns-blob-deployment'
+  params: {
+    name: 'privatelink.blob.${environment().suffixes.storage}'
+    virtualNetworkLinks: [
+      {
+        virtualNetworkResourceId: virtualNetworkResourceId
+      }
     ]
+    tags: tags
   }
 }
 
-resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = [
-  for container in blobContainerCollection: {
-    parent: blobServices
-    name: container.name
-    properties: {
-      publicAccess: container.publicAccess
+module filePrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
+  name: 'private-dns-file-deployment'
+  params: {
+    name: 'privatelink.file.${environment().suffixes.storage}'
+    virtualNetworkLinks: [
+      {
+        virtualNetworkResourceId: virtualNetworkResourceId
+      }
+    ]
+    tags: tags
+  }
+}
+
+module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
+  name: take('${take(toLower(name), 24)}-storage-account-deployment', 64)
+  dependsOn: [blobPrivateDnsZone, filePrivateDnsZone]
+  params: {
+    name: name
+    location: location
+    tags: tags
+    kind: 'StorageV2'
+    skuName: skuName
+    requireInfrastructureEncryption: false //TODO: Set to true
+    publicNetworkAccess: networkIsolation ? 'Disabled' : 'Enabled'
+    // accessTier: 'Hot'
+    // allowBlobPublicAccess: false
+    // allowSharedKeyAccess: false
+    // allowCrossTenantReplication: false
+    minimumTlsVersion: 'TLS1_2'
+    networkAcls: {
+      defaultAction: 'Allow'
+    }
+    supportsHttpsTrafficOnly: true
+    diagnosticSettings: [
+      {
+        workspaceResourceId: logAnalyticsWorkspaceResourceId
+      }
+    ]
+    privateEndpoints: networkIsolation
+      ? [
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                {
+                  privateDnsZoneResourceId: blobPrivateDnsZone.outputs.resourceId
+                }
+              ]
+            }
+            service: 'blob'
+            subnetResourceId: virtualNetworkSubnetResourceId
+          }
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                {
+                  privateDnsZoneResourceId: filePrivateDnsZone.outputs.resourceId
+                }
+              ]
+            }
+            service: 'file'
+            subnetResourceId: virtualNetworkSubnetResourceId
+          }
+        ]
+      : []
+    roleAssignments: roleAssignments
+    blobServices: {
+      automaticSnapshotPolicyEnabled: true
+      deleteRetentionPolicyDays: 9
+      deleteRetentionPolicyEnabled: true
+      containerDeleteRetentionPolicyDays: 10
+      containerDeleteRetentionPolicyEnabled: true
+      containers: [
+        for container in blobContainerCollection: {
+          name: container.name
+          publicAccess: container.publicAccess
+        }
+      ]
     }
   }
-]
+}
 
-output name string = storageAccount.name
-output resourceId string = storageAccount.id
+output name string = storageAccount.outputs.name
+output resourceId string = storageAccount.outputs.resourceId

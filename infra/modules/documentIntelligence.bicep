@@ -7,20 +7,72 @@ param location string
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
-resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-  name: name
-  location: location
-  tags: tags
-  kind: 'FormRecognizer'
-  properties: {
-    customSubDomainName: name
-    publicNetworkAccess: 'Enabled'
-  }
-  sku: {
-    name: 'S0'
+@description('Resource ID of the Log Analytics workspace to use for diagnostic settings.')
+param logAnalyticsWorkspaceResourceId string
+
+@description('Specifies whether network isolation is enabled. This will create a private endpoint for the resource and link the private DNS zone.')
+param networkIsolation bool = false
+
+@description('Resource ID of the virtual network to link the private DNS zones.')
+param virtualNetworkResourceId string = ''
+
+@description('Resource ID of the subnet for the private endpoint.')
+param virtualNetworkSubnetResourceId string = ''
+
+import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
+@description('Optional. Array of role assignments to create.')
+param roleAssignments roleAssignmentType[] = []
+
+module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
+  name: 'private-dns-cognitiveservices-deployment'
+  params: {
+    name: 'privatelink.cognitiveservices.azure.com'
+    virtualNetworkLinks: [
+      {
+        virtualNetworkResourceId: virtualNetworkResourceId
+      }
+    ]
+    tags: tags
   }
 }
 
-output name string = documentIntelligence.name
-output id string = documentIntelligence.id
-output endpoint string = documentIntelligence.properties.endpoint
+module documentIntelligence 'br/public:avm/res/cognitive-services/account:0.10.2' = {
+  name: take('${take(toLower(name), 24)}-documentintelligence-deployment', 64)
+  dependsOn: [privateDnsZone]
+  params: {
+    name: name
+    location: location
+    tags: tags
+    kind: 'FormRecognizer'
+    sku: 'S0'
+    customSubDomainName: name
+    publicNetworkAccess: networkIsolation ? 'Disabled' : 'Enabled'
+    managedIdentities: {
+      systemAssigned: true
+    }
+    diagnosticSettings: [
+      {
+        workspaceResourceId: logAnalyticsWorkspaceResourceId
+      }
+    ]
+    privateEndpoints: networkIsolation
+      ? [
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                {
+                  privateDnsZoneResourceId: privateDnsZone.outputs.resourceId
+                }
+              ]
+            }
+            subnetResourceId: virtualNetworkSubnetResourceId
+          }
+        ]
+      : []
+    roleAssignments: roleAssignments
+  }
+}
+
+output name string = documentIntelligence.outputs.name
+output id string = documentIntelligence.outputs.resourceId
+output endpoint string = documentIntelligence.outputs.endpoint

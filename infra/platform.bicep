@@ -24,9 +24,7 @@ param environmentName string
 param resourcePrefix string = toLower('${projectName}-${environmentName}')
 
 @description('SKU for Storage Account')
-param storageServiceSku object = {
-  name: 'Standard_LRS'
-}
+param storageServiceSku string = 'Standard_LRS'
 
 @description('SKU for Azure Search Service')
 param searchServiceSkuName string = 'standard'
@@ -42,7 +40,7 @@ param appServicePlanName string = toLower('${resourcePrefix}-app')
 param storageAccountName string = replace(('${projectName}${environmentName}sto'), '-', '')
 
 @description('Key Vault name')
-param keyVaultName string = toLower('${resourcePrefix}2-kv')
+param keyVaultName string = toLower('${resourcePrefix}-kv')
 
 @description('Azure Container Registry name')
 param acrName string = toLower(replace('${resourcePrefix}acr', '-', ''))
@@ -62,9 +60,6 @@ param searchServiceName string = toLower('${resourcePrefix}-search')
 @description('Service Bus namespace name')
 param serviceBusName string = toLower('${resourcePrefix}-service-bus')
 
-@description('Service Bus queue name')
-param serviceBusQueueName string = toLower('${resourcePrefix}-folders-queue')
-
 @description('Whether to deploy Azure OpenAI resources')
 param deployAzueOpenAi bool = true
 
@@ -77,21 +72,10 @@ param openAiLocation string
 @description('SKU for Azure OpenAI resource')
 param openAiSkuName string = 'S0'
 
-@description('Cosmos DB custom role definition name')
-param cosmosDbAccountDataPlaneCustomRoleName string = 'Custom Cosmos DB for NoSQL Data Plane Contributor'
+@description('Whether to enable network isolation for resources')
+param networkIsolation bool = false
 
-@description('Database name for AgileChat')
-param agileChatDatabaseName string = 'AgileChat'
-
-var blobContainersArray = loadJsonContent('./blob-storage-containers.json')
 var openAiModelsArray = loadJsonContent('./openai-models.json')
-
-var blobContainers = [
-  for name in blobContainersArray: {
-    name: toLower(name)
-    publicAccess: 'None'
-  }
-]
 
 #disable-next-line no-unused-vars
 var openAiSampleModels = [
@@ -117,7 +101,7 @@ var openAiSampleModels = [
 module logAnalyticsWorkspaceModule './modules/logAnalyticsWorkspace.bicep' = {
   name: 'logAnalyticsWorkspaceModule'
   params: {
-    logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
+    name: logAnalyticsWorkspaceName
     location: location
     tags: tags
   }
@@ -129,9 +113,9 @@ module keyVaultModule './modules/keyVault.bicep' = {
     name: keyVaultName
     location: location
     tags: tags
-    logWorkspaceName: logAnalyticsWorkspaceName
-    userObjectId: ''
-    keyVaultSecrets: [
+    networkIsolation: networkIsolation
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
+    secrets: [
       {
         name: 'AZURE-CLIENT-ID'
         contentType: 'text/plain'
@@ -152,7 +136,8 @@ module acrModule './modules/acr.bicep' = {
     name: acrName
     location: location
     tags: tags
-    logWorkspaceName: logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
+    networkIsolation: networkIsolation
   }
 }
 
@@ -162,9 +147,9 @@ module storageModule './modules/storage.bicep' = {
     name: storageAccountName
     location: location
     tags: tags
-    logWorkspaceName: logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
+    networkIsolation: networkIsolation
     skuName: storageServiceSku
-    blobContainerCollection: blobContainers
   }
 }
 
@@ -174,6 +159,8 @@ module aiSearchService './modules/aiSearch.bicep' = {
     name: searchServiceName
     location: location
     tags: tags
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
+    networkIsolation: networkIsolation
     keyVaultName: keyVaultModule.outputs.name
     searchServiceApiKeySecretName: 'AZURE-SEARCH-API-KEY' //TODO: Remove this secret after refactoring the API to use managed identity
     skuName: searchServiceSkuName
@@ -196,12 +183,10 @@ module cosmosDbAccountModule './modules/cosmosDb.bicep' = {
     name: cosmosDbAccountName
     location: location
     tags: tags
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
+    networkIsolation: networkIsolation
     keyVaultName: keyVaultModule.outputs.name
     cosmosDbAccountApiSecretName: 'AZURE-COSMOSDB-KEY' //TODO: Remove this secret after refactoring the API to use managed identity
-    cosmosDbAccountDataPlaneCustomRoleName: cosmosDbAccountDataPlaneCustomRoleName
-    databases: [
-      agileChatDatabaseName
-    ]
   }
 }
 
@@ -211,6 +196,8 @@ module documentIntelligenceModule './modules/documentIntelligence.bicep' = {
     name: formRecognizerName
     location: location
     tags: tags
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
+    networkIsolation: networkIsolation
   }
 }
 
@@ -220,7 +207,8 @@ module serviceBusModule './modules/serviceBus.bicep' = {
     name: serviceBusName
     location: location
     tags: tags
-    serviceBusQueueName: serviceBusQueueName
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
+    networkIsolation: networkIsolation
   }
 }
 
@@ -230,12 +218,14 @@ module openAiModule './modules/openai.bicep' = if (deployAzueOpenAi) {
     name: openAiName
     location: openAiLocation
     tags: tags
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
+    networkIsolation: networkIsolation
     skuName: openAiSkuName
     deployments: openAiSampleModels
   }
 }
 
-output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceName
+output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.name
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
 output searchServiceName string = aiSearchService.outputs.name
 output keyVaultName string = keyVaultModule.outputs.name
@@ -248,7 +238,5 @@ output cosmosDbAccountName string = cosmosDbAccountModule.outputs.name
 output cosmosDbAccountEndpoint string = cosmosDbAccountModule.outputs.endpoint
 output formRecognizerName string = documentIntelligenceModule.outputs.name
 output serviceBusName string = serviceBusModule.outputs.name
-output serviceBusQueueName string = serviceBusModule.outputs.serviceBusQueueName
 output openAiName string = deployAzueOpenAi ? openAiModule.outputs.name : ''
 output openAiEndpoint string = deployAzueOpenAi ? openAiModule.outputs.endpoint : ''
-output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbAccountModule.outputs.cosmosDbAccountDataPlaneCustomRoleId

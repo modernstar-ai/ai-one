@@ -1,5 +1,5 @@
 @description('Log Analytics Workspace name')
-param logAnalyticsWorkspaceName string
+param name string
 
 @description('Azure region for resource deployment')
 param location string
@@ -7,19 +7,20 @@ param location string
 @description('Resource tags')
 param tags object
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
-  name: logAnalyticsWorkspaceName
-  tags: tags
-  location: location
-  properties: {
-    retentionInDays: 30
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = {
+  name: take('${name}-log-analytics-deployment', 64)
+  params: {
+    name: name
+    location: location
+    tags: tags
+    skuName: 'PerGB2018'
+    dataRetention: 30
     // publicNetworkAccessForIngestion: 'Disabled'
     // publicNetworkAccessForQuery: 'Disabled'
-    workspaceCapping: {
-      dailyQuotaGb: 10
-    }
+    dailyQuotaGb: 10
   }
 }
 
-output logAnalyticsWorkspaceName string = logAnalyticsWorkspace.name
-output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
+output name string = logAnalyticsWorkspace.outputs.name
+output resourceId string = logAnalyticsWorkspace.outputs.resourceId
+output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceId

@@ -10,5 +10,3 @@ param environmentName = 'uat'
 param openAILocation = 'australiaeast'
 param aspCoreEnvironment = 'UAT'
 param semanticSearchSku = 'standard'
-
-

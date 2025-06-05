@@ -7,22 +7,18 @@ param location string
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
-  name: name
-  location: location
-  tags: tags
-  properties: {
-    reserved: true
+module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
+  name: take('${take(toLower(name), 24)}-serverfarm-deployment', 64)
+  params: {
+    name: name
+    location: location
+    tags: tags
+    kind: 'linux'
+    skuCapacity: 1
+    skuName: 'P1v3'
+    zoneRedundant: false
   }
-  sku: {
-    name: 'P0v3'
-    tier: 'Premium0V3'
-    size: 'P0v3'
-    family: 'Pv3'
-    capacity: 1
-  }
-  kind: 'linux'
 }
 
-output resourceId string = appServicePlan.id
-output name string = appServicePlan.name
+output resourceId string = appServicePlan.outputs.resourceId
+output name string = appServicePlan.outputs.name

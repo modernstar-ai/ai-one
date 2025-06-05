@@ -106,7 +106,6 @@ module platform 'platform.bicep' = {
     openAiLocation: openAILocation
     openAiSkuName: openAISku
     deployAzueOpenAi: deployAzueOpenAi
-    agileChatDatabaseName: agileChatDatabaseName
   }
 }
 
@@ -138,7 +137,6 @@ module apiApp 'apiapp.bicep' = {
     webAppDefaultHostName: webApp.outputs.webAppDefaultHostName
     storageName: platform.outputs.storageAccountName
     formRecognizerName: platform.outputs.formRecognizerName
-    serviceBusQueueName: platform.outputs.serviceBusQueueName
     serviceBusName: platform.outputs.serviceBusName
     searchServiceName: platform.outputs.searchServiceName
     keyVaultName: platform.outputs.keyVaultName
@@ -153,7 +151,6 @@ module apiApp 'apiapp.bicep' = {
     apimAiEndpointOverride: apimAiEndpointOverride
     apimAiEmbeddingsEndpointOverride: apimAiEmbeddingsEndpointOverride
     adminEmailAddresses: AdminEmailAddresses
-    cosmosDbAccountDataPlaneCustomRoleId: platform.outputs.cosmosDbAccountDataPlaneCustomRoleId
     agileChatDatabaseName: agileChatDatabaseName
   }
 }

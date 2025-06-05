@@ -1,4 +1,4 @@
-@description('Name of the Cosmos DB account.')
+@description('Name of the Cosmos DB Account.')
 param name string
 
 @description('Specifies the location for all the Azure resources.')
@@ -7,8 +7,25 @@ param location string
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
+@description('Resource ID of the virtual network to link the private DNS zones.')
+param virtualNetworkResourceId string = ''
+
+@description('Resource ID of the subnet for the private endpoint.')
+param virtualNetworkSubnetResourceId string = ''
+
+@description('Resource ID of the Log Analytics workspace to use for diagnostic settings.')
+param logAnalyticsWorkspaceResourceId string
+
+@description('Specifies whether network isolation is enabled. This will create a private endpoint for the Cosmos DB Account and link the private DNS zone.')
+param networkIsolation bool = false
+
+import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
+@description('Optional. Array of role assignments to create.')
+param roleAssignments roleAssignmentType[] = []
+
+import { sqlDatabaseType } from 'customTypes.bicep'
 @description('Optional. List of Cosmos DB databases to deploy.')
-param databases array = []
+param databases sqlDatabaseType[]?
 
 @description('Key Vault name for storing secrets related to Cosmos DB.')
 param keyVaultName string
@@ -16,70 +33,68 @@ param keyVaultName string
 @description('Cosmos DD Account API Secret Name')
 param cosmosDbAccountApiSecretName string
 
-@description('Cosmos DB custom role definition name')
-param cosmosDbAccountDataPlaneCustomRoleName string = 'Custom Cosmos DB for NoSQL Data Plane Contributor'
+module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
+  name: 'private-dns-cosmosdb-deployment'
+  params: {
+    name: 'privatelink.documents.azure.com'
+    virtualNetworkLinks: [
+      {
+        virtualNetworkResourceId: virtualNetworkResourceId
+      }
+    ]
+    tags: tags
+  }
+}
 
 resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
   name: keyVaultName
 }
 
-resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
-  name: name
-  location: location
-  tags: tags
-  kind: 'GlobalDocumentDB'
-  properties: {
+module cosmosDb 'br/public:avm/res/document-db/database-account:0.11.0' = {
+  name: take('${toLower(name)}-cosmosdb-deployment', 64)
+  params: {
+    name: name
+    location: location
+    tags: tags
     databaseAccountOfferType: 'Standard'
-    locations: [
+    // automaticFailover: true
+    diagnosticSettings: [
       {
-        locationName: location
-        failoverPriority: 0
+        workspaceResourceId: logAnalyticsWorkspaceResourceId
       }
     ]
-  }
-}
-
-resource cosmosDbAccountDataPlaneCustomRole 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-05-15' = {
-  name: guid(resourceGroup().id, cosmosDbAccount.id, cosmosDbAccountDataPlaneCustomRoleName)
-  parent: cosmosDbAccount
-  properties: {
-    roleName: cosmosDbAccountDataPlaneCustomRoleName
-    type: 'CustomRole'
-    assignableScopes: [
-      cosmosDbAccount.id
-    ]
-    permissions: [
-      {
-        dataActions: [
-          'Microsoft.DocumentDB/databaseAccounts/readMetadata'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*'
+    // disableKeyBasedMetadataWriteAccess: true
+    disableLocalAuth: false
+    minimumTlsVersion: 'Tls12'
+    defaultConsistencyLevel: 'Session'
+    networkRestrictions: {
+      // networkAclBypass: 'None'
+      publicNetworkAccess: networkIsolation ? 'Disabled' : 'Enabled'
+    }
+    privateEndpoints: networkIsolation
+      ? [
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                {
+                  privateDnsZoneResourceId: privateDnsZone.outputs.resourceId
+                }
+              ]
+            }
+            service: 'Sql'
+            subnetResourceId: virtualNetworkSubnetResourceId
+          }
         ]
-      }
-    ]
-  }
-}
-
-resource sqlDatabases 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2022-05-15' = [
-  for dbName in databases: {
-    name: dbName
-    parent: cosmosDbAccount
-    properties: {
-      resource: {
-        id: dbName
-      }
+      : []
+    sqlDatabases: databases
+    roleAssignments: roleAssignments
+    secretsExportConfiguration: {
+      keyVaultResourceId: keyVault.id
+      primaryWriteKeySecretName: cosmosDbAccountApiSecretName
     }
   }
-]
-
-resource cosmosDbAccountApiSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  name: cosmosDbAccountApiSecretName
-  parent: keyVault
-  properties: {
-    value: cosmosDbAccount.listKeys().secondaryMasterKey
-  }
 }
 
-output name string = cosmosDbAccount.name
-output endpoint string = cosmosDbAccount.properties.documentEndpoint
-output cosmosDbAccountDataPlaneCustomRoleId string = cosmosDbAccountDataPlaneCustomRole.id
+output resourceId string = cosmosDb.outputs.resourceId
+output name string = cosmosDb.outputs.name
+output endpoint string = cosmosDb.outputs.endpoint

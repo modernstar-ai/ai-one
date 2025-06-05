@@ -29,8 +29,6 @@ param webappName string = toLower('${resourcePrefix}-webapp')
 @description('Log Analytics Workspace name')
 param logAnalyticsWorkspaceName string
 
-var diagnosticSettingsName = 'AppServiceConsoleLogs'
-
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' existing = {
   name: appServicePlanName
 }
@@ -50,8 +48,8 @@ module webAppModule './modules/site.bicep' = {
     name: webappName
     location: location
     tags: union(tags, { 'azd-service-name': 'agilechat-web' })
-    serverFarmId: appServicePlan.id
-    logWorkspaceName: logAnalyticsWorkspace.name
+    serverFarmResourceId: appServicePlan.id
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspace.id
     userAssignedIdentityId: webAppManagedIdentity.id
     siteConfig: {
       linuxFxVersion: 'node|18-lts'
@@ -70,7 +68,6 @@ module webAppModule './modules/site.bicep' = {
         value: 'https://${apiAppName}.azurewebsites.net'
       }
     ]
-    diagnosticSettingsName: diagnosticSettingsName
   }
 }
 

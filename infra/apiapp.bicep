@@ -40,7 +40,7 @@ param storageName string
 param formRecognizerName string
 
 @description('Service Bus queue name')
-param serviceBusQueueName string
+param serviceBusQueueName string = toLower('${resourcePrefix}-folders-queue')
 
 @description('Service Bus namespace name')
 param serviceBusName string
@@ -78,13 +78,7 @@ param logAnalyticsWorkspaceName string
 @description('Storage Account name (for existing resource)')
 param storageAccountName string
 
-@description('Cosmos DB Account name (for existing resource)')
-param cosmosDbAccountName string
-
 param agileChatDatabaseName string = 'AgileChat'
-
-@description('Event Grid system topic name')
-param eventGridName string = toLower('${resourcePrefix}-blob-eg')
 
 @description('Web App default host name')
 param webAppDefaultHostName string
@@ -99,14 +93,23 @@ param auditIncludePII string = 'true'
 @description('Cosmos DB Account endpoint (document endpoint)')
 param cosmosDbAccountEndpoint string
 
+@description('Cosmos DB Account name')
+param cosmosDbAccountName string
+
 param storageServiceFoldersContainerName string = 'index-content'
 
 param eventGridSystemTopicSubName string = toLower('${resourcePrefix}-folders-blobs-listener')
 
-@description('Cosmos DB Account Data Plane Custom Role ID')
-param cosmosDbAccountDataPlaneCustomRoleId string
+@description('Event Grid system topic name')
+param eventGridName string = toLower('${resourcePrefix}-blob-eg')
 
-var serviceBusQueueId = resourceId('Microsoft.ServiceBus/namespaces/queues', serviceBusName, serviceBusQueueName)
+var blobContainersArray = loadJsonContent('./blob-storage-containers.json')
+var blobContainers = [
+  for name in blobContainersArray: {
+    name: toLower(name)
+    publicAccess: 'None'
+  }
+]
 
 resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
   name: openAiName
@@ -114,10 +117,6 @@ resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' existing 
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: storageAccountName
-}
-
-resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' existing = {
-  name: cosmosDbAccountName
 }
 
 resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
@@ -172,6 +171,14 @@ resource serviceBusDataSenderRole 'Microsoft.Authorization/roleDefinitions@2022-
   scope: subscription()
 }
 
+resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2024-01-01' existing = {
+  name: serviceBusName
+}
+
+resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' existing = {
+  name: cosmosDbAccountName
+}
+
 resource apiAppManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: 'id-${apiAppName}'
   location: location
@@ -179,12 +186,15 @@ resource apiAppManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities
 
 module apiAppModule './modules/site.bicep' = {
   name: 'apiAppModule'
+  dependsOn: [
+    serviceBusQueue
+  ]
   params: {
     name: apiAppName
     location: location
     tags: union(tags, { 'azd-service-name': 'agilechat-api' })
-    serverFarmId: appServicePlan.id
-    logWorkspaceName: logAnalyticsWorkspaceName
+    serverFarmResourceId: appServicePlan.id
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspace.id
     userAssignedIdentityId: apiAppManagedIdentity.id
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
@@ -338,7 +348,100 @@ module apiAppModule './modules/site.bicep' = {
         }
       ]
     )
-    diagnosticSettingsName: 'AppServiceConsoleLogs'
+  }
+}
+
+resource cosmosDbDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-04-15' = {
+  name: agileChatDatabaseName
+  dependsOn: [
+    cosmosDbAccount
+  ]
+  location: location
+  tags: tags
+  parent: cosmosDbAccount
+  properties: {
+    resource: {
+      id: agileChatDatabaseName
+    }
+    options: {}
+  }
+}
+
+resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2024-01-01' = {
+  name: serviceBusQueueName
+  parent: serviceBusNamespace
+  properties: {
+    maxMessageSizeInKilobytes: 256
+    lockDuration: 'PT5M'
+    maxSizeInMegabytes: 5120
+    requiresDuplicateDetection: false
+    requiresSession: false
+    defaultMessageTimeToLive: 'P14D'
+    deadLetteringOnMessageExpiration: true
+    enableBatchedOperations: true
+    duplicateDetectionHistoryTimeWindow: 'PT10M'
+    maxDeliveryCount: 5
+    status: 'Active'
+    autoDeleteOnIdle: 'PT5M'
+    enablePartitioning: false
+    enableExpress: false
+  }
+}
+
+resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = {
+  name: eventGridName
+  dependsOn: [
+    serviceBusQueue
+  ]
+  location: location
+  tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    source: storage.id
+    topicType: 'Microsoft.Storage.StorageAccounts'
+  }
+}
+
+resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-01-preview' = {
+  name: eventGridSystemTopicSubName
+  parent: eventGridSystemTopic
+  properties: {
+    destination: {
+      endpointType: 'ServiceBusQueue'
+      properties: {
+        resourceId: serviceBusQueue.id
+      }
+    }
+    filter: {
+      includedEventTypes: [
+        'Microsoft.Storage.BlobCreated'
+        'Microsoft.Storage.BlobDeleted'
+      ]
+      isSubjectCaseSensitive: false
+      enableAdvancedFilteringOnArrays: true
+      subjectBeginsWith: '/blobServices/default/containers/${storageServiceFoldersContainerName}/'
+    }
+    eventDeliverySchema: 'EventGridSchema'
+    retryPolicy: {
+      maxDeliveryAttempts: 30
+      eventTimeToLiveInMinutes: 1440
+    }
+  }
+  dependsOn: [
+    apiAppModule
+  ]
+}
+
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: applicationInsightsName
+  location: location
+  tags: tags
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalyticsWorkspace.id
   }
 }
 
@@ -402,16 +505,6 @@ resource apiAppServiceBusSenderRoleAssignment 'Microsoft.Authorization/roleAssig
   }
 }
 
-// resource apiAppCosmosDbCustomRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-05-15' = {
-//   name: guid(resourceGroup().id, apiAppManagedIdentity.id, cosmosDbAccount.id, cosmosDbAccountDataPlaneCustomRoleId)
-//   parent: cosmosDbAccount
-//   properties: {
-//     principalId: apiAppManagedIdentity.properties.principalId
-//     roleDefinitionId: cosmosDbAccountDataPlaneCustomRoleId
-//     scope: cosmosDbAccount.id
-//   }
-// }
-
 module appServiceSecretsUserRoleAssignmentModule './modules/keyvaultRoleAssignment.bicep' = {
   name: 'appServiceSecretsUserRoleAssignmentDeploy'
   params: {
@@ -421,59 +514,20 @@ module appServiceSecretsUserRoleAssignmentModule './modules/keyvaultRoleAssignme
   }
 }
 
-resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: applicationInsightsName
-  location: location
-  tags: tags
-  kind: 'web'
-  properties: {
-    Application_Type: 'web'
-    WorkspaceResourceId: logAnalyticsWorkspace.id
-  }
+resource storageAccount 'Microsoft.Storage/storageAccounts/blobServices@2024-01-01' existing = {
+  name: 'default'
+  parent: storage
 }
 
-resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2024-06-01-preview' = {
-  name: eventGridName
-  location: location
-  tags: tags
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    source: storage.id
-    topicType: 'Microsoft.Storage.StorageAccounts'
-  }
-}
-
-resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-01-preview' = {
-  name: eventGridSystemTopicSubName
-  parent: eventGridSystemTopic
-  properties: {
-    destination: {
-      endpointType: 'ServiceBusQueue'
-      properties: {
-        resourceId: serviceBusQueueId
-      }
-    }
-    filter: {
-      includedEventTypes: [
-        'Microsoft.Storage.BlobCreated'
-        'Microsoft.Storage.BlobDeleted'
-      ]
-      isSubjectCaseSensitive: false
-      enableAdvancedFilteringOnArrays: true
-      subjectBeginsWith: '/blobServices/default/containers/${storageServiceFoldersContainerName}/'
-    }
-    eventDeliverySchema: 'EventGridSchema'
-    retryPolicy: {
-      maxDeliveryAttempts: 30
-      eventTimeToLiveInMinutes: 1440
+resource blobContainersResource 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = [
+  for container in blobContainers: {
+    name: container.name
+    parent: storageAccount
+    properties: {
+      publicAccess: container.publicAccess
     }
   }
-  dependsOn: [
-    apiAppModule
-  ]
-}
+]
 
 output apiAppDefaultHostName string = apiAppModule.outputs.defaultHostName
 output apiAppManagedIdentityId string = apiAppManagedIdentity.id
