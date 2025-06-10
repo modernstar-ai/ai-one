@@ -130,8 +130,8 @@ public static class Chat
             if (_chatContainer.Assistant?.RagType == RagType.Plugin && _chatContainer.Citations.Count > 0)
             {
                 var citations = _chatContainer.Citations.Cast<ChatContainerCitationExt>()
-                    .Where(x => assistantResponse?.Contains("⁽" + ToSuperscript(x.ReferenceNumber) + "⁾") ?? false).ToList();
-
+                    .Where(x => assistantResponse?.Contains($"[doc{x.ReferenceNumber}]", StringComparison.InvariantCultureIgnoreCase) ?? false).ToList();
+                
                 if (citations.Count > 0)
                 {
                     metadata.Add(MetadataType.Citations, citations.Adapt<List<ChatContainerCitation>>());
@@ -140,7 +140,7 @@ public static class Chat
                     {
                         var citation = citations[i];
                         var updatedCitationNumber = i + 1;
-                        assistantResponse = assistantResponse!.Replace("⁽" + ToSuperscript(citation.ReferenceNumber) + "⁾", $"⁽{ToSuperscript(updatedCitationNumber)}⁾");
+                        assistantResponse = assistantResponse!.Replace($"[doc{citation.ReferenceNumber}]", $"⁽{ToSuperscript(updatedCitationNumber)}⁾");
                     }
                 }
             }
