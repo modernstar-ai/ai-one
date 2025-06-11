@@ -60,6 +60,7 @@ module site 'br/public:avm/res/web/site:0.16.0' = {
     })
     diagnosticSettings: [
       {
+        name: 'default'
         workspaceResourceId: logAnalyticsWorkspaceResourceId
       }
     ]
