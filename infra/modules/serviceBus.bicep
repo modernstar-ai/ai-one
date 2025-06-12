@@ -54,6 +54,7 @@ module serviceBus 'br/public:avm/res/service-bus/namespace:0.14.0' = {
     roleAssignments: roleAssignments
     diagnosticSettings: [
       {
+        name: 'default'
         workspaceResourceId: logAnalyticsWorkspaceResourceId
       }
     ]

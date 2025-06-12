@@ -60,6 +60,7 @@ module cosmosDb 'br/public:avm/res/document-db/database-account:0.11.0' = {
     // automaticFailover: true
     diagnosticSettings: [
       {
+        name: 'default'
         workspaceResourceId: logAnalyticsWorkspaceResourceId
       }
     ]

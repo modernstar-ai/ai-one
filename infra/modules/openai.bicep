@@ -60,6 +60,7 @@ module openAi 'br/public:avm/res/cognitive-services/account:0.10.2' = {
     }
     diagnosticSettings: [
       {
+        name: 'default'
         workspaceResourceId: logAnalyticsWorkspaceResourceId
       }
     ]

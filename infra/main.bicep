@@ -90,6 +90,9 @@ param openAIApiVersion string = '2024-08-01-preview'
 @description('Database name for AgileChat')
 param agileChatDatabaseName string = 'AgileChat'
 
+@description('Flag to control deployment of OpenAI models')
+param deployOpenAiModels bool = false
+
 var deployAzueOpenAi = (!empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride)) || (empty(apimAiEndpointOverride) && !empty(apimAiEmbeddingsEndpointOverride)) || (empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride))
 
 module platform 'platform.bicep' = {
@@ -106,6 +109,7 @@ module platform 'platform.bicep' = {
     openAiLocation: openAILocation
     openAiSkuName: openAISku
     deployAzueOpenAi: deployAzueOpenAi
+    deployOpenAiModels: deployOpenAiModels
   }
 }
 

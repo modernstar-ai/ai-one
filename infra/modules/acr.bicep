@@ -53,6 +53,7 @@ module containerRegistry 'br/public:avm/res/container-registry/registry:0.9.1' =
     }
     diagnosticSettings: [
       {
+        name: 'default'
         workspaceResourceId: logAnalyticsWorkspaceResourceId
       }
     ]

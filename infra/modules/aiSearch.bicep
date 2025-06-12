@@ -72,6 +72,7 @@ module aiSearch 'br/public:avm/res/search/search-service:0.10.0' = {
     roleAssignments: roleAssignments
     diagnosticSettings: [
       {
+        name: 'default'
         workspaceResourceId: logAnalyticsWorkspaceResourceId
       }
     ]

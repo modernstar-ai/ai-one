@@ -77,6 +77,7 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
     supportsHttpsTrafficOnly: true
     diagnosticSettings: [
       {
+        name: 'default'
         workspaceResourceId: logAnalyticsWorkspaceResourceId
       }
     ]

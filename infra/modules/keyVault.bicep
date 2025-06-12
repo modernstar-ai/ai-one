@@ -59,6 +59,7 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
     softDeleteRetentionInDays: 90
     diagnosticSettings: [
       {
+        name: 'default'
         workspaceResourceId: logAnalyticsWorkspaceResourceId
       }
     ]

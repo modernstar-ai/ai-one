@@ -40,7 +40,7 @@ param appServicePlanName string = toLower('${resourcePrefix}-app')
 param storageAccountName string = replace(('${projectName}${environmentName}sto'), '-', '')
 
 @description('Key Vault name')
-param keyVaultName string = toLower('${resourcePrefix}-kv')
+param keyVaultName string = toLower('${resourcePrefix}2-kv')
 
 @description('Azure Container Registry name')
 param acrName string = toLower(replace('${resourcePrefix}acr', '-', ''))
@@ -74,6 +74,9 @@ param openAiSkuName string = 'S0'
 
 @description('Whether to enable network isolation for resources')
 param networkIsolation bool = false
+
+@description('Flag to control deployment of OpenAI models')
+param deployOpenAiModels bool = false
 
 var openAiModelsArray = loadJsonContent('./openai-models.json')
 
@@ -221,7 +224,7 @@ module openAiModule './modules/openai.bicep' = if (deployAzueOpenAi) {
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
     networkIsolation: networkIsolation
     skuName: openAiSkuName
-    deployments: openAiSampleModels
+    deployments: deployOpenAiModels ? openAiSampleModels : []
   }
 }
 
