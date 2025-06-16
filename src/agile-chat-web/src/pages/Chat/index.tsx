@@ -17,6 +17,17 @@ import { fetchAssistantById } from '@/services/assistantservice';
 import useStreamStore from '@/stores/stream-store';
 import { createParser, EventSourceMessage } from 'eventsource-parser';
 import { useSettingsStore } from '@/stores/settings-store';
+import { Paperclip } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 
 const ChatPage = () => {
   const { threadId } = useParams();
@@ -36,6 +47,7 @@ const ChatPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const userInputRef = useRef<HTMLTextAreaElement>(null);
+  const fileUploadRef = useRef<HTMLInputElement>(null);
   const { settings } = useSettingsStore();
 
   useEffect(() => {
@@ -84,6 +96,16 @@ const ChatPage = () => {
       });
       prevMessagesRef.current = newMessages;
       clearStream();
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    setIsSending(true);
+    if (files && files.length > 0) {
+      const file = files[0];
+      console.log(file);
+      //setIsSending(false);
     }
   };
 
@@ -199,13 +221,54 @@ const ChatPage = () => {
             accessKey="i"
           />
 
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center relative">
             <Button onClick={handleSendMessage} disabled={isSending} aria-label="Send Chat" accessKey="j">
               {isSending ? 'Sending...' : 'Send'}
             </Button>
+            {/* UPLOAD FILE */}
+            <div className="relative">
+              <Button
+                onClick={() => fileUploadRef.current?.click()}
+                disabled={isSending}
+                size={'icon'}
+                variant={'outline'}
+                title="Upload File">
+                <Paperclip />
+              </Button>
+              <Input type="file" className="hidden" ref={fileUploadRef} onChange={handleFileUpload} />
+              <DropdownMenu>
+                <DropdownMenuTrigger disabled={isSending}>
+                  <Badge className="absolute right-1.5 top-8 h-4 select-none">0</Badge>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56  dark text-white">
+                  <DropdownMenuLabel ata-theme="dark">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">Files Uploaded</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+
+                  {/* Theme Options */}
+                  <DropdownMenuItem>
+                    <span>Light</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <span>Dark</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <span>System</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
             <p className="text-xs mx-auto">
-              {(settings?.aiDisclaimer && settings.aiDisclaimer != '') ? settings.aiDisclaimer : 'AI generated text can have mistakes. Check important info.'}
-              </p>
+              {settings?.aiDisclaimer && settings.aiDisclaimer != ''
+                ? settings.aiDisclaimer
+                : 'AI generated text can have mistakes. Check important info.'}
+            </p>
           </div>
         </div>
       </div>

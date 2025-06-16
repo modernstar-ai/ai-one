@@ -29,6 +29,7 @@ public class ChatThreads() : CarterModule("/api")
         //PUT
         threads.MapPut("/{id:guid}", UpdateThreadById);
         threads.MapPut("/Messages/{id:guid}", UpdateMessageById);
+        threads.MapPut("/Upload/{id:guid}", UploadFileToThreadById);
         //DELETE
         threads.MapDelete("/{id:guid}", DeleteThreadById);
     }
@@ -60,6 +61,12 @@ public class ChatThreads() : CarterModule("/api")
     private async Task<IResult> UpdateThreadById([FromServices] IMediator mediator, [FromBody] UpdateChatThreadDto chatThreadDto, [FromRoute] Guid id)
     {
         var command = chatThreadDto.Adapt<UpdateChatThreadById.Command>();
+        return await mediator.Send(command with {Id = id});
+    }
+    
+    private async Task<IResult> UploadFileToThreadById([FromServices] IMediator mediator, [FromForm] UploadFileToThreadDto uploadFileDto, [FromRoute] Guid id)
+    {
+        var command = uploadFileDto.Adapt<UpdateChatThreadById.Command>();
         return await mediator.Send(command with {Id = id});
     }
     
