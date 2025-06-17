@@ -32,7 +32,8 @@ public static class Constants
     #endregion
 
     #region BlobStorageConstants
-    public const string BlobContainerName = "index-content";
+    public const string BlobIndexContainerName = "index-content";
+    public const string BlobThreadContainerName = "thread-content";
     #endregion
 
     #region PromptPaths

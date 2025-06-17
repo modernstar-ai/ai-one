@@ -9,16 +9,15 @@ using Microsoft.Extensions.Logging;
 
 namespace Agile.Chat.Application.ChatThreads.Commands;
 
-public static class DeleteChatThreadById
+public static class DeleteThreadFileById
 {
-    public record Command(Guid Id) : IRequest<IResult>;
+    public record Command(Guid ThreadId, Guid FileId) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> logger, 
         IHttpContextAccessor contextAccessor, 
         IChatThreadService chatThreadService, 
-        IChatMessageService chatMessageService,
-        IChatThreadFileService chatThreadFileService,
-        IBlobStorage blobStorage) : IRequestHandler<Command, IResult>
+        IBlobStorage blobStorage,
+        IChatThreadFileService chatThreadFileService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -26,20 +25,17 @@ public static class DeleteChatThreadById
             logger.LogInformation("Fetched user: {Username}", username);
             if(string.IsNullOrWhiteSpace(username)) return Results.Forbid();
             
-            logger.LogInformation("Fetching Chat Thread to delete with Id {Id}", request.Id);
-            var chatThread = await chatThreadService.GetItemByIdAsync(request.Id.ToString(), ChatType.Thread.ToString());
+            logger.LogInformation("Fetching Chat Thread to delete with Id {Id}", request.ThreadId);
+            var chatThread = await chatThreadService.GetItemByIdAsync(request.ThreadId.ToString(), ChatType.Thread.ToString());
             if(chatThread == null) return Results.NotFound();
             if (!chatThread.UserId.Equals(username, StringComparison.InvariantCultureIgnoreCase))
                 return Results.Forbid();
+            
+            var file = await chatThreadFileService.GetItemByIdAsync(request.FileId.ToString(), ChatType.File.ToString());
+            if(file == null) return Results.NotFound();
 
-            var files = await chatThreadFileService.GetAllAsync(request.Id.ToString());
-            await blobStorage.DeleteThreadFilesAsync(chatThread.Id);
-            await Task.WhenAll(files.Select(file => chatThreadFileService.DeleteItemByIdAsync(file.Id, ChatType.File.ToString())));
-            
-            await chatThreadService.DeleteItemByIdAsync(chatThread.Id, ChatType.Thread.ToString());
-            await chatMessageService.DeleteByThreadIdAsync(chatThread.Id);
-            logger.LogInformation("Deleted Chat Thread with Id {Id}", chatThread.Id);
-            
+            await blobStorage.DeleteThreadFileAsync(file.Name, request.ThreadId.ToString());
+            await chatThreadFileService.DeleteItemByIdAsync(file.Id, ChatType.File.ToString());
             return Results.Ok();
         }
     }
@@ -48,9 +44,13 @@ public static class DeleteChatThreadById
     {
         public Validator(ILogger<Validator> logger)
         {
-            RuleFor(request => request.Id)
+            RuleFor(request => request.ThreadId)
                 .NotNull()
-                .WithMessage("Id is required");
+                .WithMessage("ThreadId is required");
+            
+            RuleFor(request => request.FileId)
+                .NotNull()
+                .WithMessage("FileId is required");
         }
     }
 }

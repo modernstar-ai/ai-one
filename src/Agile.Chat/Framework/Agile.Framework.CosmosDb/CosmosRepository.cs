@@ -23,7 +23,8 @@ public abstract class CosmosRepository<T> : ICosmosRepository<T> where T : Aggre
     }
 
     //All the supported LINQ operations ref: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/linq-to-sql#supported-linq-operators
-    protected IOrderedQueryable<T> LinqQuery() => Container.GetItemLinqQueryable<T>(allowSynchronousQueryExecution: true);
+    protected IOrderedQueryable<T> LinqQuery(string? partitionKey = null) => Container.GetItemLinqQueryable<T>(allowSynchronousQueryExecution: true, 
+        requestOptions: partitionKey != null ? new QueryRequestOptions() {PartitionKey = new PartitionKey(partitionKey) } : null);
 
     protected async Task<List<T>> CollectResultsAsync(IQueryable<T> query)
     {

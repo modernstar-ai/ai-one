@@ -6,7 +6,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import SimpleHeading from '@/components/Heading-Simple';
 import MessageContent from '@/components/chat-page/message-content';
 import { ChatMessageArea } from '@/components/chat-page/chat-message-area';
-import { fetchChatThread, GetChatThreadMessages } from '@/services/chatthreadservice';
+import {
+  fetchChatThread,
+  GetChatThreadFiles,
+  GetChatThreadMessages,
+  UploadChatThreadFile
+} from '@/services/chatthreadservice';
 import { ChatThread, Message, MessageType } from '@/types/ChatThread';
 import { AxiosError } from 'axios';
 import { chat } from '@/services/chat-completions-service';
@@ -20,6 +25,7 @@ import { useSettingsStore } from '@/stores/settings-store';
 import { Paperclip } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { ChatThreadFile } from '@/types/ChatThread';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import { toast } from '@/components/ui/use-toast';
 
 const ChatPage = () => {
   const { threadId } = useParams();
@@ -35,6 +42,7 @@ const ChatPage = () => {
 
   if (!threadId) navigate('/');
   const [thread, setThread] = useState<ChatThread | undefined>(undefined);
+  const [threadFiles, setThreadFiles] = useState<ChatThreadFile[] | undefined>(undefined);
   const [assistant, setAssistant] = useState<Assistant | undefined>(undefined);
 
   const [userInput, setUserInput] = useState<string>('');
@@ -55,10 +63,10 @@ const ChatPage = () => {
     setIsLoading(true);
     refreshThread().then((thread) => {
       if (thread?.assistantId) {
-        fetchAssistantById(thread.assistantId).then((assistant) => {
-          setAssistant(assistant ?? undefined);
-        });
+        refreshAssistant(thread.assistantId);
       }
+      refreshThreadFiles();
+
       GetChatThreadMessages(thread!.id)
         .then((messages) => {
           //setMessagesDb(messages);
@@ -73,6 +81,18 @@ const ChatPage = () => {
     if (!thread) navigate('/');
     setThread(thread!);
     return thread;
+  };
+
+  const refreshThreadFiles = async () => {
+    const files = await GetChatThreadFiles(threadId!);
+    setThreadFiles(files);
+  };
+
+  const refreshAssistant = async (assistantId: string) => {
+    const assistant = await fetchAssistantById(assistantId);
+    if (!assistant) navigate('/');
+    setAssistant(assistant!);
+    return assistant;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -99,13 +119,26 @@ const ChatPage = () => {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    setIsSending(true);
-    if (files && files.length > 0) {
+    if (!files || files.length === 0) return;
+
+    try {
+      setIsSending(true);
       const file = files[0];
-      console.log(file);
-      //setIsSending(false);
+      const formData = new FormData();
+      formData.append('file', file);
+      await UploadChatThreadFile(threadId!, formData);
+      await refreshThreadFiles();
+    } catch (e: any) {
+      toast({
+        title: 'Error',
+        description: <p>{e.response.data ?? e.message}</p>,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSending(false);
+      e.target.files = null;
     }
   };
 
@@ -238,7 +271,7 @@ const ChatPage = () => {
               <Input type="file" className="hidden" ref={fileUploadRef} onChange={handleFileUpload} />
               <DropdownMenu>
                 <DropdownMenuTrigger disabled={isSending}>
-                  <Badge className="absolute right-1.5 top-8 h-4 select-none">0</Badge>
+                  <Badge className="absolute right-1.5 top-8 h-4 select-none">{threadFiles?.length ?? '...'}</Badge>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56  dark text-white">
                   <DropdownMenuLabel ata-theme="dark">
@@ -248,16 +281,12 @@ const ChatPage = () => {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
 
-                  {/* Theme Options */}
-                  <DropdownMenuItem>
-                    <span>Light</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Dark</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>System</span>
-                  </DropdownMenuItem>
+                  {/* FILES LIST */}
+                  {threadFiles?.map((file) => (
+                    <DropdownMenuItem>
+                      <span>{file.name}</span>
+                    </DropdownMenuItem>
+                  ))}
 
                   <DropdownMenuSeparator />
                 </DropdownMenuContent>

@@ -24,14 +24,16 @@ public class ChatThreads() : CarterModule("/api")
         threads.MapGet("/", GetThreads);
         threads.MapGet("/{id:guid}", GetThreadById);
         threads.MapGet("/Messages/{id:guid}", GetMessagesByThreadId);
+        threads.MapGet("/Files/{id:guid}", GetFilesByThreadId);
         //POST
         threads.MapPost("/", CreateThread);
         //PUT
         threads.MapPut("/{id:guid}", UpdateThreadById);
         threads.MapPut("/Messages/{id:guid}", UpdateMessageById);
-        threads.MapPut("/Upload/{id:guid}", UploadFileToThreadById);
+        threads.MapPut("/Upload/{id:guid}", UploadFileToThreadById).DisableAntiforgery();
         //DELETE
         threads.MapDelete("/{id:guid}", DeleteThreadById);
+        threads.MapDelete("/{threadId:guid}/{fileId:guid}", DeleteFileByThreadId);
     }
 
     private async Task<IResult> GetThreads([FromServices] IMediator mediator)
@@ -52,6 +54,12 @@ public class ChatThreads() : CarterModule("/api")
         return await mediator.Send(query);
     }
     
+    private async Task<IResult> GetFilesByThreadId([FromServices] IMediator mediator, Guid id)
+    {
+        var query = new GetThreadFilesById.Query(id);
+        return await mediator.Send(query);
+    }
+    
     private async Task<IResult> CreateThread([FromServices] IMediator mediator, [FromBody] CreateChatThreadDto chatThreadDto)
     {
         var command = chatThreadDto.Adapt<CreateChatThread.Command>();
@@ -66,8 +74,8 @@ public class ChatThreads() : CarterModule("/api")
     
     private async Task<IResult> UploadFileToThreadById([FromServices] IMediator mediator, [FromForm] UploadFileToThreadDto uploadFileDto, [FromRoute] Guid id)
     {
-        var command = uploadFileDto.Adapt<UpdateChatThreadById.Command>();
-        return await mediator.Send(command with {Id = id});
+        var command = new UploadFileToThreadById.Command(id, uploadFileDto.File);
+        return await mediator.Send(command);
     }
     
     private async Task<IResult> UpdateMessageById([FromServices] IMediator mediator, [FromBody] Dictionary<MetadataType, object> dto, [FromRoute] Guid id)
@@ -79,6 +87,12 @@ public class ChatThreads() : CarterModule("/api")
     private async Task<IResult> DeleteThreadById([FromServices] IMediator mediator, Guid id)
     {
         var command = new DeleteChatThreadById.Command(id);
+        return await mediator.Send(command);
+    }
+    
+    private async Task<IResult> DeleteFileByThreadId([FromServices] IMediator mediator, [FromRoute] Guid threadId, [FromRoute] Guid fileId)
+    {
+        var command = new DeleteThreadFileById.Command(threadId, fileId);
         return await mediator.Send(command);
     }
 }

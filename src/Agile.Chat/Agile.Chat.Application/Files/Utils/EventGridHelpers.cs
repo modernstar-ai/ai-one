@@ -79,7 +79,7 @@ public static class EventGridHelpers
         
         return JsonSerializer.Serialize(new
         {
-            subject = $"/blobServices/default/containers/{Constants.BlobContainerName}/blobs/{file.IndexName}/{folder}{file.Name}",
+            subject = $"/blobServices/default/containers/{Constants.BlobIndexContainerName}/blobs/{file.IndexName}/{folder}{file.Name}",
             eventType = type,
             data = new
             {
