@@ -7,6 +7,7 @@ import SimpleHeading from '@/components/Heading-Simple';
 import MessageContent from '@/components/chat-page/message-content';
 import { ChatMessageArea } from '@/components/chat-page/chat-message-area';
 import {
+  DeleteChatThreadFile,
   fetchChatThread,
   GetChatThreadFiles,
   GetChatThreadMessages,
@@ -22,7 +23,7 @@ import { fetchAssistantById } from '@/services/assistantservice';
 import useStreamStore from '@/stores/stream-store';
 import { createParser, EventSourceMessage } from 'eventsource-parser';
 import { useSettingsStore } from '@/stores/settings-store';
-import { Paperclip } from 'lucide-react';
+import { Paperclip, XIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ChatThreadFile } from '@/types/ChatThread';
@@ -130,6 +131,11 @@ const ChatPage = () => {
       formData.append('file', file);
       await UploadChatThreadFile(threadId!, formData);
       await refreshThreadFiles();
+      toast({
+        title: 'Success',
+        description: <p>File {file.name} uploaded successfully</p>,
+        variant: 'default'
+      });
     } catch (e: any) {
       toast({
         title: 'Error',
@@ -139,6 +145,22 @@ const ChatPage = () => {
     } finally {
       setIsSending(false);
       e.target.files = null;
+    }
+  };
+
+  const handleFileDelete = async (fileId: string) => {
+    try {
+      setIsSending(true);
+      await DeleteChatThreadFile(threadId!, fileId);
+      await refreshThreadFiles();
+    } catch (e: any) {
+      toast({
+        title: 'Error',
+        description: <p>{e.response.data ?? e.message}</p>,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -283,9 +305,20 @@ const ChatPage = () => {
 
                   {/* FILES LIST */}
                   {threadFiles?.map((file) => (
-                    <DropdownMenuItem>
-                      <span>{file.name}</span>
-                    </DropdownMenuItem>
+                    <div className="flex items-center">
+                      <DropdownMenuItem disabled={true}>
+                        <span className="truncate">{file.name}</span>
+                      </DropdownMenuItem>
+                      <Button
+                        size={'icon'}
+                        variant={'outline'}
+                        className="w-6 h-6 ms-auto"
+                        disabled={isSending}
+                        title="Remove file"
+                        onClick={() => handleFileDelete(file.id)}>
+                        <XIcon />
+                      </Button>
+                    </div>
                   ))}
 
                   <DropdownMenuSeparator />

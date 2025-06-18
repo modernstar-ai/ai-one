@@ -44,6 +44,7 @@ public static class Chat
         IChatThreadService chatThreadService,
         IChatMessageService chatMessageService,
         IAzureAiSearch azureAiSearch,
+        IChatThreadFileService chatThreadFileService,
         IAuditService<Message> chatMessageAuditService,
         IAuditService<ChatThread> chatThreadAuditService) : IRequestHandler<Command, IResult>
     {
@@ -54,6 +55,7 @@ public static class Chat
             //Fetch what's needed to do chatting
             var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId, ChatType.Thread.ToString());
             var chatMessages = await chatMessageService.GetAllMessagesAsync(thread!.Id);
+            var files = await chatThreadFileService.GetAllAsync(request.ThreadId);
             var chatHistory = chatMessages.ParseSemanticKernelChatHistory(request.UserPrompt);
             var assistant = !string.IsNullOrWhiteSpace(thread.AssistantId)
                 ? await assistantService.GetItemByIdAsync(thread.AssistantId)
@@ -61,11 +63,13 @@ public static class Chat
 
             _chatContainer = new ChatContainer
             {
+                UserPrompt = request.UserPrompt,
                 Thread = thread,
                 Assistant = assistant,
                 AzureAiSearch = azureAiSearch,
                 Messages = chatMessages,
-                AppKernel = appKernel
+                AppKernel = appKernel,
+                ThreadFiles = files
             };
 
             var hasIndex = !string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName);
@@ -84,21 +88,21 @@ public static class Chat
             var chatSettings = ChatUtils.ParseAzureOpenAiPromptExecutionSettings(assistant, thread);
             IResult assistantResult = assistant?.Type switch
             {
-                AssistantType.Chat or null => await GetChatResultAsync(request.UserPrompt, assistant?.PromptOptions?.SystemPrompt, assistant?.FilterOptions, chatSettings, chatHistory),
-                AssistantType.Search => await GetSearchResultAsync(request.UserPrompt, assistant?.PromptOptions?.SystemPrompt, assistant?.FilterOptions, chatSettings),
+                AssistantType.Chat or null => await GetChatResultAsync(chatSettings, chatHistory),
+                AssistantType.Search => await GetSearchResultAsync(chatSettings),
                 _ => Results.BadRequest("Unknown chat type")
             };
 
             if (assistantResult is BadRequest<string> badRequest)
             {
-                var (userMessage, assistantMessage, citationMessages) = CreateUserAssistantAndCitationMessages(thread.Id, request.UserPrompt, badRequest.Value ?? string.Empty, null);
+                var (userMessage, assistantMessage, citationMessages) = CreateUserAssistantAndCitationMessages(badRequest.Value ?? string.Empty, null);
                 await SaveAuditLogsAsync(userMessage, assistantMessage, citationMessages);
                 return badRequest;
             }
 
             //Get the full response and metadata
             var (assistantResponse, assistantMetadata) = GetAssistantResponseAndMetadata(assistant?.Type, assistantResult);
-            await SaveUserAssistantCitationsMessagesAsync(thread.Id, request.UserPrompt, assistantResponse, assistantMetadata);
+            await SaveUserAssistantCitationsMessagesAsync(assistantResponse, assistantMetadata);
 
             //If its a new chat, update the threads name, otherwise just update the last modified date
             thread.Update(chatHistory.Count <= 1 ? TruncateUserPrompt(request.UserPrompt) : thread.Name, thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions);
@@ -127,40 +131,35 @@ public static class Chat
                     break;
             }
 
-            if (_chatContainer.Assistant?.RagType == RagType.Plugin && _chatContainer.Citations.Count > 0)
+            var referencedCitations = new List<ChatContainerCitation>();
+            var docIndex = 1;
+            //Regular index based citations processing
+            for (var i = 0; i < _chatContainer.Citations.Count; i++)
             {
-                var citations = _chatContainer.Citations.Cast<ChatContainerCitationExt>()
-                    .Where(x => assistantResponse?.Contains($"[doc{x.ReferenceNumber}]", StringComparison.InvariantCultureIgnoreCase) ?? false).ToList();
+                if (!assistantResponse!.Contains($"[doc{i + 1}]")) continue;
                 
-                if (citations.Count > 0)
-                {
-                    metadata.Add(MetadataType.Citations, citations.Adapt<List<ChatContainerCitation>>());
-
-                    for (var i = 0; i < citations.Count; i++)
-                    {
-                        var citation = citations[i];
-                        var updatedCitationNumber = i + 1;
-                        assistantResponse = assistantResponse!.Replace($"[doc{citation.ReferenceNumber}]", $"⁽{ToSuperscript(updatedCitationNumber)}⁾");
-                    }
-                }
+                assistantResponse = assistantResponse.Replace($"[doc{i + 1}]", $"⁽{ToSuperscript(docIndex)}⁾");
+                docIndex++;
+                referencedCitations.Add(_chatContainer.Citations[i]);
             }
-            else if (_chatContainer.Assistant?.RagType == RagType.AzureSearchChatDataSource)
+            
+            //File based citations processing
+            for (var i = 0; i < _chatContainer.ThreadFiles.Count; i++)
             {
-                var citations = new List<ChatContainerCitation>();
-                var fetchedCitations = _chatContainer.Citations.Cast<ChatContainerCitation>().ToList();
-                var docIndex = 1;
-                for (var i = 0; i < fetchedCitations.Count; i++)
-                {
-                    if (!assistantResponse!.Contains($"[doc{i + 1}]")) continue;
-
-                    citations.Add(fetchedCitations[i]);
-                    assistantResponse = assistantResponse.Replace($"[doc{i + 1}]", $"⁽{ToSuperscript(docIndex)}⁾");
-                    docIndex++;
-                }
-
-                if (citations.Count > 0)
-                    metadata.Add(MetadataType.Citations, citations);
+                if (!assistantResponse!.Contains($"[file{i + 1}]")) continue;
+                
+                assistantResponse = assistantResponse.Replace($"[file{i + 1}]", $"⁽{ToSuperscript(docIndex)}⁾");
+                var citation = new ChatContainerCitation(docIndex, 
+                    _chatContainer.ThreadFiles[i].Content,
+                    _chatContainer.ThreadFiles[i].Name, 
+                    _chatContainer.ThreadFiles[i].Url);
+                
+                docIndex++;
+                referencedCitations.Add(citation);
             }
+
+            if (referencedCitations.Count > 0)
+                metadata.Add(MetadataType.Citations, referencedCitations);
 
             return (assistantResponse!, metadata);
         }
@@ -183,8 +182,11 @@ public static class Chat
             return number.ToString().Select(x => map[x]).Aggregate("", (x, y) => x + y);
         }
 
-        private async Task<IResult> GetChatResultAsync(string userPrompt, string? assistantSystemPrompt, AssistantFilterOptions? assistantFilterOptions, AzureOpenAIPromptExecutionSettings chatSettings, ChatHistory chatHistory)
+        private async Task<IResult> GetChatResultAsync(AzureOpenAIPromptExecutionSettings chatSettings, ChatHistory chatHistory)
         {
+            var assistantSystemPrompt = _chatContainer.Assistant?.PromptOptions.SystemPrompt;
+            var assistantFilterOptions = _chatContainer.Assistant?.FilterOptions;
+            
             var hasIndex = !string.IsNullOrWhiteSpace(assistantFilterOptions?.IndexName);
             if (!hasIndex)
             {
@@ -198,19 +200,23 @@ public static class Chat
                 new Dictionary<string, object?>
                 {
                     { "assistantSystemPrompt", assistantSystemPrompt },
-                    { "userPrompt", userPrompt },
+                    { "userPrompt", _chatContainer.UserPrompt },
                     { "chatHistory", chatHistory.TakeLast(14).ToList() },
-                    { "limitKnowledge", assistantFilterOptions?.LimitKnowledgeToIndex ?? false}
+                    { "limitKnowledge", assistantFilterOptions?.LimitKnowledgeToIndex ?? false},
+                    { "threadFiles", ChatUtils.GetThreadFilesString(_chatContainer.ThreadFiles) }
                 });
 
             var assistantFullResponse = await ChatUtils.StreamAndGetAssistantResponseAsync(contextAccessor.HttpContext!, indexStream!, _chatContainer);
             return assistantFullResponse;
         }
 
-        private async Task<IResult> GetSearchResultAsync(string userPrompt, string? assistantSystemPrompt, AssistantFilterOptions? assistantFilterOptions, AzureOpenAIPromptExecutionSettings chatSettings)
+        private async Task<IResult> GetSearchResultAsync(AzureOpenAIPromptExecutionSettings chatSettings)
         {
             if (_chatContainer.Assistant?.RagType == RagType.AzureSearchChatDataSource)
                 throw new Exception("Azure Search Chat Data Source is currently not supported with Search type Assistants.");
+            
+            var assistantSystemPrompt = _chatContainer.Assistant?.PromptOptions.SystemPrompt;
+            var assistantFilterOptions = _chatContainer.Assistant?.FilterOptions;
 
             try
             {
@@ -223,8 +229,9 @@ public static class Chat
                     new Dictionary<string, object?>
                     {
                         {"assistantSystemPrompt", assistantSystemPrompt},
-                        { "userPrompt", userPrompt },
-                        { "limitKnowledge", assistantFilterOptions?.LimitKnowledgeToIndex ?? false}
+                        { "userPrompt", _chatContainer.UserPrompt },
+                        { "limitKnowledge", assistantFilterOptions?.LimitKnowledgeToIndex ?? false},
+                        { "threadFiles", ChatUtils.GetThreadFilesString(_chatContainer.ThreadFiles) }
                     });
                 ChatUtils.CheckForInnerCitations(aiResponse.GetValue<ChatMessageContent>()!, _chatContainer);
                 var searchResponse = JsonSerializer.Deserialize<SearchResponseDto>(aiResponse.ToString());
@@ -240,10 +247,10 @@ public static class Chat
             }
         }
 
-        private async Task SaveUserAssistantCitationsMessagesAsync(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
+        private async Task SaveUserAssistantCitationsMessagesAsync(string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
         {
             // Create messages
-            var (userMessage, assistantMessage, citationMessages) = CreateUserAssistantAndCitationMessages(threadId, userPrompt, assistantResponse, assistantMetadata);
+            var (userMessage, assistantMessage, citationMessages) = CreateUserAssistantAndCitationMessages(assistantResponse, assistantMetadata);
 
             // Save messages 
             await Task.WhenAll([
@@ -261,12 +268,12 @@ public static class Chat
                 new List<Message> { userMessage, assistantMessage });
         }
 
-        private (Message userMessage, Message assistantMessage, List<Message> citationMessages) CreateUserAssistantAndCitationMessages(string threadId, string userPrompt, string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
+        private (Message userMessage, Message assistantMessage, List<Message> citationMessages) CreateUserAssistantAndCitationMessages(string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
         {
-            var userMessage = Message.CreateUser(threadId, userPrompt);
-            var assistantMessage = Message.CreateAssistant(threadId, assistantResponse);
+            var userMessage = Message.CreateUser(_chatContainer.Thread.Id, _chatContainer.UserPrompt);
+            var assistantMessage = Message.CreateAssistant(_chatContainer.Thread.Id, assistantResponse);
             var citationMessages = assistantMetadata?.TryGetValue(MetadataType.Citations, out var citations) ?? false ?
-                (citations as List<ChatContainerCitation>)!.Select(c => Message.CreateCitation(threadId, c.Content)).ToList() : [];
+                (citations as List<ChatContainerCitation>)!.Select(c => Message.CreateCitation(_chatContainer.Thread.Id, c.Content)).ToList() : [];
 
             if (assistantMetadata != null)
             {

@@ -107,3 +107,8 @@ export async function UploadChatThreadFile(chatThreadId: string, formData: FormD
   const apiUrl = getApiUrl(`/Upload/${chatThreadId}`);
   return axios.put(apiUrl, formData);
 }
+
+export async function DeleteChatThreadFile(threadId: string, fileId: string) {
+  const apiUrl = getApiUrl(`/${threadId}/${fileId}`);
+  return axios.delete(apiUrl);
+}

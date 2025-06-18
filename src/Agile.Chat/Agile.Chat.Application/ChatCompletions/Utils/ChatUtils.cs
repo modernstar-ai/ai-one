@@ -6,6 +6,7 @@ using Agile.Chat.Application.ChatCompletions.Models;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Assistants.ValueObjects;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
+using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Framework.AzureAiSearch;
 using Agile.Framework.AzureAiSearch.AiSearchConstants;
 using Agile.Framework.AzureAiSearch.Models;
@@ -70,12 +71,7 @@ public static class ChatUtils
         var messageContext = update.GetMessageContext();
         if (messageContext is { Citations.Count: > 0 })
         {
-            chatContainer.Citations.AddRange(messageContext.Citations.Select(c => new ChatContainerCitation
-            {
-                Name = c.Title,
-                Url = c.Url,
-                Content = c.Content
-            }));
+            chatContainer.Citations.AddRange(messageContext.Citations.Select((c, i) => new ChatContainerCitation(i + 1, c.Content, c.Title, c.Url)));
         }
     }
 
@@ -85,12 +81,7 @@ public static class ChatUtils
         var messageContext = (update.InnerContent as OpenAI.Chat.ChatCompletion).GetMessageContext();
         if (messageContext is { Citations.Count: > 0 })
         {
-            chatContainer.Citations.AddRange(messageContext.Citations.Select(c => new ChatContainerCitation
-            {
-                Name = c.Title,
-                Url = c.Url,
-                Content = c.Content
-            }));
+            chatContainer.Citations.AddRange(messageContext.Citations.Select((c, i) => new ChatContainerCitation(i + 1, c.Content, c.Title, c.Url)));
         }
     }
 
@@ -137,6 +128,16 @@ public static class ChatUtils
             Strictness = chatThread.FilterOptions.Strictness,
             TopNDocuments = chatThread.FilterOptions.DocumentLimit,
         };
+    }
+
+    public static string? GetThreadFilesString(List<ChatThreadFile> threadFiles)
+    {
+        if (threadFiles.Count == 0) return null;
+        
+        var citations = threadFiles.Select((file, index) =>
+            new ChatContainerCitation(index + 1, file.Content, file.Name, file.Url).ToString());
+
+        return string.Join("\n-----------------------\n", citations);
     }
 
 }

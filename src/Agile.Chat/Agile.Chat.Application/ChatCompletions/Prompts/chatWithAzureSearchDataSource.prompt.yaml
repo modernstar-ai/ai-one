@@ -3,6 +3,15 @@ template: |
   {{#if assistantSystemPrompt}}
     <message role="system">{{assistantSystemPrompt}}</message>
   {{/if}}
+  {{#if threadFiles}}
+    <message role="system">Here are some special uploaded files attached as context for the conversation. You MUST add citations to ANY part of the responses you create with the help/assistance of the file contents provided to you in any way shape or form.
+  In longer responses, you must avoid adding all the citations at the end of the response. Spread your citations out at each part of the response you use references.
+  The citations for these special uploaded files must be in the following format:
+  [file{DOC_NUMBER}] where {DOC_NUMBER} is the ReferenceNumber. i.e. [file1], [file3], [file12] etc.
+  
+  Files:
+  {{threadFiles}}</message>
+  {{/if}}
   {{#each chatHistory}}
   <message role="{{this.Role}}">{{this.Content}}</message>
   {{/each}}
@@ -18,3 +27,6 @@ input_variables:
   - name:          userPrompt
     description:   The message from the user
     is_required:   true
+  - name:          threadFiles
+    description:   The files uploaded to a chat thread
+    is_required:   false

@@ -12,6 +12,14 @@ template: |
   {{#if limitKnowledge}}
   Your knowledge is limited to the documents you are provided from tool calls. If they are not relevant to the question asked, Your response MUST BE "The requested information is not available in the retrieved data. Please try another query or topic."
   {{/if}}</message>
+  {{#if threadFiles}}
+    <message role="system">Here are some special uploaded files attached as context for the conversation. Citations must be added for this special case if the information is used as part of your response and must follow the same guidelines and rules stated previously only with the exception of formatting differences.
+  The citations for these special uploaded files must be in the following format:
+  [file{DOC_NUMBER}] where {DOC_NUMBER} is the ReferenceNumber. i.e. [file1], [file3], [file12] etc.
+  
+  Files:
+  {{threadFiles}}</message>
+  {{/if}}
   {{#each chatHistory}}
   <message role="{{this.Role}}">{{this.Content}}</message>
   {{/each}}

@@ -64,7 +64,9 @@ export function CitationSheet(props: CitationSheetProps) {
             <Input
               readOnly={true}
               id="name"
-              value={decodeURI(new URL(citation.url).pathname).replace(/\/index-content\/[^/]+\//, '')}
+              value={decodeURI(new URL(citation.url).pathname)
+                .replace(/\/index-content\/[^/]+\//, '')
+                .replace(/\/thread-content\/[^/]+\//, '')}
               className=""
             />
             <Button
@@ -73,7 +75,9 @@ export function CitationSheet(props: CitationSheetProps) {
               title="Copy"
               onClick={() => {
                 navigator.clipboard.writeText(
-                  decodeURI(new URL(citation.url).pathname).replace(/\/index-content\/[^/]+\//, '')
+                  decodeURI(new URL(citation.url).pathname)
+                    .replace(/\/index-content\/[^/]+\//, '')
+                    .replace(/\/thread-content\/[^/]+\//, '')
                 );
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1000);
