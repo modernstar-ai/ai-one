@@ -267,6 +267,7 @@ const ChatPage = () => {
           <Textarea
             ref={userInputRef}
             placeholder="Type your message here..."
+            disabled={isSending}
             className="w-full mb-2"
             rows={4}
             onChange={(e) => setUserInput(e.target.value)}
@@ -278,7 +279,7 @@ const ChatPage = () => {
 
           <div className="flex gap-2 items-center relative">
             <Button onClick={handleSendMessage} disabled={isSending} aria-label="Send Chat" accessKey="j">
-              {isSending ? 'Sending...' : 'Send'}
+              {isSending ? 'Loading...' : 'Send'}
             </Button>
             {/* UPLOAD FILE */}
             {(!thread.assistantId || assistant?.filterOptions.allowInThreadFileUploads) && (
