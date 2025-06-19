@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.Audits.Services;
 using Agile.Chat.Application.ChatThreads.Services;
 using Agile.Chat.Application.Files.Utils;
@@ -23,7 +24,8 @@ public static class UploadFileToThreadById
     public class Handler(ILogger<Handler> logger, 
         IAuditService<ChatThread> chatThreadAuditService, 
         IHttpContextAccessor contextAccessor, 
-        IChatThreadService chatThreadService, 
+        IChatThreadService chatThreadService,
+        IAssistantService assistantService,
         IChatThreadFileService chatThreadFileService,
         IBlobStorage blobStorage,
         IDocumentIntelligence documentIntelligence) : IRequestHandler<Command, IResult>
@@ -39,6 +41,13 @@ public static class UploadFileToThreadById
             if(chatThread is null) return Results.NotFound();
             if (!chatThread.UserId.Equals(username, StringComparison.InvariantCultureIgnoreCase))
                 return Results.Forbid();
+
+            if (!string.IsNullOrWhiteSpace(chatThread.AssistantId))
+            {
+                var assistant = await assistantService.GetItemByIdAsync(chatThread.AssistantId);
+                if (assistant != null && !assistant.FilterOptions.AllowInThreadFileUploads)
+                    return Results.BadRequest("In thread file uploads are disabled for this assistant");
+            }
             
             logger.LogInformation("Getting ChatThread files");
             var files = await chatThreadFileService.GetAllAsync(request.Id.ToString());

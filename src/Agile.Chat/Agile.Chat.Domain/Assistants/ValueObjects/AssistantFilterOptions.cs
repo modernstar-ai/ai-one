@@ -6,6 +6,7 @@ public class AssistantFilterOptions
 {
     public string IndexName { get; set; }
     public bool LimitKnowledgeToIndex { get; set; } = false;
+    public bool AllowInThreadFileUploads { get; set; } = false;
     public int DocumentLimit { get; set; }
     public int? Strictness { get; set; } = null;
     public List<string> Folders { get; set; } = new();

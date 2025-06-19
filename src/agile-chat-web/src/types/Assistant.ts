@@ -41,6 +41,7 @@ export interface AssistantPromptOptions {
 export interface AssistantFilterOptions {
   indexName: string;
   limitKnowledgeToIndex: boolean;
+  allowInThreadFileUploads: boolean;
   documentLimit: number;
   strictness?: number;
   folders: string[];

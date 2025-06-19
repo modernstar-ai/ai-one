@@ -47,6 +47,7 @@ const AssistantPromptOptionsSchema = z.object({
 const AssistantFilterOptionsSchema = z.object({
   indexName: z.string(),
   limitKnowledgeToIndex: z.boolean(),
+  allowInThreadFileUploads: z.boolean(),
   documentLimit: z.number().int(),
   strictness: z.number().min(1).max(5).optional(),
   folders: z.array(z.string()),
@@ -100,6 +101,7 @@ export default function AssistantForm() {
       filterOptions: {
         indexName: '',
         limitKnowledgeToIndex: false,
+        allowInThreadFileUploads: false,
         documentLimit: 5,
         strictness: undefined,
         folders: [],
@@ -141,6 +143,7 @@ export default function AssistantForm() {
           filterOptions: {
             indexName: file.filterOptions.indexName,
             limitKnowledgeToIndex: file.filterOptions.limitKnowledgeToIndex,
+            allowInThreadFileUploads: file.filterOptions.allowInThreadFileUploads,
             documentLimit: file.filterOptions.documentLimit,
             strictness: file.filterOptions.strictness ?? undefined,
             folders: file.filterOptions.folders ?? [],
@@ -396,6 +399,22 @@ export default function AssistantForm() {
                     <FormItem className="flex items-center space-y-0">
                       <FormLabel htmlFor="container-select" className="my-auto">
                         Limit Assistant knowledge to container only
+                      </FormLabel>
+                      <FormControl>
+                        <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="filterOptions.allowInThreadFileUploads"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-y-0">
+                      <FormLabel htmlFor="container-select" className="my-auto">
+                        Allow in thread file uploads
                       </FormLabel>
                       <FormControl>
                         <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />

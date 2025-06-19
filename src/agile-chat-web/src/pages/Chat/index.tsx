@@ -281,50 +281,52 @@ const ChatPage = () => {
               {isSending ? 'Sending...' : 'Send'}
             </Button>
             {/* UPLOAD FILE */}
-            <div className="relative">
-              <Button
-                onClick={() => fileUploadRef.current?.click()}
-                disabled={isSending}
-                size={'icon'}
-                variant={'outline'}
-                title="Upload File">
-                <Paperclip />
-              </Button>
-              <Input type="file" className="hidden" ref={fileUploadRef} onChange={handleFileUpload} />
-              <DropdownMenu>
-                <DropdownMenuTrigger disabled={isSending}>
-                  <Badge className="absolute right-1.5 top-8 h-4 select-none">{threadFiles?.length ?? '...'}</Badge>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56  dark text-white">
-                  <DropdownMenuLabel ata-theme="dark">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">Files Uploaded</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+            {(!thread.assistantId || assistant?.filterOptions.allowInThreadFileUploads) && (
+              <div className="relative">
+                <Button
+                  onClick={() => fileUploadRef.current?.click()}
+                  disabled={isSending}
+                  size={'icon'}
+                  variant={'outline'}
+                  title="Upload File">
+                  <Paperclip />
+                </Button>
+                <Input type="file" className="hidden" ref={fileUploadRef} onChange={handleFileUpload} />
+                <DropdownMenu>
+                  <DropdownMenuTrigger disabled={isSending}>
+                    <Badge className="absolute right-1.5 top-8 h-4 select-none">{threadFiles?.length ?? '...'}</Badge>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56  dark text-white">
+                    <DropdownMenuLabel ata-theme="dark">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">Files Uploaded</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
 
-                  {/* FILES LIST */}
-                  {threadFiles?.map((file) => (
-                    <div className="flex items-center">
-                      <DropdownMenuItem disabled={true}>
-                        <span className="truncate">{file.name}</span>
-                      </DropdownMenuItem>
-                      <Button
-                        size={'icon'}
-                        variant={'outline'}
-                        className="w-6 h-6 ms-auto"
-                        disabled={isSending}
-                        title="Remove file"
-                        onClick={() => handleFileDelete(file.id)}>
-                        <XIcon />
-                      </Button>
-                    </div>
-                  ))}
+                    {/* FILES LIST */}
+                    {threadFiles?.map((file) => (
+                      <div className="flex items-center">
+                        <DropdownMenuItem disabled={true}>
+                          <span className="truncate">{file.name}</span>
+                        </DropdownMenuItem>
+                        <Button
+                          size={'icon'}
+                          variant={'outline'}
+                          className="w-6 h-6 ms-auto"
+                          disabled={isSending}
+                          title="Remove file"
+                          onClick={() => handleFileDelete(file.id)}>
+                          <XIcon />
+                        </Button>
+                      </div>
+                    ))}
 
-                  <DropdownMenuSeparator />
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                    <DropdownMenuSeparator />
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
 
             <p className="text-xs mx-auto">
               {settings?.aiDisclaimer && settings.aiDisclaimer != ''
