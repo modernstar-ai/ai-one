@@ -46,6 +46,7 @@ module documentIntelligence 'br/public:avm/res/cognitive-services/account:0.10.2
     kind: 'FormRecognizer'
     sku: 'S0'
     customSubDomainName: name
+    disableLocalAuth:false
     publicNetworkAccess: networkIsolation ? 'Disabled' : 'Enabled'
     managedIdentities: {
       systemAssigned: true
