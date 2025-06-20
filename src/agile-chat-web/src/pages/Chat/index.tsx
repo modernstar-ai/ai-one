@@ -145,6 +145,7 @@ const ChatPage = () => {
     } finally {
       setIsSending(false);
       e.target.files = null;
+      (e.target as any).value = null;
     }
   };
 
@@ -306,8 +307,8 @@ const ChatPage = () => {
                     <DropdownMenuSeparator />
 
                     {/* FILES LIST */}
-                    {threadFiles?.map((file) => (
-                      <div className="flex items-center">
+                    {threadFiles?.map((file, index) => (
+                      <div className="flex items-center" key={file.name + index}>
                         <DropdownMenuItem disabled={true}>
                           <span className="truncate">{file.name}</span>
                         </DropdownMenuItem>

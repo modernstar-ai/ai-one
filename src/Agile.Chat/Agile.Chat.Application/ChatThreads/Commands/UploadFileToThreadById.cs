@@ -60,7 +60,7 @@ public static class UploadFileToThreadById
             try
             {
                 content = await documentIntelligence.CrackDocumentAsync(request.File.OpenReadStream(),
-                    FileHelpers.TextFormats.Contains(request.File.ContentType));
+                    FileHelpers.ContainsText(request.File.FileName));
             }
             catch (Exception ex)
             {

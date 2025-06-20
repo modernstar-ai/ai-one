@@ -108,7 +108,7 @@ export const ChatSearchResponse = (props: ChatSearchResponseProps) => {
                 citation.name &&
                 citation.url &&
                 chunks && (
-                  <div>
+                  <div key={'citation' + index}>
                     <div className="flex items-center gap-2">
                       <span className="font-bold mt-2">{index + 1})&nbsp;&nbsp;</span>
                       <FileViewingDialog citation={citation} />
