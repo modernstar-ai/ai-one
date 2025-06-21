@@ -6,7 +6,6 @@ export type Assistant = {
   description: string;
   greeting: string;
   type: AssistantType;
-  ragType: RagType;
   status: AssistantStatus;
   promptOptions: AssistantPromptOptions;
   filterOptions: AssistantFilterOptions;
@@ -18,11 +17,6 @@ export type Assistant = {
 export enum AssistantType {
   Chat = 'Chat',
   Search = 'Search'
-}
-
-export enum RagType {
-  Plugin = 'Plugin',
-  AzureSearchChatDataSource = 'AzureSearchChatDataSource'
 }
 
 export enum AssistantStatus {

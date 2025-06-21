@@ -22,9 +22,10 @@ public class ChatContainerCitation
                 {ReferenceNumber}
                 Title:
                 {Name}
-                Chunk:
+                Chunk (wrapped in stars *****):
+                **********************************
                 {ModelHelpers.RemoveExtraWhitespaces(Content)}
-
+                **********************************
                 """;
     }
 }

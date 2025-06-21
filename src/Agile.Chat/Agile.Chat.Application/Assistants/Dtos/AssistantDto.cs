@@ -12,7 +12,6 @@ public class AssistantDto
     public string Greeting { get; set; }
     
     public AssistantType Type { get; set; }
-    public RagType RagType { get; set; }
     public AssistantStatus Status { get; set; }
 
     public AssistantFilterOptions FilterOptions { get; set; } = new();

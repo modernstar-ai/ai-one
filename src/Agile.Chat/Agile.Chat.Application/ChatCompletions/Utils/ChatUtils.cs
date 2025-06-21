@@ -90,44 +90,13 @@ public static class ChatUtils
         var options = new AzureOpenAIPromptExecutionSettings()
         {
 #pragma warning disable SKEXP0010
-            FunctionChoiceBehavior = assistant?.RagType == RagType.Plugin ? FunctionChoiceBehavior.Auto() : null,
-            AzureChatDataSource = assistant?.RagType == RagType.AzureSearchChatDataSource && !string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName) ? GetAzureSearchDataSource(assistant, chatThread) : null,
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             ChatSystemPrompt = string.IsNullOrWhiteSpace(chatThread.PromptOptions.SystemPrompt) ? null : chatThread.PromptOptions.SystemPrompt,
             Temperature = chatThread.PromptOptions.Temperature,
             TopP = chatThread.PromptOptions.TopP,
             MaxTokens = chatThread.PromptOptions.MaxTokens
         };
         return options;
-    }
-
-#pragma warning disable AOAI001
-    private static AzureSearchChatDataSource GetAzureSearchDataSource(Assistant assistant, ChatThread chatThread)
-    {
-        return new AzureSearchChatDataSource
-        {
-            Endpoint = new Uri(Configs.AzureSearch.Endpoint),
-            Authentication = DataSourceAuthentication.FromApiKey(Configs.AzureSearch.ApiKey),
-            IndexName = assistant.FilterOptions.IndexName,
-            SemanticConfiguration = SearchConstants.SemanticConfigurationName,
-            Filter = new SearchFilterBuilder(assistant.FilterOptions.IndexName)
-                .AddFolders(assistant.FilterOptions.Folders)
-                .AddFolders(chatThread.FilterOptions.Folders)
-                .AddTags(assistant.FilterOptions.Tags)
-                .AddTags(chatThread.FilterOptions.Tags)
-                .Build(),
-            FieldMappings = new DataSourceFieldMappings()
-            {
-                ContentFieldNames = { nameof(AzureSearchDocument.Chunk) },
-                TitleFieldName = nameof(AzureSearchDocument.Name),
-                UrlFieldName = nameof(AzureSearchDocument.Url),
-                VectorFieldNames = { nameof(AzureSearchDocument.ChunkVector), nameof(AzureSearchDocument.NameVector) },
-            },
-            QueryType = DataSourceQueryType.VectorSemanticHybrid,
-            InScope = assistant.FilterOptions.LimitKnowledgeToIndex,
-            VectorizationSource = DataSourceVectorizer.FromDeploymentName(Configs.AzureOpenAi.EmbeddingsDeploymentName),
-            Strictness = chatThread.FilterOptions.Strictness,
-            TopNDocuments = chatThread.FilterOptions.DocumentLimit,
-        };
     }
 
     public static string? GetThreadFilesString(List<ChatThreadFile> threadFiles)

@@ -71,17 +71,12 @@ public static class Chat
                 AppKernel = appKernel,
                 ThreadFiles = files
             };
-
-            var hasIndex = !string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName);
-
-            if (assistant?.RagType == RagType.Plugin)
-            {
-                var sp = new ServiceCollection()
-                    .AddSingleton<ChatContainer>(_ => _chatContainer)
-                    .BuildServiceProvider();
-                if (hasIndex)
-                    appKernel.AddPlugin<AzureAiSearchRag>(sp);
-            }
+            
+            var sp = new ServiceCollection()
+                .AddSingleton<ChatContainer>(_ => _chatContainer)
+                .BuildServiceProvider();
+            if (!string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName))
+                appKernel.AddPlugin<AzureAiSearchRag>(sp);
 
 
             //Execute Chat Stream
@@ -187,16 +182,9 @@ public static class Chat
             var assistantSystemPrompt = _chatContainer.Assistant?.PromptOptions.SystemPrompt;
             var assistantFilterOptions = _chatContainer.Assistant?.FilterOptions;
             
-            var hasIndex = !string.IsNullOrWhiteSpace(assistantFilterOptions?.IndexName);
-            if (!hasIndex)
-            {
-                var assistantResp = await ChatUtils.StreamAndGetAssistantResponseAsync(contextAccessor.HttpContext!, appKernel.GetChatStream(chatHistory, chatSettings), _chatContainer);
-                return assistantResp;
-            }
-
             var indexStream = appKernel.GetPromptFileChatStream(chatSettings,
                 Constants.ChatCompletionsPromptsPath,
-                _chatContainer.Assistant?.RagType == RagType.Plugin ? Constants.Prompts.ChatWithRag : Constants.Prompts.ChatWithAzureSearchDataSource,
+                Constants.Prompts.ChatWithRag,
                 new Dictionary<string, object?>
                 {
                     { "assistantSystemPrompt", assistantSystemPrompt },
@@ -212,9 +200,6 @@ public static class Chat
 
         private async Task<IResult> GetSearchResultAsync(AzureOpenAIPromptExecutionSettings chatSettings)
         {
-            if (_chatContainer.Assistant?.RagType == RagType.AzureSearchChatDataSource)
-                throw new Exception("Azure Search Chat Data Source is currently not supported with Search type Assistants.");
-            
             var assistantSystemPrompt = _chatContainer.Assistant?.PromptOptions.SystemPrompt;
             var assistantFilterOptions = _chatContainer.Assistant?.FilterOptions;
 

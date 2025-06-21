@@ -17,7 +17,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice';
-import { Assistant, AssistantStatus, AssistantType, RagType } from '@/types/Assistant';
+import { Assistant, AssistantStatus, AssistantType } from '@/types/Assistant';
 //import { MultiSelectInput } from '@/components/ui-extended/multi-select';
 //import { useFolders } from '@/hooks/use-folders';
 
@@ -62,7 +62,6 @@ const formSchema = z.object({
   description: z.string(),
   greeting: z.string(),
   type: z.nativeEnum(AssistantType),
-  ragType: z.nativeEnum(RagType),
   status: z.nativeEnum(AssistantStatus),
   promptOptions: AssistantPromptOptionsSchema,
   filterOptions: AssistantFilterOptionsSchema,
@@ -90,7 +89,6 @@ export default function AssistantForm() {
       description: '',
       greeting: '',
       type: AssistantType.Chat,
-      ragType: RagType.AzureSearchChatDataSource,
       status: AssistantStatus.Draft,
       promptOptions: {
         systemPrompt: '',
@@ -132,7 +130,6 @@ export default function AssistantForm() {
           description: file.description,
           greeting: file.greeting,
           type: file.type,
-          ragType: file.ragType,
           status: file.status,
           promptOptions: {
             systemPrompt: file.promptOptions.systemPrompt,
@@ -183,16 +180,6 @@ export default function AssistantForm() {
   // }, [selectedToolIds, tools, form]);
 
   const onSubmit = async (values: FormValues) => {
-    if (values.ragType === RagType.AzureSearchChatDataSource && values.type === AssistantType.Search) {
-      const t = toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: "Assistant type 'Search' is not supported for this RAG Type"
-      });
-      setTimeout(() => t.dismiss(), 3000);
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       const fileData = values as Assistant;
@@ -359,34 +346,6 @@ export default function AssistantForm() {
                           </SelectContent>
                         </Select>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="ragType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel htmlFor="type-select">RAG Type</FormLabel>
-                      {form.getValues().type === AssistantType.Search &&
-                        form.getValues().ragType === RagType.AzureSearchChatDataSource && (
-                          <FormMessage>Warning: Assistant type 'Search' is not supported for this RAG Type</FormMessage>
-                        )}
-                      <Select onValueChange={(value) => field.onChange(value as RagType)} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger id="type-select" aria-labelledby="type-select-label">
-                            <SelectValue placeholder="Select RAG Type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={RagType.AzureSearchChatDataSource}>
-                            Azure Search Chat Datasource
-                          </SelectItem>
-                          <SelectItem value={RagType.Plugin}>Tool based</SelectItem>
-                        </SelectContent>
-                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
