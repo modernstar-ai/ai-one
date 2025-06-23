@@ -9,10 +9,23 @@ on:
         type: string
         default: "agaionev2devsto"
         required: true
+      environment_name:
+        description: "Select the application environment name - used to name resources"
+        type: choice
+        default: "dev"
+        options:
+          - "dev"
+          - "tst"
+          - "uat"
+          - "prod"
+        required: true
+
 env:
+  AGILE_CHAT_APPLICATION_SRC: "./src/Agile.Chat/Agile.Chat.Application"
 
 jobs:
   upload-to-blob:
+    environment: ${{ inputs.environment_name }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -34,5 +47,5 @@ jobs:
               --account-name ${{ inputs.storage_account }} \
               --destination config \
               --destination-path prompts \
-              --source src/Agile.Chat/Agile.Chat.Application/ChatCompletions/Prompts \
+              --source ${{ env.AGILE_CHAT_APPLICATION_SRC }}/ChatCompletions/Prompts \
               --overwrite true
