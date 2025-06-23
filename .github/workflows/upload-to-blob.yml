@@ -1,0 +1,38 @@
+name: Upload prompt files to Azure Blob Storage
+
+# No auto trigger. Run this workflow manually from the Actions tab.
+on:
+  workflow_dispatch:
+    inputs:
+      storage_account:
+        description: "Enter the storage account name"
+        type: string
+        default: "agaionev2devsto"
+        required: true
+env:
+
+jobs:
+  upload-to-blob:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Upload files to Azure Blob Storage
+        uses: azure/CLI@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az storage blob upload-batch \
+              --account-name ${{ inputs.storage_account }} \
+              --destination config \
+              --destination-path prompts \
+              --source src/Agile.Chat/Agile.Chat.Application/ChatCompletions/Prompts \
+              --overwrite true
