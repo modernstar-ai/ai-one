@@ -16,16 +16,16 @@ This project uses [MkDocs](https://www.mkdocs.org/) to generate a static documen
    .venv\Scripts\Activate.ps1
    ```
 
-2. **Install MkDocs**:
+2. **Install MkDocs and Material theme**:
 
    ```powershell
-   pip install mkdocs
+   pip install mkdocs mkdocs-material
    ```
 
 3. **Preview the documentation site locally**:
 
    ```powershell
-   mkdocs serve -f docs/mkdocs.yml
+   mkdocs serve
    ```
 
    Then open <http://127.0.0.1:8000> in your browser.
@@ -33,12 +33,12 @@ This project uses [MkDocs](https://www.mkdocs.org/) to generate a static documen
 4. **Build the static site**:
 
    ```powershell
-   mkdocs build -f docs/mkdocs.yml -d site
+   mkdocs build
    ```
 
-   The generated site will be in the `site/` folder.
+   The generated site will be in the `site/` folder at the project root.
 
 ## Notes
 
 - All documentation source files are in the `docs/` folder.
-- The navigation and site configuration are in `docs/mkdocs.yml`.
+- The navigation and site configuration are in `mkdocs.yml` at the project root.

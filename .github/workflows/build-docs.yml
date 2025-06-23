@@ -9,7 +9,7 @@ permissions:
 jobs:
   deploy:
     env:
-      CONFIG_FILE: docs/mkdocs.yml
+      CONFIG_FILE: mkdocs.yml
       REQUIREMENTS: requirements.txt
     runs-on: ubuntu-latest
     steps:
@@ -29,4 +29,4 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - run: pip install mkdocs-material
-      - run: mkdocs gh-deploy --force --config-file docs/mkdocs.yml
+      - run: mkdocs gh-deploy --force --config-file mkdocs.yml
