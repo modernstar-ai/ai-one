@@ -1,6 +1,9 @@
 name: Upload prompt files to Azure Blob Storage
 
 # No auto trigger. Run this workflow manually from the Actions tab.
+permissions:
+  id-token: write
+  contents: read
 on:
   workflow_dispatch:
     inputs:
