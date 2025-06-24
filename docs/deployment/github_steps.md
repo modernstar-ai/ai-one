@@ -1,75 +1,4 @@
-# AI-One Deployment Guide
-
-This guide provides step-by-step instructions for deploying the AI-One application on Azure.
-
-The deployment process provisions and configures the following solution components:
-
-- **Platform**: Core infrastructure and shared services
-- **API**: Backend services
-- **Web App**: Frontend application for user interaction
-
-## Infrastructure as Code (IaC)
-
-The infrastructure resources are defined using modular Bicep templates. All the templates and supporting scripts are under the `infra` directory of the project repository:
-
-```plaintext
-infra
-├── platform
-├── backend
-├── frontend
-├── scripts
-└── modules
-```
-
-- `platform`: Platform Bicep code & parameter files
-- `backend`: API app Bicep code & parameter files
-- `frontend`: Web app Bicep code & parameter files
-- `scripts`: Deployment and utility scripts
-- `modules`: Reusable Bicep modules (e.g., Key Vault, Cosmos DB etc.)
-
-### Platform Infrastructure
-
-The platform infrastructure is defined in the `infra/platform` folder. This folder contains the Bicep files that provision the core resources required for the AI-One platform.
-
-| Resource                | Resource Type                                   | Purpose                                                      |
-|-----------------------------|-------------------------------------------------|--------------------------------------------------------------|
-| Log Analytics Workspace      | Microsoft.OperationalInsights/workspaces        | Centralized logging and monitoring                           |
-| Key Vault                    | Microsoft.KeyVault/vaults                       | Secure storage for secrets and keys                          |
-| Storage Account              | Microsoft.Storage/storageAccounts               | General-purpose storage for the platform                     |
-| Azure AI Search              | Microsoft.Search/searchServices                 | Provides search capabilities                                 |
-| App Service Plan             | Microsoft.Web/serverfarms                      | Hosts web applications and APIs                              |
-| Cosmos DB Account            | Microsoft.DocumentDB/databaseAccounts           | Globally distributed NoSQL database for application data     |
-| Document Intelligence        | Microsoft.CognitiveServices/accounts            | AI-powered document analysis                                 |
-| Service Bus                  | Microsoft.ServiceBus/namespaces                 | Messaging and eventing between services                      |
-| Azure OpenAI Service         | Microsoft.CognitiveServices/accounts            | Access to Azure OpenAI models                                |
-
-### API Infrastructure
-
-The API infrastructure is defined in the `infra/backend` folder and provisions the resources required to host Agile.Chat API. The following resources are created by the `apiapp.bicep` file:
-
-| Resource      | Resource Type                                         | Purpose                                         |
-|----------------------------|-------------------------------------------------------|-------------------------------------------------|
-| API App                    | Microsoft.Web/sites                                   | Hosts the Agile.Chat API application            |
-| Service Bus Queue          | Microsoft.ServiceBus/namespaces/queues                | Queue for managing indexing requests            |
-| Cosmos DB Database         | Microsoft.DocumentDB/databaseAccounts/sqlDatabases    | Stores chat history and configuration           |
-| Event Grid System Topic    | Microsoft.EventGrid/systemTopics                      | Eventing for blob storage events                |
-| Event Grid Subscription    | Microsoft.EventGrid/systemTopics/eventSubscriptions   | Routes blob events to Service Bus               |
-| Application Insights       | Microsoft.Insights/components                         | Application monitoring and telemetry            |
-| Blob Containers            | Microsoft.Storage/storageAccounts/blobServices/containers | Storage containers for API data             |
-
-### Web App Infrastructure
-
-The web app infrastructure is defined in the `infra/frontend` folder and provisions the resources required to host the Agile.Chat frontend application. The following resources are created by the `webapp.bicep` file:
-
-| Resource      | Resource Type                 | Purpose                                 |
-|----------------------------|-------------------------------|-----------------------------------------|
-| Web App                    | Microsoft.Web/sites           | Hosts the Agile.Chat frontend application|
-
-## Deployment Steps
-
-AI-One deployment supports both Azure DevOps and GitHub Actions.
-
-### GitHub
+# AI-One Deployment Using GitHub Actions
 
 Deployment is managed using GitHub Actions, defined in the `.github/workflows` directory of the project repository.
 
@@ -81,15 +10,15 @@ The deployment process includes the following steps:
 
 ---
 
-#### Set Up Source Code Repository
+## 1. Set Up Source Code Repository
 
 Fork or copy [agile-chat](https://github.com/agile-internal/agile-chat) repository to a new project repository in Customer's GitHub organization.
 
 ---
 
-#### Create Environments
+## 2. Create Environments
 
-The deployment is designed to work with multiple environments (e.g., dev, test, uat, and prod).
+The deployment is designed to work with multiple environments (e.g., dev, tst, uat, and prod).
 Create the required environments in the new project repository on GitHub.
 
 The environments will be used to manage environment-specific configurations and secrets.
@@ -99,12 +28,12 @@ The environments will be used to manage environment-specific configurations and 
 1. Navigate to the new project repository on GitHub.
 2. Click on the **Settings** tab.
 3. In the left sidebar, select **Environments** under the **Code and automation** section.
-4. Click the **New environment** button and enter a name (e.g., `dev`, `test`, `uat`, `prod`).
+4. Click the **New environment** button and enter a name (e.g., `dev`, `tst`, `uat`, `prod`).
 5. Repeat step 4 for each environment required.
 
 ---
 
-#### Create Environment Variables
+## 3. Create Environment Variables
 
 Create the following environment variables in each environment created in the previous step.
 
@@ -118,13 +47,37 @@ Create the following environment variables in each environment created in the pr
     - `AZURE_TENANT_ID`: The Azure Active Directory (AAD) tenant ID associated with the organization.
     - `AZURE_CLIENT_ID`: The application (client) ID of the Azure Service Principal used for authentication and deployment automation.
     - `AZURE_RESOURCE_GROUP`: The name of the Azure resource group.
-    - `VITE_AGILECHAT_API_URL`: The base URL for the Agile.Chat API. e.g., `https://ag-aione-apiapp.azurewebsites.net`.
+    - `VITE_AGILECHAT_API_URL`: The base URL for the Agile.Chat API. 
+      
+        e.g., `https://ag-aione-apiapp.azurewebsites.net`.
 
 4. Repeat step 3 for each environment to support.
 
 ---
 
-#### Platform Deployment
+## 4. Configure Access to GitHub Actions
+
+To enable GitHub Actions to deploy resources to Azure, you must set up **Federated Credentials** between Azure Active Directory (Entra ID) and the GitHub repository. This allows GitHub Actions workflows to authenticate securely to Azure without storing secrets.
+
+***To set up Federated Credentials:***
+
+1. In the Azure Portal, go to **Azure Active Directory > App registrations** and select the application registration created earlier (e.g., `My Company AI Platform - Dev`).
+2. In the left menu, select **Certificates & secrets > Federated credentials**.
+3. Click **+ Add credential**.
+4. Fill in the form:
+    - **Name**: e.g., `GitHubActions-<env>`
+    - **Issuer**: `https://token.actions.githubusercontent.com`
+    - **Organization**: Your GitHub organization name (e.g., `myorg`)
+    - **Repository**: The repository name (e.g., `myrepo`)
+    - **Entity type**: The entity type, which should be `Environment`
+    - **Environment**: The environment name (e.g., `dev`, `tst`, `uat`, `prod`)
+    - **Subject identifier**: `repo:<org>/<repo>:environment:<env>` (e.g., `repo:myorg/myrepo:environment:dev`)
+5. Click **Add** to save the federated credential.
+6. Repeat steps 3-5 for each environment you created in the previous step (e.g., `dev`, `tst`, `uat`, `prod`).
+
+---
+
+## 5. Platform Deployment
 
 ```plaintext
 infra
@@ -137,15 +90,15 @@ infra
 - `platform.bicep`: The bicep file that defines the platform infrastructure resources.
 - `[env].bicepparam`: Environment-specific parameter file for the platform deployment.
 
-##### Configure Parameters
+### 5.1 Configure Parameters
 
-For every environment required, define in GitHub (such as `dev`, `test`, `uat`, or `prod`), create a corresponding parameter file (e.g., `dev.bicepparam`, `test.bicepparam`) in the `infra/platform` directory.
+For every environment required, define in GitHub (such as `dev`, `tst`, `uat`, or `prod`), create a corresponding parameter file (e.g., `dev.bicepparam`, `tst.bicepparam`) in the `infra/platform` directory.
 
 The parameter file name must exactly match the environment name. These files provide environment-specific values that the GitHub Action uses during deployment.
 
 | Parameter Name      | Description                                                                                                 | Default Value      |
 |---------------------|-------------------------------------------------------------------------------------------------------------|--------------------|
-| `environmentName`   | The name of the deployment environment (should match the environment, e.g., `dev`, `test`).                 | (none)             |
+| `environmentName`   | The name of the deployment environment (should match the environment, e.g., `dev`, `tst`).                 | (none)             |
 | `projectName`       | The project name.                                                                                           | `ag-aione`         |
 | `location`          | Azure region for resource deployment.                                                                       | `australiaeast`    |
 | `azureClientId`     | Azure Service Principal Client ID for authentication.                                                       | (none)             |
@@ -180,7 +133,7 @@ param networkIsolation = false
 
 ---
 
-##### Run Platform Deployment GitHub Action
+### 5.2 Run Platform Deployment GitHub Action
 
 The platform infrastructure is deployed using the `.github/workflows/deploy-platform.yml` GitHub Action.
 
@@ -191,7 +144,7 @@ The platform infrastructure is deployed using the `.github/workflows/deploy-plat
 3. Click **Run workflow**.
 4. Fill in the required inputs:
     - **Project Name**: The name of your project (e.g., `ag-aione`).
-    - **Environment**: The target environment (e.g., `dev`, `test`, `uat`, or `prod`).
+    - **Environment**: The target environment (e.g., `dev`, `tst`, `uat`, or `prod`).
     - **Location**: The Azure region for deployment (e.g., `australiaeast`).
 5. Click **Run workflow** to start deployment.
 
@@ -199,7 +152,7 @@ The workflow will use the appropriate parameter file (e.g., `dev.bicepparam`) ba
 
 ---
 
-#### API Deployment
+## 6 API Deployment
 
 ```plaintext
 infra
@@ -213,15 +166,15 @@ infra
 
 The API infrastructure is deployed using the `.github/workflows/deploy-backend.yml` GitHub Action. This action provisions the backend Azure resources and deploys the Agile.Chat API application.
 
-##### Configure API Parameters
+### 6.1 Configure API Parameters
 
-For each environment (such as `dev`, `test`, `uat`, or `prod`), create a corresponding parameter file (e.g., `dev.bicepparam`, `test.bicepparam`) in the `infra/backend` directory.
+For each environment (such as `dev`, `tst`, `uat`, or `prod`), create a corresponding parameter file (e.g., `dev.bicepparam`, `tst.bicepparam`) in the `infra/backend` directory.
 
 The parameter file name must exactly match the environment name. These files provide environment-specific values for the API deployment.
 
 | Parameter Name                | Description                                                                                 | Default Value                |
 |-------------------------------|---------------------------------------------------------------------------------------------|------------------------------|
-| `environmentName`             | The name of the deployment environment (should match the environment, e.g., `dev`, `test`). | (none)                       |
+| `environmentName`             | The name of the deployment environment (should match the environment, e.g., `dev`, `tst`). | (none)                       |
 | `projectName`                 | The project name.                                                                           | `ag-aione`                   |
 | `location`                    | Azure region for resource deployment.                                                        | `australiaeast`              |
 | `azureClientId`               | Azure Service Principal Client ID for authentication.                                        | (none)                       |
@@ -281,7 +234,7 @@ param adminEmailAddresses = ['adam-stephensen@agile-analytics.com.au']
 
 ---
 
-##### Run API Deployment GitHub Action
+### 6.2 Run API Deployment GitHub Action
 
 To deploy the API infrastructure and application:
 
@@ -289,7 +242,7 @@ To deploy the API infrastructure and application:
 2. Find and select the **Deploy AI-One Api** workflow.
 3. Click **Run workflow**.
 4. Fill in the required inputs:
-    - **Environment Name**: The target environment (e.g., `dev`, `test`, `uat`, or `prod`).
+    - **Environment Name**: The target environment (e.g., `dev`, `tst`, `uat`, or `prod`).
     - **Api App Name**: The name of your API App Service (e.g., `ag-aione-dev-apiapp`).
 5. Click **Run workflow** to start deployment.
 
@@ -297,7 +250,7 @@ The workflow will use the appropriate parameter file (e.g., `dev.bicepparam`) ba
 
 ---
 
-#### Web App Deployment
+## 7. Web App Deployment
 
 ```plaintext
 infra
@@ -309,15 +262,13 @@ infra
 - `webapp.bicep`: The Bicep file that defines the web app infrastructure resources.
 - `[env].bicepparam`: Environment-specific parameter file for the web app deployment.
 
-The web app infrastructure is deployed using a GitHub Actions workflow (e.g., `.github/workflows/deploy-frontend.yml`). This workflow provisions the frontend Azure resources and deploys the Agile.Chat web application.
+### 7.1 Configure Web App Parameters
 
-##### Configure Web App Parameters
-
-For each environment (such as `dev`, `test`, `uat`, or `prod`), create a corresponding parameter file (e.g., `dev.bicepparam`, `test.bicepparam`) in the `infra/frontend` directory. The parameter file name must exactly match the environment name. These files provide environment-specific values for the web app deployment.
+For each environment (such as `dev`, `tst`, `uat`, or `prod`), create a corresponding parameter file (e.g., `dev.bicepparam`, `tst.bicepparam`) in the `infra/frontend` directory. The parameter file name must exactly match the environment name. These files provide environment-specific values for the web app deployment.
 
 | Parameter Name            | Description                                                      | Default Value                |
 |--------------------------|------------------------------------------------------------------|------------------------------|
-| `environmentName`         | The name of the deployment environment (should match the environment, e.g., `dev`, `test`). | (none)                       |
+| `environmentName`         | The name of the deployment environment (should match the environment, e.g., `dev`, `tst`). | (none)                       |
 | `projectName`             | The project name.                                                | `ag-aione`                   |
 | `location`                | Azure region for resource deployment.                            | `australiaeast`              |
 | `tags`                    | Resource tags (loaded from tags.json).                           | `{}`                         |
@@ -341,7 +292,7 @@ param logAnalyticsWorkspaceName = 'ag-aione-dev-la'
 
 ---
 
-##### Run Web App Deployment GitHub Action
+### 7.2 Run Web App Deployment GitHub Action
 
 To deploy the web app infrastructure and application:
 
@@ -349,7 +300,7 @@ To deploy the web app infrastructure and application:
 2. Find and select the **Deploy AI-One Web App** workflow.
 3. Click **Run workflow**.
 4. Fill in the required inputs:
-    - **Environment Name**: The target environment (e.g., `dev`, `test`, `uat`, or `prod`).
+    - **Environment Name**: The target environment (e.g., `dev`, `tst`, `uat`, or `prod`).
     - **Web App Name**: The name of your Web App Service (e.g., `ag-aione-dev-webapp`).
 5. Click **Run workflow** to start deployment.
 
