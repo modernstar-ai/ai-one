@@ -1,4 +1,4 @@
-name: IaC
+name: Deploy Network Infrastructure
 
 on:
   workflow_dispatch:
@@ -27,7 +27,7 @@ on:
           - "australiasoutheast"
         required: true
 env:
-  AZURE_BICEP_MAIN: "./infra/main.bicep"
+  AZURE_BICEP_MAIN: "./infra/vnet/vnet.bicep"
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
   PROJECT_NAME: ${{ inputs.project_name }}
@@ -56,19 +56,6 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Bicep What-If Analysis
-        uses: azure/bicep-deploy@v2
-        with:
-          type: deployment
-          name: bicep-deployment-validation
-          operation: validate
-          scope: resourceGroup
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
-          template-file: ${{ env.AZURE_BICEP_MAIN }}
-          parameters-file: infra/${{ inputs.environment_name }}.bicepparam
-          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
-
       - name: Deploy Bicep Infrastructure
         uses: azure/bicep-deploy@v2
         with:
@@ -79,7 +66,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
           template-file: ${{ env.AZURE_BICEP_MAIN }}
-          parameters-file: infra/${{ inputs.environment_name }}.bicepparam
+          parameters-file: infra/vnet/${{ inputs.environment_name }}.bicepparam
           parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
 
       - name: Print Deployment Outputs

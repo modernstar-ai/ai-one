@@ -15,24 +15,12 @@
         "model": {
             "format": "OpenAI",
             "name": "text-embedding-3-small",
-            "version": "2024-11-20"
+            "version": "1"
         },
-        "name": "text-embedding-3-small",
+        "name": "embedding",
         "sku": {
             "name": "GlobalStandard",
             "capacity": 350
-        }
-    },
-    {
-        "model": {
-            "format": "OpenAI",
-            "name": "o3-mini",
-            "version": "2024-06-01"
-        },
-        "name": "o3-mini",
-        "sku": {
-            "name": "GlobalStandard",
-            "capacity": 100
         }
     }
 ]

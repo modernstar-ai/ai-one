@@ -93,27 +93,26 @@ param agileChatDatabaseName string = 'AgileChat'
 @description('Flag to control deployment of OpenAI models')
 param deployOpenAiModels bool = false
 
-var deployAzueOpenAi = (!empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride)) || (empty(apimAiEndpointOverride) && !empty(apimAiEmbeddingsEndpointOverride)) || (empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride))
+var deployAzureOpenAi = (!empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride)) || (empty(apimAiEndpointOverride) && !empty(apimAiEmbeddingsEndpointOverride)) || (empty(apimAiEndpointOverride) && empty(apimAiEmbeddingsEndpointOverride))
 
-module platform 'platform.bicep' = {
+module platform './platform/platform.bicep' = {
   name: 'platform'
   params: {
     projectName: projectName
     environmentName: environmentName
     location: location
-    tags: tags
     resourcePrefix: resourcePrefix
     semanticSearchSku: semanticSearchSku
     azureClientId: azureClientId
     azureTenantId: azureTenantId
-    openAiLocation: openAILocation
+    openAILocation: openAILocation
     openAiSkuName: openAISku
-    deployAzueOpenAi: deployAzueOpenAi
+    deployAzureOpenAi: deployAzureOpenAi
     deployOpenAiModels: deployOpenAiModels
   }
 }
 
-module webApp 'webapp.bicep' = {
+module webApp './frontend/webapp.bicep' = {
   name: 'webapp'
   params: {
     projectName: projectName
@@ -127,7 +126,7 @@ module webApp 'webapp.bicep' = {
   }
 }
 
-module apiApp 'apiapp.bicep' = {
+module apiApp './backend/apiapp.bicep' = {
   name: 'apiapp'
   params: {
     projectName: projectName
@@ -138,7 +137,9 @@ module apiApp 'apiapp.bicep' = {
     apiAppName: apiAppName
     aspCoreEnvironment: aspCoreEnvironment
     azureTenantId: azureTenantId
-    webAppDefaultHostName: webApp.outputs.webAppDefaultHostName
+    allowedOrigins: [
+      'https://${webApp.outputs.webAppDefaultHostName}'
+    ]
     storageName: platform.outputs.storageAccountName
     formRecognizerName: platform.outputs.formRecognizerName
     serviceBusName: platform.outputs.serviceBusName

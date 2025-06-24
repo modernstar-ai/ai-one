@@ -14,14 +14,14 @@ param projectName string
 @description('The type of environment. e.g. local, dev, uat, prod.')
 param environmentName string
 
+@description('Resource prefix for naming resources')
+param resourcePrefix string = toLower('${projectName}-${environmentName}')
+
 @description('App Service Plan name')
 param appServicePlanName string
 
 @description('API App name')
-param apiAppName string = toLower('${resourcePrefix}-apiapp')
-
-@description('Resource prefix for naming resources')
-param resourcePrefix string = toLower('${projectName}-${environmentName}')
+param apiAppName string
 
 @description('Web App name')
 param webappName string = toLower('${resourcePrefix}-webapp')
@@ -42,7 +42,7 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-12
   name: logAnalyticsWorkspaceName
 }
 
-module webAppModule './modules/site.bicep' = {
+module webAppModule '../modules/site.bicep' = {
   name: 'webAppModule'
   params: {
     name: webappName

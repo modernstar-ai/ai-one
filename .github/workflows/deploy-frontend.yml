@@ -1,0 +1,109 @@
+name: Deploy AI-One Web App
+
+# Manually triggered workflow
+on:
+  workflow_dispatch:
+    inputs:
+      environment_name:
+        description: "Select the application environment name - used to name resources"
+        type: choice
+        default: "dev"
+        options:
+          - "dev"
+          - "tst"
+          - "uat"
+          - "prod"
+        required: true
+      uiWebAppName:
+        description: "Enter the name of the Web App"
+        type: string
+        default: "ag-aione-v2-dev-webapp"
+
+env:
+  AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  AZURE_BICEP_MAIN: "./infra/frontend/webapp.bicep"
+  AGILE_WEB_SRC: "./src/agile-chat-web"
+  VITE_AGILECHAT_API_URL: ${{ vars.VITE_AGILECHAT_API_URL }}
+  VITE_AZURE_AD_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  VITE_AZURE_AD_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+
+# Set up permissions for deploying with secretless Azure federated credentials
+# https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-infra-and-web:
+    environment: ${{ inputs.environment_name }}
+    name: Deploy Web Infrastructure and Application
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Validate Web Infrastructure (Bicep What-If)
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          name: webapp-bicep-validation
+          operation: validate
+          scope: resourceGroup
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ${{ env.AZURE_BICEP_MAIN }}
+          parameters-file: infra/frontend/${{ inputs.environment_name }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
+
+      - name: Deploy Web Infrastructure (Bicep Create)
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: create
+          name: webapp-bicep-deployment
+          scope: resourceGroup
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ${{ env.AZURE_BICEP_MAIN }}
+          parameters-file: infra/frontend/${{ inputs.environment_name }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
+
+      - name: Build Agile Chat Web App
+        run: |
+          cd ${{ env.AGILE_WEB_SRC }}
+          npm install
+          npm run build
+
+      - name: Zip Web App Artifact for Deployment
+        run: |
+          cd ${{ env.AGILE_WEB_SRC }}
+          zip -r ../../release.zip dist
+
+      - name: Upload Web App Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app
+          path: release.zip
+
+      - name: Deploy Agile Chat Web App to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ github.event.inputs.uiWebAppName }}
+          package: ./release.zip
