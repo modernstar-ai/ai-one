@@ -1,6 +1,6 @@
 using './platform.bicep'
 
-param environmentName = 'prd'
+param environmentName = 'prod'
 param projectName = readEnvironmentVariable('PROJECT_NAME','ag-aione')
 param location = readEnvironmentVariable('AZURE_LOCATION', 'australiaeast')
 param azureClientId = readEnvironmentVariable('AZURE_CLIENT_ID')

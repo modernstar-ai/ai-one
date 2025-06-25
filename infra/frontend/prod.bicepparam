@@ -1,11 +1,11 @@
 using './webapp.bicep'
 
-param environmentName = 'prd'
+param environmentName = 'prod'
 
 param projectName = readEnvironmentVariable('PROJECT_NAME', 'ag-aione')
 param location = readEnvironmentVariable('AZURE_LOCATION', 'australiaeast')
 param tags = loadJsonContent('../tags.json')
 
-param appServicePlanName = 'ag-aione-prd-app'
-param apiAppName = 'ag-aione-prd-apiapp'
-param logAnalyticsWorkspaceName = 'ag-aione-prd-la'
+param appServicePlanName = 'ag-aione-prod-app'
+param apiAppName = 'ag-aione-prod-apiapp'
+param logAnalyticsWorkspaceName = 'ag-aione-prod-la'

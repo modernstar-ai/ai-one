@@ -1,3 +1,3 @@
 # AI-One Documentation
 
-- [Deployment Guide](deployment.md)
+- [Deployment Guide](deployment/index.md)
