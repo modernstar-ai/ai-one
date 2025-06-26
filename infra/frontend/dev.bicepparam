@@ -6,6 +6,6 @@ param projectName = readEnvironmentVariable('PROJECT_NAME', 'ag-aione')
 param location = readEnvironmentVariable('AZURE_LOCATION', 'australiaeast')
 param tags = loadJsonContent('../tags.json')
 
-param appServicePlanName = 'ag-aione-v2-dev-app'
-param apiAppName = 'ag-aione-v2-dev-apiapp'
-param logAnalyticsWorkspaceName = 'ag-aione-v2-dev-la'
+param appServicePlanName = 'ag-aione-dev-app'
+param apiAppName = 'ag-aione-dev-apiapp'
+param logAnalyticsWorkspaceName = 'ag-aione-dev-la'

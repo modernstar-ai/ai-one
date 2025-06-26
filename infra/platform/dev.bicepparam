@@ -9,6 +9,7 @@ param azureTenantId = readEnvironmentVariable('AZURE_TENANT_ID')
 param openAILocation = 'australiaeast' 
 param deployAzureOpenAi = true
 param deployOpenAiModels = true
+param keyVaultName = 'ag-aione3-dev-kv' //to be removed
 
 param semanticSearchSku = 'standard'
 param networkIsolation = false

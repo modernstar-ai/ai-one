@@ -17,7 +17,7 @@ on:
       apiWebAppName:
         description: "Enter the name of the Api App"
         type: string
-        default: "ag-aione-v2-dev-apiapp"
+        default: "ag-aione-dev-apiapp"
 env:
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}

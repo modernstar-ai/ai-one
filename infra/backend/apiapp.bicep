@@ -135,6 +135,10 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' existing = {
   name: appServicePlanName
 }
 
+resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
+  name: keyVaultName
+}
+
 // Key Vault Secrets User Role
 resource keyVaultSecretsUserRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
   name: '4633458b-17de-408a-b874-0445c86b69e6'
@@ -504,7 +508,7 @@ resource apiAppServiceBusSenderRoleAssignment 'Microsoft.Authorization/roleAssig
 }
 
 module appServiceSecretsUserRoleAssignmentModule '../modules/keyvaultRoleAssignment.bicep' = {
-  name: 'appServiceSecretsUserRoleAssignmentDeploy'
+  name: guid(resourceGroup().id, apiAppManagedIdentity.id, keyVault.id, keyVaultSecretsUserRole.id)
   params: {
     roleDefinitionId: keyVaultSecretsUserRole.id
     principalId: apiAppManagedIdentity.properties.principalId
