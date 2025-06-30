@@ -1,0 +1,123 @@
+# Backend API Deploy Pipeline (converted from GitHub Actions)
+trigger: none
+
+parameters:
+- name: environment
+  type: string
+  default: dev
+  displayName: 'Select the Azure Deployment Environment'
+  values:
+  - dev
+  - tst
+  - uat
+  - prod
+
+- name: apiWebAppName
+  displayName: 'Enter the name of the Api App'
+  type: string
+  default: 'ag-aione-dev-apiapp'
+
+variables:
+  - name: environment
+    value: ${{ parameters.environment }}
+  - name: SERVICE_CONNECTION_NAME_DEV
+    value: 'dev-service-connection'
+  - name: agileChatApiSrc
+    value: './src/Agile.Chat/Agile.Chat.Api'
+  - name: agileChatApiPub
+    value: './publish/Agile.Chat/Agile.Chat.Api'
+  - name: azureBicepMain
+    value: './infra/backend/apiapp.bicep'
+
+stages:
+# Build Stage
+- stage: Build
+  displayName: 'Build Agile-Chat-Api'
+  jobs:
+  - job: BuildJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      persistCredentials: true
+
+    - task: UseDotNet@2
+      displayName: 'Use .NET 8 SDK'
+      inputs:
+        version: '8.0.x'
+        performMultiLevelLookup: true
+
+    - script: |
+        dotnet restore $(agileChatApiSrc)
+        dotnet build $(agileChatApiSrc) --no-restore --configuration Release
+        dotnet publish $(agileChatApiSrc) -c Release -o $(agileChatApiPub)
+      displayName: 'Build and Publish Agile-Chat-Api'
+      env:
+        ENVIRONMENT: ${{ parameters.environment }}
+
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish Agile-Chat-Api Artifact'
+      inputs:
+        targetPath: '$(agileChatApiPub)'
+        artifact: 'agile-chat-api'
+        publishLocation: 'pipeline'
+
+# Deploy Stage
+- stage: DeployDev
+  displayName: 'Deploy API Infrastructure and Application - Dev'
+  condition: eq(variables['environment'], 'dev')
+  variables:
+    - group: dev
+  dependsOn: Build
+  jobs:
+    - deployment: DeployJob
+      environment: 'dev'
+      displayName: 'Deploy to Azure'
+      pool:
+        vmImage: 'ubuntu-latest'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - checkout: self
+                fetchDepth: 1
+                persistCredentials: true
+
+              - task: DownloadPipelineArtifact@2
+                displayName: 'Download Agile-Chat-Api Artifact'
+                inputs:
+                  artifact: 'agile-chat-api'
+                  path: '$(agileChatApiPub)'
+
+              - task: AzureCLI@2
+                displayName: 'Validate API Infrastructure (Bicep What-If) - Dev'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION_NAME_DEV)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az deployment group validate \
+                      --resource-group $(AZURE_RESOURCE_GROUP) \
+                      --template-file $(azureBicepMain) \
+                      --parameters ./infra/backend/${{ parameters.environment }}.bicepparam environmentName=${{ parameters.environment }}
+
+              - task: AzureCLI@2
+                displayName: 'Deploy API Infrastructure (Bicep Create) - Dev'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION_NAME_DEV)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az deployment group create \
+                      --resource-group $(AZURE_RESOURCE_GROUP) \
+                      --template-file $(azureBicepMain) \
+                      --parameters ./infra/backend/${{ parameters.environment }}.bicepparam environmentName=${{ parameters.environment }}
+
+              - task: AzureWebApp@1
+                displayName: 'Deploy Agile-Chat-Api to Azure Web App - Dev'
+                inputs:
+                  appType: webAppLinux
+                  azureSubscription: $(SERVICE_CONNECTION_NAME_DEV)
+                  appName: ${{ parameters.apiWebAppName }}
+                  package: $(agileChatApiPub)
