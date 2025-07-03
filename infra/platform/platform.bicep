@@ -65,16 +65,13 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
 param cosmosDbAccountName string = toLower('${resourcePrefix}-cosmos')
 
 @description('Form Recognizer name')
-param formRecognizerName string = toLower('${resourcePrefix}-form')
+param documentIntelligenceServiceName string = toLower('${resourcePrefix}-docintel')
 
 @description('Azure Search Service name')
 param searchServiceName string = toLower('${resourcePrefix}-search')
 
 @description('Service Bus namespace name')
 param serviceBusName string = toLower('${resourcePrefix}-service-bus')
-
-@description('Whether to deploy Azure OpenAI resources')
-param deployAzureOpenAi bool = true
 
 @description('OpenAI resource name')
 param openAiName string = toLower('${resourcePrefix}-aillm')
@@ -256,19 +253,6 @@ module cosmosDbAccountModule '../modules/cosmosDb.bicep' = {
   }
 }
 
-module documentIntelligenceModule '../modules/documentIntelligence.bicep' = {
-  name: 'documentIntelligenceModule'
-  params: {
-    name: formRecognizerName
-    location: location
-    tags: tags
-    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
-    virtualNetworkSubnetResourceId: formRecognizerSubnetResourceId
-    networkIsolation: networkIsolation
-    virtualNetworkResourceId: virtualNetworkResourceId
-  }
-}
-
 module serviceBusModule '../modules/serviceBus.bicep' = {
   name: 'serviceBusModule'
   params: {
@@ -282,7 +266,20 @@ module serviceBusModule '../modules/serviceBus.bicep' = {
   }
 }
 
-module openAiModule '../modules/openai.bicep' = if (deployAzureOpenAi) {
+module documentIntelligenceModule '../modules/documentIntelligence.bicep' = if (!deployAIFoundryResources) {
+  name: 'documentIntelligenceModule'
+  params: {
+    name: documentIntelligenceServiceName
+    location: location
+    tags: tags
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
+    virtualNetworkSubnetResourceId: formRecognizerSubnetResourceId
+    networkIsolation: networkIsolation
+    virtualNetworkResourceId: virtualNetworkResourceId
+  }
+}
+
+module openAiModule '../modules/openai.bicep' = if (!deployAIFoundryResources) {
   name: 'openAiModule'
   params: {
     name: openAiName
@@ -324,6 +321,8 @@ module cognitiveServices '../modules/cognitive-services/main.bicep' = if (deploy
     aiServiceLocation: openAILocation
     resourcePrefix: resourcePrefix
     networkIsolation: networkIsolation
+    documentIntelligenceServiceEnabled: true
+    documentIntelligenceServiceName: documentIntelligenceServiceName
     languageEnabled: false
     visionEnabled: false
     contentSafetyEnabled: false
@@ -357,7 +356,6 @@ output appServicePlanName string = appServicePlanModule.outputs.name
 output appServicePlanId string = appServicePlanModule.outputs.resourceId
 output cosmosDbAccountName string = cosmosDbAccountModule.outputs.name
 output cosmosDbAccountEndpoint string = cosmosDbAccountModule.outputs.endpoint
-output formRecognizerName string = documentIntelligenceModule.outputs.name
 output serviceBusName string = serviceBusModule.outputs.name
 output openAiName string = deployAIFoundryResources
   ? cognitiveServices.outputs.aiServicesName

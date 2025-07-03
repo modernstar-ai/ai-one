@@ -104,7 +104,7 @@ The parameter file name must exactly match the environment name. These files pro
 | `azureClientId`     | Azure Service Principal Client ID for authentication.                                                       | (none)             |
 | `azureTenantId`     | Azure Active Directory Tenant ID.                                                                           | (none)             |
 | `openAILocation`    | Azure region for OpenAI resources.                                                                         | `australiaeast`    |
-| `deployAzureOpenAi` | Set to `true` to provision Azure OpenAI Service, or `false` to skip deployment.                            | `true`             |
+| `deployAIFoundryResources`| Set to `true` to deploy AI Foundry resources, or `false` to deploy resources as standalone services.    | `true`             |
 | `deployOpenAiModels`| Set to `true` to deploy OpenAI models, or `false` to skip model deployment.                                | `true`             |
 | `semanticSearchSku` | SKU for Azure AI Search.                                                                                   | `standard`         |
 | `networkIsolation`  | Set to `true` to enable private network isolation, or `false` for public access.                           | `false`            |
@@ -121,7 +121,7 @@ param location = 'australiaeast'
 param azureClientId = '<your-client-id>'
 param azureTenantId = '<your-tenant-id>'
 param openAILocation = 'australiaeast'
-param deployAzureOpenAi = true
+param deployAIFoundryResources = true
 param deployOpenAiModels = true
 param semanticSearchSku = 'standard'
 param networkIsolation = false
@@ -186,7 +186,8 @@ The parameter file name must exactly match the environment name. These files pro
 | `keyVaultName`                | Name of the Key Vault.                                                                      | (none)           |
 | `storageName`                 | Name of the Storage Account.                                                                | (none)           |
 | `storageAccountName`          | Name of the existing Storage Account.                                                       | (none)           |
-| `formRecognizerName`          | Name of the Form Recognizer resource.                                                       | (none)           |
+| `documentIntelligenceServiceName`          | Name of the Form Recognizer resource.                                                       | (none)           |
+| `documentIntelligenceEndpoint`| Endpoint URL for the Document Intelligence Service.                                          | (none)           |
 | `openAiName`                  | Name of the Azure OpenAI resource.                                                          | (none)           |
 | `openAiApiVersion`            | API version for Azure OpenAI.                                                               | (none)           |
 | `searchServiceName`           | Name of the Azure Search Service.                                                           | (none)           |
@@ -218,7 +219,8 @@ param logAnalyticsWorkspaceName = 'ag-aione-dev-la'
 param keyVaultName = 'ag-aione-dev-kv'
 param storageName = 'agaionedevsto'
 param storageAccountName = 'agaionedevsto'
-param formRecognizerName = 'ag-aione-dev-form'
+param documentIntelligenceServiceName = 'ag-aione-dev-docintel'
+param documentIntelligenceEndpoint = 'https://ag-aione-dev-foundry.cognitiveservices.azure.com/'
 param openAiName = 'ag-aione-dev-aillm'
 param openAiApiVersion = '2024-08-01-preview'
 param searchServiceName = 'ag-aione-dev-search'

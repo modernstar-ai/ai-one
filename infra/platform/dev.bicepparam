@@ -8,7 +8,6 @@ param azureTenantId = readEnvironmentVariable('AZURE_TENANT_ID')
 
 param openAILocation = 'australiaeast'
 param openAiName = 'ag-aione-dev-v3aillm'
-param deployAzureOpenAi = false
 param deployAIFoundryResources = true
 param deployOpenAiModels = true
 

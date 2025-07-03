@@ -29,7 +29,13 @@ param aiServicesName string
 param aiServiceLocation string = location
 
 @description('Whether to include Azure Document Intelligence in the deployment.')
-param documentIntelligenceEnabled bool = false
+param documentIntelligenceServiceEnabled bool = false
+
+@description('The name of the Document Intelligence resource.')
+param documentIntelligenceServiceName string = '${resourcePrefix}-docintel'
+
+@description('The SKU for the Document Intelligence resource. Defaults to S0.')
+param documentIntelligenceServiceSku string = 'S0'
 
 @description('Whether to include Azure AI Content Safety in the deployment.')
 param contentSafetyEnabled bool = false
@@ -219,13 +225,14 @@ module translator 'service.bicep' = if (translatorEnabled) {
   }
 }
 
-module documentIntelligence 'service.bicep' = if (documentIntelligenceEnabled) {
+module documentIntelligence 'service.bicep' = if (documentIntelligenceServiceEnabled) {
   name: take('${resourcePrefix}-doc-intel-deployment', 64)
   dependsOn: [cognitiveServicesPrivateDnsZone] // required due to optional flags that could change dependency
   params: {
-    name: '${resourcePrefix}-docintel'
+    name: documentIntelligenceServiceName
     location: location
     kind: 'FormRecognizer'
+    sku: documentIntelligenceServiceSku
     networkIsolation: networkIsolation
     virtualNetworkSubnetResourceId: networkIsolation ? virtualNetworkSubnetResourceId : ''
     privateDnsZonesResourceIds: networkIsolation
@@ -251,5 +258,5 @@ output connections array = union(
   languageEnabled ? [language.outputs.foundryConnection] : [],
   speechEnabled ? [speech.outputs.foundryConnection] : [],
   translatorEnabled ? [translator.outputs.foundryConnection] : [],
-  documentIntelligenceEnabled ? [documentIntelligence.outputs.foundryConnection] : []
+  documentIntelligenceServiceEnabled ? [documentIntelligence.outputs.foundryConnection] : []
 )

@@ -41,8 +41,11 @@ param storageName string
 @description('Storage Account name (for existing resource)')
 param storageAccountName string
 
-@description('Form Recognizer name')
-param formRecognizerName string
+@description('Document Intelligence Service name')
+param documentIntelligenceServiceName string
+
+@description('Document Intelligence Service endpoint')
+param documentIntelligenceEndpoint string
 
 @description('OpenAI resource name')
 param openAiName string
@@ -125,8 +128,8 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: storageAccountName
 }
 
-resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
-  name: formRecognizerName
+resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
+  name: documentIntelligenceServiceName
 }
 
 resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' existing = {
@@ -238,7 +241,7 @@ module apiAppModule '../modules/site.bicep' = {
         }
         {
           name: 'AzureDocumentIntelligence__Endpoint'
-          value: 'https://${formRecognizerName}.cognitiveservices.azure.com/'
+          value: documentIntelligenceEndpoint
         }
         {
           name: 'AzureServiceBus__BlobQueueName'
@@ -487,9 +490,9 @@ resource apiAppBlobStorageRoleAssignment 'Microsoft.Authorization/roleAssignment
 //   }
 // }
 
-resource apiAppFormRecognizerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, formRecognizer.id, cognitiveServicesUserRole.id)
-  scope: formRecognizer
+resource apiAppDocIntelligenceRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, apiAppManagedIdentity.id, documentIntelligence.id, cognitiveServicesUserRole.id)
+  scope: documentIntelligence
   properties: {
     roleDefinitionId: cognitiveServicesUserRole.id
     principalId: apiAppManagedIdentity.properties.principalId
