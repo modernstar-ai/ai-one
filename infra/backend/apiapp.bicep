@@ -104,6 +104,9 @@ param storageServiceFoldersContainerName string = 'index-content'
 @description('Event Grid system topic name')
 param eventGridName string = toLower('${resourcePrefix}-blob-eg')
 
+param allowModelSelection bool = true
+param defaultTextModelId string = 'gpt-4o'
+
 param eventGridSystemTopicSubName string = toLower('${resourcePrefix}-folders-blobs-listener')
 
 var blobContainersArray = loadJsonContent('../blob-storage-containers.json')
@@ -338,6 +341,14 @@ module apiAppModule '../modules/site.bicep' = {
         {
           name: 'AzureOpenAi__EmbeddingsModelName'
           value: embeddingModelName
+        }
+        {
+          name: 'AllowModelSelection'
+          value: allowModelSelection
+        }
+        {
+          name: 'DefaultTextModelId'
+          value: defaultTextModelId
         }
         {
           name: 'AzureSearch__Endpoint'

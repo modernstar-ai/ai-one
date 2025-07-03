@@ -13,10 +13,10 @@ using Agile.Framework.Common.Enums;
 using Agile.Framework.Common.EnvironmentVariables;
 using Azure.AI.OpenAI.Chat;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Serilog;
+using static Agile.Framework.Common.EnvironmentVariables.Constants;
 
 namespace Agile.Chat.Application.ChatCompletions.Utils;
 
@@ -102,10 +102,20 @@ public static class ChatUtils
             FunctionChoiceBehavior = assistant?.RagType == RagType.Plugin ? FunctionChoiceBehavior.Auto() : null,
             AzureChatDataSource = assistant?.RagType == RagType.AzureSearchChatDataSource && !string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName) ? GetAzureSearchDataSource(assistant, chatThread) : null,
             ChatSystemPrompt = string.IsNullOrWhiteSpace(chatThread.PromptOptions.SystemPrompt) ? null : chatThread.PromptOptions.SystemPrompt,
-            Temperature = chatThread.PromptOptions.Temperature,
-            TopP = chatThread.PromptOptions.TopP,
-            MaxTokens = chatThread.PromptOptions.MaxTokens
         };
+
+        //TODO: Remove this when we have a better way to handle model configuration
+        if (string.Equals(chatThread.ModelOptions.ModelId, TextModels.O3Mini, StringComparison.OrdinalIgnoreCase))
+        {
+            options.SetNewMaxCompletionTokensEnabled = true;
+        }
+        else
+        {
+            options.TopP = chatThread.PromptOptions.TopP;
+            options.Temperature = chatThread.PromptOptions.Temperature;
+            options.MaxTokens = chatThread.PromptOptions.MaxTokens;
+        }
+
         return options;
     }
 

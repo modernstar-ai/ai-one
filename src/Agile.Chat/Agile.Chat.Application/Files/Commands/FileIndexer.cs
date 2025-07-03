@@ -8,13 +8,12 @@ using Agile.Framework.Ai;
 using Agile.Framework.AzureAiSearch;
 using Agile.Framework.AzureAiSearch.Models;
 using Agile.Framework.AzureDocumentIntelligence;
-using Agile.Framework.AzureDocumentIntelligence.Converters;
+using Agile.Framework.Common.EnvironmentVariables;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Logging;
 using Polly;
-using Polly.Retry;
 
 namespace Agile.Chat.Application.Files.Commands;
 
@@ -22,24 +21,28 @@ public static class FileIndexer
 {
     public record Command(string FileName, string IndexName, string FolderName, EventGridHelpers.FileMetadata FileMetadata, EventGridHelpers.Type EventType) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, 
-        IAppKernel appKernel,
-        IFileService fileService, 
-        IIndexService indexService, 
-        IAzureAiSearch azureAiSearch, 
-        IMediator mediator, 
+    public class Handler(ILogger<Handler> logger,
+        IFileService fileService,
+        IIndexService indexService,
+        IAzureAiSearch azureAiSearch,
+        IAppKernelBuilder appKernelBuilder,
+        IMediator mediator,
         IDocumentIntelligence documentIntelligence) : IRequestHandler<Command, IResult>
     {
         private bool _indexExists;
+        private IAppKernel _appKernel = null!;
+
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
+            AddSemanticKernel();
+
             var index = await HandleIndexSyncing(request.IndexName, request.EventType);
             _indexExists = await azureAiSearch.IndexExistsAsync(request.IndexName);
 
             var file = await HandleFileSyncing(request.EventType, request.FileName, request.IndexName,
                 request.FolderName, request.FileMetadata);
             if (file is null) return Results.Ok();
-            
+
             try
             {
                 if (request.EventType == EventGridHelpers.Type.BlobDeleted)
@@ -88,8 +91,8 @@ public static class FileIndexer
             var chunks = documentIntelligence.ChunkDocumentWithOverlap(document, index?.ChunkSize, index?.ChunkOverlap)
                 .Where(c => !string.IsNullOrWhiteSpace(c)).ToList();
             logger.LogInformation("Chunked {Count} documents with Chunk Size {ChunkSize} and overlap {Overlap}", chunks.Count, index?.ChunkSize, index?.ChunkOverlap);
-            
-            var embeddings = await GenerateEmbeddingsForChunksAsync([..chunks, file.Name]);
+
+            var embeddings = await GenerateEmbeddingsForChunksAsync([.. chunks, file.Name]);
             var nameEmbedding = embeddings.Last();
             var documents = chunks
                 .Select((chunk, index) => AzureSearchDocument.Create(file.Id, chunk, file.Name, file.Url, file.Tags, embeddings[index], nameEmbedding))
@@ -118,18 +121,18 @@ public static class FileIndexer
                 .Handle<Exception>()
                 .WaitAndRetryAsync(3, _ =>
                     TimeSpan.FromSeconds(60));
-        
+
             int skip = 0;
             int take = 5;
-            
+
             var embeddings = new List<ReadOnlyMemory<float>>();
 
             while (true)
             {
                 var batch = chunks.Skip(skip).Take(take).ToList();
                 if (batch.Count == 0) break;
-                
-                var batchEmbeddings = await retryPolicy.ExecuteAsync(async _ => await appKernel.GenerateEmbeddingsAsync(batch), new CancellationToken());
+
+                var batchEmbeddings = await retryPolicy.ExecuteAsync(async _ => await _appKernel.GenerateEmbeddingsAsync(batch), new CancellationToken());
                 embeddings.AddRange(batchEmbeddings.ToList());
                 logger.LogInformation("Embedding status: {Count}/{Total}", embeddings.Count, chunks.Count);
                 skip += take;
@@ -138,7 +141,7 @@ public static class FileIndexer
             logger.LogInformation("Finished embeddings with total embeddings count: {Count}", embeddings.Count);
             return embeddings;
         }
-        
+
         private async Task<CosmosFile?> HandleFileSyncing(EventGridHelpers.Type eventType, string fileName, string indexName, string folderName, EventGridHelpers.FileMetadata fileMetadata)
         {
             //In the case of blob creating, ensure it's created in cosmos
@@ -146,12 +149,12 @@ public static class FileIndexer
             {
                 var file = CosmosFile.Create(fileName,
                     fileMetadata.ContentType,
-                    fileMetadata.ContentLength, 
-                    indexName, 
+                    fileMetadata.ContentLength,
+                    indexName,
                     folderName,
                     new List<string>());
                 file.Update(FileStatus.Indexing, fileMetadata.BlobUrl, file.ContentType, file.Size, file.Tags);
-                
+
                 await fileService.AddItemAsync(file);
                 logger.LogInformation("Added new file name: {FileName} in CosmosDb", file.Name);
                 return file;
@@ -179,7 +182,7 @@ public static class FileIndexer
                     logger.LogInformation("Creating new index {IndexName} in Azure AI Search", indexName);
                     await azureAiSearch.CreateIndexIfNotExistsAsync(indexName);
                 }
-                
+
                 var index = CosmosIndex.Create(indexName, indexName, 2300, 25, null, null);
                 await indexService.AddItemAsync(index);
                 logger.LogInformation("Added new index {IndexName} in CosmosDb", indexName);
@@ -192,6 +195,16 @@ public static class FileIndexer
                 return index;
             }
             return null;
+        }
+
+        private void AddSemanticKernel()
+        {
+            var configs = Configs.AzureOpenAi;
+            var chatEndpoint = !string.IsNullOrWhiteSpace(configs.Apim.Endpoint) ? configs.Apim.Endpoint : configs.Endpoint;
+            var embeddingsEndpoint = !string.IsNullOrWhiteSpace(configs.Apim.EmbeddingsEndpoint) ? configs.Apim.EmbeddingsEndpoint : configs.Endpoint;
+            appKernelBuilder.AddAzureOpenAIChatCompletion(configs.DeploymentName);
+            appKernelBuilder.AddAzureOpenAITextEmbeddingGeneration(configs.EmbeddingsDeploymentName!);
+            _appKernel = appKernelBuilder.Build();
         }
     }
 }

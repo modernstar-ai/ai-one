@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { fetchAssistantById } from '@/services/assistantservice';
 import { createChatThread } from '@/services/chatthreadservice';
+import { Loader2 } from 'lucide-react';
 
 const ChatRouter: React.FC = () => {
   const { state } = useLocation();
@@ -15,7 +16,7 @@ const ChatRouter: React.FC = () => {
         const assistant = state.assistantId ? await fetchAssistantById(state.assistantId) : undefined;
         const thread = await createChatThread({
           name: assistant ? `${assistant.name}` : 'New Chat',
-          assistantId: assistant?.id,
+          assistantId: assistant?.id
         });
 
         if (thread) {
@@ -30,7 +31,11 @@ const ChatRouter: React.FC = () => {
     fetchData();
   }, [navigate, setSearchParams]);
 
-  return <div>Loading...</div>;
+  return (
+    <div className="h-screen flex justify-center items-center">
+      <Loader2 className="animate-spin" />
+    </div>
+  );
 };
 
 export default ChatRouter;

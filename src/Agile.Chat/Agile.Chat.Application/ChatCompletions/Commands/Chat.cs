@@ -15,7 +15,7 @@ using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Ai;
 using Agile.Framework.AzureAiSearch;
-using Agile.Framework.AzureAiSearch.Models;
+using Agile.Framework.Common.EnvironmentVariables;
 using FluentValidation;
 using Mapster;
 using MediatR;
@@ -38,26 +38,28 @@ public static class Chat
     public record Command(string UserPrompt, string ThreadId) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> logger,
-        IAppKernel appKernel,
         IHttpContextAccessor contextAccessor,
         IAssistantService assistantService,
         IChatThreadService chatThreadService,
         IChatMessageService chatMessageService,
         IAzureAiSearch azureAiSearch,
+        IAppKernelBuilder appKernelBuilder,
         IAuditService<Message> chatMessageAuditService,
         IAuditService<ChatThread> chatThreadAuditService) : IRequestHandler<Command, IResult>
     {
-        private ChatContainer _chatContainer;
+        private ChatContainer _chatContainer = null!;
+        private IAppKernel _appKernel = null!;
 
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             //Fetch what's needed to do chatting
-            var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId, ChatType.Thread.ToString());
+            var thread = await chatThreadService.GetChatThreadById(request.ThreadId);
             var chatMessages = await chatMessageService.GetAllMessagesAsync(thread!.Id);
-            var chatHistory = chatMessages.ParseSemanticKernelChatHistory(request.UserPrompt);
-            var assistant = !string.IsNullOrWhiteSpace(thread.AssistantId)
-                ? await assistantService.GetItemByIdAsync(thread.AssistantId)
+            var chatHistory = chatMessages.ParseSemanticKernelChatHistory(request.UserPrompt); var assistant = !string.IsNullOrWhiteSpace(thread.AssistantId)
+                ? await assistantService.GetAssistantById(thread.AssistantId)
                 : null;
+
+            AddSemanticKernel(thread.ModelOptions?.ModelId);
 
             _chatContainer = new ChatContainer
             {
@@ -65,7 +67,7 @@ public static class Chat
                 Assistant = assistant,
                 AzureAiSearch = azureAiSearch,
                 Messages = chatMessages,
-                AppKernel = appKernel
+                AppKernel = _appKernel
             };
 
             var hasIndex = !string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName);
@@ -74,9 +76,8 @@ public static class Chat
             {
                 var sp = new ServiceCollection()
                     .AddSingleton<ChatContainer>(_ => _chatContainer)
-                    .BuildServiceProvider();
-                if (hasIndex)
-                    appKernel.AddPlugin<AzureAiSearchRag>(sp);
+                    .BuildServiceProvider(); if (hasIndex)
+                    _appKernel.AddPlugin<AzureAiSearchRag>(sp);
             }
 
 
@@ -101,15 +102,17 @@ public static class Chat
             await SaveUserAssistantCitationsMessagesAsync(thread.Id, request.UserPrompt, assistantResponse, assistantMetadata);
 
             //If its a new chat, update the threads name, otherwise just update the last modified date
-            thread.Update(chatHistory.Count <= 1 ? TruncateUserPrompt(request.UserPrompt) : thread.Name, thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions);
+            thread.Update(chatHistory.Count <= 1 ? TruncateUserPrompt(request.UserPrompt) :
+                thread.Name, thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions, thread.ModelOptions);
+
             await chatThreadService.UpdateItemByIdAsync(thread.Id, thread, ChatType.Thread.ToString());
             return Results.Empty;
         }
+
         private string TruncateUserPrompt(string userPrompt) => userPrompt.Substring(0, Math.Min(userPrompt.Length, 39)) +
                                                                 (userPrompt.Length <= 39
                                                                     ? string.Empty
                                                                     : "...");
-
         private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(AssistantType? assistantType, IResult result)
         {
             var assistantResponse = string.Empty;
@@ -131,7 +134,7 @@ public static class Chat
             {
                 var citations = _chatContainer.Citations.Cast<ChatContainerCitationExt>()
                     .Where(x => assistantResponse?.Contains($"[doc{x.ReferenceNumber}]", StringComparison.InvariantCultureIgnoreCase) ?? false).ToList();
-                
+
                 if (citations.Count > 0)
                 {
                     metadata.Add(MetadataType.Citations, citations.Adapt<List<ChatContainerCitation>>());
@@ -188,11 +191,11 @@ public static class Chat
             var hasIndex = !string.IsNullOrWhiteSpace(assistantFilterOptions?.IndexName);
             if (!hasIndex)
             {
-                var assistantResp = await ChatUtils.StreamAndGetAssistantResponseAsync(contextAccessor.HttpContext!, appKernel.GetChatStream(chatHistory, chatSettings), _chatContainer);
+                var assistantResp = await ChatUtils.StreamAndGetAssistantResponseAsync(contextAccessor.HttpContext!, _appKernel.GetChatStream(chatHistory, chatSettings), _chatContainer);
                 return assistantResp;
             }
 
-            var indexStream = appKernel.GetPromptFileChatStream(chatSettings,
+            var indexStream = _appKernel.GetPromptFileChatStream(chatSettings,
                 Constants.ChatCompletionsPromptsPath,
                 _chatContainer.Assistant?.RagType == RagType.Plugin ? Constants.Prompts.ChatWithRag : Constants.Prompts.ChatWithAzureSearchDataSource,
                 new Dictionary<string, object?>
@@ -217,7 +220,7 @@ public static class Chat
 #pragma warning disable SKEXP0010
                 chatSettings.ResponseFormat = "json_object";
 
-                var aiResponse = await appKernel.GetPromptFileChat(chatSettings,
+                var aiResponse = await _appKernel.GetPromptFileChat(chatSettings,
                     Constants.ChatCompletionsPromptsPath,
                     Constants.Prompts.ChatWithSearch,
                     new Dictionary<string, object?>
@@ -287,6 +290,27 @@ public static class Chat
                 ..citationMessages.Select(c => chatMessageAuditService.AddItemAsync(Audit<Message>.Create(c)))
             ]);
         }
+
+        private void AddSemanticKernel(string? chatCompletionModelId)
+        {
+            var configs = Configs.AzureOpenAi;
+            var chatEndpoint = !string.IsNullOrWhiteSpace(configs.Apim.Endpoint) ? configs.Apim.Endpoint : configs.Endpoint;
+            var embeddingsEndpoint = !string.IsNullOrWhiteSpace(configs.Apim.EmbeddingsEndpoint) ? configs.Apim.EmbeddingsEndpoint : configs.Endpoint;
+
+            ///TODO: check if the model is supported
+            var modelId = chatCompletionModelId;
+            if (string.IsNullOrWhiteSpace(modelId))
+            {
+                chatCompletionModelId = Configs.AppSettings.DefaultTextModelId;
+            }
+
+            ///TODO: currently the modelId is used as the deployment name, 
+            ///but this should be handled differently by maintaining a mapping of modelId to deploymentName 
+            var chatCompletionDeploymentName = chatCompletionModelId;
+            appKernelBuilder.AddAzureOpenAIChatCompletion(chatCompletionDeploymentName);
+            appKernelBuilder.AddAzureOpenAITextEmbeddingGeneration(configs.EmbeddingsDeploymentName!);
+            _appKernel = appKernelBuilder.Build();
+        }
     }
 
     public class Validator : AbstractValidator<Command>
@@ -305,7 +329,7 @@ public static class Chat
 
         private async Task<bool> ValidateUserThreadAsync(IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService, string threadId)
         {
-            var thread = await chatThreadService.GetItemByIdAsync(threadId, ChatType.Thread.ToString());
+            var thread = await chatThreadService.GetChatThreadById(threadId);
             if (thread is null) return false;
 
             var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;

@@ -108,7 +108,7 @@ const AssistantsComponent: React.FC = () => {
       case '2':
         return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Archived</Badge>;
       default:
-        return <Badge className="bg-gray-100 text-gray-800 bg-gray-100">Unknown</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>;
     }
   };
 
@@ -154,6 +154,7 @@ const AssistantsComponent: React.FC = () => {
                   <TableHead className="w-[40px]">Status</TableHead>
                   <TableHead className="w-[200px]">Container</TableHead>
                   <TableHead className="w-[500px]">Description</TableHead>
+                  <TableHead className="w-[500px]">Supported models</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -248,6 +249,14 @@ const AssistantsComponent: React.FC = () => {
                     <TableCell>{getStatusBadge(assistant.status)}</TableCell>
                     <TableCell>{assistant.filterOptions.indexName}</TableCell>
                     <TableCell className="font-medium">{assistant.description}</TableCell>
+                    <TableCell className="font-medium">
+                      {assistant.modelOptions.allowModelSelection
+                        ? assistant.modelOptions.models
+                            .filter((m) => m.isSelected)
+                            .map((model) => model.modelId)
+                            .join(', ')
+                        : 'GPT-4o'}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

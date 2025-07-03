@@ -9,9 +9,9 @@ public class AssistantFilterOptions
     public int DocumentLimit { get; set; }
     public int? Strictness { get; set; } = null;
     public List<string> Folders { get; set; } = new();
-    
+
     public List<string> Tags { get; set; } = new();
-    
+
     public ChatThreadFilterOptions ParseChatThreadFilterOptions()
     {
         var options = new ChatThreadFilterOptions()

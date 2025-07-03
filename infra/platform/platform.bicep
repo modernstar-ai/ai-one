@@ -39,7 +39,7 @@ param appServicePlanName string = toLower('${resourcePrefix}-app')
 param storageAccountName string = replace(('${projectName}${environmentName}sto'), '-', '')
 
 @description('Key Vault name')
-param keyVaultName string = toLower('${resourcePrefix}-kv')
+param keyVaultName string = toLower('${resourcePrefix}2-kv')
 
 @description('Azure Container Registry name')
 param acrName string = toLower(replace('${resourcePrefix}acr', '-', ''))

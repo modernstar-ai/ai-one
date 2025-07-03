@@ -9,4 +9,5 @@ public class UpdateChatThreadDto
     public bool IsBookmarked { get; set; }
     public ChatThreadPromptOptions PromptOptions { get; set; }
     public ChatThreadFilterOptions FilterOptions { get; set; }
+    public ChatThreadModelOptions ModelOptions { get; set; }
 }

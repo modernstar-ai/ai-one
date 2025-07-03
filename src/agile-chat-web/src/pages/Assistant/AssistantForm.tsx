@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Settings } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent } from '@/components/ui/card';
 import { useForm } from 'react-hook-form';
@@ -17,13 +18,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice';
-import { Assistant, AssistantStatus, AssistantType, RagType } from '@/types/Assistant';
-//import { MultiSelectInput } from '@/components/ui-extended/multi-select';
-//import { useFolders } from '@/hooks/use-folders';
-
-//import { MultiToolSettingsDropdownInput } from '@/components/MultiToolSelector';
+import { Assistant, AssistantStatus, AssistantType, InsertAssistant, RagType } from '@/types/Assistant';
 import { fetchTools } from '@/services/toolservice';
-//import { Tool } from '@/types/Tool';
 import { useIndexes } from '@/hooks/use-indexes';
 import { Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -33,7 +29,9 @@ import {
 } from '@/components/ui-extended/permissions-access-control';
 import { PermissionsAccessControlSchema } from '@/components/ui-extended/permissions-access-control/form';
 import { MultiInput } from '@/components/ui-extended/multi-input';
-//import { enablePreviewFeatures } from '@/globals';
+import { MODEL_CONFIG_DEFAULTS } from '@/configs/form-default-values/assistant';
+import { BaseDialog } from '@/components/base/BaseDiaglog';
+import useGetTextModels from '@/hooks/use-get-textmodels';
 
 // Define the AssistantPromptOptions schema
 const AssistantPromptOptionsSchema = z.object({
@@ -55,6 +53,32 @@ const AssistantFilterOptionsSchema = z.object({
   })
 });
 
+// Enhanced model options schema with proper validation
+const ModelOptionsSchema = z
+  .object({
+    allowModelSelection: z.boolean(),
+    models: z.array(
+      z.object({
+        modelId: z.string(),
+        isSelected: z.boolean()
+      })
+    ),
+    defaultModelId: z.string()
+  })
+  .refine(
+    (data) => {
+      // If model selection is enabled, at least one model must be selected
+      if (data.allowModelSelection) {
+        return data.models.some((model) => model.isSelected);
+      }
+      return true;
+    },
+    {
+      message: 'At least one model must be selected when model selection is enabled',
+      path: ['models']
+    }
+  );
+
 // Define the main schema
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
@@ -65,7 +89,8 @@ const formSchema = z.object({
   status: z.nativeEnum(AssistantStatus),
   promptOptions: AssistantPromptOptionsSchema,
   filterOptions: AssistantFilterOptionsSchema,
-  accessControl: PermissionsAccessControlSchema
+  accessControl: PermissionsAccessControlSchema,
+  modelOptions: ModelOptionsSchema
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -77,10 +102,9 @@ export default function AssistantForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  //const { folders } = useFolders();
   const { indexes } = useIndexes();
-  //const [selectedToolIds, setSelectedToolIds] = useState<Set<string>>(new Set());
-  //const [tools, setTools] = useState<Tool[]>([]);
+
+  const { data, isLoading: textmodelsLoading } = useGetTextModels();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -105,15 +129,19 @@ export default function AssistantForm() {
         folders: [],
         tags: []
       },
-      accessControl: permissionsAccessControlDefaultValues
+      accessControl: permissionsAccessControlDefaultValues,
+      modelOptions: MODEL_CONFIG_DEFAULTS
     }
   });
+
+  const { watch } = form;
+  const watchAllFields = watch();
 
   const getTools = async () => {
     try {
       const response = await fetchTools();
       if (response) {
-        //setTools(response.sort((a, b) => a.name.localeCompare(b.name)));
+        // Handle tools if needed
       }
     } catch (error) {
       console.error('Failed to fetch tools:', error);
@@ -146,7 +174,8 @@ export default function AssistantForm() {
             folders: file.filterOptions.folders ?? [],
             tags: file.filterOptions.tags ?? []
           },
-          accessControl: file.accessControl ?? permissionsAccessControlDefaultValues
+          accessControl: file.accessControl ?? permissionsAccessControlDefaultValues,
+          modelOptions: file.modelOptions ?? MODEL_CONFIG_DEFAULTS
         });
       } else {
         toast({
@@ -169,16 +198,36 @@ export default function AssistantForm() {
     load();
   }, []);
 
-  // useEffect(() => {
-  //   form.setValue(
-  //     'tools',
-  //     Array.from(selectedToolIds).map((toolId) => {
-  //       const tool = tools.find((t) => t.id === toolId);
-  //       return tool ? { toolId: tool.id, toolName: tool.name } : { toolId: '', toolName: '' };
-  //     })
-  //   );
-  // }, [selectedToolIds, tools, form]);
+  // Handle model selection changes
+  // Handle model selection changes
+  const handleModelSelectionChange = (modelIndex: number, isSelected: boolean) => {
+    const currentModels = watchAllFields.modelOptions.models;
+    const updatedModels = [...currentModels];
+    updatedModels[modelIndex] = { ...updatedModels[modelIndex], isSelected };
 
+    form.setValue('modelOptions.models', updatedModels);
+
+    const currentDefault = watchAllFields.modelOptions.defaultModelId;
+    const changedModel = updatedModels[modelIndex];
+
+    if (isSelected) {
+      // If checking a model and no default is set, set this as default
+      if (!currentDefault || !updatedModels.some((m) => m.isSelected && m.modelId === currentDefault)) {
+        form.setValue('modelOptions.defaultModelId', changedModel.modelId);
+      }
+    } else {
+      // If unchecking a model and it's the current default, find a new default
+      if (changedModel.modelId === currentDefault) {
+        const firstSelectedModel = updatedModels.find((m) => m.isSelected);
+        form.setValue('modelOptions.defaultModelId', firstSelectedModel?.modelId || '');
+      }
+    }
+
+    // Trigger validation with a slight delay to ensure state is updated
+    setTimeout(() => {
+      form.trigger('modelOptions');
+    }, 0);
+  };
   const onSubmit = async (values: FormValues) => {
     if (values.ragType === RagType.AzureSearchChatDataSource && values.type === AssistantType.Search) {
       const t = toast({
@@ -192,21 +241,42 @@ export default function AssistantForm() {
 
     setIsSubmitting(true);
     try {
-      const fileData = values as Assistant;
+      const fileData = values as InsertAssistant;
 
-      if (fileId) await updateAssistant(fileData, fileId);
-      else await createAssistant(fileData);
+      if (fileId) {
+        await updateAssistant(fileData, fileId);
+      } else {
+        await createAssistant(fileData);
+      }
 
       toast({
         title: 'Success',
         description: fileId ? 'Assistant updated successfully' : 'Assistant created successfully'
       });
       navigate('/assistants');
-    } catch (error) {
+    } catch (error: any) {
+      // Enhanced error handling for 400 responses
+      let errorMessage = 'An error occurred';
+
+      if (error?.response?.status === 400) {
+        // Handle validation errors from the API
+        if (error.response.data?.errors) {
+          // If the API returns structured validation errors
+          const validationErrors = Object.values(error.response.data.errors).flat();
+          errorMessage = validationErrors.join(', ');
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        } else {
+          errorMessage = 'Validation failed. Please check your input.';
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred'
+        description: errorMessage
       });
     } finally {
       setIsSubmitting(false);
@@ -250,7 +320,6 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="description"
@@ -264,7 +333,6 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="type"
@@ -316,7 +384,6 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="accessControl"
@@ -332,7 +399,6 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="filterOptions.indexName"
@@ -360,15 +426,14 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="ragType"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel htmlFor="type-select">RAG Type</FormLabel>
-                      {form.getValues().type === AssistantType.Search &&
-                        form.getValues().ragType === RagType.AzureSearchChatDataSource && (
+                      {watchAllFields.type === AssistantType.Search &&
+                        watchAllFields.ragType === RagType.AzureSearchChatDataSource && (
                           <FormMessage>Warning: Assistant type 'Search' is not supported for this RAG Type</FormMessage>
                         )}
                       <Select onValueChange={(value) => field.onChange(value as RagType)} value={field.value}>
@@ -388,7 +453,6 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="filterOptions.limitKnowledgeToIndex"
@@ -404,7 +468,6 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="filterOptions.folders"
@@ -451,25 +514,6 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-
-                {/* {enablePreviewFeatures == true && (
-                  <FormField
-                    control={form.control}
-                    name="tools"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Add Functionalities to the Bots</FormLabel>
-                        <MultiToolSettingsDropdownInput
-                          tools={tools}
-                          selectedToolIds={selectedToolIds}
-                          setSelectedToolIds={setSelectedToolIds}
-                        />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )} */}
-
                 <FormField
                   control={form.control}
                   name="promptOptions.temperature"
@@ -493,7 +537,6 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="promptOptions.topP"
@@ -515,7 +558,6 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="promptOptions.maxTokens"
@@ -534,25 +576,6 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-                {/* {enablePreviewFeatures == true && (
-                  <FormField
-                    control={form.control}
-                    name="pastMessages"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Past Messages Included</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            placeholder="Enter a number, by default value will be set to 10"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )} */}
                 <FormField
                   control={form.control}
                   name="filterOptions.strictness"
@@ -576,7 +599,6 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="status"
@@ -599,7 +621,107 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
+                {textmodelsLoading ? (
+                  <div className="flex justify-center items-center">
+                    <Loader2 className="animate-spin" />
+                  </div>
+                ) : (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="modelOptions.allowModelSelection"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-y-0">
+                          <FormLabel htmlFor="allow-model-selection" className="my-auto mr-3">
+                            Allow Model Selection
+                          </FormLabel>
+                          <FormControl>
+                            <Checkbox
+                              id="allow-model-selection"
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
+                    {watchAllFields.modelOptions.allowModelSelection ? (
+                      <>
+                        <p className="text-red-500">{form.formState.errors.modelOptions?.defaultModelId?.message}</p>
+                        <p className="text-red-500">{form.formState.errors.modelOptions?.models?.message}</p>
+                      </>
+                    ) : null}
+                    {/* Model Configuration Dialog */}
+                    <BaseDialog
+                      title="Model Configuration"
+                      description="Manage the models available for the assistant."
+                      label={
+                        <div className="flex justify-center items-center space-x-2">
+                          <span className="mr-4">
+                            <Settings />
+                          </span>
+                          Model Configuration
+                        </div>
+                      }
+                      disabled={!watchAllFields.modelOptions.allowModelSelection}>
+                      <div className="space-y-4">
+                        <FormLabel>Available Models</FormLabel>
+                        {data?.models?.map((model, index) => (
+                          <div key={model.modelId} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div className="flex items-center space-x-4">
+                              <Checkbox
+                                checked={form.getValues(`modelOptions.models.${index}.isSelected`) || false}
+                                onCheckedChange={(checked) => handleModelSelectionChange(index, checked as boolean)}
+                              />
+                              <div className="flex-1">
+                                <div className="font-medium">{model.modelId}</div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Display validation error for models */}
+                        <FormField
+                          control={form.control}
+                          name="modelOptions.models"
+                          render={() => (
+                            <FormItem>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="modelOptions.defaultModelId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel htmlFor="default-model-select">Default Model</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger id="default-model-select">
+                                  <SelectValue placeholder="Select Default Model" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {form
+                                  .getValues('modelOptions.models')
+                                  ?.filter((m) => m.isSelected)
+                                  .map((model) => (
+                                    <SelectItem key={model.modelId} value={model.modelId}>
+                                      {model.modelId}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                    </BaseDialog>
+                  </>
+                )}
                 <div className="flex justify-between mt-2">
                   <Button
                     type="submit"

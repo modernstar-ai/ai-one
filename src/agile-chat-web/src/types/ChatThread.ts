@@ -9,6 +9,11 @@ export interface ChatThread {
   filterOptions: ChatThreadFilterOptions;
   createdDate: Date;
   lastModified: Date;
+  modelOptions?: IModelOptions;
+}
+
+interface IModelOptions {
+  modelId: string;
 }
 
 export interface CreateChatThread {
