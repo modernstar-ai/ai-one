@@ -4,7 +4,7 @@ targetScope = 'resourceGroup'
 param location string = resourceGroup().location
 
 @description('The name of the solution.')
-@minLength(1)
+@minLength(3)
 @maxLength(12)
 param projectName string
 
@@ -47,6 +47,20 @@ param acrName string = toLower(replace('${resourcePrefix}acr', '-', ''))
 @description('Log Analytics Workspace name')
 param logAnalyticsWorkspaceName string = toLower('${resourcePrefix}-la')
 
+@description('Application Insights name')
+param applicationInsightsName string = toLower('${resourcePrefix}-platform')
+
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: applicationInsightsName
+  location: location
+  tags: tags
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
+  }
+}
+
 @description('Cosmos DB account name')
 param cosmosDbAccountName string = toLower('${resourcePrefix}-cosmos')
 
@@ -65,6 +79,15 @@ param deployAzureOpenAi bool = true
 @description('OpenAI resource name')
 param openAiName string = toLower('${resourcePrefix}-aillm')
 
+@description('Flag to control deployment of AI Foundry resources')
+param deployAIFoundryResources bool = true
+
+@description('Name of the AI Foundry Account.')
+param aiFoundryAccountName string = toLower('${resourcePrefix}-foundry')
+
+@description('AI Foundry Project name')
+param aiFoundryProjectName string = toLower('${resourcePrefix}-prj')
+
 @description('Azure OpenAI resource location')
 param openAILocation string
 
@@ -76,23 +99,15 @@ param networkIsolation bool = false
 
 param virtualNetworkName string = toLower('${resourcePrefix}-vnet')
 
-// param keyVaultSubnetName string = 'keyvault-subnet'
-// param storageSubnetName string = 'storage-subnet'
-// param cosmosDbSubnetName string = 'cosmosdb-subnet'
-// param aiSearchSubnetName string = 'aisearch-subnet'
-// param serviceBusSubnetName string = 'servicebus-subnet'
-// param formRecognizerSubnetName string = 'formrecognizer-subnet'
-// param openAiSubnetName string = 'openai-subnet'
-// param acrSubnetName string = 'acr-subnet'
-
 param keyVaultSubnetName string = 'VmSubnet'
 param storageSubnetName string = 'VmSubnet'
 param cosmosDbSubnetName string = 'VmSubnet'
 param aiSearchSubnetName string = 'VmSubnet'
 param serviceBusSubnetName string = 'VmSubnet'
 param formRecognizerSubnetName string = 'VmSubnet'
-param openAiSubnetName string = 'VmSubnet'
 param acrSubnetName string = 'VmSubnet'
+param openAiSubnetName string = 'VmSubnet'
+param cognitiveServiceSubnetName string = 'VmSubnet'
 
 @description('Shared variables pattern for loading tags')
 var tagsFilePath = '../tags.json'
@@ -135,8 +150,9 @@ var cosmosDbSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${cosmosDb
 var aiSearchSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${aiSearchSubnetName}' : ''
 var serviceBusSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${serviceBusSubnetName}' : ''
 var formRecognizerSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${formRecognizerSubnetName}' : ''
-var openAiSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${openAiSubnetName}' : ''
 var acrSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${acrSubnetName}' : ''
+var openAiSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${openAiSubnetName}' : ''
+var cognitiveServiceSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${cognitiveServiceSubnetName}' : ''
 
 module logAnalyticsWorkspaceModule '../modules/logAnalyticsWorkspace.bicep' = {
   name: 'logAnalyticsWorkspaceModule'
@@ -281,6 +297,55 @@ module openAiModule '../modules/openai.bicep' = if (deployAzureOpenAi) {
   }
 }
 
+module aiFoundryProject '../modules/aifoundryProject.bicep' = if (deployAIFoundryResources) {
+  name: aiFoundryProjectName
+  params: {
+    name: aiFoundryProjectName
+    location: location
+    tags: tags
+    aiFoundryAccountName: aiFoundryAccountName
+    cosmosDbEnabled: true
+    searchEnabled: true
+    cosmosDBname: cosmosDbAccountName
+    searchServiceName: aiSearchService.outputs.name
+    storageName: storageModule.outputs.name
+  }
+}
+
+module cognitiveServices '../modules/cognitive-services/main.bicep' = if (deployAIFoundryResources) {
+  name: '${projectName}-cognitive-services-deployment'
+  dependsOn: [
+    aiFoundryProject
+  ]
+  params: {
+    location: location
+    tags: tags
+    aiServicesName: openAiName
+    aiServiceLocation: openAILocation
+    resourcePrefix: resourcePrefix
+    networkIsolation: networkIsolation
+    languageEnabled: false
+    visionEnabled: false
+    contentSafetyEnabled: false
+    speechEnabled: false
+    // networkAcls: networkAcls
+    virtualNetworkResourceId: virtualNetworkResourceId
+    virtualNetworkSubnetResourceId: cognitiveServiceSubnetResourceId
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
+  }
+}
+
+module modelDeployments '../modules/modelDeployments.bicep' = if (deployOpenAiModels) {
+  name: 'modelDeployments'
+  dependsOn: [
+    cognitiveServices
+  ]
+  params: {
+    aiFoundryAccountName: aiFoundryAccountName
+    aiModelDeployments: openAiSampleModels
+  }
+}
+
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.name
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
 output searchServiceName string = aiSearchService.outputs.name
@@ -294,5 +359,9 @@ output cosmosDbAccountName string = cosmosDbAccountModule.outputs.name
 output cosmosDbAccountEndpoint string = cosmosDbAccountModule.outputs.endpoint
 output formRecognizerName string = documentIntelligenceModule.outputs.name
 output serviceBusName string = serviceBusModule.outputs.name
-output openAiName string = deployAzureOpenAi ? openAiModule.outputs.name : ''
-output openAiEndpoint string = deployAzureOpenAi ? openAiModule.outputs.endpoint : ''
+output openAiName string = deployAIFoundryResources
+  ? cognitiveServices.outputs.aiServicesName
+  : openAiModule.outputs.name
+output openAiEndpoint string = deployAIFoundryResources
+  ? cognitiveServices.outputs.aiServicesEndpoint
+  : openAiModule.outputs.endpoint

@@ -47,6 +47,9 @@ param formRecognizerName string
 @description('OpenAI resource name')
 param openAiName string
 
+@description('OpenAI API endpoint')
+param openAiEndpoint string
+
 @description('OpenAI API version')
 param openAiApiVersion string
 
@@ -322,11 +325,7 @@ module apiAppModule '../modules/site.bicep' = {
         }
         {
           name: 'AzureOpenAi__Endpoint'
-          value: 'https://${openAiName}.openai.azure.com/'
-        }
-        {
-          name: 'AzureOpenAi__InstanceName'
-          value: openAiName
+          value: openAiEndpoint
         }
         {
           name: 'AzureOpenAi__DeploymentName'

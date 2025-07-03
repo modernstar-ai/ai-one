@@ -14,7 +14,7 @@ on:
       environment_name:
         description: "Select the application environment name - used to name resources"
         type: choice
-        default: "uat"
+        default: "dev"
         options:
           - "dev"
           - "tst"

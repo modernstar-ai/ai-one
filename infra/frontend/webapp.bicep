@@ -29,6 +29,9 @@ param webappName string = toLower('${resourcePrefix}-webapp')
 @description('Log Analytics Workspace name')
 param logAnalyticsWorkspaceName string
 
+@description('Application Insights name')
+param applicationInsightsName string = toLower('${resourcePrefix}-webapp')
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' existing = {
   name: appServicePlanName
 }
@@ -40,6 +43,17 @@ resource webAppManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' existing = {
   name: logAnalyticsWorkspaceName
+}
+
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: applicationInsightsName
+  location: location
+  tags: tags
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalyticsWorkspace.id
+  }
 }
 
 module webAppModule '../modules/site.bicep' = {

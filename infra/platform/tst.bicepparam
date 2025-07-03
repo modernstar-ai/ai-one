@@ -7,7 +7,8 @@ param azureClientId = readEnvironmentVariable('AZURE_CLIENT_ID')
 param azureTenantId = readEnvironmentVariable('AZURE_TENANT_ID')
 
 param openAILocation = 'australiaeast' 
-param deployAzureOpenAi = true
+param deployAzureOpenAi = false
+param deployAIFoundryResources = true
 param deployOpenAiModels = true
 
 param semanticSearchSku = 'standard'
