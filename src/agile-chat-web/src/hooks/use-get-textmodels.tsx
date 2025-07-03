@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getTextModels } from '@/services/chat-config-service';
+import { getTextModels } from '@/services/chat-completions-service';
 import { IModelOptions } from '@/types/Assistant';
 
 const useGetTextModels = () => {

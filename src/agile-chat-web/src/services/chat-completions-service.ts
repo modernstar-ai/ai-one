@@ -1,5 +1,6 @@
 import axios from '@/error-handling/axiosSetup';
 import { ChatDto } from '@/types/ChatCompletions';
+import { IModelOptions } from '@/types/Assistant';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -17,4 +18,14 @@ export async function chat(chatDto: ChatDto) {
     responseType: 'stream',
     adapter: 'fetch',
   });
+}
+
+export async function getTextModels() {
+  const apiUrl = getApiUrl('/config/textmodels');
+  try {
+    const res = await axios.get<IModelOptions>(apiUrl);
+    return res.data;
+  } catch {
+    return null;
+  }
 }
