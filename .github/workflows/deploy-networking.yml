@@ -1,4 +1,4 @@
-name: Deploy Network Infrastructure (VNet, Subnets, NSGs, Bastion)
+name: Deploy Network Infrastructure
 
 on:
   workflow_dispatch:
