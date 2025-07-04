@@ -1,5 +1,4 @@
 name: Deploy Network Infrastructure
-
 on:
   workflow_dispatch:
     inputs:
@@ -60,16 +59,20 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Validate Bicep Template
-        run: |
-          az deployment group validate \
-            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
-            --template-file ${{ env.AZURE_BICEP_MAIN }} \
-            --parameters @infra/networking/${{ inputs.environment_name }}.bicepparam \
-            --verbose
+      - name: Bicep What-If Analysis
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          name: bicep-deployment-validation
+          operation: validate
+          scope: resourceGroup
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ${{ env.AZURE_BICEP_MAIN }}
+          parameters-file: infra/networking/${{ inputs.environment_name }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
 
       - name: Deploy Bicep Infrastructure
-        id: deployment
         uses: azure/bicep-deploy@v2
         with:
           type: deployment
