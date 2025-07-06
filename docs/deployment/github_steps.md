@@ -47,6 +47,8 @@ Create the following environment variables in each environment created in the pr
     - `AZURE_TENANT_ID`: The Azure Active Directory (AAD) tenant ID associated with the organization.
     - `AZURE_CLIENT_ID`: The application (client) ID of the Azure Service Principal used for authentication and deployment automation.
     - `AZURE_RESOURCE_GROUP`: The name of the Azure resource group.
+    - `PROJECT_NAME`: The name of the project (e.g., `ag-aione`).
+    - `AZURE_LOCATION`: The location (region) where resources will be deployed (e.g., `australiaeast`).
     - `VITE_AGILECHAT_API_URL`: The base URL for the Agile.Chat API. 
       
         e.g., `https://ag-aione-apiapp.azurewebsites.net`.
