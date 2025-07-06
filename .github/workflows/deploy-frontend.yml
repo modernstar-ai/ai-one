@@ -4,8 +4,8 @@ name: Deploy AI-One Web App
 on:
   workflow_dispatch:
     inputs:
-      environment_name:
-        description: "Select the application environment name - used to name resources"
+      environment:
+        description: "Select the environment to deploy the Web Application infrastructure"
         type: choice
         default: "dev"
         options:
@@ -36,7 +36,7 @@ permissions:
 
 jobs:
   deploy-infra-and-web:
-    environment: ${{ inputs.environment_name }}
+    environment: ${{ inputs.environment }}
     name: Deploy Web Infrastructure and Application
     runs-on: ubuntu-latest
 
@@ -64,8 +64,8 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
           template-file: ${{ env.AZURE_BICEP_MAIN }}
-          parameters-file: infra/frontend/${{ inputs.environment_name }}.bicepparam
-          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
+          parameters-file: infra/frontend/${{ inputs.environment }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
       - name: Deploy Web Infrastructure (Bicep Create)
         uses: azure/bicep-deploy@v2
@@ -77,8 +77,8 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
           template-file: ${{ env.AZURE_BICEP_MAIN }}
-          parameters-file: infra/frontend/${{ inputs.environment_name }}.bicepparam
-          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
+          parameters-file: infra/frontend/${{ inputs.environment }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
       - name: Setup Node.js
         uses: actions/setup-node@v3

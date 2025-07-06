@@ -5,7 +5,7 @@ parameters:
 - name: environment
   type: string
   default: dev
-  displayName: 'Select the Azure Deployment Environment'
+  displayName: 'Select the environment to deploy the API infrastructure'
   values:
   - dev
   - tst

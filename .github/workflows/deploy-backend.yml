@@ -4,8 +4,8 @@ name: Deploy AI-One Api
 on:
   workflow_dispatch:
     inputs:
-      environment_name:
-        description: "Select the application environment name - used to name resources"
+      environment:
+        description: "Select the environment to deploy the API infrastructure"
         type: choice
         default: "dev"
         options:
@@ -33,7 +33,7 @@ permissions:
 
 jobs:
   deploy-infra-and-api:
-    environment: ${{ inputs.environment_name }}
+    environment: ${{ inputs.environment }}
     name: Deploy API Infrastructure and Application
     runs-on: ubuntu-latest
     steps:
@@ -60,8 +60,8 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
           template-file: ${{ env.AZURE_BICEP_MAIN }}
-          parameters-file: infra/backend/${{ inputs.environment_name }}.bicepparam
-          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
+          parameters-file: infra/backend/${{ inputs.environment }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
       - name: Deploy API Infrastructure (Bicep Create)
         uses: azure/bicep-deploy@v2
@@ -73,8 +73,8 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
           template-file: ${{ env.AZURE_BICEP_MAIN }}
-          parameters-file: infra/backend/${{ inputs.environment_name }}.bicepparam
-          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
+          parameters-file: infra/backend/${{ inputs.environment }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
       - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v3
