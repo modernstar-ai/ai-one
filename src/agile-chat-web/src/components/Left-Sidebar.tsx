@@ -10,7 +10,19 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
-import { Home, FileBox, Plus, PanelLeftOpen, PanelLeftClose, Loader2, Database, Bot, Menu } from 'lucide-react';
+import {
+  Home,
+  FileBox,
+  Plus,
+  PanelLeftOpen,
+  PanelLeftClose,
+  Loader2,
+  Database,
+  Bot,
+  Menu,
+  MoveLeftIcon,
+  StepBack
+} from 'lucide-react';
 import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
 import { UserRole } from '@/authentication/user-roles';
 
@@ -191,6 +203,10 @@ export function ResponsiveNavigation() {
       {/* Top Bar for Mobile */}
       <div className="lg:hidden flex items-center justify-between p-4 border-b bg-gray-900 border-gray-700 fixed w-full h-[5vh]">
         <div className="flex items-center space-x-2">
+          <StepBack
+            className="text-white cursor-pointer"
+            onClick={() => navigate(window.location.href.includes('/chat/') ? -2 : -1)}
+          />
           <img
             src={settings?.logoUrl && settings.logoUrl != '' ? settings.logoUrl : Logo}
             alt="Agile Logo"
