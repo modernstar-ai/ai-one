@@ -292,7 +292,7 @@ export default function AssistantForm() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="flex min-h-screen lg:h-screen lg:overflow-y-auto bg-background text-foreground">
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
