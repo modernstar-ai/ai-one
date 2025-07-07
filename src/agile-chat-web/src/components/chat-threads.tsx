@@ -20,7 +20,7 @@ interface Thread {
 }
 
 interface Props {
-  threads?: Thread[];
+  threads?: Thread[] | null;
   loading: boolean;
   error?: string;
   handleCreateChat: () => void;

@@ -20,7 +20,6 @@ import {
   Database,
   Bot,
   Menu,
-  MoveLeftIcon,
   StepBack
 } from 'lucide-react';
 import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
@@ -204,7 +203,7 @@ export function ResponsiveNavigation() {
       <div className="lg:hidden flex items-center justify-between p-4 border-b bg-gray-900 border-gray-700 fixed w-full h-[5vh]">
         <div className="flex items-center space-x-2">
           <StepBack
-            className="text-white cursor-pointer"
+            className="text-gray-300 cursor-pointer"
             onClick={() => navigate(window.location.href.includes('/chat/') ? -2 : -1)}
           />
           <img
@@ -261,6 +260,7 @@ export function ResponsiveNavigation() {
                   <ChatThreads
                     error={error || undefined}
                     loading={loading}
+                    threads={threads}
                     handleCreateChat={handleCreateChat}
                     handleClearHistory={handleClearHistory}
                     handleDeleteThread={handleDeleteThread}
@@ -393,6 +393,7 @@ export function ResponsiveNavigation() {
                 <ChatThreads
                   error={error || undefined}
                   loading={loading}
+                  threads={threads}
                   handleCreateChat={handleCreateChat}
                   handleClearHistory={handleClearHistory}
                   handleDeleteThread={handleDeleteThread}
