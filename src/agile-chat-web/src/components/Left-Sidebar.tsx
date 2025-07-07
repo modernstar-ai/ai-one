@@ -7,52 +7,19 @@ import { createChatThread, deleteChatThread } from '@/services/chatthreadservice
 
 import { Button } from '@/components/ui/button';
 
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger
-} from '@/components/ui/alert-dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
-import {
-  Home,
-  FileBox,
-  User,
-  LogOut,
-  Plus,
-  Trash2,
-  Sun,
-  Moon,
-  Monitor,
-  PanelLeftOpen,
-  PanelLeftClose,
-  Loader2,
-  Database,
-  Bot,
-  Menu
-} from 'lucide-react';
+import { Home, FileBox, Plus, PanelLeftOpen, PanelLeftClose, Loader2, Database, Bot, Menu } from 'lucide-react';
 import { PermissionHandler } from '@/authentication/permission-handler/permission-handler';
 import { UserRole } from '@/authentication/user-roles';
 
 import Logo from '@/assets/agile-logo.png';
 import { useThreadsStore } from '@/stores/threads-store';
 import { useSettingsStore } from '@/stores/settings-store';
+import { UserMenu } from './user-menu';
+import { NavigationItems } from './navigation-items';
+import { ChatThreads } from './chat-threads';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -219,231 +186,6 @@ export function ResponsiveNavigation() {
     setIsMobileMenuOpen(false);
   };
 
-  // Navigation items component for reuse
-  const NavigationItems = ({ isMobile = false }: { isMobile?: boolean }) => (
-    <div className={cn('flex space-y-2', isMobile ? 'flex-col' : 'flex-col mt-4')}>
-      <Button
-        variant="ghost"
-        size={isMobile ? 'default' : 'icon'}
-        className={cn(
-          'justify-start',
-          isMobile ? 'w-full text-gray-300 hover:text-white hover:bg-gray-800' : '',
-          isMobile ? '' : 'text-gray-300 hover:text-white hover:bg-gray-800'
-        )}
-        onClick={() => handleNavigation('/')}>
-        <Home className={cn('h-5 w-5', isMobile ? 'mr-2' : '')} />
-        {isMobile && 'Home'}
-      </Button>
-
-      <Button
-        variant="ghost"
-        size={isMobile ? 'default' : 'icon'}
-        className={cn(
-          'justify-start',
-          isMobile ? 'w-full text-gray-300 hover:text-white hover:bg-gray-800' : '',
-          isMobile ? '' : 'text-gray-300 hover:text-white hover:bg-gray-800'
-        )}
-        onClick={() => handleNavigation('/assistants')}>
-        <Bot className={cn('h-5 w-5', isMobile ? 'mr-2' : '')} />
-        {isMobile && 'Assistants'}
-      </Button>
-
-      <PermissionHandler roles={[UserRole.ContentManager]}>
-        <Button
-          variant="ghost"
-          size={isMobile ? 'default' : 'icon'}
-          className={cn(
-            'justify-start',
-            isMobile ? 'w-full text-gray-300 hover:text-white hover:bg-gray-800' : '',
-            isMobile ? '' : 'text-gray-300 hover:text-white hover:bg-gray-800'
-          )}
-          onClick={() => handleNavigation('/files')}>
-          <FileBox className={cn('h-5 w-5', isMobile ? 'mr-2' : '')} />
-          {isMobile && 'Files'}
-        </Button>
-      </PermissionHandler>
-
-      <PermissionHandler roles={[UserRole.ContentManager]}>
-        <Button
-          variant="ghost"
-          size={isMobile ? 'default' : 'icon'}
-          className={cn(
-            'justify-start',
-            isMobile ? 'w-full text-gray-300 hover:text-white hover:bg-gray-800' : '',
-            isMobile ? '' : 'text-gray-300 hover:text-white hover:bg-gray-800'
-          )}
-          onClick={() => handleNavigation('/containers')}>
-          <Database className={cn('h-5 w-5', isMobile ? 'mr-2' : '')} />
-          {isMobile && 'Database'}
-        </Button>
-      </PermissionHandler>
-    </div>
-  );
-
-  // User menu component for reuse
-  const UserMenu = ({ isMobile = false }: { isMobile?: boolean }) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size={isMobile ? 'default' : 'icon'}
-          className={cn(
-            'lg:justify-center justify-start',
-            isMobile ? 'w-full text-gray-300 hover:text-white hover:bg-gray-800' : '',
-            isMobile ? '' : 'text-gray-300 hover:text-white hover:bg-gray-800'
-          )}
-          aria-label="User Profile">
-          <User className={cn('h-5 w-5', isMobile ? 'mr-2' : '')} />
-          {isMobile && name}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium">{name}</p>
-            <p className="text-xs text-muted-foreground">{username}</p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-
-        {/* Theme Options */}
-        <DropdownMenuItem onClick={() => applyTheme('light')}>
-          <Sun className="mr-2 h-4 w-4" />
-          <span>Light</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => applyTheme('dark')}>
-          <Moon className="mr-2 h-4 w-4" />
-          <span>Dark</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => applyTheme('system')}>
-          <Monitor className="mr-2 h-4 w-4" />
-          <span>System</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-  // Chat threads component for reuse
-  const ChatThreads = () => (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-        <h2 className="font-semibold text-white">Recent Chats</h2>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleCreateChat}
-          disabled={loading}
-          aria-label="New Chat"
-          className="text-gray-300 hover:text-white hover:bg-gray-800">
-          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
-        </Button>
-      </div>
-
-      {/* Error Message */}
-      {error && <div className="px-4 py-2 text-red-400 text-sm">{error}</div>}
-
-      {/* Chat Threads */}
-      {loading && threads?.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
-      ) : (
-        <ScrollArea className="flex-1">
-          <div className="p-4 space-y-2">
-            {threads?.map((thread) => (
-              <div
-                key={thread.id}
-                className={cn(
-                  'group flex items-center justify-between p-2 rounded-md',
-                  'hover:bg-gray-800 cursor-pointer',
-                  loading && 'opacity-50 pointer-events-none'
-                )}>
-                <div
-                  className="flex flex-col flex-grow min-w-0"
-                  onClick={() => {
-                    navigate(`/chat/${thread.id}`);
-                    setIsMobileMenuOpen(false);
-                  }}>
-                  <span className="text-sm font-medium truncate text-gray-200">
-                    {thread.name.length > 50 ? `${thread.name.slice(0, 30)}...` : thread.name}
-                  </span>
-                </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-400 hover:bg-gray-800"
-                      disabled={loading}
-                      onClick={(e) => e.stopPropagation()}>
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Chat</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete this chat? This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDeleteThread(thread.id)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-      )}
-
-      {/* Clear History Button */}
-      {threads && threads.length > 0 && (
-        <div className="p-4 border-t border-gray-700">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full border-gray-600 bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white"
-                disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Clear History
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Clear All Chat History</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to clear all chat history? This action cannot be undone and will delete all your
-                  conversations.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleClearHistory}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Clear All
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <div className="h-screen flex flex-col">
       {/* Top Bar for Mobile */}
@@ -486,13 +228,29 @@ export function ResponsiveNavigation() {
                     className="w-1/2 mb-4"
                   />
                   <div className="space-y-2">
-                    <NavigationItems isMobile={true} />
-                    {isLoggedIn && <UserMenu isMobile={true} />}
+                    <NavigationItems handleNavigation={handleNavigation} isMobile={true} />
+                    {isLoggedIn && (
+                      <UserMenu
+                        isMobile={true}
+                        handleLogout={handleLogout}
+                        name={name}
+                        username={username}
+                        applyTheme={applyTheme}
+                      />
+                    )}
                   </div>
                 </div>
 
                 <div className="flex-1 overflow-hidden">
-                  <ChatThreads />
+                  <ChatThreads
+                    error={error || undefined}
+                    loading={loading}
+                    handleCreateChat={handleCreateChat}
+                    handleClearHistory={handleClearHistory}
+                    handleDeleteThread={handleDeleteThread}
+                    navigate={navigate}
+                    setIsMobileMenuOpen={setIsMobileMenuOpen}
+                  />
                 </div>
               </div>
             </SheetContent>
@@ -588,13 +346,18 @@ export function ResponsiveNavigation() {
 
             {isLoggedIn && (
               <div className="mt-auto flex justify-center items-center">
-                <UserMenu />
+                <UserMenu
+                  isMobile={false}
+                  handleLogout={handleLogout}
+                  name={name}
+                  username={username}
+                  applyTheme={applyTheme}
+                />
               </div>
             )}
           </TooltipProvider>
         </div>
 
-        {/* Expandable Panel - Always Dark */}
         <div
           className={cn(
             'border-r bg-gray-900 border-gray-700 transition-all duration-300 ease-in-out',
@@ -611,7 +374,15 @@ export function ResponsiveNavigation() {
               </div>
 
               <div className="flex-1 overflow-hidden">
-                <ChatThreads />
+                <ChatThreads
+                  error={error || undefined}
+                  loading={loading}
+                  handleCreateChat={handleCreateChat}
+                  handleClearHistory={handleClearHistory}
+                  handleDeleteThread={handleDeleteThread}
+                  navigate={navigate}
+                  setIsMobileMenuOpen={setIsMobileMenuOpen}
+                />
               </div>
             </div>
           )}
