@@ -1,0 +1,58 @@
+site_name: AI-One Documentation
+site_url: https://example.com/
+site_description: Documentation for the AI-One project.
+site_author: AI-One Team
+repo_url: https://github.com/agile-internal/agile-chat
+repo_name: GitHub
+edit_uri: edit/main/docs/
+docs_dir: docs
+site_dir: site
+nav:
+  - "Deployment Guide":
+    - Overview: deployment/overview.md
+    - Application Registration: deployment/app_registration.md
+    - Deployment Steps Using GitHub Actions: deployment/github_steps.md
+    - Deployment Steps Using Azure DevOps: deployment/azure_devops_steps.md
+# Theme settings
+theme:
+  name: material
+  language: en
+  palette:
+    - scheme: default
+      primary: black
+      accent: black
+  font:
+    text: Roboto
+    code: Roboto Mono
+  logo: images/logo.png # Place your logo in docs/images/
+  favicon: images/favicon.ico # Place your favicon in docs/images/
+  features:
+    - content.code.copy
+# Plugins
+plugins:
+  - search
+#  - mkdocstrings  # Removed due to missing package
+#  - autorefs  # Removed due to missing package
+#  - git-revision-date-localized  # Removed due to missing package
+# Markdown extensions
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+  - footnotes
+  - meta
+  - def_list
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.emoji
+# Extra CSS and JS
+extra_css:
+  - stylesheets/extra.css # Place your custom CSS in docs/stylesheets/
+extra_javascript:
+  - javascripts/extra.js # Place your custom JS in docs/javascripts/
+# Strict mode
+strict: false
+# Watch additional files
+watch:
+  - mkdocs.yml

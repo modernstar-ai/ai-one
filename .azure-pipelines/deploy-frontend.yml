@@ -1,0 +1,130 @@
+# Frontend Web App Deploy Pipeline (converted from GitHub Actions)
+trigger: none
+
+parameters:
+- name: environment
+  type: string
+  default: dev
+  displayName: 'Select the environment to deploy the Web Application infrastructure'
+  values:
+  - dev
+  - tst
+  - uat
+  - prod
+
+- name: uiWebAppName
+  displayName: 'Enter the name of the Web App'
+  type: string
+  default: 'ag-aione-dev-webapp'
+
+variables:
+  - name: environment
+    value: ${{ parameters.environment }}
+  - name: SERVICE_CONNECTION_NAME_DEV
+    value: 'dev-service-connection'
+  - name: agileWebSrc
+    value: './src/agile-chat-web'
+
+stages:
+# Build Stage
+- stage: Build
+  displayName: 'Build Agile Chat Web App'
+  variables:
+  - group: dev
+  jobs:
+  - job: BuildJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      persistCredentials: true
+
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+      displayName: 'Install Node.js'
+
+    - script: |
+        cd $(agileWebSrc)
+        echo "VITE_AGILECHAT_API_URL=${VITE_AGILECHAT_API_URL}" >> .env
+        echo "VITE_AZURE_AD_CLIENT_ID=${AZURE_CLIENT_ID}" >> .env
+        echo "VITE_AZURE_AD_TENANT_ID=${AZURE_TENANT_ID}" >> .env
+        npm install
+        npm run build
+      displayName: 'Build Agile Chat Web App'
+
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(agileWebSrc)/dist'
+        includeRootFolder: true
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/release.zip'
+      displayName: 'Create ZIP artifact'
+
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish Agile Chat Web App Artifact'
+      inputs:
+        targetPath: '$(Build.ArtifactStagingDirectory)/release.zip'
+        artifact: 'agile-chat-web'
+        publishLocation: 'pipeline'
+
+# Deploy Stage
+- stage: DeployDev
+  displayName: 'Deploy Web Infrastructure and Application - Dev'
+  condition: eq(variables['environment'], 'dev')
+  variables:
+    - group: dev
+  dependsOn: Build
+  jobs:
+    - deployment: DeployJob
+      environment: 'dev'
+      displayName: 'Deploy to Azure'
+      pool:
+        vmImage: 'ubuntu-latest'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - checkout: self
+                fetchDepth: 1
+                persistCredentials: true
+
+              - task: DownloadPipelineArtifact@2
+                displayName: 'Download Agile Chat Web App Artifact'
+                inputs:
+                  artifact: 'agile-chat-web'
+                  path: '$(Build.ArtifactStagingDirectory)'
+
+              - task: AzureCLI@2
+                displayName: 'Validate Web Infrastructure (Bicep What-If) - Dev'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION_NAME_DEV)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az deployment group validate \
+                      --resource-group $(AZURE_RESOURCE_GROUP) \
+                      --template-file ./infra/frontend/webapp.bicep \
+                      --parameters ./infra/frontend/${{ parameters.environment }}.bicepparam environmentName=${{ parameters.environment }}
+
+              - task: AzureCLI@2
+                displayName: 'Deploy Web Infrastructure (Bicep Create) - Dev'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION_NAME_DEV)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az deployment group create \
+                      --resource-group $(AZURE_RESOURCE_GROUP) \
+                      --template-file ./infra/frontend/webapp.bicep \
+                      --parameters ./infra/frontend/${{ parameters.environment }}.bicepparam environmentName=${{ parameters.environment }}
+
+              - task: AzureWebApp@1
+                displayName: 'Deploy Agile Chat Web App - Dev'
+                inputs:
+                  appType: webAppLinux
+                  azureSubscription: $(SERVICE_CONNECTION_NAME_DEV)
+                  appName: ${{ parameters.uiWebAppName }}
+                  package: '$(Build.ArtifactStagingDirectory)/release.zip'
+                  runtimeStack: 'NODE|18-lts'

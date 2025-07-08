@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AzureCosmosDisableNewtonsoftJsonCheck>true</AzureCosmosDisableNewtonsoftJsonCheck>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Azure.Identity" Version="1.14.1" />
+		<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.52.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.6" />
+		<PackageReference Include="System.Linq.Dynamic.Core" Version="1.6.6" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Agile.Framework.Common\Agile.Framework.Common.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,78 @@
+name: Deploy AI-One Platform Infrastructure
+
+on:
+  # push:
+  #   branches:
+  #     - "feature/vnet"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Select the environment to deploy the platform infrastructure"
+        type: choice
+        default: "dev"
+        options:
+          - "dev"
+          - "tst"
+          - "uat"
+          - "prod"
+        required: true
+env:
+  AZURE_BICEP_MAIN: "./infra/platform.bicep"
+  AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  PROJECT_NAME: ${{ vars.PROJECT_NAME }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+  # AZURE_RESOURCE_GROUP
+  # APIM_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
+  # APIM_EMBEDDINGS_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
+
+# Set up permissions for deploying with secretless Azure federated credentials
+# https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-infrastructure:
+    environment: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Bicep What-If Analysis
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          name: bicep-deployment-validation
+          operation: validate
+          scope: resourceGroup
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ${{ env.AZURE_BICEP_MAIN }}
+          parameters-file: infra/platform/${{ inputs.environment }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment }}" }'
+
+      - name: Deploy Bicep Infrastructure
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: create
+          name: bicep-deployment
+          scope: resourceGroup
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ${{ env.AZURE_BICEP_MAIN }}
+          parameters-file: infra/platform/${{ inputs.environment }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment }}" }'
+
+      - name: Print Deployment Outputs
+        run: |
+          echo "intOutput: ${{ steps.deployment.outputs.intOutput }}"
+          echo "stringOutput: ${{ steps.deployment.outputs.stringOutput }}"

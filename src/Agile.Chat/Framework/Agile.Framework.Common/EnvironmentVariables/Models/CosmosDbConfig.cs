@@ -1,0 +1,8 @@
+﻿namespace Agile.Framework.Common.EnvironmentVariables.Models;
+
+public class CosmosDbConfig
+{
+    public string Endpoint { get; set; }
+    public string Key { get; set; }
+    public string DatabaseName { get; set; }
+}
