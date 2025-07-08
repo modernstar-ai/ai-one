@@ -39,10 +39,7 @@ param appServicePlanName string = toLower('${resourcePrefix}-app')
 param storageAccountName string = replace(('${projectName}${environmentName}sto'), '-', '')
 
 @description('Key Vault name')
-param keyVaultName string = toLower('${resourcePrefix}2-kv')
-
-@description('Azure Container Registry name')
-param acrName string = toLower(replace('${resourcePrefix}acr', '-', ''))
+param keyVaultName string = toLower('${resourcePrefix}-kv')
 
 @description('Log Analytics Workspace name')
 param logAnalyticsWorkspaceName string = toLower('${resourcePrefix}-la')
@@ -79,8 +76,8 @@ param openAiName string = toLower('${resourcePrefix}-aillm')
 @description('Flag to control deployment of AI Foundry resources')
 param deployAIFoundryResources bool = true
 
-@description('Name of the AI Foundry Account.')
-param aiFoundryAccountName string = toLower('${resourcePrefix}-foundry')
+@description('AI Services resource name if deploying AI Foundry resources')
+param aiFoundryServicesName string = toLower('${resourcePrefix}-foundry')
 
 @description('AI Foundry Project name')
 param aiFoundryProjectName string = toLower('${resourcePrefix}-prj')
@@ -182,19 +179,6 @@ module keyVaultModule '../modules/keyVault.bicep' = {
         value: azureTenantId
       }
     ]
-  }
-}
-
-module acrModule '../modules/acr.bicep' = {
-  name: 'acrModule'
-  params: {
-    name: acrName
-    location: location
-    tags: tags
-    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
-    networkIsolation: networkIsolation
-    virtualNetworkResourceId: virtualNetworkResourceId
-    virtualNetworkSubnetResourceId: acrSubnetResourceId
   }
 }
 
@@ -300,24 +284,21 @@ module aiFoundryProject '../modules/aifoundryProject.bicep' = if (deployAIFoundr
     name: aiFoundryProjectName
     location: location
     tags: tags
-    aiFoundryAccountName: aiFoundryAccountName
+    aiFoundryServicesName: cognitiveServices.outputs.aiFoundryServicesName
     cosmosDbEnabled: true
     searchEnabled: true
     cosmosDBname: cosmosDbAccountName
-    searchServiceName: aiSearchService.outputs.name
-    storageName: storageModule.outputs.name
+    searchServiceName: searchServiceName
+    storageName: storageAccountName
   }
 }
 
 module cognitiveServices '../modules/cognitive-services/main.bicep' = if (deployAIFoundryResources) {
   name: '${projectName}-cognitive-services-deployment'
-  dependsOn: [
-    aiFoundryProject
-  ]
   params: {
     location: location
     tags: tags
-    aiServicesName: openAiName
+    aiFoundryServicesName: aiFoundryServicesName
     aiServiceLocation: openAILocation
     resourcePrefix: resourcePrefix
     networkIsolation: networkIsolation
@@ -327,7 +308,6 @@ module cognitiveServices '../modules/cognitive-services/main.bicep' = if (deploy
     visionEnabled: false
     contentSafetyEnabled: false
     speechEnabled: false
-    // networkAcls: networkAcls
     virtualNetworkResourceId: virtualNetworkResourceId
     virtualNetworkSubnetResourceId: cognitiveServiceSubnetResourceId
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceModule.outputs.resourceId
@@ -340,7 +320,7 @@ module modelDeployments '../modules/modelDeployments.bicep' = if (deployOpenAiMo
     cognitiveServices
   ]
   params: {
-    aiFoundryAccountName: aiFoundryAccountName
+    aiFoundryServicesName: aiFoundryServicesName
     aiModelDeployments: openAiSampleModels
   }
 }
@@ -358,7 +338,7 @@ output cosmosDbAccountName string = cosmosDbAccountModule.outputs.name
 output cosmosDbAccountEndpoint string = cosmosDbAccountModule.outputs.endpoint
 output serviceBusName string = serviceBusModule.outputs.name
 output openAiName string = deployAIFoundryResources
-  ? cognitiveServices.outputs.aiServicesName
+  ? cognitiveServices.outputs.aiFoundryServicesName
   : openAiModule.outputs.name
 output openAiEndpoint string = deployAIFoundryResources
   ? cognitiveServices.outputs.aiServicesEndpoint
