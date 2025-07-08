@@ -22,6 +22,8 @@ on:
 env:
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  PROJECT_NAME: ${{ vars.PROJECT_NAME }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
   AZURE_BICEP_MAIN: "./infra/frontend/webapp.bicep"
   AGILE_WEB_SRC: "./src/agile-chat-web"
   VITE_AGILECHAT_API_URL: ${{ vars.VITE_AGILECHAT_API_URL }}
