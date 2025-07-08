@@ -1,0 +1,797 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for the AI-One project.">
+      
+      
+        <meta name="author" content="AI-One Team">
+      
+      
+        <link rel="canonical" href="https://example.com/deployment/overview/">
+      
+      
+      
+        <link rel="next" href="../app_registration/">
+      
+      
+      <link rel="icon" href="../../images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
+    
+    
+      
+        <title>Overview - AI-One Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="black">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ai-one-deployment-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="AI-One Documentation" class="md-header__button md-logo" aria-label="AI-One Documentation" data-md-component="logo">
+      
+  <img src="../../images/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AI-One Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Overview
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="black"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/agile-internal/agile-chat" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="AI-One Documentation" class="md-nav__button md-logo" aria-label="AI-One Documentation" data-md-component="logo">
+      
+  <img src="../../images/logo.png" alt="logo">
+
+    </a>
+    AI-One Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/agile-internal/agile-chat" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Deployment Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-infrastructure-as-code-iac" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Infrastructure as Code (IaC)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Infrastructure as Code (IaC)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-platform-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 Platform Infrastructure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-api-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.2 API Infrastructure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-web-app-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3 Web App Infrastructure
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-deployment-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Deployment Steps
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../app_registration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Application Registration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../github_steps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment Steps Using GitHub Actions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../azure_devops_steps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment Steps Using Azure DevOps
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-infrastructure-as-code-iac" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Infrastructure as Code (IaC)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Infrastructure as Code (IaC)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-platform-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 Platform Infrastructure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-api-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.2 API Infrastructure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-web-app-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3 Web App Infrastructure
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-deployment-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Deployment Steps
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="ai-one-deployment-guide">AI-One Deployment Guide<a class="headerlink" href="#ai-one-deployment-guide" title="Permanent link">&para;</a></h1>
+<p>This guide provides step-by-step instructions for deploying the AI-One application on Azure.</p>
+<p>The deployment process provisions and configures the following solution components:</p>
+<ul>
+<li><strong>Platform</strong>: Core infrastructure and shared services</li>
+<li><strong>API</strong>: Backend services</li>
+<li><strong>Web App</strong>: Frontend application for user interaction</li>
+</ul>
+<h2 id="1-infrastructure-as-code-iac">1. Infrastructure as Code (IaC)<a class="headerlink" href="#1-infrastructure-as-code-iac" title="Permanent link">&para;</a></h2>
+<p>The infrastructure resources are defined using modular Bicep templates. All the templates and supporting scripts are under the <code>infra</code> directory of the project repository:</p>
+<div class="highlight"><pre><span></span><code>infra
+├── platform
+├── backend
+├── frontend
+├── scripts
+└── modules
+</code></pre></div>
+<ul>
+<li><code>platform</code>: Platform Bicep code &amp; parameter files</li>
+<li><code>backend</code>: API app Bicep code &amp; parameter files</li>
+<li><code>frontend</code>: Web app Bicep code &amp; parameter files</li>
+<li><code>scripts</code>: Deployment and utility scripts</li>
+<li><code>modules</code>: Reusable Bicep modules (e.g., Key Vault, Cosmos DB etc.)</li>
+</ul>
+<h3 id="11-platform-infrastructure">1.1 Platform Infrastructure<a class="headerlink" href="#11-platform-infrastructure" title="Permanent link">&para;</a></h3>
+<p>The platform infrastructure is defined in the <code>infra/platform</code> folder. This folder contains the Bicep files that provision the core resources required for the AI-One platform.</p>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Resource Type</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Log Analytics Workspace</td>
+<td>Microsoft.OperationalInsights/workspaces</td>
+<td>Centralized logging and monitoring</td>
+</tr>
+<tr>
+<td>Key Vault</td>
+<td>Microsoft.KeyVault/vaults</td>
+<td>Secure storage for secrets and keys</td>
+</tr>
+<tr>
+<td>Storage Account</td>
+<td>Microsoft.Storage/storageAccounts</td>
+<td>General-purpose storage for the platform</td>
+</tr>
+<tr>
+<td>Azure AI Search</td>
+<td>Microsoft.Search/searchServices</td>
+<td>Provides search capabilities</td>
+</tr>
+<tr>
+<td>App Service Plan</td>
+<td>Microsoft.Web/serverfarms</td>
+<td>Hosts web applications and APIs</td>
+</tr>
+<tr>
+<td>Cosmos DB Account</td>
+<td>Microsoft.DocumentDB/databaseAccounts</td>
+<td>Globally distributed NoSQL database for application data</td>
+</tr>
+<tr>
+<td>Document Intelligence</td>
+<td>Microsoft.CognitiveServices/accounts</td>
+<td>AI-powered document analysis</td>
+</tr>
+<tr>
+<td>Service Bus</td>
+<td>Microsoft.ServiceBus/namespaces</td>
+<td>Messaging and eventing between services</td>
+</tr>
+<tr>
+<td>Azure OpenAI Service</td>
+<td>Microsoft.CognitiveServices/accounts</td>
+<td>Access to Azure OpenAI models</td>
+</tr>
+</tbody>
+</table>
+<h3 id="12-api-infrastructure">1.2 API Infrastructure<a class="headerlink" href="#12-api-infrastructure" title="Permanent link">&para;</a></h3>
+<p>The API infrastructure is defined in the <code>infra/backend</code> folder and provisions the resources required to host Agile.Chat API. The following resources are created by the <code>apiapp.bicep</code> file:</p>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Resource Type</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API App</td>
+<td>Microsoft.Web/sites</td>
+<td>Hosts the Agile.Chat API application</td>
+</tr>
+<tr>
+<td>Service Bus Queue</td>
+<td>Microsoft.ServiceBus/namespaces/queues</td>
+<td>Queue for managing indexing requests</td>
+</tr>
+<tr>
+<td>Cosmos DB Database</td>
+<td>Microsoft.DocumentDB/databaseAccounts/sqlDatabases</td>
+<td>Stores chat history and configuration</td>
+</tr>
+<tr>
+<td>Event Grid System Topic</td>
+<td>Microsoft.EventGrid/systemTopics</td>
+<td>Eventing for blob storage events</td>
+</tr>
+<tr>
+<td>Event Grid Subscription</td>
+<td>Microsoft.EventGrid/systemTopics/eventSubscriptions</td>
+<td>Routes blob events to Service Bus</td>
+</tr>
+<tr>
+<td>Application Insights</td>
+<td>Microsoft.Insights/components</td>
+<td>Application monitoring and telemetry</td>
+</tr>
+<tr>
+<td>Blob Containers</td>
+<td>Microsoft.Storage/storageAccounts/blobServices/containers</td>
+<td>Storage containers for API data</td>
+</tr>
+</tbody>
+</table>
+<h3 id="13-web-app-infrastructure">1.3 Web App Infrastructure<a class="headerlink" href="#13-web-app-infrastructure" title="Permanent link">&para;</a></h3>
+<p>The web app infrastructure is defined in the <code>infra/frontend</code> folder and provisions the resources required to host the Agile.Chat frontend application. The following resources are created by the <code>webapp.bicep</code> file:</p>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Resource Type</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Web App</td>
+<td>Microsoft.Web/sites</td>
+<td>Hosts the Agile.Chat frontend application</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-deployment-steps">2. Deployment Steps<a class="headerlink" href="#2-deployment-steps" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>Create App Registration in Azure Active Directory (Entra ID). The registered application will be used for the below mentioned requirements.</p>
+<ul>
+<li>Authorize CI/CD pipelines to deploy resources.</li>
+<li>Secure access to AI-One API using OAuth 2.0 authentication.</li>
+</ul>
+<p>Follow the <a href="../app_registration/">Application Registration Guide</a> to complete this step.</p>
+<p>You would need a new app registration for each environment (e.g., <code>dev</code>, <code>tst</code>, <code>uat</code>, <code>prod</code>) to isolate resources and permissions.</p>
+</li>
+<li>
+<p>AI-One deployment supports both Azure DevOps and GitHub Actions.</p>
+<p>Based on the choice of CI/CD platform, follow the respective deployment steps:</p>
+<ul>
+<li><a href="../github_steps/">Deployment Steps Using GitHub</a></li>
+<li><a href="../azure_devops_steps/">Deployment Steps Using Azure DevOps</a></li>
+</ul>
+</li>
+<li>
+<p>Update the redirect URI in the app registration after deployment. The redirect URI is the URL where Azure AD will send authentication responses. It should match the URL of your deployed web app. </p>
+<p>e.g., <code>https://ag-aione-dev-webapp.azurewebsites.net</code>.</p>
+</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.56ea9cef.min.js"></script>
+      
+        <script src="../../javascripts/extra.js"></script>
+      
+    
+  </body>
+</html>
