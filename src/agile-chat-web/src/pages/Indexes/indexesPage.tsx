@@ -13,7 +13,7 @@ export default function IndexesPage() {
   };
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex bg-background text-foreground">
       <div className="flex-1 flex flex-col">
         <SimpleHeading Title="Containers" Subtitle={'Configure your Containers'} DocumentCount={0} />
         <div className="flex-1 p-4 overflow-auto">

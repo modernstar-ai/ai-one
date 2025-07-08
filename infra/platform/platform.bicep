@@ -99,7 +99,6 @@ param cosmosDbSubnetName string = 'VmSubnet'
 param aiSearchSubnetName string = 'VmSubnet'
 param serviceBusSubnetName string = 'VmSubnet'
 param formRecognizerSubnetName string = 'VmSubnet'
-param acrSubnetName string = 'VmSubnet'
 param openAiSubnetName string = 'VmSubnet'
 param cognitiveServiceSubnetName string = 'VmSubnet'
 
@@ -144,7 +143,6 @@ var cosmosDbSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${cosmosDb
 var aiSearchSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${aiSearchSubnetName}' : ''
 var serviceBusSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${serviceBusSubnetName}' : ''
 var formRecognizerSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${formRecognizerSubnetName}' : ''
-var acrSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${acrSubnetName}' : ''
 var openAiSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${openAiSubnetName}' : ''
 var cognitiveServiceSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${cognitiveServiceSubnetName}' : ''
 
@@ -196,8 +194,8 @@ module storageModule '../modules/storage.bicep' = {
   }
 }
 
-module aiSearchService '../modules/aiSearch.bicep' = {
-  name: 'aiSearchService'
+module aiSearchServiceModule '../modules/aiSearch.bicep' = {
+  name: 'aiSearchServiceModule'
   params: {
     name: searchServiceName
     location: location
@@ -287,9 +285,9 @@ module aiFoundryProject '../modules/aifoundryProject.bicep' = if (deployAIFoundr
     aiFoundryServicesName: cognitiveServices.outputs.aiFoundryServicesName
     cosmosDbEnabled: true
     searchEnabled: true
-    cosmosDBname: cosmosDbAccountName
-    searchServiceName: searchServiceName
-    storageName: storageAccountName
+    cosmosDBname: cosmosDbAccountModule.outputs.name
+    searchServiceName: aiSearchServiceModule.outputs.name
+    storageName: storageModule.outputs.name
   }
 }
 
@@ -327,7 +325,7 @@ module modelDeployments '../modules/modelDeployments.bicep' = if (deployOpenAiMo
 
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceModule.outputs.name
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspaceModule.outputs.logAnalyticsWorkspaceId
-output searchServiceName string = aiSearchService.outputs.name
+output searchServiceName string = aiSearchServiceModule.outputs.name
 output keyVaultName string = keyVaultModule.outputs.name
 output keyVaultId string = keyVaultModule.outputs.resourceId
 output storageAccountName string = storageModule.outputs.name

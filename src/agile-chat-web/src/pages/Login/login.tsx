@@ -25,11 +25,13 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="flex w-full h-screen justify-center items-center bg-background text-foreground">
+    <div className="flex w-full  h-[95vh] lg:h-screen justify-center items-center bg-background text-foreground">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">
-            <span className="text-primary">{(settings?.appName && settings.appName != '') ? settings.appName : 'Agile Chat'}</span>
+          <CardTitle className="text-2xl text-center lg:text-left">
+            <span className="text-primary">
+              {settings?.appName && settings.appName != '' ? settings.appName : 'Agile Chat'}
+            </span>
           </CardTitle>
           <CardDescription>Login in with your Microsoft 365 account</CardDescription>
         </CardHeader>
@@ -39,7 +41,9 @@ const LoginPage = () => {
               Login is currently in progress <Loader2Icon className="ml-auto animate-spin" />
             </div>
           ) : (
-            <Button onClick={() => instance.loginPopup({ scopes: msalScopes })}>Login</Button>
+            <Button className="w-full" onClick={() => instance.loginPopup({ scopes: msalScopes })}>
+              Login
+            </Button>
           )}
         </CardContent>
       </Card>

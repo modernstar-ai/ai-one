@@ -1,7 +1,7 @@
 import { Citation, Message, SearchProcess } from '@/types/ChatThread';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Tabs } from '@radix-ui/react-tabs';
-import { TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+
+import { TabsContent, TabsList, TabsTrigger, Tabs } from '../ui/tabs';
 import { Book, Lightbulb, Loader2Icon, MessageCircleMore, View } from 'lucide-react';
 import { useState } from 'react';
 import { Separator } from '../ui/separator';

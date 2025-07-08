@@ -41,3 +41,7 @@ infra/aad_setup.sh
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
+.ssh/
+*.Local.json
+.env
+*.secret.json

@@ -20,7 +20,7 @@ const AssistantsPage = () => {
         {/* Header */}
         <SimpleHeading Title="AI Assistant" Subtitle="Configure your AI Assistants" DocumentCount={0} />
 
-        <div className="flex-1 p-4 overflow-auto">
+        <div className="flex-1 p-4 lg:overflow-auto">
           <main className="flex-1 space-y-6">
             {/* CTA Buttons */}
             <PermissionHandler roles={[UserRole.SystemAdmin]}>
