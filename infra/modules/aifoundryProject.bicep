@@ -8,7 +8,7 @@ param location string
 param tags object = {}
 
 @description('Name of the AI Foundry Account.')
-param aiFoundryAccountName string
+param aiFoundryServicesName string
 
 @description('AI Foundry SKU.')
 param aiFoundrySku string = 'S0'
@@ -32,6 +32,10 @@ param searchServiceName string
 param defaultProjectName string = name
 param defaultProjectDisplayName string = name
 
+resource foundryAccount 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing = {
+  name: aiFoundryServicesName
+}
+
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
   name: storageName
 }
@@ -42,24 +46,6 @@ resource aiSearchService 'Microsoft.Search/searchServices@2024-06-01-preview' ex
 
 resource cosmosDBAccount 'Microsoft.DocumentDB/databaseAccounts@2025-05-01-preview' existing = if (cosmosDbEnabled) {
   name: cosmosDBname
-}
-
-resource foundryAccount 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
-  name: aiFoundryAccountName
-  location: location
-  identity: {
-    type: 'SystemAssigned'
-  }
-  sku: {
-    name: aiFoundrySku
-  }
-  kind: 'AIServices'
-  properties: {
-    allowProjectManagement: true
-    customSubDomainName: aiFoundryAccountName
-    disableLocalAuth: false
-    publicNetworkAccess: 'Enabled'
-  }
 }
 
 resource project 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {

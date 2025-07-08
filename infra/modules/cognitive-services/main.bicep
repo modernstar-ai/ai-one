@@ -23,7 +23,7 @@ param virtualNetworkSubnetResourceId string = ''
 param logAnalyticsWorkspaceResourceId string
 
 @description('The name of the Azure AI Services resource.')
-param aiServicesName string
+param aiFoundryServicesName string
 
 @description('The location of the Azure AI Services resource. Defaults to the location of the resource group.')
 param aiServiceLocation string = location
@@ -85,7 +85,7 @@ module aiServices 'service.bicep' = {
   name: take('${resourcePrefix}-ai-services-deployment', 64)
   dependsOn: [cognitiveServicesPrivateDnsZone, openAiPrivateDnsZone] // required due to optional flags that could change dependency
   params: {
-    name: aiServicesName
+    name: aiFoundryServicesName
     location: aiServiceLocation
     kind: 'AIServices'
     category: 'AIServices'
@@ -247,7 +247,7 @@ module documentIntelligence 'service.bicep' = if (documentIntelligenceServiceEna
 }
 
 output aiServicesResourceId string = aiServices.outputs.resourceId
-output aiServicesName string = aiServices.outputs.name
+output aiFoundryServicesName string = aiServices.outputs.name
 output aiServicesEndpoint string = aiServices.outputs.endpoint
 output aiServicesSystemAssignedMIPrincipalId string = aiServices.outputs.?systemAssignedMIPrincipalId ?? ''
 

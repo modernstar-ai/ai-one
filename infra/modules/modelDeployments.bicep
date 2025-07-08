@@ -1,12 +1,12 @@
-@description('AI Foundry account name')
-param aiFoundryAccountName string
+@description('AI Services resource name')
+param aiFoundryServicesName string
 
 import { deploymentsType } from './customTypes.bicep'
 @description('Optional. Specifies the OpenAI deployments to create.')
 param aiModelDeployments deploymentsType[] = []
 
 resource foundryAccount 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing = {
-  name: aiFoundryAccountName
+  name: aiFoundryServicesName
 }
 
 @batchSize(1)
