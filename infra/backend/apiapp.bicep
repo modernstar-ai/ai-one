@@ -26,30 +26,35 @@ param apiAppName string = toLower('${resourcePrefix}-apiapp')
 @description('App Service Plan name')
 param appServicePlanName string
 
-@description('Deployment Environment')
-@allowed(['Development', 'Test', 'UAT', 'Production'])
-param aspCoreEnvironment string = 'Development'
-
 @description('Application Insights name')
 param applicationInsightsName string = toLower('${resourcePrefix}-apiapp')
+
+@description('Log Analytics Workspace name')
+param logAnalyticsWorkspaceName string
+
+@description('Key Vault name')
+param keyVaultName string
 
 @description('Storage account name')
 param storageName string
 
-@description('Form Recognizer name')
-param formRecognizerName string
+@description('Storage Account name (for existing resource)')
+param storageAccountName string
 
-@description('Service Bus queue name')
-param serviceBusQueueName string = toLower('${resourcePrefix}-folders-queue')
+@description('Document Intelligence Service name')
+param documentIntelligenceServiceName string
 
-@description('Service Bus namespace name')
-param serviceBusName string
-
-@description('OpenAI API version')
-param openAiApiVersion string
+@description('Document Intelligence Service endpoint')
+param documentIntelligenceEndpoint string
 
 @description('OpenAI resource name')
 param openAiName string
+
+@description('OpenAI API endpoint')
+param openAiEndpoint string
+
+@description('OpenAI API version')
+param openAiApiVersion string
 
 @description('APIM Azure OpenAI Endpoint')
 param apimAiEndpointOverride string = ''
@@ -69,19 +74,22 @@ param embeddingModelName string = 'text-embedding-3-small'
 @description('Azure Search Service name')
 param searchServiceName string
 
-@description('Key Vault name')
-param keyVaultName string
+@description('Service Bus namespace name')
+param serviceBusName string
 
-@description('Log Analytics Workspace name')
-param logAnalyticsWorkspaceName string
+@description('Service Bus queue name')
+param serviceBusQueueName string = toLower('${resourcePrefix}-folders-queue')
 
-@description('Storage Account name (for existing resource)')
-param storageAccountName string
+@description('Cosmos DB Account name')
+param cosmosDbAccountName string
+
+@description('Cosmos DB Account endpoint (document endpoint)')
+param cosmosDbAccountEndpoint string
 
 param agileChatDatabaseName string = 'AgileChat'
 
-@description('Web App default host name')
-param webAppDefaultHostName string
+@description('Allowed origins for CORS')
+param allowedOrigins string[] = []
 
 @description('Admin email addresses')
 param adminEmailAddresses array
@@ -90,20 +98,21 @@ param adminEmailAddresses array
 @allowed(['true', 'false'])
 param auditIncludePII string = 'true'
 
-@description('Cosmos DB Account endpoint (document endpoint)')
-param cosmosDbAccountEndpoint string
-
-@description('Cosmos DB Account name')
-param cosmosDbAccountName string
+@description('Deployment Environment')
+@allowed(['Development', 'Test', 'UAT', 'Production'])
+param aspCoreEnvironment string
 
 param storageServiceFoldersContainerName string = 'index-content'
-
-param eventGridSystemTopicSubName string = toLower('${resourcePrefix}-folders-blobs-listener')
 
 @description('Event Grid system topic name')
 param eventGridName string = toLower('${resourcePrefix}-blob-eg')
 
-var blobContainersArray = loadJsonContent('./blob-storage-containers.json')
+param allowModelSelection bool = true
+param defaultTextModelId string = 'gpt-4o'
+
+param eventGridSystemTopicSubName string = toLower('${resourcePrefix}-folders-blobs-listener')
+
+var blobContainersArray = loadJsonContent('../blob-storage-containers.json')
 var blobContainers = [
   for name in blobContainersArray: {
     name: toLower(name)
@@ -119,8 +128,8 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: storageAccountName
 }
 
-resource formRecognizer 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
-  name: formRecognizerName
+resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
+  name: documentIntelligenceServiceName
 }
 
 resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' existing = {
@@ -133,6 +142,10 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-12
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' existing = {
   name: appServicePlanName
+}
+
+resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
+  name: keyVaultName
 }
 
 // Key Vault Secrets User Role
@@ -184,7 +197,7 @@ resource apiAppManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities
   location: location
 }
 
-module apiAppModule './modules/site.bicep' = {
+module apiAppModule '../modules/site.bicep' = {
   name: 'apiAppModule'
   dependsOn: [
     serviceBusQueue
@@ -209,9 +222,7 @@ module apiAppModule './modules/site.bicep' = {
         }
       ]
       cors: {
-        allowedOrigins: [
-          'https://${webAppDefaultHostName}'
-        ]
+        allowedOrigins: allowedOrigins
         supportCredentials: true
       }
       defaultDocuments: [
@@ -230,7 +241,7 @@ module apiAppModule './modules/site.bicep' = {
         }
         {
           name: 'AzureDocumentIntelligence__Endpoint'
-          value: 'https://${formRecognizerName}.cognitiveservices.azure.com/'
+          value: documentIntelligenceEndpoint
         }
         {
           name: 'AzureServiceBus__BlobQueueName'
@@ -320,11 +331,7 @@ module apiAppModule './modules/site.bicep' = {
         }
         {
           name: 'AzureOpenAi__Endpoint'
-          value: 'https://${openAiName}.openai.azure.com/'
-        }
-        {
-          name: 'AzureOpenAi__InstanceName'
-          value: openAiName
+          value: openAiEndpoint
         }
         {
           name: 'AzureOpenAi__DeploymentName'
@@ -337,6 +344,14 @@ module apiAppModule './modules/site.bicep' = {
         {
           name: 'AzureOpenAi__EmbeddingsModelName'
           value: embeddingModelName
+        }
+        {
+          name: 'AllowModelSelection'
+          value: allowModelSelection
+        }
+        {
+          name: 'DefaultTextModelId'
+          value: defaultTextModelId
         }
         {
           name: 'AzureSearch__Endpoint'
@@ -475,9 +490,9 @@ resource apiAppBlobStorageRoleAssignment 'Microsoft.Authorization/roleAssignment
 //   }
 // }
 
-resource apiAppFormRecognizerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, formRecognizer.id, cognitiveServicesUserRole.id)
-  scope: formRecognizer
+resource apiAppDocIntelligenceRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, apiAppManagedIdentity.id, documentIntelligence.id, cognitiveServicesUserRole.id)
+  scope: documentIntelligence
   properties: {
     roleDefinitionId: cognitiveServicesUserRole.id
     principalId: apiAppManagedIdentity.properties.principalId
@@ -505,8 +520,8 @@ resource apiAppServiceBusSenderRoleAssignment 'Microsoft.Authorization/roleAssig
   }
 }
 
-module appServiceSecretsUserRoleAssignmentModule './modules/keyvaultRoleAssignment.bicep' = {
-  name: 'appServiceSecretsUserRoleAssignmentDeploy'
+module appServiceSecretsUserRoleAssignmentModule '../modules/keyvaultRoleAssignment.bicep' = {
+  name: guid(resourceGroup().id, apiAppManagedIdentity.id, keyVault.id, keyVaultSecretsUserRole.id)
   params: {
     roleDefinitionId: keyVaultSecretsUserRole.id
     principalId: apiAppManagedIdentity.properties.principalId

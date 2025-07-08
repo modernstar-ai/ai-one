@@ -1,0 +1,98 @@
+name: Deploy AI-One Api
+
+# Manually triggered workflow
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Select the environment to deploy the API infrastructure"
+        type: choice
+        default: "dev"
+        options:
+          - "dev"
+          - "tst"
+          - "uat"
+          - "prod"
+        required: true
+      apiWebAppName:
+        description: "Enter the name of the Api App"
+        type: string
+        default: "ag-aione-dev-apiapp"
+env:
+  AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  PROJECT_NAME: ${{ vars.PROJECT_NAME }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+  AZURE_BICEP_MAIN: "./infra/backend/apiapp.bicep"
+  AGILE_CHAT_API_SRC: "./src/Agile.Chat/Agile.Chat.Api"
+  AGILE_CHAT_API_PUB: "./publish/Agile.Chat/Agile.Chat.Api"
+
+# Set up permissions for deploying with secretless Azure federated credentials
+# https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-infra-and-api:
+    environment: ${{ inputs.environment }}
+    name: Deploy API Infrastructure and Application
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Validate API Infrastructure (Bicep What-If)
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          name: apiapp-bicep-validation
+          operation: validate
+          scope: resourceGroup
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ${{ env.AZURE_BICEP_MAIN }}
+          parameters-file: infra/backend/${{ inputs.environment }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment }}" }'
+
+      - name: Deploy API Infrastructure (Bicep Create)
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: create
+          name: apiapp-bicep-deployment
+          scope: resourceGroup
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ${{ env.AZURE_BICEP_MAIN }}
+          parameters-file: infra/backend/${{ inputs.environment }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment }}" }'
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build and Publish Agile-Chat-Api
+        run: |
+          dotnet restore ${{ env.AGILE_CHAT_API_SRC }}
+          dotnet build ${{ env.AGILE_CHAT_API_SRC }} --no-restore --configuration Release
+          dotnet publish ${{ env.AGILE_CHAT_API_SRC }} -c Release -o ${{ env.AGILE_CHAT_API_PUB }}
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+
+      - name: Deploy Agile-Chat-Api to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ github.event.inputs.apiWebAppName }}
+          package: ${{ env.AGILE_CHAT_API_PUB }}

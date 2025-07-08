@@ -45,9 +45,9 @@ jobs:
         run: npm run build
         working-directory: src/agile-chat-web
 
-  validate-bicep:
+  validate-platform-bicep:
     runs-on: ubuntu-latest
-    name: Validate Bicep
+    name: Validate Platform Bicep
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -57,4 +57,32 @@ jobs:
         with:
           inlineScript: |
             az bicep install
-            az bicep build --file ./infra/main.bicep
+            az bicep build --file ./infra/platform/platform.bicep
+
+  validate-api-bicep:
+    runs-on: ubuntu-latest
+    name: Validate Api Bicep
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Azure CLI to build Bicep files
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az bicep install
+            az bicep build --file ./infra/backend/apiapp.bicep
+
+  validate-webapp-bicep:
+    runs-on: ubuntu-latest
+    name: Validate Web App Bicep
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Azure CLI to build Bicep files
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az bicep install
+            az bicep build --file ./infra/frontend/webapp.bicep

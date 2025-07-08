@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SimpleHeading from '@/components/Heading-Simple';
 import MessageContent from '@/components/chat-page/message-content';
@@ -11,6 +10,7 @@ import {
   fetchChatThread,
   GetChatThreadFiles,
   GetChatThreadMessages,
+  updateChatThread,
   UploadChatThreadFile
 } from '@/services/chatthreadservice';
 import { ChatThread, Message, MessageType } from '@/types/ChatThread';
@@ -23,19 +23,10 @@ import { fetchAssistantById } from '@/services/assistantservice';
 import useStreamStore from '@/stores/stream-store';
 import { createParser, EventSourceMessage } from 'eventsource-parser';
 import { useSettingsStore } from '@/stores/settings-store';
-import { Paperclip, XIcon } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { ChatThreadFile } from '@/types/ChatThread';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { toast } from '@/components/ui/use-toast';
+import ChatInput from '@/components/chat-page/chat-input';
+import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const ChatPage = () => {
   const { threadId } = useParams();
@@ -45,6 +36,7 @@ const ChatPage = () => {
   const [thread, setThread] = useState<ChatThread | undefined>(undefined);
   const [threadFiles, setThreadFiles] = useState<ChatThreadFile[] | undefined>(undefined);
   const [assistant, setAssistant] = useState<Assistant | undefined>(undefined);
+  const { toast } = useToast();
 
   const [userInput, setUserInput] = useState<string>('');
   const prevMessagesRef = useRef<Message[] | undefined>(undefined);
@@ -52,11 +44,11 @@ const ChatPage = () => {
   const { clearStream, setStream } = useStreamStore();
 
   const [isLoading, setIsLoading] = useState(true);
+  const [swappingModels, setSwappingModels] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const userInputRef = useRef<HTMLTextAreaElement>(null);
-  const fileUploadRef = useRef<HTMLInputElement>(null);
   const { settings } = useSettingsStore();
 
   useEffect(() => {
@@ -182,10 +174,12 @@ const ChatPage = () => {
     try {
       setIsSending(true);
 
-      const response = await chat({
+      const payload: ChatDto = {
         threadId: thread.id,
         userPrompt: userPrompt
-      } as ChatDto);
+      };
+
+      const response = await chat(payload);
 
       const parser = createParser({ onEvent });
 
@@ -225,15 +219,20 @@ const ChatPage = () => {
       setError(errorMsg);
     } finally {
       setIsSending(false);
+      setTimeout(() => userInputRef.current?.focus(), 0);
     }
   };
 
   if (isLoading || !thread || !prevMessagesRef.current) {
-    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+    return (
+      <div className="h-screen flex justify-center items-center">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex h-[95vh] lg:h-screen bg-background text-foreground">
       <div className="flex-1 flex flex-col">
         <SimpleHeading
           Title={thread!.name ?? 'Chat'}
@@ -264,79 +263,33 @@ const ChatPage = () => {
           )}
         </ScrollArea>
 
-        <div className="p-4 border-t">
-          <Textarea
-            ref={userInputRef}
-            placeholder="Type your message here..."
-            disabled={isSending}
-            className="w-full mb-2"
-            rows={4}
-            onChange={(e) => setUserInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            autoFocus
-            aria-label="Chat Input"
-            accessKey="i"
-          />
-
-          <div className="flex gap-2 items-center relative">
-            <Button onClick={handleSendMessage} disabled={isSending} aria-label="Send Chat" accessKey="j">
-              {isSending ? 'Loading...' : 'Send'}
-            </Button>
-            {/* UPLOAD FILE */}
-            {(!thread.assistantId || assistant?.filterOptions.allowInThreadFileUploads) && (
-              <div className="relative">
-                <Button
-                  onClick={() => fileUploadRef.current?.click()}
-                  disabled={isSending}
-                  size={'icon'}
-                  variant={'outline'}
-                  title="Upload File">
-                  <Paperclip />
-                </Button>
-                <Input type="file" className="hidden" ref={fileUploadRef} onChange={handleFileUpload} />
-                <DropdownMenu>
-                  <DropdownMenuTrigger disabled={isSending}>
-                    <Badge className="absolute right-1.5 top-8 h-4 select-none">{threadFiles?.length ?? '...'}</Badge>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56  dark text-white">
-                    <DropdownMenuLabel ata-theme="dark">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium">Files Uploaded</p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-
-                    {/* FILES LIST */}
-                    {threadFiles?.map((file, index) => (
-                      <div className="flex items-center" key={file.name + index}>
-                        <DropdownMenuItem disabled={true}>
-                          <span className="truncate">{file.name}</span>
-                        </DropdownMenuItem>
-                        <Button
-                          size={'icon'}
-                          variant={'outline'}
-                          className="w-6 h-6 ms-auto"
-                          disabled={isSending}
-                          title="Remove file"
-                          onClick={() => handleFileDelete(file.id)}>
-                          <XIcon />
-                        </Button>
-                      </div>
-                    ))}
-
-                    <DropdownMenuSeparator />
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
-
-            <p className="text-xs mx-auto">
-              {settings?.aiDisclaimer && settings.aiDisclaimer != ''
-                ? settings.aiDisclaimer
-                : 'AI generated text can have mistakes. Check important info.'}
-            </p>
-          </div>
-        </div>
+        <ChatInput
+          handleFileUpload={handleFileUpload}
+          handleFileDelete={handleFileDelete}
+          thread={thread}
+          threadFiles={threadFiles}
+          assistant={assistant}
+          isSending={swappingModels || isSending}
+          userInputRef={userInputRef}
+          setUserInput={setUserInput}
+          disableSelect={swappingModels}
+          handleModelChange={async (v) => {
+            if (!v) return;
+            setSwappingModels(true);
+            try {
+              await updateChatThread({ ...thread, modelOptions: { modelId: v } });
+              toast({ value: 'Model Swapped' });
+            } catch {
+              toast({ variant: 'destructive', value: 'Error swapping models' });
+            } finally {
+              setSwappingModels(false);
+            }
+          }}
+          defaultModel={thread.modelOptions?.modelId}
+          handleSendMessage={handleSendMessage}
+          handleKeyDown={handleKeyDown}
+          settings={settings}
+        />
       </div>
     </div>
   );

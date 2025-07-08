@@ -140,7 +140,7 @@ export default function FileUploadComponent() {
   };
 
   return (
-    <div className="flex h-screen bg-white-100">
+    <div className="flex min-h-screen bg-white-100">
       {/* Main Content */}
       <main className="flex-1 p-8" role="main">
         <header className="mb-8 text-center" role="banner">
@@ -150,7 +150,7 @@ export default function FileUploadComponent() {
         </header>
 
         {/* File Types */}
-        <div className="mb-8 grid grid-cols-5 gap-4 text-center">
+        <div className="mb-8 flex flex-wrap justify-around items-stretch lg:justify-center gap-2 lg:gap-8 text-center">
           {[
             { icon: FileTextIcon, title: 'Data', description: 'xml, json, csv, txt' },
             { icon: FileSpreadsheetIcon, title: 'Productivity Software', description: 'ppt, docx, xlsx' },
@@ -158,10 +158,14 @@ export default function FileUploadComponent() {
             { icon: GlobeIcon, title: 'Web', description: 'html, html' },
             { icon: MailIcon, title: 'Email', description: 'email & msg' }
           ].map((item, index) => (
-            <div key={index} className="flex flex-col items-center">
-              <item.icon className="mb-2 h-12 w-12 text-primary" />
-              <h2 className="font-semibold">{item.title}</h2>
-              <p className="text-sm text-gray-600">{item.description}</p>
+            <div key={index} className="flex flex-col items-center w-32 h-28">
+              <item.icon className="mb-2 h-12 w-12 text-primary flex-shrink-0" />
+              <h2 className="font-semibold text-sm leading-tight mb-1 min-h-[2rem] flex items-center justify-center">
+                {item.title}
+              </h2>
+              <p className="text-xs text-gray-600 leading-tight flex-1 flex items-center justify-center">
+                {item.description}
+              </p>
             </div>
           ))}
         </div>
@@ -243,7 +247,7 @@ export default function FileUploadComponent() {
                         }) => (
                           <div
                             {...getRootProps()}
-                            className={`group relative grid h-52 w-1/2 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-2.5 text-center transition hover:bg-muted/25 ${
+                            className={`group relative grid h-52 lg:w-1/2 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-2.5 text-center transition hover:bg-muted/25 ${
                               isDragActive ? 'border-muted-foreground/50' : ''
                             }`}>
                             <input {...getInputProps()} aria-labelledby="dropzone-label" />

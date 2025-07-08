@@ -21,14 +21,14 @@ public static class UpdateChatMessageById
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             var message = await chatMessageService.GetItemByIdAsync(request.Id.ToString(), ChatType.Message.ToString());
-            if(message is null) return Results.NotFound("Message not found");
+            if (message is null) return Results.NotFound("Message not found");
 
-            var thread = await chatThreadService.GetItemByIdAsync(message.ThreadId, ChatType.Thread.ToString());
-            if(thread is null) return Results.NotFound("Thread not found");
-            
+            var thread = await chatThreadService.GetChatThreadById(message.ThreadId);
+            if (thread is null) return Results.NotFound("Thread not found");
+
             if (!IsUserOwnerOfThread(thread))
                 return Results.Forbid();
-            
+
             message.AddMetadata(MetadataType.IsLiked, request.Options[MetadataType.IsLiked]);
             message.AddMetadata(MetadataType.IsDisliked, request.Options[MetadataType.IsDisliked]);
             await chatMessageService.UpdateItemByIdAsync(message.Id, message, ChatType.Message.ToString());
@@ -36,7 +36,7 @@ public static class UpdateChatMessageById
             logger.LogInformation("Updated Message: {@Message}", message);
             return Results.Ok();
         }
-        
+
         private bool IsUserOwnerOfThread(ChatThread thread)
         {
             var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;

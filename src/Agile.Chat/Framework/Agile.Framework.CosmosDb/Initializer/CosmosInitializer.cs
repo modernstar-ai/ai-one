@@ -13,9 +13,9 @@ public class CosmosInitializer(CosmosClient client) : IAsyncInitializer
     private Database Db { get; set; }
     public async Task InitializeAsync()
     {
-        await client.CreateDatabaseIfNotExistsAsync(Configs.CosmosDb.DatabaseName );
+        await client.CreateDatabaseIfNotExistsAsync(Configs.CosmosDb.DatabaseName);
         Db = client.GetDatabase(Configs.CosmosDb.DatabaseName);
-        
+
         await CreateOrUpdateContainerAsync(Constants.CosmosChatsContainerName, Constants.CosmosChatsPartitionKeyPath);
         await CreateOrUpdateContainerAsync(Constants.Cosmos.Files.ContainerName, Constants.Cosmos.Files.PartitionKeyPath, Constants.Cosmos.Files.SortableTextProperties);
         //await CreateOrUpdateContainerAsync(GetContainerProperties(Constants.CosmosToolsContainerName, "/");
@@ -26,7 +26,7 @@ public class CosmosInitializer(CosmosClient client) : IAsyncInitializer
 
     private async Task CreateOrUpdateContainerAsync(string id, string partitionKey, string[]? sortableTextProperties = null)
     {
-        var properties = GetContainerProperties(id,partitionKey, sortableTextProperties);
+        var properties = GetContainerProperties(id, partitionKey, sortableTextProperties);
         var response = await Db.CreateContainerIfNotExistsAsync(properties);
 
         if (sortableTextProperties != null && response.StatusCode == HttpStatusCode.OK)
@@ -44,19 +44,19 @@ public class CosmosInitializer(CosmosClient client) : IAsyncInitializer
     {
         var properties = new ContainerProperties(id, partitionKey);
         if (sortableTextProperties is null) return properties;
-        
+
         //This is by default required for all containers in cosmos db
         properties.IndexingPolicy.IncludedPaths.Add(new IncludedPath()
         {
             Path = $"/*"
         });
-        
+
         foreach (var sortableTextProperty in sortableTextProperties)
         {
             //Add the computed property
             properties.ComputedProperties.Add(new ComputedProperty()
             {
-                Name = $"lower{sortableTextProperty}", 
+                Name = $"lower{sortableTextProperty}",
                 Query = $"SELECT VALUE LOWER(c.{System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(sortableTextProperty)}) FROM c"
             });
             //Add the indexing policy
@@ -65,7 +65,7 @@ public class CosmosInitializer(CosmosClient client) : IAsyncInitializer
                 Path = $"/lower{sortableTextProperty}/?"
             });
         }
-        
+
         return properties;
     }
 }

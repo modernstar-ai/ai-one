@@ -8,7 +8,7 @@ public class AssistantPromptOptions
     public float Temperature { get; set; }
     public float TopP { get; set; }
     public int MaxTokens { get; set; } = 800;
-    
+
     public ChatThreadPromptOptions ParseChatThreadPromptOptions()
     {
         var options = new ChatThreadPromptOptions()

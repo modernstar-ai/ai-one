@@ -1,0 +1,80 @@
+# Platform Infrastructure Deploy Pipeline (converted from GitHub Actions)
+trigger: none
+
+parameters:
+- name: project_name
+  type: string
+  default: ag-aione
+  displayName: 'Enter the Name of the project'
+
+- name: environment
+  type: string
+  default: dev
+  displayName: 'Select the environment to deploy the platform infrastructure'
+  values:
+  - dev
+  - tst
+  - uat
+  - prod
+
+- name: azure_location
+  type: string
+  default: australiaeast
+  displayName: 'Select the Azure deployment location'
+  values:
+  - australiaeast
+  - australiasoutheast
+
+variables:
+  - name: environment
+    value: ${{ parameters.environment }}
+  - name: SERVICE_CONNECTION_NAME_DEV
+    value: 'dev-service-connection'
+  - name: azureBicepMain
+    value: './infra/platform/platform.bicep'
+
+stages:
+
+  - stage: DeployDev
+    displayName: 'Deploy Platform Infrastructure - Dev'
+    condition: eq(variables['environment'], 'dev')
+    variables:
+      - group: dev
+    jobs:
+      - deployment: DeployPlatformDev
+        environment: 'dev'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  displayName: 'Bicep What-If Analysis (Dev)'
+                  inputs:
+                    azureSubscription: $(SERVICE_CONNECTION_NAME_DEV)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      az deployment group what-if \
+                        --name platform-bicep-whatif-dev \
+                        --resource-group $(AZURE_RESOURCE_GROUP) \
+                        --template-file $(azureBicepMain) \
+                        --parameters ./infra/platform/dev.bicepparam environmentName=dev
+                - task: AzureCLI@2
+                  displayName: 'Deploy Bicep Infrastructure (Dev)'
+                  inputs:
+                    azureSubscription: $(SERVICE_CONNECTION_NAME_DEV)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      az deployment group create \
+                        --name platform-bicep-deploy-dev \
+                        --resource-group $(AZURE_RESOURCE_GROUP) \
+                        --template-file $(azureBicepMain) \
+                        --parameters ./infra/platform/dev.bicepparam environmentName=dev
+                - script: |
+                    echo "intOutput: $(intOutput)"
+                    echo "stringOutput: $(stringOutput)"
+                  displayName: 'Print Deployment Outputs (Dev)'

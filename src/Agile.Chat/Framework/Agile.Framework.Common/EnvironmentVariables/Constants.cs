@@ -44,5 +44,11 @@ public static class Constants
         public const string ChatWithSearch = "chatWithSearch.prompt.yaml";
     }
 
+    public static class TextModels
+    {
+        public const string Gpt4o = "GPT-4o";
+        public const string O3Mini = "o3-mini";
+    }
+
     #endregion
 }

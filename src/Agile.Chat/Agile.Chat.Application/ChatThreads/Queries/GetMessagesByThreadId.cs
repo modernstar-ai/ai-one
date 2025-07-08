@@ -21,7 +21,7 @@ public static class GetMessagesByThreadId
             return Results.Ok(messages);
         }
     }
-    
+
     public class Validator : AbstractValidator<Query>
     {
         public Validator(IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService)
@@ -31,14 +31,14 @@ public static class GetMessagesByThreadId
                 .WithMessage("Thread not found");
         }
 
-        private async Task<bool> IsUserOwnerOfThread(IHttpContextAccessor contextAccessor, 
+        private async Task<bool> IsUserOwnerOfThread(IHttpContextAccessor contextAccessor,
             IChatThreadService chatThreadService,
             string threadId)
         {
             var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;
             if (string.IsNullOrWhiteSpace(username)) return false;
-            
-            var thread = await chatThreadService.GetItemByIdAsync(threadId, ChatType.Thread.ToString());
+
+            var thread = await chatThreadService.GetChatThreadById(threadId);
             return thread?.UserId.Equals(username, StringComparison.InvariantCultureIgnoreCase) ?? false;
         }
     }

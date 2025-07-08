@@ -4,7 +4,6 @@ using Agile.Chat.Application.Audits.Services;
 using Agile.Chat.Application.ChatThreads.Services;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Audits.Aggregates;
-using Agile.Chat.Domain.Audits.ValueObjects;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
@@ -21,12 +20,13 @@ public static class CreateChatThread
         string Name,
         string? AssistantId,
         ChatThreadPromptOptions PromptOptions,
-        ChatThreadFilterOptions FilterOptions) : IRequest<IResult>;
+        ChatThreadFilterOptions FilterOptions,
+        ChatThreadModelOptions ModelOptions) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, 
-        IAuditService<ChatThread> chatThreadAuditService, 
-        IAssistantService assistantService, 
-        IHttpContextAccessor contextAccessor, 
+    public class Handler(ILogger<Handler> logger,
+        IAuditService<ChatThread> chatThreadAuditService,
+        IAssistantService assistantService,
+        IHttpContextAccessor contextAccessor,
         IChatThreadService chatThreadService,
         IChatMessageService chatMessageService,
         IAuditService<Message> chatMessageAuditService) : IRequestHandler<Command, IResult>
@@ -34,16 +34,18 @@ public static class CreateChatThread
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;
-            if(string.IsNullOrWhiteSpace(username)) return Results.Forbid();
-            
+            if (string.IsNullOrWhiteSpace(username)) return Results.Forbid();
+
             logger.LogInformation("Handler executed {Handler}", typeof(Handler).Namespace);
 
-            var assistant = request.AssistantId != null ? await assistantService.GetItemByIdAsync(request.AssistantId) : null;
+            var assistant = request.AssistantId != null ? await assistantService.GetAssistantById(request.AssistantId) : null;
+
             var chatThread = ChatThread.Create(
                 username,
                 request.Name,
                 assistant is null ? request.PromptOptions : assistant.PromptOptions.ParseChatThreadPromptOptions(),
                 assistant is null ? request.FilterOptions : assistant.FilterOptions.ParseChatThreadFilterOptions(),
+                assistant is null ? request.ModelOptions : assistant.ModelOptions.ParseChatThreadModelOptions(),
                 request.AssistantId);
 
             await chatThreadService.AddItemAsync(chatThread);
@@ -72,7 +74,7 @@ public static class CreateChatThread
             RuleFor(request => request.Name)
                 .MinimumLength(1)
                 .WithMessage("Name is required");
-            
+
             RuleFor(request => request.FilterOptions.Strictness)
                 .InclusiveBetween(1, 5)
                 .WithMessage("Strictness must be between 1 and 5 inclusive");

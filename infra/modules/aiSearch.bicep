@@ -100,3 +100,4 @@ module aiSearch 'br/public:avm/res/search/search-service:0.10.0' = {
 
 output resourceId string = aiSearch.outputs.resourceId
 output name string = aiSearch.outputs.name
+output endpoint string = aiSearch.outputs.endpoint

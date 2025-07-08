@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Agile.Chat.Application.ChatThreads.Services;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.BlobStorage.Interfaces;
@@ -24,11 +24,11 @@ public static class DeleteChatThreadById
         {
             var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;
             logger.LogInformation("Fetched user: {Username}", username);
-            if(string.IsNullOrWhiteSpace(username)) return Results.Forbid();
-            
+            if (string.IsNullOrWhiteSpace(username)) return Results.Forbid();
+
             logger.LogInformation("Fetching Chat Thread to delete with Id {Id}", request.Id);
-            var chatThread = await chatThreadService.GetItemByIdAsync(request.Id.ToString(), ChatType.Thread.ToString());
-            if(chatThread == null) return Results.NotFound();
+            var chatThread = await chatThreadService.GetChatThreadById(request.Id.ToString());
+            if (chatThread == null) return Results.NotFound();
             if (!chatThread.UserId.Equals(username, StringComparison.InvariantCultureIgnoreCase))
                 return Results.Forbid();
 
@@ -39,11 +39,11 @@ public static class DeleteChatThreadById
             await chatThreadService.DeleteItemByIdAsync(chatThread.Id, ChatType.Thread.ToString());
             await chatMessageService.DeleteByThreadIdAsync(chatThread.Id);
             logger.LogInformation("Deleted Chat Thread with Id {Id}", chatThread.Id);
-            
+
             return Results.Ok();
         }
     }
-    
+
     public class Validator : AbstractValidator<Command>
     {
         public Validator(ILogger<Validator> logger)

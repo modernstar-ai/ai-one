@@ -16,16 +16,17 @@ import { CosmosFile } from '@/models/filemetadata';
 import { updateFile } from '@/services/files-service';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Pencil } from 'lucide-react';
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 interface FileViewingDialogProps {
   file: CosmosFile;
+  customTrigger?: React.ReactNode;
   handleRefresh: () => Promise<void>;
 }
 export function FileEditDialog(props: FileViewingDialogProps) {
-  const { file, handleRefresh } = props;
+  const { file, handleRefresh, customTrigger } = props;
   const closeRef = useRef<HTMLButtonElement>(null);
 
   const formSchema = z.object({
@@ -60,9 +61,13 @@ export function FileEditDialog(props: FileViewingDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant={'outline'} size={'icon'} className="w-8 h-8" title={`Edit ${file.name}`}>
-          <Pencil />
-        </Button>
+        {customTrigger ? (
+          customTrigger
+        ) : (
+          <Button variant={'outline'} size={'icon'} className="w-8 h-8" title={`Edit ${file.name}`}>
+            <Pencil />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="flex flex-col">
         <DialogHeader>

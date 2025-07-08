@@ -10,7 +10,7 @@ public class AssistantDto
     public string Description { get; set; }
 
     public string Greeting { get; set; }
-    
+
     public AssistantType Type { get; set; }
     public AssistantStatus Status { get; set; }
 
@@ -18,5 +18,6 @@ public class AssistantDto
 
     public AssistantPromptOptions PromptOptions { get; set; } = new();
 
+    public AssistantModelOptions ModelOptions { get; set; } = new();
     public PermissionsAccessControl AccessControl { get; set; } = new();
 }
