@@ -167,7 +167,7 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex h-[95vh] lg:h-screen bg-background text-foreground">
       <div className="flex-1 flex flex-col">
         <SimpleHeading
           Title={thread!.name ?? 'Chat'}

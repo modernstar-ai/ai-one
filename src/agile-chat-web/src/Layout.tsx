@@ -1,5 +1,5 @@
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { LeftSidebar } from './components/Left-Sidebar';
+import { ResponsiveNavigation } from './components/Left-Sidebar';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -12,13 +12,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {
             '--sidebar-width-icon': '3.5rem',
             '--sidebar-width': '20rem',
-            '--sidebar-width-mobile': '20rem',
+            '--sidebar-width-mobile': '20rem'
           } as React.CSSProperties
-        }
-      >
-        <LeftSidebar />
+        }>
+        <ResponsiveNavigation />
         {/* Main Content Area */}
-        <div className="h-screen w-full">{children}</div>
+        <div className="min-h-[95vh] lg:h-screen w-full lg:mt-0 mt-[5vh]">{children}</div>
       </SidebarProvider>
     </div>
   );

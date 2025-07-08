@@ -49,7 +49,7 @@ export default function ChatInput({
       />
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <p className="text-xs text-center sm:text-right text-muted-foreground">
+        <p className="text-xs text-center sm:text-right text-muted-foreground hidden lg:block">
           {settings?.aiDisclaimer?.trim()
             ? settings.aiDisclaimer
             : 'AI generated text can have mistakes. Check important info.'}
@@ -78,6 +78,11 @@ export default function ChatInput({
             Send
           </Button>
         </div>
+        <p className="text-xs text-center sm:text-right text-muted-foreground lg:hidden">
+          {settings?.aiDisclaimer?.trim()
+            ? settings.aiDisclaimer
+            : 'AI generated text can have mistakes. Check important info.'}
+        </p>
       </div>
     </div>
   );

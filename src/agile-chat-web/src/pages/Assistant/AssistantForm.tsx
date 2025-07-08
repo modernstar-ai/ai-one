@@ -150,7 +150,6 @@ export default function AssistantForm() {
 
   const loadAssistant = async () => {
     if (fileId) {
-      toast({ title: 'load', description: 'Loading...' });
       const file = (await fetchAssistantById(fileId)) as Assistant;
       if (file) {
         form.reset({
@@ -293,7 +292,7 @@ export default function AssistantForm() {
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex min-h-screen lg:h-screen lg:overflow-y-auto bg-background text-foreground">
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
@@ -303,7 +302,7 @@ export default function AssistantForm() {
           DocumentCount={0}
         />
 
-        <div className="flex flex-col h-full grow min-h-0 overflow-auto">
+        <div className="flex flex-col h-full grow min-h-0 lg:pt-0 pt-4 overflow-auto">
           <Card>
             <CardContent className="space-y-8">
               <Form {...form}>
