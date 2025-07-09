@@ -16,6 +16,7 @@ import {
 } from '../ui/dropdown-menu';
 import { Badge } from '../ui/badge';
 import { ChatThread, ChatThreadFile } from '@/types/ChatThread';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 interface ChatInputProps {
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
@@ -103,7 +104,7 @@ export default function ChatInput({
                   {/* FILES LIST */}
                   {threadFiles?.map((file, index) => (
                     <div className="flex items-center" key={file.name + index}>
-                      <DropdownMenuItem disabled={true}>
+                      <DropdownMenuItem className="truncate" onClick={(e) => e.preventDefault()} title={file.name}>
                         <span className="truncate">{file.name}</span>
                       </DropdownMenuItem>
                       <Button
