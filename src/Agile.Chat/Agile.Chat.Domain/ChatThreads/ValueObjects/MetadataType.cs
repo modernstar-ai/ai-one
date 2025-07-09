@@ -8,6 +8,5 @@ public enum MetadataType
     IsLiked,
     IsDisliked,
     Citations,
-    SearchProcess,
-    DocumentsRetrieved,
+    SearchProcess
 }

@@ -6,7 +6,6 @@ export type Assistant = {
   description: string;
   greeting: string;
   type: AssistantType;
-  ragType: RagType;
   status: AssistantStatus;
   promptOptions: AssistantPromptOptions;
   filterOptions: AssistantFilterOptions;
@@ -21,11 +20,6 @@ export type InsertAssistant = Partial<Assistant>;
 export enum AssistantType {
   Chat = 'Chat',
   Search = 'Search'
-}
-
-export enum RagType {
-  Plugin = 'Plugin',
-  AzureSearchChatDataSource = 'AzureSearchChatDataSource'
 }
 
 export enum AssistantStatus {
@@ -55,6 +49,7 @@ export interface Model {
 export interface AssistantFilterOptions {
   indexName: string;
   limitKnowledgeToIndex: boolean;
+  allowInThreadFileUploads: boolean;
   documentLimit: number;
   strictness?: number;
   folders: string[];

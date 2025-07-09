@@ -16,7 +16,6 @@ public static class UpdateAssistantById
         string Description,
         string Greeting,
         AssistantType Type,
-        RagType RagType,
         AssistantStatus Status,
         AssistantFilterOptions FilterOptions,
         AssistantPromptOptions PromptOptions,
@@ -32,7 +31,7 @@ public static class UpdateAssistantById
             if (assistant is null) return Results.NotFound();
 
             logger.LogInformation("Updating Assistant old values: {@Assistant}", assistant);
-            assistant.Update(request.Name, request.Description, request.Greeting, request.Type, request.RagType, request.Status,
+            assistant.Update(request.Name, request.Description, request.Greeting, request.Type, request.Status,
                 request.FilterOptions, request.PromptOptions, request.ModelOptions);
             assistant.UpdateAccessControl(request.AccessControl);
             await assistantService.UpdateItemByIdAsync(assistant.Id, assistant);

@@ -1,4 +1,4 @@
-﻿using Agile.Chat.Application.Assistants.Services;
+using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Assistants.ValueObjects;
 using Agile.Chat.Domain.Shared.ValueObjects;
@@ -16,9 +16,8 @@ public static class CreateAssistant
         string Description,
         string Greeting,
         AssistantType Type,
-        RagType RagType,
-        AssistantStatus Status,
-        AssistantFilterOptions FilterOptions,
+        AssistantStatus Status, 
+        AssistantFilterOptions FilterOptions, 
         AssistantPromptOptions PromptOptions,
         AssistantModelOptions ModelOptions,
         PermissionsAccessControl AccessControl) : IRequest<IResult>;
@@ -34,7 +33,6 @@ public static class CreateAssistant
                 request.Description,
                 request.Greeting,
                 request.Type,
-                request.RagType,
                 request.Status,
                 request.FilterOptions,
                 request.PromptOptions,

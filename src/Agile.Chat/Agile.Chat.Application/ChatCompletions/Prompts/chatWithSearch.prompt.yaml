@@ -15,6 +15,14 @@ template: |
   - SearchProcess: A JSON object containing the following keys:
     - ThoughtProcess: A string containing the thought process that went into generating your AssistantResponse.
   </message>
+  {{#if threadFiles}}
+    <message role="system">Here are some special uploaded files attached as context for the conversation. Citations must be added for this special case if the information is used as part of your response and must follow the same guidelines and rules stated previously only with the exception of formatting differences.
+    The citations for these special uploaded files must be in the following format:
+      [file{DOC_NUMBER}] where {DOC_NUMBER} is the ReferenceNumber. i.e. [file1], [file3], [file12] etc.
+    
+    Files:
+    {{threadFiles}}</message>
+  {{/if}}
   <message role="user">{{userPrompt}}</message>
 template_format: handlebars
 description: Searches for text to reference within loaded documents from a RAG datasource.

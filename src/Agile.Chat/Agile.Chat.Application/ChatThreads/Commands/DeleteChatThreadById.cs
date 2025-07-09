@@ -1,6 +1,7 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Agile.Chat.Application.ChatThreads.Services;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
+using Agile.Framework.BlobStorage.Interfaces;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -12,7 +13,12 @@ public static class DeleteChatThreadById
 {
     public record Command(Guid Id) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService, IChatMessageService chatMessageService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, 
+        IHttpContextAccessor contextAccessor, 
+        IChatThreadService chatThreadService, 
+        IChatMessageService chatMessageService,
+        IChatThreadFileService chatThreadFileService,
+        IBlobStorage blobStorage) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -21,11 +27,15 @@ public static class DeleteChatThreadById
             if (string.IsNullOrWhiteSpace(username)) return Results.Forbid();
 
             logger.LogInformation("Fetching Chat Thread to delete with Id {Id}", request.Id);
-            var chatThread = await chatThreadService.GetChatThreadById(request.Id.ToString());
+            var chatThread = await chatThreadService.GetItemByIdAsync(request.Id.ToString(), ChatType.Thread.ToString());
             if (chatThread == null) return Results.NotFound();
             if (!chatThread.UserId.Equals(username, StringComparison.InvariantCultureIgnoreCase))
                 return Results.Forbid();
 
+            var files = await chatThreadFileService.GetAllAsync(request.Id.ToString());
+            await blobStorage.DeleteThreadFilesAsync(chatThread.Id);
+            await Task.WhenAll(files.Select(file => chatThreadFileService.DeleteItemByIdAsync(file.Id, ChatType.File.ToString())));
+            
             await chatThreadService.DeleteItemByIdAsync(chatThread.Id, ChatType.Thread.ToString());
             await chatMessageService.DeleteByThreadIdAsync(chatThread.Id);
             logger.LogInformation("Deleted Chat Thread with Id {Id}", chatThread.Id);

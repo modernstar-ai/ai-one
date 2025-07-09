@@ -12,7 +12,7 @@ public class SearchFilterBuilder
 
     public SearchFilterBuilder(string indexName)
     {
-        _containerName = Constants.BlobContainerName;
+        _containerName = Constants.BlobIndexContainerName;
         _indexName = indexName;
     }
 

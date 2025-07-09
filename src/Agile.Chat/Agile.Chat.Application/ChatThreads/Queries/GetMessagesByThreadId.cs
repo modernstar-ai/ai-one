@@ -38,7 +38,7 @@ public static class GetMessagesByThreadId
             var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;
             if (string.IsNullOrWhiteSpace(username)) return false;
 
-            var thread = await chatThreadService.GetChatThreadById(threadId);
+            var thread = await chatThreadService.GetItemByIdAsync(threadId, ChatType.Thread.ToString());
             return thread?.UserId.Equals(username, StringComparison.InvariantCultureIgnoreCase) ?? false;
         }
     }

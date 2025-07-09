@@ -18,7 +18,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice';
-import { Assistant, AssistantStatus, AssistantType, InsertAssistant, RagType } from '@/types/Assistant';
+import { Assistant, AssistantStatus, AssistantType, InsertAssistant } from '@/types/Assistant';
 import { fetchTools } from '@/services/toolservice';
 import { useIndexes } from '@/hooks/use-indexes';
 import { Loader2 } from 'lucide-react';
@@ -45,6 +45,7 @@ const AssistantPromptOptionsSchema = z.object({
 const AssistantFilterOptionsSchema = z.object({
   indexName: z.string(),
   limitKnowledgeToIndex: z.boolean(),
+  allowInThreadFileUploads: z.boolean(),
   documentLimit: z.number().int(),
   strictness: z.number().min(1).max(5).optional(),
   folders: z.array(z.string()),
@@ -85,7 +86,6 @@ const formSchema = z.object({
   description: z.string(),
   greeting: z.string(),
   type: z.nativeEnum(AssistantType),
-  ragType: z.nativeEnum(RagType),
   status: z.nativeEnum(AssistantStatus),
   promptOptions: AssistantPromptOptionsSchema,
   filterOptions: AssistantFilterOptionsSchema,
@@ -113,7 +113,6 @@ export default function AssistantForm() {
       description: '',
       greeting: '',
       type: AssistantType.Chat,
-      ragType: RagType.AzureSearchChatDataSource,
       status: AssistantStatus.Draft,
       promptOptions: {
         systemPrompt: '',
@@ -124,6 +123,7 @@ export default function AssistantForm() {
       filterOptions: {
         indexName: '',
         limitKnowledgeToIndex: false,
+        allowInThreadFileUploads: false,
         documentLimit: 5,
         strictness: undefined,
         folders: [],
@@ -157,7 +157,6 @@ export default function AssistantForm() {
           description: file.description,
           greeting: file.greeting,
           type: file.type,
-          ragType: file.ragType,
           status: file.status,
           promptOptions: {
             systemPrompt: file.promptOptions.systemPrompt,
@@ -168,6 +167,7 @@ export default function AssistantForm() {
           filterOptions: {
             indexName: file.filterOptions.indexName,
             limitKnowledgeToIndex: file.filterOptions.limitKnowledgeToIndex,
+            allowInThreadFileUploads: file.filterOptions.allowInThreadFileUploads,
             documentLimit: file.filterOptions.documentLimit,
             strictness: file.filterOptions.strictness ?? undefined,
             folders: file.filterOptions.folders ?? [],
@@ -228,16 +228,6 @@ export default function AssistantForm() {
     }, 0);
   };
   const onSubmit = async (values: FormValues) => {
-    if (values.ragType === RagType.AzureSearchChatDataSource && values.type === AssistantType.Search) {
-      const t = toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: "Assistant type 'Search' is not supported for this RAG Type"
-      });
-      setTimeout(() => t.dismiss(), 3000);
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       const fileData = values as InsertAssistant;
@@ -427,38 +417,26 @@ export default function AssistantForm() {
                 />
                 <FormField
                   control={form.control}
-                  name="ragType"
+                  name="filterOptions.limitKnowledgeToIndex"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel htmlFor="type-select">RAG Type</FormLabel>
-                      {watchAllFields.type === AssistantType.Search &&
-                        watchAllFields.ragType === RagType.AzureSearchChatDataSource && (
-                          <FormMessage>Warning: Assistant type 'Search' is not supported for this RAG Type</FormMessage>
-                        )}
-                      <Select onValueChange={(value) => field.onChange(value as RagType)} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger id="type-select" aria-labelledby="type-select-label">
-                            <SelectValue placeholder="Select RAG Type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={RagType.AzureSearchChatDataSource}>
-                            Azure Search Chat Datasource
-                          </SelectItem>
-                          <SelectItem value={RagType.Plugin}>Tool based</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <FormItem className="flex items-center space-y-0">
+                      <FormLabel htmlFor="container-select" className="my-auto">
+                        Limit Assistant knowledge to container only
+                      </FormLabel>
+                      <FormControl>
+                        <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <FormField
                   control={form.control}
-                  name="filterOptions.limitKnowledgeToIndex"
+                  name="filterOptions.allowInThreadFileUploads"
                   render={({ field }) => (
                     <FormItem className="flex items-center space-y-0">
                       <FormLabel htmlFor="container-select" className="my-auto">
-                        Limit Assistant knowledge to container only
+                        Allow in thread file uploads
                       </FormLabel>
                       <FormControl>
                         <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />

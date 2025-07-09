@@ -47,6 +47,19 @@ export enum MessageType {
   Assistant = 'Assistant'
 }
 
+export interface ChatThreadFile {
+  id: string;
+  content: string;
+  contentType: string;
+  name: string;
+  type: ChatType;
+  size: number;
+  threadId: string;
+  url: string;
+  createdDate: Date;
+  lastModified: Date;
+}
+
 export interface Message {
   id: string;
   content: string;
