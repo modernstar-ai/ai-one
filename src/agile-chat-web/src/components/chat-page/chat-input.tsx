@@ -16,7 +16,6 @@ import {
 } from '../ui/dropdown-menu';
 import { Badge } from '../ui/badge';
 import { ChatThread, ChatThreadFile } from '@/types/ChatThread';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 interface ChatInputProps {
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
