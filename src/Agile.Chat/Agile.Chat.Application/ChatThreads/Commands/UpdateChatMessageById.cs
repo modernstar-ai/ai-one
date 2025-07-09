@@ -23,7 +23,7 @@ public static class UpdateChatMessageById
             var message = await chatMessageService.GetItemByIdAsync(request.Id.ToString(), ChatType.Message.ToString());
             if (message is null) return Results.NotFound("Message not found");
 
-            var thread = await chatThreadService.GetChatThreadById(message.ThreadId);
+            var thread = await chatThreadService.GetItemByIdAsync(message.ThreadId, ChatType.Thread.ToString());
             if (thread is null) return Results.NotFound("Thread not found");
 
             if (!IsUserOwnerOfThread(thread))

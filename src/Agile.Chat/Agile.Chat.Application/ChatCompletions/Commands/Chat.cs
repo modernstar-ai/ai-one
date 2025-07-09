@@ -54,7 +54,7 @@ public static class Chat
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             //Fetch what's needed to do chatting
-            var thread = await chatThreadService.GetChatThreadById(request.ThreadId);
+            var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId, ChatType.Thread.ToString());
             var chatMessages = await chatMessageService.GetAllMessagesAsync(thread!.Id);
             var files = await chatThreadFileService.GetAllAsync(request.ThreadId);
             var chatHistory = chatMessages.ParseSemanticKernelChatHistory(request.UserPrompt);
@@ -323,7 +323,7 @@ public static class Chat
 
         private async Task<bool> ValidateUserThreadAsync(IHttpContextAccessor contextAccessor, IChatThreadService chatThreadService, string threadId)
         {
-            var thread = await chatThreadService.GetChatThreadById(threadId);
+            var thread = await chatThreadService.GetItemByIdAsync(threadId, ChatType.Thread.ToString());
             if (thread is null) return false;
 
             var username = contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;

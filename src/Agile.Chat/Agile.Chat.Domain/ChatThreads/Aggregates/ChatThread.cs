@@ -3,6 +3,7 @@ using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Chat.Domain.DomainEvents.ChatThreads;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.DomainAbstractions;
+using Agile.Framework.Common.EnvironmentVariables;
 
 namespace Agile.Chat.Domain.ChatThreads.Aggregates;
 
@@ -17,7 +18,7 @@ public class ChatThread : AuditableAggregateRoot
         IsBookmarked = isBookmarked;
         PromptOptions = promptOptions;
         FilterOptions = filterOptions;
-        ModelOptions = modelOptions;
+        ModelOptions = modelOptions ?? new() { ModelId = Configs.AppSettings.DefaultTextModelId };
         AssistantId = assistantId;
         AddEvent(new ChatThreadUpdatedEvent(this));
     }
@@ -29,6 +30,7 @@ public class ChatThread : AuditableAggregateRoot
     public string? AssistantId { get; private set; }
     public ChatThreadPromptOptions PromptOptions { get; private set; }
     public ChatThreadFilterOptions FilterOptions { get; private set; }
+
     public ChatThreadModelOptions ModelOptions { get; private set; }
 
     public static ChatThread Create(string userId,

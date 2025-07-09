@@ -27,7 +27,7 @@ public static class DeleteChatThreadById
             if (string.IsNullOrWhiteSpace(username)) return Results.Forbid();
 
             logger.LogInformation("Fetching Chat Thread to delete with Id {Id}", request.Id);
-            var chatThread = await chatThreadService.GetChatThreadById(request.Id.ToString());
+            var chatThread = await chatThreadService.GetItemByIdAsync(request.Id.ToString(), ChatType.Thread.ToString());
             if (chatThread == null) return Results.NotFound();
             if (!chatThread.UserId.Equals(username, StringComparison.InvariantCultureIgnoreCase))
                 return Results.Forbid();
