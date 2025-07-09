@@ -32,6 +32,7 @@ import { MultiInput } from '@/components/ui-extended/multi-input';
 import { MODEL_CONFIG_DEFAULTS } from '@/configs/form-default-values/assistant';
 import { BaseDialog } from '@/components/base/BaseDiaglog';
 import useGetTextModels from '@/hooks/use-get-textmodels';
+import { useSettingsStore } from '@/stores/settings-store';
 
 // Define the AssistantPromptOptions schema
 const AssistantPromptOptionsSchema = z.object({
@@ -103,6 +104,8 @@ export default function AssistantForm() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { indexes } = useIndexes();
+
+  const { settings } = useSettingsStore();
 
   const { data, isLoading: textmodelsLoading } = useGetTextModels();
 
@@ -602,7 +605,7 @@ export default function AssistantForm() {
                   <div className="flex justify-center items-center">
                     <Loader2 className="animate-spin" />
                   </div>
-                ) : (
+                ) : settings?.modelSelectionFeatureEnabled ? (
                   <>
                     <FormField
                       control={form.control}
@@ -698,7 +701,7 @@ export default function AssistantForm() {
                       />
                     </BaseDialog>
                   </>
-                )}
+                ) : null}
                 <div className="flex justify-between mt-2">
                   <Button
                     type="submit"
