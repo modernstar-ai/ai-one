@@ -9,7 +9,7 @@ export interface AppSettings {
   aiDisclaimer?: string;
   logoUrl?: string;
   faviconUrl?: string;
-  allowModelSelectionDefaultValue: boolean;
+  allowModelSelectionDefaultValue: string;
   defaultTextModelId: string;
   modelSelectionFeatureEnabled: boolean;
 }
