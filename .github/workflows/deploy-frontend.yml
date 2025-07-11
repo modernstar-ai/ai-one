@@ -56,7 +56,7 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Validate Web Infrastructure (Bicep What-If)
+      - name: Validate Web App Infrastructure (Bicep What-If)
         uses: azure/bicep-deploy@v2
         with:
           type: deployment
@@ -69,7 +69,7 @@ jobs:
           parameters-file: infra/frontend/${{ inputs.environment }}.bicepparam
           parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
-      - name: Deploy Web Infrastructure (Bicep Create)
+      - name: Deploy Web App Infrastructure (Bicep Create)
         uses: azure/bicep-deploy@v2
         with:
           type: deployment

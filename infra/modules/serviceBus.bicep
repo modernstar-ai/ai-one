@@ -7,6 +7,9 @@ param location string
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
+@description('The SKU of the Service Bus namespace. Default is Standard.')
+param sku string = 'Standard'
+
 @description('Resource ID of the virtual network to link the private DNS zones.')
 param virtualNetworkResourceId string = ''
 
@@ -46,11 +49,8 @@ module serviceBus 'br/public:avm/res/service-bus/namespace:0.14.0' = {
     disableLocalAuth: false
     publicNetworkAccess: networkIsolation ? 'Disabled' : 'Enabled'
     skuObject: {
-      name: 'Standard'
+      name: sku
     }
-    // managedIdentities: {
-    //   systemAssigned: true
-    // }
     roleAssignments: roleAssignments
     diagnosticSettings: [
       {
@@ -72,6 +72,15 @@ module serviceBus 'br/public:avm/res/service-bus/namespace:0.14.0' = {
           }
         ]
       : []
+    networkRuleSets: networkIsolation
+      ? {
+          defaultAction: 'Deny'
+          publicNetworkAccess: 'Disabled'
+          trustedServiceAccessEnabled: true
+          ipRules: []
+          virtualNetworkRules: []
+        }
+      : null
   }
 }
 

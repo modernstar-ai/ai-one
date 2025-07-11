@@ -1,14 +1,17 @@
-using './webapp.bicep'
+using './main.bicep'
 
 param environmentName = 'uat'
-var sharedVariables = loadJsonContent('../shared-parameters.json')
+var sharedVariables = loadJsonContent('../../shared-parameters.json')
 
+param tags = loadJsonContent('../../tags.json')
 param projectName = readEnvironmentVariable('PROJECT_NAME', sharedVariables.projectName)
 param location = readEnvironmentVariable('AZURE_LOCATION', sharedVariables.location)
-param tags = loadJsonContent('../tags.json')
+param openAILocation = readEnvironmentVariable('AZURE_OPENAI_LOCATION', sharedVariables.openAILocation)
 
-param appServicePlanName = 'ag-aionev10-uat-app'
-param apiAppName = 'ag-aionev10-uat-apiapp'
 param logAnalyticsWorkspaceResourceId = '/subscriptions/9221a966-ce17-4b76-a348-887f234a827a/resourcegroups/rg-practice-ai-aione-private-dev/providers/microsoft.operationalinsights/workspaces/ag-aionev10-uat-la'
-// param networkIsolation = true
-param virtualNetworkName = 'ag-aionev10-uat-vnet'
+
+// OpenAI and AI Foundry configuration
+param deployAIFoundryResources = true
+param deployOpenAiModels = true
+
+param networkIsolation = true

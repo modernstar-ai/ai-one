@@ -118,6 +118,8 @@ public class ServiceBusQueueConsumer : BackgroundService
         var (indexName, folderName) = EventGridHelpers.GetIndexAndFolderName(body);
         var (fileName, eventType) = EventGridHelpers.GetFileNameAndEventType(body);
         var fileMetadata = EventGridHelpers.GetFileCreatedMetaData(body);
+        fileMetadata.BlobUrl = EventGridHelpers.GetBlobUrl(Configs.BlobStorage.Endpoint, body);
+        _logger.LogInformation("Blob URL: {BlobUrl}", fileMetadata.BlobUrl);
         _logger.LogInformation("Fetched index name {IndexName} folder name {FolderName}", indexName, folderName);
         _logger.LogInformation("Fetched file name {FileName} event type {EventType}", fileName, eventType);
 

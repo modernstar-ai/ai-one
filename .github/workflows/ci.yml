@@ -57,7 +57,8 @@ jobs:
         with:
           inlineScript: |
             az bicep install
-            az bicep build --file ./infra/platform/platform.bicep
+            az bicep build --file ./infra/platform/core/main.bicep
+            az bicep build --file ./infra/platform/ai/main.bicep
 
   validate-api-bicep:
     runs-on: ubuntu-latest

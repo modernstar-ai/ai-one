@@ -1,29 +1,34 @@
 using './apiapp.bicep'
 
 param environmentName = 'uat'
-param projectName = readEnvironmentVariable('PROJECT_NAME', 'ag-aione')
-param location = readEnvironmentVariable('AZURE_LOCATION', 'australiaeast')
+var sharedVariables = loadJsonContent('../shared-parameters.json')
+
+param projectName = readEnvironmentVariable('PROJECT_NAME', sharedVariables.projectName)
+param location = readEnvironmentVariable('AZURE_LOCATION', sharedVariables.location)
 param tags = loadJsonContent('../tags.json')
+
 param azureTenantId = readEnvironmentVariable('AZURE_TENANT_ID')
 
 param aspCoreEnvironment = 'UAT'
-param appServicePlanName = 'ag-aione-uat-app'
-param applicationInsightsName = 'ag-aione-uat-apiapp'
-param logAnalyticsWorkspaceName = 'ag-aione-uat-la'
-param keyVaultName = 'ag-aione-uat-kv'
-param storageName = 'agaioneuatsto'
-param storageAccountName = 'agaioneuatsto'
-param documentIntelligenceServiceName = 'ag-aione-uat-docintel'
-param documentIntelligenceEndpoint = 'https://ag-aione-uat-docintel.cognitiveservices.azure.com/'
-param openAiName = 'ag-aione-uat-aillm'
-param openAiEndpoint = 'https://ag-aione-uat-aillm.openai.azure.com/'
+param appServicePlanName = 'ag-aionev10-uat-app'
+param applicationInsightsName = 'ag-aionev10-uat-apiapp'
+param logAnalyticsWorkspaceResourceId = '/subscriptions/9221a966-ce17-4b76-a348-887f234a827a/resourcegroups/rg-practice-ai-aione-private-dev/providers/microsoft.operationalinsights/workspaces/ag-aionev10-uat-la'
+
+param keyVaultName = 'ag-aionev10-uat-kv'
+param storageAccountName = 'agaionev10uatsto'
+param maxServiceBusQueueMessageSizeInKilobytes = 1024
+param documentIntelligenceServiceName = 'ag-aionev10-uat-docintel'
+param documentIntelligenceEndpoint = 'https://ag-aionev10-uat-docintel.cognitiveservices.azure.com/'
+param openAiName = 'ag-aionev10-uat-foundry'
+param openAiEndpoint = 'https://ag-aionev10-uat-foundry.openai.azure.com/'
 param openAiApiVersion = '2024-08-01-preview'
-param searchServiceName = 'ag-aione-uat-search'
-param serviceBusName = 'ag-aione-uat-service-bus'
-param cosmosDbAccountName = 'ag-aione-uat-cosmos'
-param cosmosDbAccountEndpoint = 'https://ag-aione-uat-cosmos.documents.azure.com:443/'
-param eventGridName = 'ag-aione-uat-blob-eg'
+param searchServiceName = 'ag-aionev10-uat-search'
+param serviceBusName = 'ag-aionev10-uat-service-bus'
+param cosmosDbAccountName = 'ag-aionev10-uat-cosmos'
+param cosmosDbAccountEndpoint = 'https://ag-aionev10-uat-cosmos.documents.azure.com:443/'
+param eventGridName = 'ag-aionev10-uat-blob-eg'
 
-param allowedOrigins = ['https://ag-aione-uat-webapp.azurewebsites.net']
+param allowedOrigins = ['https://ag-aionev10-uat-webapp.azurewebsites.net']
 
-param adminEmailAddresses = ['adam-stephensen@agile-analytics.com.au']
+param networkIsolation = true
+param virtualNetworkName = 'ag-aionev10-uat-vnet'

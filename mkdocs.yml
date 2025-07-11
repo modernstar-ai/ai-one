@@ -8,11 +8,7 @@ edit_uri: edit/main/docs/
 docs_dir: docs
 site_dir: site
 nav:
-  - "Deployment Guide":
-    - Overview: deployment/overview.md
-    - Application Registration: deployment/app_registration.md
-    - Deployment Steps Using GitHub Actions: deployment/github_steps.md
-    - Deployment Steps Using Azure DevOps: deployment/azure_devops_steps.md
+  - "Deployment Guide": deployment.md
 # Theme settings
 theme:
   name: material
