@@ -5,10 +5,13 @@ export interface SettingsState {
 }
 
 export interface AppSettings {
-  appName: string | undefined;
-  aiDisclaimer: string | undefined;
-  logoUrl: string | undefined;
-  faviconUrl: string | undefined;
+  appName?: string;
+  aiDisclaimer?: string;
+  logoUrl?: string;
+  faviconUrl?: string;
+  allowModelSelectionDefaultValue: string;
+  defaultTextModelId: string;
+  modelSelectionFeatureEnabled: boolean;
 }
 
 export const useSettingsStore = create<SettingsState>(() => ({

@@ -29,9 +29,10 @@ import {
 } from '@/components/ui-extended/permissions-access-control';
 import { PermissionsAccessControlSchema } from '@/components/ui-extended/permissions-access-control/form';
 import { MultiInput } from '@/components/ui-extended/multi-input';
-import { MODEL_CONFIG_DEFAULTS } from '@/configs/form-default-values/assistant';
+
 import { BaseDialog } from '@/components/base/BaseDiaglog';
 import useGetTextModels from '@/hooks/use-get-textmodels';
+import { useSettingsStore } from '@/stores/settings-store';
 
 // Define the AssistantPromptOptions schema
 const AssistantPromptOptionsSchema = z.object({
@@ -104,6 +105,8 @@ export default function AssistantForm() {
   const navigate = useNavigate();
   const { indexes } = useIndexes();
 
+  const { settings } = useSettingsStore();
+
   const { data, isLoading: textmodelsLoading } = useGetTextModels();
 
   const form = useForm<FormValues>({
@@ -130,7 +133,11 @@ export default function AssistantForm() {
         tags: []
       },
       accessControl: permissionsAccessControlDefaultValues,
-      modelOptions: MODEL_CONFIG_DEFAULTS
+      modelOptions: {
+        allowModelSelection: settings?.modelSelectionFeatureEnabled || false,
+        models: [],
+        defaultModelId: settings?.allowModelSelectionDefaultValue || 'GPT-4o'
+      }
     }
   });
 
@@ -174,7 +181,7 @@ export default function AssistantForm() {
             tags: file.filterOptions.tags ?? []
           },
           accessControl: file.accessControl ?? permissionsAccessControlDefaultValues,
-          modelOptions: file.modelOptions ?? MODEL_CONFIG_DEFAULTS
+          modelOptions: file.modelOptions
         });
       } else {
         toast({
