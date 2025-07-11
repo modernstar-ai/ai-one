@@ -82,7 +82,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
           template-file: ${{ env.AZURE_BICEP_CORE }}
-          parameters-file: infra/platform/core/${{ inputs.environment_name }}.bicepparam
+          parameters-file: infra/platform/core/${{ inputs.environment }}.bicepparam
           parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
       - name: Deploy Cognitive Services Infrastructure
@@ -95,7 +95,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
           template-file: ${{ env.AZURE_BICEP_AI }}
-          parameters-file: infra/platform/ai/${{ inputs.environment_name }}.bicepparam
+          parameters-file: infra/platform/ai/${{ inputs.environment }}.bicepparam
           parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
       - name: Print Deployment Summary
