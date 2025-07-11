@@ -55,7 +55,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
           template-file: ${{ env.AZURE_BICEP_MAIN }}
-          parameters-file: infra/platform/${{ inputs.environment }}.bicepparam
+          parameters-file: infra/platform/monitoring/${{ inputs.environment }}.bicepparam
           parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
       - name: Display Bicep Outputs
