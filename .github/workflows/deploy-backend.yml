@@ -96,6 +96,13 @@ jobs:
           fetch-depth: 1
           persist-credentials: true
 
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
       - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v3
         with:
