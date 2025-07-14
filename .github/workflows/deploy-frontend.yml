@@ -2,7 +2,7 @@
 # Deploy AI-One Web App
 name: Deploy AI-One Web App
 
-# Triggers: manual, push to mdevelopment, and relevant file changes
+# Triggers: manual, push to development, and relevant file changes
 on:
   workflow_dispatch:
     inputs:
@@ -22,7 +22,7 @@ on:
         default: "ag-aione-dev-webapp"
   push:
     branches:
-      - mdevelopment
+      - development
     paths:
       - 'src/agile-chat-web/**'
       - 'infra/frontend/**'
