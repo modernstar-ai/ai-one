@@ -16,6 +16,7 @@ public static class Configs
     public static AzureDocumentIntelligenceConfig AzureDocumentIntelligence => config.GetSection("AzureDocumentIntelligence").Get<AzureDocumentIntelligenceConfig>()! ?? throw new NullReferenceException("AzureDocumentIntelligence is null");
     public static AzureServiceBusConfig AzureServiceBus => config.GetSection("AzureServiceBus").Get<AzureServiceBusConfig>()! ?? throw new NullReferenceException("AzureServiceBus is null");
     public static AzureOpenAiConfig AzureOpenAi => config.GetSection("AzureOpenAi").Get<AzureOpenAiConfig>()! ?? throw new NullReferenceException("AzureOpenAi is null");
+    public static AIServicesConfig AIServices => config.GetSection("AIServices").Get<AIServicesConfig>()! ?? throw new NullReferenceException("AIServices is null");
     public static AzureSearchConfig AzureSearch => config.GetSection("AzureSearch").Get<AzureSearchConfig>()! ?? throw new NullReferenceException("AzureSearch is null");
     public static CosmosDbConfig CosmosDb => config.GetSection("CosmosDb").Get<CosmosDbConfig>()! ?? throw new NullReferenceException("CosmosDb is null");
     public static AuditConfig Audit => config.GetSection("Audit").Get<AuditConfig>()! ?? throw new NullReferenceException("Audit is null");

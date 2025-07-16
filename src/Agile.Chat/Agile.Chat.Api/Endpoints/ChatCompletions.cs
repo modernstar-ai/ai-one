@@ -1,5 +1,6 @@
 ﻿using Agile.Chat.Application.ChatCompletions.Dtos;
 using Agile.Chat.Application.Assistants.Queries;
+using Agile.Chat.Application.ChatCompletions.Routing;
 using Carter;
 using Carter.OpenApi;
 using Mapster;
@@ -25,8 +26,8 @@ public class ChatCompletions() : CarterModule("/api")
             .WithTags("ChatConfig");
 
         //POST
-        completions.MapPost("/", ChatStream);
-        
+        completions.MapPost("/", ChatStreamWithRouter);
+
         //GET Config
         chatConfig.MapGet("/textmodels", GetSupportedTextModelOptions);
     }
@@ -35,6 +36,11 @@ public class ChatCompletions() : CarterModule("/api")
     {
         var command = dto.Adapt<Application.ChatCompletions.Commands.Chat.Command>();
         return await mediator.Send(command);
+    }
+
+    private async Task<IResult> ChatStreamWithRouter([FromServices] ChatCommandRouter router, [FromBody] ChatPayload payload)
+    {
+        return await router.RouteAsync(payload);
     }
 
     private async Task<IResult> GetSupportedTextModelOptions([FromServices] IMediator mediator)

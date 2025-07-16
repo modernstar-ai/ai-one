@@ -1,8 +1,7 @@
-﻿using Agile.Chat.Application.Events;
+﻿using Agile.Chat.Application.ChatCompletions.Routing;
+using Agile.Chat.Application.Events;
 using Agile.Framework;
-using Agile.Framework.Common.EnvironmentVariables;
 using Agile.Framework.Mediator.Pipelines;
-using Azure.Messaging.ServiceBus;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -17,6 +16,7 @@ public static class DependencyInjection
             .AddTransient(typeof(IPipelineBehavior<,>), typeof(TracingBehavior<,>))
             .AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>))
             .AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly)
+            .AddScoped<ChatCommandRouter>()
             .AddServiceBus(builder);
 
     private static IServiceCollection AddServiceBus(this IServiceCollection services, WebApplicationBuilder builder)
