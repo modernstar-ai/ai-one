@@ -10,11 +10,12 @@ AI-One is an enterprise AI platform designed to help organizations rapidly adopt
 
 AI-One seamlessly connects with enterprise data and integration sources, solving the common challenges of AI adoption by providing:
 
-Enterprise-grade AI orchestration – unify and manage AI Assistants, Agents, and Chatbots across your organization.
-Seamless scalability & security – deploy AI solutions with role-based access control and enterprise authentication.
-Frictionless AI use case validation – experiment with new AI applications quickly, reducing time-to-value.
-Centralized AI management – streamline deployment, monitoring, and governance of AI solutions.
-AI-powered search & data insights – create AI Search Indexes, integrate unstructured data sources, and enhance decision-making with intelligent retrieval.
+- **Enterprise-grade AI orchestration** – unify and manage AI Assistants, Agents, and Chatbots across your organization.
+- **Seamless scalability & security** – deploy AI solutions with role-based access control and enterprise authentication.
+- **Frictionless AI use case validation** – experiment with new AI applications quickly, reducing time-to-value.
+- **Centralized AI management** – streamline deployment, monitoring, and governance of AI solutions.
+- **AI-powered search & data insights** – create AI Search Indexes, integrate unstructured data sources, and enhance decision-making with intelligent retrieval. 
+
 By consolidating AI capabilities into a single, scalable platform, AI-One reduces complexity, accelerates innovation, and ensures AI solutions are robust, secure, and aligned with enterprise needs.
 
 ## Logical Architecture
