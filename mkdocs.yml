@@ -8,6 +8,7 @@ edit_uri: edit/main/docs/
 docs_dir: docs
 site_dir: site
 nav:
+  - "solution Design": architecture.md
   - "Deployment Guide": deployment.md
 # Theme settings
 theme:
