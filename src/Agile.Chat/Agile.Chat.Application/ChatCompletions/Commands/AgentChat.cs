@@ -3,7 +3,9 @@ using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.Audits.Services;
 using Agile.Chat.Application.ChatThreads.Services;
 using Agile.Chat.Application.Services;
+using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Audits.Aggregates;
+using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Entities;
 using FluentValidation;
 using MediatR;
@@ -28,34 +30,56 @@ public static class AgentChat
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
+            var requestId = Guid.NewGuid().ToString();
+            logger.LogDebug("Handler executed {Handler}", typeof(Handler).Namespace);
+
             var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId, ChatType.Thread.ToString());
+            var assistant = await assistantService.GetItemByIdAsync(thread.AssistantId);
+
+            using (logger.BeginScope(new
+            {
+                ChatRequestId = requestId,
+                AssistantId = assistant.Id,
+                ThreadId = thread.Id,
+                AgentThreadId = thread.AgentThreadConfiguration.AgentThreadId,
+            }))
+            {
+                return await HandleAsync(request, requestId, assistant, thread, cancellationToken);
+            }
+        }
+
+        public async Task<IResult> HandleAsync(Command request, string requestId, Assistant assistant, ChatThread thread, CancellationToken cancellationToken)
+        {
             var chatMessages = await chatMessageService.GetAllMessagesAsync(thread!.Id);
             var chatHistory = chatMessages.ParseSemanticKernelChatHistory(request.UserPrompt);
-            var assistant = !string.IsNullOrWhiteSpace(thread.AssistantId)
-                ? await assistantService.GetItemByIdAsync(thread.AssistantId)
-                : null;
 
+            logger.LogDebug("Calling Azure AI Agent service");
             var assistantResponse = await azureAIAgentService.GetChatResultAsync
                 (request.UserPrompt, contextAccessor.HttpContext, assistant.AgentConfiguration.AgentId,
                 thread.AgentThreadConfiguration.AgentThreadId);
 
+            logger.LogDebug("Received response from Azure AI Agent service");
             var userMessage = Message.CreateUser(thread.Id, request.UserPrompt);
             var assistantMessage = Message.CreateAssistant(thread.Id, assistantResponse);
 
+            logger.LogDebug("Updating chat thread with new messages");
             await Task.WhenAll([
                 chatMessageService.AddItemAsync(userMessage),
                 chatMessageService.AddItemAsync(assistantMessage)]);
 
+            logger.LogDebug("Adding messages to audit");
             await Task.WhenAll([
                 chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage)),
                 chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage))
             ]);
 
+            logger.LogDebug("Saving chat thread updates");
             ////If its a new chat, update the threads name, otherwise just update the last modified date
             thread.Update(chatHistory.Count <= 1 ? TruncateUserPrompt(request.UserPrompt) :
                 thread.Name, thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions, thread.ModelOptions);
 
             await chatThreadService.UpdateItemByIdAsync(thread.Id, thread, ChatType.Thread.ToString());
+
             return Results.Empty;
         }
 

@@ -72,30 +72,12 @@ public class AzureAIAgentService : IAzureAIAgentService
         _logger.LogDebug("Sending message to agent. agentId: {AgentId}, threadId: {ThreadId}", agentId, threadId);
 
         var agent = await GetAgentAsync(agentId);
-        var agentThread = await GetOrCreateAgentThreadAsync(threadId);
+        var agentThread = await GetThreadAsync(threadId);
 
         var response = await InvokeAgent(userPrompt, context, agent, agentThread, _logger);
 
         _logger.LogDebug("Message sent successfully. agentId: {AgentId}, threadId: {ThreadId}", agentId, agentThread.Id);
         return response;
-    }
-
-    private async Task<PersistentAgentThread> GetOrCreateAgentThreadAsync(string? threadId)
-    {
-        _logger.LogDebug("Getting or creating agent thread for threadId: {ThreadId}", threadId);
-        if (!string.IsNullOrEmpty(threadId))
-        {
-            var persistentThread = await _projectClient.Threads.GetThreadAsync(threadId);
-            if (persistentThread != null)
-            {
-                _logger.LogDebug("Found existing thread for threadId: {ThreadId}", threadId);
-                return persistentThread;
-            }
-        }
-
-        _logger.LogDebug("Creating new agent thread.");
-        var thread = await _projectClient.Threads.CreateThreadAsync();
-        return thread;
     }
 
     private async Task<string> InvokeAgent(string userPrompt, HttpContext context, PersistentAgent agent, PersistentAgentThread agentThread, ILogger logger)
