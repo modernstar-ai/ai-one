@@ -1,13 +1,10 @@
 using System.Security.Claims;
 using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.Audits.Services;
-using Agile.Chat.Application.ChatCompletions.Models;
 using Agile.Chat.Application.ChatThreads.Services;
 using Agile.Chat.Application.Services;
-using Agile.Chat.Domain.ChatThreads.Aggregates;
+using Agile.Chat.Domain.Audits.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Entities;
-using Agile.Framework.Ai;
-using Agile.Framework.AzureAiSearch;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -26,78 +23,46 @@ public static class AgentChat
         IAssistantService assistantService,
         IChatThreadService chatThreadService,
         IChatMessageService chatMessageService,
-        IAzureAiSearch azureAiSearch,
-        IChatThreadFileService chatThreadFileService,
         IAzureAIAgentService azureAIAgentService,
-        IAppKernelBuilder appKernelBuilder,
-        IAuditService<Message> chatMessageAuditService,
-        IAuditService<ChatThread> chatThreadAuditService) : IRequestHandler<Command, IResult>
+        IAuditService<Message> chatMessageAuditService) : IRequestHandler<Command, IResult>
     {
-        private ChatContainer _chatContainer = null!;
-        private IAppKernel _appKernel = null!;
-
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId, ChatType.Thread.ToString());
             var chatMessages = await chatMessageService.GetAllMessagesAsync(thread!.Id);
-            var files = await chatThreadFileService.GetAllAsync(request.ThreadId);
             var chatHistory = chatMessages.ParseSemanticKernelChatHistory(request.UserPrompt);
             var assistant = !string.IsNullOrWhiteSpace(thread.AssistantId)
                 ? await assistantService.GetItemByIdAsync(thread.AssistantId)
                 : null;
 
-            //_chatContainer = new ChatContainer
-            //{
-            //    UserPrompt = request.UserPrompt,
-            //    Thread = thread,
-            //    Assistant = assistant,
-            //    AzureAiSearch = azureAiSearch,
-            //    Messages = chatMessages,
-            //    AppKernel = _appKernel,
-            //    ThreadFiles = files
-            //};
-
-
             var assistantResponse = await azureAIAgentService.GetChatResultAsync
                 (request.UserPrompt, contextAccessor.HttpContext, assistant.AgentConfiguration.AgentId,
                 thread.AgentThreadConfiguration.AgentThreadId);
 
-            //var agentThread = await GetOrCreateAgentThreadAsync(threadId);
+            var userMessage = Message.CreateUser(thread.Id, request.UserPrompt);
+            var assistantMessage = Message.CreateAssistant(thread.Id, assistantResponse);
 
-            //var sp = new ServiceCollection()
-            //    .AddSingleton<ChatContainer>(_ => _chatContainer)
-            //    .BuildServiceProvider();
-            //if (!string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName))
-            //    _appKernel.AddPlugin<AzureAiSearchRag>(sp);
+            await Task.WhenAll([
+                chatMessageService.AddItemAsync(userMessage),
+                chatMessageService.AddItemAsync(assistantMessage)]);
 
-
-            ////Execute Chat Stream
-            //var chatSettings = ChatUtils.ParseAzureOpenAiPromptExecutionSettings(assistant, thread);
-            //IResult assistantResult = assistant?.Type switch
-            //{
-            //    AssistantType.Chat or null => await GetChatResultAsync(chatSettings, chatHistory),
-            //    AssistantType.Search => await GetSearchResultAsync(chatSettings),
-            //    _ => Results.BadRequest("Unknown chat type")
-            //};
-
-            //if (assistantResult is BadRequest<string> badRequest)
-            //{
-            //    var (userMessage, assistantMessage, citationMessages) = CreateUserAssistantAndCitationMessages(badRequest.Value ?? string.Empty, null);
-            //    await SaveAuditLogsAsync(userMessage, assistantMessage, citationMessages);
-            //    return badRequest;
-            //}
-
-            ////Get the full response and metadata
-            //var (assistantResponse, assistantMetadata) = GetAssistantResponseAndMetadata(assistant?.Type, assistantResult);
-            //await SaveUserAssistantCitationsMessagesAsync(assistantResponse, assistantMetadata);
+            await Task.WhenAll([
+                chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage)),
+                chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage))
+            ]);
 
             ////If its a new chat, update the threads name, otherwise just update the last modified date
-            //thread.Update(chatHistory.Count <= 1 ? TruncateUserPrompt(request.UserPrompt) :
-            //    thread.Name, thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions, thread.ModelOptions);
+            thread.Update(chatHistory.Count <= 1 ? TruncateUserPrompt(request.UserPrompt) :
+                thread.Name, thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions, thread.ModelOptions);
 
-            //await chatThreadService.UpdateItemByIdAsync(thread.Id, thread, ChatType.Thread.ToString());
+            await chatThreadService.UpdateItemByIdAsync(thread.Id, thread, ChatType.Thread.ToString());
             return Results.Empty;
         }
+
+        private string TruncateUserPrompt(string userPrompt) => userPrompt.Substring(0, Math.Min(userPrompt.Length, 39)) +
+                                                             (userPrompt.Length <= 39
+                                                                 ? string.Empty
+                                                                 : "...");
     }
 
     public class Validator : AbstractValidator<Command>

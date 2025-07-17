@@ -25,7 +25,8 @@ public class ChatThreadService(CosmosClient cosmosClient, IAssistantService assi
 {
     public async Task<ChatThread> AddChatThreadAsync(Assistant assistant, ChatThread chatThread)
     {
-        if (assistant.Type == AssistantType.Agent)
+        if (assistant != null &&
+            assistant.Type == AssistantType.Agent)
         {
             var agentThread = await azureAIAgentService.CreateThreadAsync();
             chatThread.AddAgentThreadConfiguration(new AgentThreadConfiguration
