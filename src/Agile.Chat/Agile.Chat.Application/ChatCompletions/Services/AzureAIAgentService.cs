@@ -27,16 +27,57 @@ public class AzureAIAgentService : IAzureAIAgentService
         _logger = logger;
     }
 
-    public async Task GetChatResultAsync(string userPrompt, HttpContext context, string agentName, string agentId, string threadId)
+    public async Task<PersistentAgent> CreateAgentAsync(string agentName, string description, string modelId, string instructions, float? temperature, float? topP)
+    {
+        _logger.LogDebug("Creating new agent with name: {AgentName}", agentName);
+        var agentDefinition = await _projectClient.Administration.CreateAgentAsync(
+             modelId,
+             name: agentName,
+             description: description,
+             instructions: instructions,
+             tools: [],
+             toolResources: null,
+             temperature: temperature,
+             topP: topP);
+        _logger.LogDebug("Agent created successfully. AgentId: {AgentId}", agentDefinition.Value.Id);
+        return agentDefinition;
+    }
+
+    public async Task<PersistentAgent> GetAgentAsync(string agentId)
+    {
+        _logger.LogDebug("Getting agent for agentId: {AgentId}", agentId);
+        var agent = await _projectClient.Administration.GetAgentAsync(agentId);
+        _logger.LogDebug("Agent retrieved successfully. AgentId: {AgentId}", agent.Value.Id);
+        return agent;
+    }
+
+    public async Task<PersistentAgentThread> GetThreadAsync(string threadId)
+    {
+        _logger.LogDebug("Getting agent thread for threadId: {ThreadId}", threadId);
+        var thread = await _projectClient.Threads.CreateThreadAsync();
+        _logger.LogDebug("Agent thread retrieved successfully. ThreadId: {ThreadId}", thread.Value.Id);
+        return thread;
+    }
+
+    public async Task<PersistentAgentThread> CreateThreadAsync()
+    {
+        _logger.LogDebug("Creating new agent thread without specific threadId.");
+        var thread = await _projectClient.Threads.CreateThreadAsync();
+        _logger.LogDebug("New agent thread created successfully. ThreadId: {ThreadId}", thread.Value.Id);
+        return thread;
+    }
+
+    public async Task<string> GetChatResultAsync(string userPrompt, HttpContext context, string agentId, string threadId)
     {
         _logger.LogDebug("Sending message to agent. agentId: {AgentId}, threadId: {ThreadId}", agentId, threadId);
 
-        var agent = await GetOrCreateAgentAsync(agentName, agentId);
+        var agent = await GetAgentAsync(agentId);
         var agentThread = await GetOrCreateAgentThreadAsync(threadId);
 
-        await InvokeAgent(userPrompt, context, agent, agentThread, _logger);
+        var response = await InvokeAgent(userPrompt, context, agent, agentThread, _logger);
 
         _logger.LogDebug("Message sent successfully. agentId: {AgentId}, threadId: {ThreadId}", agentId, agentThread.Id);
+        return response;
     }
 
     private async Task<PersistentAgentThread> GetOrCreateAgentThreadAsync(string? threadId)
@@ -55,64 +96,6 @@ public class AzureAIAgentService : IAzureAIAgentService
         _logger.LogDebug("Creating new agent thread.");
         var thread = await _projectClient.Threads.CreateThreadAsync();
         return thread;
-    }
-
-    private async Task<PersistentAgent> GetOrCreateAgentAsync(string agentName, string? agentId)
-    {
-        _logger.LogDebug("Getting or creating agent for agentId: {AgentId}", agentId);
-        PersistentAgent agentDefinition = null;
-        var modelId = Configs.AzureOpenAi.DeploymentName;
-        var agentInstructions = "You are an assistant";
-
-        if (!string.IsNullOrEmpty(agentId))
-        {
-            try
-            {
-                agentDefinition = await _projectClient.Administration.GetAgentAsync(agentId);
-                _logger.LogDebug("Found existing agent for agentId: {AgentId}", agentId);
-            }
-            catch (Azure.RequestFailedException)
-            {
-                _logger.LogWarning("Agent not found for agentId: {AgentId}, will create a new one.", agentId);
-            }
-        }
-
-        if (agentDefinition == null)
-        {
-            var agentsAsync = _projectClient.Administration.GetAgentsAsync();
-            var enumerator = agentsAsync.GetAsyncEnumerator();
-            try
-            {
-                while (await enumerator.MoveNextAsync())
-                {
-                    var agentDefn = enumerator.Current;
-                    if (agentDefn.Name == agentName)
-                    {
-                        agentDefinition = agentDefn;
-                        _logger.LogDebug("Found agent by name: {AgentName}", agentName);
-                        break;
-                    }
-                }
-            }
-            finally
-            {
-                await enumerator.DisposeAsync();
-            }
-        }
-
-        if (agentDefinition == null)
-        {
-            _logger.LogDebug("Creating new agent with name: {AgentName}", agentName);
-            agentDefinition = await _projectClient.Administration.CreateAgentAsync(
-                modelId,
-                name: agentName,
-                instructions: agentInstructions,
-                tools: [],
-                toolResources: null);
-        }
-
-        _logger.LogDebug("Agent ready for use. agentId: {AgentId}", agentDefinition.Id);
-        return agentDefinition;
     }
 
     private async Task<string> InvokeAgent(string userPrompt, HttpContext context, PersistentAgent agent, PersistentAgentThread agentThread, ILogger logger)

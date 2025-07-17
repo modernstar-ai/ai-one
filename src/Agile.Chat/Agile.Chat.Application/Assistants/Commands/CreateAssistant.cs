@@ -39,7 +39,7 @@ public static class CreateAssistant
                 request.ModelOptions,
                 request.AccessControl);
 
-            await assistantService.AddItemAsync(assistant);
+            await assistantService.AddAssistantAsync(assistant);
             return Results.Created(assistant.Id, assistant);
         }
     }

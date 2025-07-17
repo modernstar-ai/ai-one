@@ -1,4 +1,5 @@
 ﻿using Agile.Chat.Application.ExtensionMethods;
+using Agile.Chat.Application.Services;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Assistants.ValueObjects;
 using Agile.Framework.Authentication.Enums;
@@ -14,14 +15,35 @@ namespace Agile.Chat.Application.Assistants.Services;
 
 public interface IAssistantService : ICosmosRepository<Assistant>
 {
+    public Task<Assistant> AddAssistantAsync(Assistant assistant);
     public Task<Assistant> GetAssistantById(string id);
     public Task<List<Assistant>> GetAllAsync();
 }
 
 [Export(typeof(IAssistantService), ServiceLifetime.Scoped)]
-public class AssistantService(CosmosClient cosmosClient, IAssistantModelConfigService assistantModelConfigService, IRoleService roleService) :
+public class AssistantService(CosmosClient cosmosClient, IAzureAIAgentService azureAIAgentService, IAssistantModelConfigService assistantModelConfigService, IRoleService roleService) :
     CosmosRepository<Assistant>(Constants.CosmosAssistantsContainerName, cosmosClient), IAssistantService
 {
+    public async Task<Assistant> AddAssistantAsync(Assistant assistant)
+    {
+        if (assistant.Type == AssistantType.Agent)
+        {
+            var agentName = assistant.Name.Trim();
+            var agent = await azureAIAgentService.CreateAgentAsync
+                  (agentName, assistant.Description, assistant.ModelOptions.DefaultModelId,
+                  assistant.PromptOptions.SystemPrompt, assistant.PromptOptions.Temperature, assistant.PromptOptions.TopP);
+
+            assistant.AddAgentConfiguration(new AgentConfiguration
+            {
+                AgentName = agentName,
+                AgentId = agent.Id,
+            });
+        }
+
+        await AddItemAsync(assistant);
+        return assistant;
+    }
+
     public async Task<Assistant> GetAssistantById(string id)
     {
         if (string.IsNullOrWhiteSpace(id))

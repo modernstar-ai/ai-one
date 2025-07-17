@@ -38,7 +38,6 @@ public static class AgentChat
 
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
-            //Fetch what's needed to do chatting
             var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId, ChatType.Thread.ToString());
             var chatMessages = await chatMessageService.GetAllMessagesAsync(thread!.Id);
             var files = await chatThreadFileService.GetAllAsync(request.ThreadId);
@@ -47,18 +46,22 @@ public static class AgentChat
                 ? await assistantService.GetItemByIdAsync(thread.AssistantId)
                 : null;
 
-            _chatContainer = new ChatContainer
-            {
-                UserPrompt = request.UserPrompt,
-                Thread = thread,
-                Assistant = assistant,
-                AzureAiSearch = azureAiSearch,
-                Messages = chatMessages,
-                AppKernel = _appKernel,
-                ThreadFiles = files
-            };
+            //_chatContainer = new ChatContainer
+            //{
+            //    UserPrompt = request.UserPrompt,
+            //    Thread = thread,
+            //    Assistant = assistant,
+            //    AzureAiSearch = azureAiSearch,
+            //    Messages = chatMessages,
+            //    AppKernel = _appKernel,
+            //    ThreadFiles = files
+            //};
 
-            var assistantResponse = await azureAIAgentService.SendMessage(request.UserPrompt, contextAccessor.HttpContext, "test", "test", "");
+
+            var assistantResponse = await azureAIAgentService.GetChatResultAsync
+                (request.UserPrompt, contextAccessor.HttpContext, assistant.AgentConfiguration.AgentId,
+                thread.AgentThreadConfiguration.AgentThreadId);
+
             //var agentThread = await GetOrCreateAgentThreadAsync(threadId);
 
             //var sp = new ServiceCollection()
