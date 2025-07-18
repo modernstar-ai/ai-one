@@ -106,8 +106,6 @@ export default function AssistantForm() {
 
   const { data, isLoading: textmodelsLoading } = useGetTextModels();
 
-  console.log(data);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -208,10 +206,10 @@ export default function AssistantForm() {
     if (data && !textmodelsLoading) {
       form.setValue('modelOptions.allowModelSelection', data.allowModelSelection || false);
       form.setValue('modelOptions.defaultModelId', data.defaultModelId || 'GPT-4o');
-      
+
       // Initialize models array with API data
       if (data.models) {
-        const modelsWithSelection = data.models.map(model => ({
+        const modelsWithSelection = data.models.map((model) => ({
           modelId: model.modelId,
           isSelected: false
         }));
