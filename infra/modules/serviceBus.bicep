@@ -72,15 +72,15 @@ module serviceBus 'br/public:avm/res/service-bus/namespace:0.14.0' = {
           }
         ]
       : []
-    networkRuleSets: networkIsolation
-      ? {
-          defaultAction: 'Deny'
-          publicNetworkAccess: 'Disabled'
-          trustedServiceAccessEnabled: true
-          ipRules: []
-          virtualNetworkRules: []
-        }
-      : null
+    // networkRuleSets: networkIsolation
+    //   ? {
+    //       defaultAction: 'Deny'
+    //       publicNetworkAccess: 'Disabled'
+    //       trustedServiceAccessEnabled: true
+    //       ipRules: []
+    //       virtualNetworkRules: []
+    //     }
+    //   : null
   }
 }
 
