@@ -540,6 +540,16 @@ resource blobContainersResource 'Microsoft.Storage/storageAccounts/blobServices/
   }
 ]
 
+// Role Assignment: Allow Event Grid to send to Service Bus (Data Sender role)
+resource senderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, eventGridSystemTopic.id, serviceBus.id, serviceBusDataSenderRole.id)
+  scope: serviceBus
+  properties: {
+    roleDefinitionId: serviceBusDataSenderRole.id
+    principalId: eventGridSystemTopic.identity.principalId
+  }
+}
+
 output apiAppName string = apiAppModule.outputs.name
 output apiAppDefaultHostName string = apiAppModule.outputs.defaultHostName
 output apiAppManagedIdentityId string = apiAppManagedIdentity.id
