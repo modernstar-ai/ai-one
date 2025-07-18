@@ -76,7 +76,7 @@ module serviceBus 'br/public:avm/res/service-bus/namespace:0.14.0' = {
 }
 
 resource networkRuleSet 'Microsoft.ServiceBus/namespaces/networkRuleSets@2022-10-01-preview' = {
-  name: name
+  name: '${name}/default'
   properties: {
     trustedServiceAccessEnabled: true
   }
