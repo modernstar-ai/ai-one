@@ -32,7 +32,7 @@ public class ChatCommandRouter
         return chatPayload.Type switch
         {
             ChatPayloadType.AgentMode => await HandleAgentModeChatAsync(chatPayload),
-            _ => await HandleAgentModeChatAsync(chatPayload)
+            _ => await HandleStandardChatAsync(chatPayload)
         };
     }
 
@@ -58,6 +58,5 @@ public class ChatCommandRouter
 
         var command = chatDto.Adapt<Commands.AgentChat.Command>();
         return await _mediator.Send(command);
-    }
-
+    } 
 }
