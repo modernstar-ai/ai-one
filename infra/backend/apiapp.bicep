@@ -419,10 +419,15 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
   name: eventGridSystemTopicSubName
   parent: eventGridSystemTopic
   properties: {
-    destination: {
-      endpointType: 'ServiceBusQueue'
-      properties: {
-        resourceId: serviceBusQueue.id
+    deliveryWithResourceIdentity: {
+      // destination: {
+      //   endpointType: 'ServiceBusQueue'
+      //   properties: {
+      //     resourceId: serviceBusQueue.id
+      //   }
+      // }
+      identity: {
+        type: 'SystemAssigned'
       }
     }
     filter: {
