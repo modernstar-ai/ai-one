@@ -105,6 +105,7 @@ param storageServiceFoldersContainerName string = 'index-content'
 param eventGridName string = toLower('${resourcePrefix}-blob-eg')
 
 param allowModelSelection bool = true
+
 param defaultTextModelId string = 'gpt-4o'
 
 param eventGridSystemTopicSubName string = toLower('${resourcePrefix}-folders-blobs-listener')
@@ -118,6 +119,8 @@ param virtualNetworkName string = toLower('${resourcePrefix}-vnet')
 @description('App Service subnet name')
 param appServiceSubnetName string = 'AppServiceSubnet'
 
+param deployRoleAssignments bool = true
+
 var blobContainersArray = loadJsonContent('../blob-storage-containers.json')
 var blobContainers = [
   for name in blobContainersArray: {
@@ -126,16 +129,8 @@ var blobContainers = [
   }
 ]
 
-resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
-  name: openAiName
-}
-
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: storageAccountName
-}
-
-resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
-  name: documentIntelligenceServiceName
 }
 
 resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' existing = {
@@ -144,46 +139,6 @@ resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' existing = {
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' existing = {
   name: appServicePlanName
-}
-
-resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
-  name: keyVaultName
-}
-
-// Key Vault Secrets User Role
-resource keyVaultSecretsUserRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '4633458b-17de-408a-b874-0445c86b69e6'
-  scope: subscription()
-}
-
-// Cognitive Services OpenAI User Role
-resource openAiUserRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
-  scope: subscription()
-}
-
-// Cognitive Services User Role for Document Intelligence
-resource cognitiveServicesUserRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: 'a97b65f3-24c7-4388-baec-2e87135dc908'
-  scope: subscription()
-}
-
-// Storage Blob Data Contributor Role
-resource blobDataContributorRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
-  scope: subscription()
-}
-
-// Azure Service Bus Data Receiver Role
-resource serviceBusDataReceiverRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '4f6d3b9b-027b-4f4c-9142-0e5a2a2247e0'
-  scope: subscription()
-}
-
-// Azure Service Bus Data Sender Role
-resource serviceBusDataSenderRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '69a216fc-b8fb-44d8-bc22-1f3c2cd27a39'
-  scope: subscription()
 }
 
 resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2024-01-01' existing = {
@@ -419,13 +374,19 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
   name: eventGridSystemTopicSubName
   parent: eventGridSystemTopic
   properties: {
+    // destination: {
+    //   endpointType: 'ServiceBusQueue'
+    //   properties: {
+    //     resourceId: serviceBusQueue.id
+    //   }
+    // }
     deliveryWithResourceIdentity: {
-      // destination: {
-      //   endpointType: 'ServiceBusQueue'
-      //   properties: {
-      //     resourceId: serviceBusQueue.id
-      //   }
-      // }
+      destination: {
+        endpointType: 'ServiceBusQueue'
+        properties: {
+          resourceId: serviceBusQueue.id
+        }
+      }
       identity: {
         type: 'SystemAssigned'
       }
@@ -461,75 +422,6 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource apiAppOpenAiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, azureopenai.id, openAiUserRole.id)
-  scope: azureopenai
-  properties: {
-    roleDefinitionId: openAiUserRole.id
-    principalId: apiAppManagedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource apiAppBlobStorageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, storage.id, blobDataContributorRole.id)
-  scope: storage
-  properties: {
-    roleDefinitionId: blobDataContributorRole.id
-    principalId: apiAppManagedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// resource apiAppCosmosDbContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-//   name: guid(resourceGroup().id, apiAppManagedIdentity.id, cosmosDbAccount.id, cosmosDbContributorRole.id)
-//   scope: cosmosDbAccount
-//   properties: {
-//     roleDefinitionId: cosmosDbContributorRole.id
-//     principalId: apiAppManagedIdentity.properties.principalId
-//     principalType: 'ServicePrincipal'
-//   }
-// }
-
-resource apiAppDocIntelligenceRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, documentIntelligence.id, cognitiveServicesUserRole.id)
-  scope: documentIntelligence
-  properties: {
-    roleDefinitionId: cognitiveServicesUserRole.id
-    principalId: apiAppManagedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource apiAppServiceBusReceiverRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, serviceBus.id, serviceBusDataReceiverRole.id)
-  scope: serviceBus
-  properties: {
-    roleDefinitionId: serviceBusDataReceiverRole.id
-    principalId: apiAppManagedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource apiAppServiceBusSenderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, serviceBus.id, serviceBusDataSenderRole.id)
-  scope: serviceBus
-  properties: {
-    roleDefinitionId: serviceBusDataSenderRole.id
-    principalId: apiAppManagedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-module appServiceSecretsUserRoleAssignmentModule '../modules/keyvaultRoleAssignment.bicep' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, keyVault.id, keyVaultSecretsUserRole.id)
-  params: {
-    roleDefinitionId: keyVaultSecretsUserRole.id
-    principalId: apiAppManagedIdentity.properties.principalId
-    keyVaultName: keyVaultName
-  }
-}
-
 resource storageAccount 'Microsoft.Storage/storageAccounts/blobServices@2024-01-01' existing = {
   name: 'default'
   parent: storage
@@ -545,6 +437,12 @@ resource blobContainersResource 'Microsoft.Storage/storageAccounts/blobServices/
   }
 ]
 
+// Azure Service Bus Data Sender Role
+resource serviceBusDataSenderRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+  name: '69a216fc-b8fb-44d8-bc22-1f3c2cd27a39'
+  scope: subscription()
+}
+
 // Role Assignment: Allow Event Grid to send to Service Bus (Data Sender role)
 resource senderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroup().id, eventGridSystemTopic.id, serviceBus.id, serviceBusDataSenderRole.id)
@@ -552,6 +450,18 @@ resource senderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-0
   properties: {
     roleDefinitionId: serviceBusDataSenderRole.id
     principalId: eventGridSystemTopic.identity.principalId
+  }
+}
+
+module apiAppRoleAssignments './roleAssignment.bicep' = if (deployRoleAssignments) {
+  name: 'apiAppRoleAssignments'
+  params: {
+    principalId: apiAppManagedIdentity.properties.principalId
+    openAiResourceId: openAiName
+    storageResourceId: storageAccountName
+    documentIntelligenceResourceId: documentIntelligenceServiceName
+    serviceBusResourceId: serviceBusName
+    keyVaultResourceId: keyVaultName
   }
 }
 
