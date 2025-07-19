@@ -133,10 +133,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: storageAccountName
 }
 
-resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' existing = {
-  name: serviceBusName
-}
-
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' existing = {
   name: appServicePlanName
 }
@@ -437,22 +433,6 @@ resource blobContainersResource 'Microsoft.Storage/storageAccounts/blobServices/
   }
 ]
 
-// Azure Service Bus Data Sender Role
-resource serviceBusDataSenderRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '69a216fc-b8fb-44d8-bc22-1f3c2cd27a39'
-  scope: subscription()
-}
-
-// Role Assignment: Allow Event Grid to send to Service Bus (Data Sender role)
-resource senderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, eventGridSystemTopic.id, serviceBus.id, serviceBusDataSenderRole.id)
-  scope: serviceBus
-  properties: {
-    roleDefinitionId: serviceBusDataSenderRole.id
-    principalId: eventGridSystemTopic.identity.principalId
-  }
-}
-
 module apiAppRoleAssignments './roleAssignment.bicep' = if (deployRoleAssignments) {
   name: 'apiAppRoleAssignments'
   params: {
@@ -462,6 +442,7 @@ module apiAppRoleAssignments './roleAssignment.bicep' = if (deployRoleAssignment
     documentIntelligenceResourceId: documentIntelligenceServiceName
     serviceBusResourceId: serviceBusName
     keyVaultResourceId: keyVaultName
+    eventGridSystemTopicPrincipalId: eventGridSystemTopic.identity.principalId
   }
 }
 

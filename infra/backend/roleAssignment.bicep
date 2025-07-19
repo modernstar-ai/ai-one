@@ -1,5 +1,5 @@
-// Managed Identity Principal ID
 param principalId string
+param eventGridSystemTopicPrincipalId string
 
 // Resource IDs for role assignment targets
 param openAiResourceId string
@@ -121,6 +121,16 @@ resource keyVaultResourceIdRoleAssignment 'Microsoft.Authorization/roleAssignmen
   properties: {
     roleDefinitionId: keyVaultSecretsUserRole.id
     principalId: principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource eventGridSystemTopicServiceBusSenderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, eventGridSystemTopicPrincipalId, serviceBusDataSenderRole.id)
+  scope: serviceBusResource
+  properties: {
+    roleDefinitionId: serviceBusDataSenderRole.id
+    principalId: eventGridSystemTopicPrincipalId
     principalType: 'ServicePrincipal'
   }
 }
