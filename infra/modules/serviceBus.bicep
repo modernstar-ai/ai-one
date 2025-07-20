@@ -72,15 +72,25 @@ module serviceBus 'br/public:avm/res/service-bus/namespace:0.14.0' = {
           }
         ]
       : []
-    networkRuleSets: networkIsolation
-      ? {
-          defaultAction: 'Deny'
-          publicNetworkAccess: 'Disabled'
-          trustedServiceAccessEnabled: true
-          ipRules: []
-          virtualNetworkRules: []
-        }
-      : null
+    // networkRuleSets: networkIsolation
+    //   ? {
+    //       defaultAction: 'Deny'
+    //       publicNetworkAccess: 'Disabled'
+    //       trustedServiceAccessEnabled: true
+    //       ipRules: []
+    //       virtualNetworkRules: []
+    //     }
+    //   : null
+  }
+}
+
+resource networkRuleSet 'Microsoft.ServiceBus/namespaces/networkRuleSets@2022-10-01-preview' = {
+  name: '${name}/default'
+  dependsOn: [
+    serviceBus
+  ]
+  properties: {
+    trustedServiceAccessEnabled: true
   }
 }
 
