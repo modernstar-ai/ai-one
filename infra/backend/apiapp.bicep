@@ -293,7 +293,7 @@ module apiAppModule '../modules/site.bicep' = {
           value: embeddingModelName
         }
         {
-          name: 'AllowModelSelection'
+          name: 'ModelSelectionFeatureEnabled'
           value: allowModelSelection
         }
         {
