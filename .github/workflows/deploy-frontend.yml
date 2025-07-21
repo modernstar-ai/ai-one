@@ -1,4 +1,3 @@
-
 # Deploy AI-One Web App
 name: Deploy AI-One Web App
 
@@ -20,12 +19,17 @@ on:
         description: "Enter the name of the Web App"
         type: string
         default: "ag-aione-dev-webapp"
+      deployInfra:
+        description: "Deploy Web Infrastructure (set to false to skip infra deployment)"
+        type: boolean
+        default: true
+        required: false
   push:
     branches:
       - development
     paths:
-      - 'src/agile-chat-web/**'
-      - 'infra/frontend/**'
+      - "src/agile-chat-web/**"
+      - "infra/frontend/**"
 env:
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
@@ -45,6 +49,7 @@ permissions:
 
 jobs:
   deploy-infra:
+    if: ${{ inputs.deployInfra == true }}
     environment: ${{ inputs.environment }}
     name: Deploy Web Infrastructure
     runs-on: ubuntu-latest
@@ -90,7 +95,8 @@ jobs:
           parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
   deploy-app:
-    needs: deploy-infra
+    needs: [deploy-infra]
+    if: ${{ inputs.deployInfra == false || needs.deploy-infra.result == 'success' }}
     environment: ${{ inputs.environment }}
     name: Deploy AI-One Web App
     runs-on: ubuntu-latest

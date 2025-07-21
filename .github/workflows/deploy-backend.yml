@@ -6,8 +6,8 @@ on:
     branches:
       - development
     paths:
-      - 'infra/backend/**'
-      - 'src/Agile.Chat/**'
+      - "infra/backend/**"
+      - "src/Agile.Chat/**"
   workflow_dispatch:
     inputs:
       environment:
@@ -24,6 +24,11 @@ on:
         description: "Enter the name of the Api App"
         type: string
         default: "ag-aione-dev-apiapp"
+      deployInfra:
+        description: "Deploy API Infrastructure (set to false to skip infra deployment)"
+        type: boolean
+        default: true
+        required: false
 env:
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
@@ -41,6 +46,7 @@ permissions:
 
 jobs:
   deploy-infra:
+    if: ${{ inputs.deployInfra == true }}
     environment: ${{ inputs.environment }}
     name: Deploy API Infrastructure
     runs-on: ubuntu-latest
@@ -85,7 +91,8 @@ jobs:
           parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
   deploy-app:
-    needs: deploy-infra
+    needs: [deploy-infra]
+    if: ${{ inputs.deployInfra == false || needs.deploy-infra.result == 'success' }}
     environment: ${{ inputs.environment }}
     name: Deploy AI-One Api to Azure Web App
     runs-on: ubuntu-latest
