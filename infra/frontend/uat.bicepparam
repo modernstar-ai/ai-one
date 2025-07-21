@@ -15,3 +15,4 @@ param networkIsolation = true
 param virtualNetworkName = 'ag-aionev12-uat-vnet'
 param appServiceSubnetName = 'AppServiceSubnet'
 param privateEndpointsSubnetName = 'PrivateEndpointsSubnet'
+param allowPrivateAccessOnly = true
