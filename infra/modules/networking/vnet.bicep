@@ -88,13 +88,13 @@ param serviceBusSubnetNsgId string
 param cognitiveServiceSubnetNsgId string
 
 @description('App Service subnet NSG ID')
-param appServiceSubnetNsgId string = 'AppServiceSubnetNsg'
+param appServiceSubnetNsgId string
 
 @description('App Service subnet V2 NSG ID')
-param appServiceSubnetV2NsgId string = 'AppServiceSubnetV2Nsg'
+param appServiceSubnetV2NsgId string
 
 @description('App Gateway subnet configuration')
-param appGatewaySubnetNsgId string = 'AppGatewaySubnetNsg'
+param appGatewaySubnetNsgId string
 
 @description('Resource tags')
 param tags object = {}

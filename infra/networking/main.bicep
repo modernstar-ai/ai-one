@@ -197,6 +197,7 @@ module vnet '../modules/networking/vnet.bicep' = {
     cognitiveServiceSubnet: vnetConfig.cognitiveServiceSubnet
     appServiceSubnet: vnetConfig.appServiceSubnet
     appServiceSubnetV2: vnetConfig.appServiceSubnetV2
+    appGatewaySubnet: vnetConfig.appGatewaySubnet
     vmSubnetNsgId: vmNsg.outputs.nsgId
     keyVaultSubnetNsgId: keyVaultNsg.outputs.nsgId
     storageSubnetNsgId: storageNsg.outputs.nsgId
@@ -206,7 +207,7 @@ module vnet '../modules/networking/vnet.bicep' = {
     cognitiveServiceSubnetNsgId: cognitiveServiceNsg.outputs.nsgId
     appServiceSubnetNsgId: appServiceNsg.outputs.nsgId
     appServiceSubnetV2NsgId: appServiceNsg.outputs.nsgId
-    appGatewaySubnet: vnetConfig.appGatewaySubnet
+    appGatewaySubnetNsgId: appGatewayNsg.outputs.nsgId
     tags: tags
   }
 }
