@@ -31,7 +31,6 @@ permissions:
 
 jobs:
   deploy-appgw:
-    needs: deploy-cognitive-infra
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     steps:
