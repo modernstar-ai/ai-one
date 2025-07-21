@@ -86,9 +86,10 @@ param nsgConfig object = {
   serviceBusNsgName: toLower('${resourcePrefix}-servicebus-nsg')
   cognitiveServiceNsgName: toLower('${resourcePrefix}-cognitive-nsg')
   appServiceNsgName: toLower('${resourcePrefix}-appservice-nsg')
+  appGatewayNsgName: toLower('${resourcePrefix}-appgw-nsg')
   eventGridNsgName: toLower('${resourcePrefix}-eventgrid-nsg')
   allowedIpAddress: ''
-}
+} 
 
 @description('Enable diagnostic settings')
 param enableDiagnostics bool = true
@@ -176,6 +177,16 @@ module appServiceNsg '../modules/networking/nsg.bicep' = {
   }
 }
 
+module appGatewayNsg '../modules/networking/nsg.bicep' = if (deployAppGatewaySubnet) {
+  name: 'appGatewayNsg'
+  params: {
+    location: location
+    nsgName: nsgConfig.appGatewayNsgName
+    securityRules: []
+    tags: tags
+  }
+}
+
 module vnet '../modules/networking/vnet.bicep' = {
   name: 'vnet'
   params: {
@@ -200,6 +211,7 @@ module vnet '../modules/networking/vnet.bicep' = {
     cognitiveServiceSubnetNsgId: cognitiveServiceNsg.outputs.nsgId
     appServiceSubnetNsgId: appServiceNsg.outputs.nsgId
     appServiceSubnetV2NsgId: appServiceNsg.outputs.nsgId
+    appGatewaySubnet: vnetConfig.appGatewaySubnet
     tags: tags
   }
 }
