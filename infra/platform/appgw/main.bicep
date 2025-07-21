@@ -1,14 +1,14 @@
-@description('Azure region for resource deployment')
-param location string
+@description('Primary location for all resources')
+param location string = resourceGroup().location
 
+@description('The name of the solution.')
 @minLength(3)
 @maxLength(12)
-@description('The name of the solution.')
 param projectName string
 
+@description('The type of environment. e.g. local, dev, uat, prod.')
 @minLength(1)
 @maxLength(4)
-@description('The type of environment. e.g. local, dev, uat, prod.')
 param environmentName string
 
 @description('Tags to apply to all resources.')
@@ -17,124 +17,129 @@ param tags object = {}
 @description('Resource prefix for naming resources')
 param resourcePrefix string = toLower('${projectName}-${environmentName}')
 
-@description('Application Gateway name')
-param appGatewayName string = '${resourcePrefix}-appgw'
+@description('Azure Virtual Network name')
+param virtualNetworkName string = toLower('${resourcePrefix}-vnet')
 
-@description('Subnet ID for Application Gateway')
-param appGatewaySubnetId string
+@description('Name of the subnet where App Gateway will be deployed.')
+param virtualNetworkSubnetName string = 'AppGatewaySubnet'
 
-@description('SKU for Application Gateway')
-param appGatewaySkuName string = 'Standard_v2'
+@description('Resource ID of the Log Analytics workspace to use for diagnostic settings.')
+param logAnalyticsWorkspaceResourceId string = ''
 
-@description('Capacity for Application Gateway')
-param appGatewayCapacity int = 2
+@description('Enable diagnostic settings.')
+param enableDiagnostics bool = false
 
-resource appGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
-  name: appGatewayName
-  location: location
-  tags: tags
-  sku: {
-    name: appGatewaySkuName
-    tier: appGatewaySkuName
-    capacity: appGatewayCapacity
-  }
-  properties: {
-    gatewayIPConfigurations: [
-      {
-        name: 'appGatewayIpConfig'
-        properties: {
-          subnet: {
-            id: appGatewaySubnetId
-          }
-        }
-      }
-    ]
-    frontendIPConfigurations: [
-      {
-        name: 'appGatewayFrontendIP'
-        properties: {
-          privateIPAllocationMethod: 'Dynamic'
-          subnet: {
-            id: appGatewaySubnetId
-          }
-        }
-      }
-    ]
-    frontendPorts: [
-      {
-        name: 'appGatewayFrontendPort'
-        properties: {
-          port: 80
-        }
-      }
-    ]
-    backendAddressPools: [
-      {
-        name: 'appGatewayBackendPool'
-      }
-    ]
-    backendHttpSettingsCollection: [
-      {
-        name: 'appGatewayBackendHttpSettings'
-        properties: {
-          port: 80
-          protocol: 'Http'
-          cookieBasedAffinity: 'Disabled'
-        }
-      }
-    ]
-    httpListeners: [
-      {
-        name: 'appGatewayHttpListener'
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId(
-              'Microsoft.Network/applicationGateways/frontendIPConfigurations',
-              appGatewayName,
-              'appGatewayFrontendIP'
-            )
-          }
-          frontendPort: {
-            id: resourceId(
-              'Microsoft.Network/applicationGateways/frontendPorts',
-              appGatewayName,
-              'appGatewayFrontendPort'
-            )
-          }
-          protocol: 'Http'
-        }
-      }
-    ]
-    requestRoutingRules: [
-      {
-        name: 'rule1'
-        properties: {
-          ruleType: 'Basic'
-          httpListener: {
-            id: resourceId(
-              'Microsoft.Network/applicationGateways/httpListeners',
-              appGatewayName,
-              'appGatewayHttpListener'
-            )
-          }
-          backendAddressPool: {
-            id: resourceId(
-              'Microsoft.Network/applicationGateways/backendAddressPools',
-              appGatewayName,
-              'appGatewayBackendPool'
-            )
-          }
-          backendHttpSettings: {
-            id: resourceId(
-              'Microsoft.Network/applicationGateways/backendHttpSettingsCollection',
-              appGatewayName,
-              'appGatewayBackendHttpSettings'
-            )
-          }
-        }
-      }
-    ]
+module networking './networking.bicep' = {
+  name: 'appGwNetworking'
+  params: {
+    location: location
+    tags: tags
+    virtualNetworkName: virtualNetworkName
+    virtualNetworkSubnetName: virtualNetworkSubnetName
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
+    enableDiagnostics: enableDiagnostics
   }
 }
 
-output appGatewayId string = appGateway.id
+// resource applicationGateway 'Microsoft.Network/applicationGateways@2023-06-01' = {
+//   name: name
+//   location: location
+//   tags: tags
+//   properties: {
+//     sku: {
+//       name: 'Standard_v2'
+//       tier: 'Standard_v2'
+//       capacity: 2
+//     }
+//     gatewayIPConfigurations: [
+//       {
+//         name: 'appGatewayIpConfig'
+//         properties: {
+//           subnet: {
+//             id: networking.outputs.subnetId
+//           }
+//         }
+//       }
+//     ]
+//     frontendIPConfigurations: [
+//       {
+//         name: 'appGatewayFrontendIP'
+//         properties: {
+//           privateIPAllocationMethod: 'Dynamic'
+//           subnet: {
+//             id: networking.outputs.subnetId
+//           }
+//         }
+//       }
+//     ]
+//     frontendPorts: [
+//       {
+//         name: 'appGatewayFrontendPort'
+//         properties: {
+//           port: 80
+//         }
+//       }
+//     ]
+//     backendAddressPools: [
+//       {
+//         name: 'appGatewayBackendPool'
+//         properties: {}
+//       }
+//     ]
+//     backendHttpSettingsCollection: [
+//       {
+//         name: 'appGatewayBackendHttpSettings'
+//         properties: {
+//           port: 80
+//           protocol: 'Http'
+//           cookieBasedAffinity: 'Disabled'
+//           pickHostNameFromBackendAddress: true
+//           requestTimeout: 20
+//         }
+//       }
+//     ]
+//     httpListeners: [
+//       {
+//         name: 'appGatewayHttpListener'
+//         properties: {
+//           frontendIPConfiguration: {
+//             id: resourceId(
+//               'Microsoft.Network/applicationGateways/frontendIPConfigurations',
+//               name,
+//               'appGatewayFrontendIP'
+//             )
+//           }
+//           frontendPort: {
+//             id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', name, 'appGatewayFrontendPort')
+//           }
+//           protocol: 'Http'
+//         }
+//       }
+//     ]
+//     requestRoutingRules: [
+//       {
+//         name: 'appGatewayRoutingRule'
+//         properties: {
+//           ruleType: 'Basic'
+//           priority: 100
+//           httpListener: {
+//             id: resourceId('Microsoft.Network/applicationGateways/httpListeners', name, 'appGatewayHttpListener')
+//           }
+//           backendAddressPool: {
+//             id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name, 'appGatewayBackendPool')
+//           }
+//           backendHttpSettings: {
+//             id: resourceId(
+//               'Microsoft.Network/applicationGateways/backendHttpSettingsCollection',
+//               name,
+//               'appGatewayBackendHttpSettings'
+//             )
+//           }
+//         }
+//       }
+//     ]
+//   }
+// }
+
+// output applicationGatewayId string = applicationGateway.id
+// output applicationGatewayName string = applicationGateway.name

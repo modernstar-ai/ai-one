@@ -48,10 +48,6 @@ param vnetConfig = {
     name: 'PrivateEndpointsSubnet'
     addressPrefix: '10.3.10.0/24'
   }
-  appGatewaySubnet: {
-    name: 'AppGatewaySubnet'
-    addressPrefix: '10.3.11.0/24'
-  }
 }
 
 param nsgConfig = {
@@ -63,7 +59,6 @@ param nsgConfig = {
   serviceBusNsgName: '${resourcePrefix}-servicebus-nsg'
   cognitiveServiceNsgName: '${resourcePrefix}-cognitive-nsg'
   appServiceNsgName: '${resourcePrefix}-appservice-nsg'
-  appGatewayNsgName: '${resourcePrefix}-appgateway-nsg'
   allowedIpAddress: '' // Leave empty to allow all IPs, or specify a specific IP
 }
 

@@ -65,10 +65,6 @@ param vnetConfig object = {
       serviceName: 'Microsoft.Web/serverFarms'
     }
   }
-  appGatewaySubnet: {
-    name: 'AppGatewaySubnet'
-    addressPrefix: '10.3.11.0/24'
-  }
 }
 
 @description('Network Security Group configuration')
@@ -81,7 +77,6 @@ param nsgConfig object = {
   serviceBusNsgName: toLower('${resourcePrefix}-servicebus-nsg')
   cognitiveServiceNsgName: toLower('${resourcePrefix}-cognitive-nsg')
   appServiceNsgName: toLower('${resourcePrefix}-appservice-nsg')
-  appGatewayNsgName: toLower('${resourcePrefix}-appgw-nsg')
   eventGridNsgName: toLower('${resourcePrefix}-eventgrid-nsg')
   allowedIpAddress: ''
 }
@@ -172,16 +167,6 @@ module appServiceNsg '../modules/networking/nsg.bicep' = {
   }
 }
 
-module appGatewayNsg '../modules/networking/nsg.bicep' = {
-  name: 'appGatewayNsg'
-  params: {
-    location: location
-    nsgName: nsgConfig.appGatewayNsgName
-    securityRules: []
-    tags: tags
-  }
-}
-
 module vnet '../modules/networking/vnet.bicep' = {
   name: 'vnet'
   params: {
@@ -197,7 +182,6 @@ module vnet '../modules/networking/vnet.bicep' = {
     cognitiveServiceSubnet: vnetConfig.cognitiveServiceSubnet
     appServiceSubnet: vnetConfig.appServiceSubnet
     privateEndpointsSubnet: vnetConfig.privateEndpointsSubnet
-    appGatewaySubnet: vnetConfig.appGatewaySubnet
     vmSubnetNsgId: vmNsg.outputs.nsgId
     keyVaultSubnetNsgId: keyVaultNsg.outputs.nsgId
     storageSubnetNsgId: storageNsg.outputs.nsgId
@@ -206,7 +190,6 @@ module vnet '../modules/networking/vnet.bicep' = {
     serviceBusSubnetNsgId: serviceBusNsg.outputs.nsgId
     cognitiveServiceSubnetNsgId: cognitiveServiceNsg.outputs.nsgId
     appServiceSubnetNsgId: appServiceNsg.outputs.nsgId
-    appGatewaySubnetNsgId: appGatewayNsg.outputs.nsgId
     tags: tags
   }
 }
@@ -240,6 +223,7 @@ module vnetDiagnostics '../modules/networking/diagnostic-settings.bicep' = if (e
 
 output virtualNetworkId string = vnet.outputs.virtualNetworkId
 output virtualNetworkName string = vnet.outputs.virtualNetworkName
+
 output vmSubnetId string = vnet.outputs.vmSubnetId
 output keyVaultSubnetId string = vnet.outputs.keyVaultSubnetId
 output storageSubnetId string = vnet.outputs.storageSubnetId
@@ -249,6 +233,7 @@ output serviceBusSubnetId string = vnet.outputs.serviceBusSubnetId
 output cognitiveServiceSubnetId string = vnet.outputs.cognitiveServiceSubnetId
 output appServiceSubnetId string = vnet.outputs.appServiceSubnetId
 output privateEndpointsSubnetId string = vnet.outputs.privateEndpointsSubnetId
+
 output vmSubnetName string = vnet.outputs.vmSubnetName
 output keyVaultSubnetName string = vnet.outputs.keyVaultSubnetName
 output storageSubnetName string = vnet.outputs.storageSubnetName
@@ -258,6 +243,7 @@ output serviceBusSubnetName string = vnet.outputs.serviceBusSubnetName
 output cognitiveServiceSubnetName string = vnet.outputs.cognitiveServiceSubnetName
 output appServiceSubnetName string = vnet.outputs.appServiceSubnetName
 output privateEndpointsSubnetName string = vnet.outputs.privateEndpointSubnetName
+
 output vmNsgId string = vmNsg.outputs.nsgId
 output keyVaultNsgId string = keyVaultNsg.outputs.nsgId
 output storageNsgId string = storageNsg.outputs.nsgId
