@@ -117,6 +117,9 @@ param eventGridSystemTopicSubName string = toLower('${resourcePrefix}-folders-bl
 @description('Whether to enable network isolation for resources')
 param networkIsolation bool = false
 
+@description('Specifies whether the app service should be accessible only through private network')
+param allowPrivateAccessOnly bool = false
+
 @description('Azure Virtual Network name')
 param virtualNetworkName string = toLower('${resourcePrefix}-vnet')
 
@@ -178,6 +181,7 @@ module apiAppModule '../modules/site.bicep' = {
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     userAssignedIdentityId: apiAppManagedIdentity.id
     networkIsolation: networkIsolation
+    allowPrivateAccessOnly: allowPrivateAccessOnly
     virtualNetworkResourceId: virtualNetworkResourceId
     virtualNetworkSubnetResourceId: appServiceSubnetResourceId
     privateEndpointsSubnetResourceId: privateEndpointsSubnetResourceId

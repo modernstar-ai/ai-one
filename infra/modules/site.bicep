@@ -19,6 +19,9 @@ param virtualNetworkSubnetResourceId string = ''
 @description('Specifies whether network isolation is enabled. This will create a private endpoint for the Service Bus and link the private DNS zone.')
 param networkIsolation bool = false
 
+@description('Specifies whether the app service should be accessible only through private network')
+param allowPrivateAccessOnly bool = false
+
 @description('Resource ID of the subnet for the private endpoints.')
 param privateEndpointsSubnetResourceId string = ''
 
@@ -34,7 +37,7 @@ param siteConfig object
 @description('App settings array')
 param appSettings array = []
 
-module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
+module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation && allowPrivateAccessOnly) {
   name: 'private-dns-site-deployment'
   params: {
     name: 'privatelink.azurewebsites.net'
@@ -72,7 +75,7 @@ module site 'br/public:avm/res/web/site:0.16.0' = {
       systemAssigned: !empty(userAssignedIdentityId) ? false : true
       userAssignedResourceIds: !empty(userAssignedIdentityId) ? [userAssignedIdentityId] : []
     }
-    privateEndpoints: networkIsolation
+    privateEndpoints: (networkIsolation && allowPrivateAccessOnly)
       ? [
           {
             privateDnsZoneGroup: {

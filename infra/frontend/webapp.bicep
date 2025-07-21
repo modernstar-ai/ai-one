@@ -35,6 +35,9 @@ param applicationInsightsName string = toLower('${resourcePrefix}-webapp')
 @description('Whether to enable network isolation for resources')
 param networkIsolation bool = false
 
+@description('Specifies whether the app service should be accessible only through private network')
+param allowPrivateAccessOnly bool = false
+
 @description('Azure Virtual Network name')
 param virtualNetworkName string = toLower('${resourcePrefix}-vnet')
 
@@ -82,6 +85,7 @@ module webAppModule '../modules/site.bicep' = {
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     userAssignedIdentityId: webAppManagedIdentity.id
     networkIsolation: networkIsolation
+    allowPrivateAccessOnly: allowPrivateAccessOnly
     virtualNetworkResourceId: virtualNetworkResourceId
     virtualNetworkSubnetResourceId: appServiceSubnetResourceId
     privateEndpointsSubnetResourceId: privateEndpointsSubnetResourceId
