@@ -86,7 +86,7 @@ public static class FileIndexer
             var document = FileHelpers.HasCustomExtractor(file.Url, out var extractor)
                 ? await extractor.ExtractTextAsync(fileStream)
                 : await documentIntelligence.CrackDocumentAsync(fileStream,
-                    FileHelpers.TextFormats.Contains(okResult.ContentType));
+                    FileHelpers.ContainsText(file.Name));
             logger.LogInformation("Extracted document contents string length: {Length}", document.Length);
             var chunks = documentIntelligence.ChunkDocumentWithOverlap(document, index?.ChunkSize, index?.ChunkOverlap)
                 .Where(c => !string.IsNullOrWhiteSpace(c)).ToList();

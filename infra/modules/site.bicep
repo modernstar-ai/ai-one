@@ -31,18 +31,18 @@ param siteConfig object
 @description('App settings array')
 param appSettings array = []
 
-module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
-  name: 'private-dns-site-deployment'
-  params: {
-    name: 'privatelink.azurewebsites.net'
-    virtualNetworkLinks: [
-      {
-        virtualNetworkResourceId: virtualNetworkResourceId
-      }
-    ]
-    tags: tags
-  }
-}
+// module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
+//   name: 'private-dns-site-deployment'
+//   params: {
+//     name: 'privatelink.azurewebsites.net'
+//     virtualNetworkLinks: [
+//       {
+//         virtualNetworkResourceId: virtualNetworkResourceId
+//       }
+//     ]
+//     tags: tags
+//   }
+// }
 
 module site 'br/public:avm/res/web/site:0.16.0' = {
   name: take('${take(toLower(name), 24)}-site-deployment', 64)
@@ -55,6 +55,7 @@ module site 'br/public:avm/res/web/site:0.16.0' = {
     keyVaultAccessIdentityResourceId: !empty(userAssignedIdentityId) ? userAssignedIdentityId : null
     httpsOnly: true
     clientAffinityEnabled: false
+    virtualNetworkSubnetId: virtualNetworkSubnetResourceId
     siteConfig: union(siteConfig, {
       appSettings: appSettings
     })
@@ -68,21 +69,21 @@ module site 'br/public:avm/res/web/site:0.16.0' = {
       systemAssigned: !empty(userAssignedIdentityId) ? false : true
       userAssignedResourceIds: !empty(userAssignedIdentityId) ? [userAssignedIdentityId] : []
     }
-    privateEndpoints: networkIsolation
-      ? [
-          {
-            privateDnsZoneGroup: {
-              privateDnsZoneGroupConfigs: [
-                {
-                  name: 'privatelink.azurewebsites.net'
-                  privateDnsZoneResourceId: privateDnsZone.outputs.resourceId
-                }
-              ]
-            }
-            subnetResourceId: virtualNetworkSubnetResourceId
-          }
-        ]
-      : []
+    // privateEndpoints: networkIsolation
+    //   ? [
+    //       {
+    //         privateDnsZoneGroup: {
+    //           privateDnsZoneGroupConfigs: [
+    //             {
+    //               name: 'privatelink.azurewebsites.net'
+    //               privateDnsZoneResourceId: privateDnsZone.outputs.resourceId
+    //             }
+    //           ]
+    //         }
+    //         subnetResourceId: virtualNetworkSubnetResourceId
+    //       }
+    //     ]
+    //   : []
   }
 }
 

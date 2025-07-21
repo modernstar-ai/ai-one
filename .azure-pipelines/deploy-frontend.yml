@@ -17,114 +17,108 @@ parameters:
   type: string
   default: 'ag-aione-dev-webapp'
 
+- name: deployInfra
+  displayName: 'Deploy Web Infrastructure (true/false)'
+  type: boolean
+  default: true
 variables:
   - name: environment
     value: ${{ parameters.environment }}
-  - name: SERVICE_CONNECTION_NAME_DEV
-    value: 'dev-service-connection'
-  - name: agileWebSrc
+  - name: AGILE_WEB_SRC
     value: './src/agile-chat-web'
+  - name: AZURE_BICEP_WEB
+    value: './infra/frontend/webapp.bicep'
+  
+  # Environment-specific service connections
+  - name: SERVICE_CONNECTION_DEV
+    value: 'dev-service-connection'
+  - name: SERVICE_CONNECTION_TST
+    value: 'tst-service-connection'
+  - name: SERVICE_CONNECTION_UAT
+    value: 'uat-service-connection'
+  - name: SERVICE_CONNECTION_PROD
+    value: 'prod-service-connection'
 
 stages:
 # Build Stage
-- stage: Build
-  displayName: 'Build Agile Chat Web App'
-  variables:
-  - group: dev
-  jobs:
-  - job: BuildJob
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-    - checkout: self
-      fetchDepth: 1
-      persistCredentials: true
+  - stage: Build
+    displayName: 'Build AI-One Web App'
+    variables:
+      - group: ${{ parameters.environment }}
+    jobs:
+      - job: BuildJob
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+            fetchDepth: 1
+            persistCredentials: true
 
-    - task: NodeTool@0
-      inputs:
-        versionSpec: '18.x'
-      displayName: 'Install Node.js'
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '18.x'
+            displayName: 'Install Node.js'
 
-    - script: |
-        cd $(agileWebSrc)
-        echo "VITE_AGILECHAT_API_URL=${VITE_AGILECHAT_API_URL}" >> .env
-        echo "VITE_AZURE_AD_CLIENT_ID=${AZURE_CLIENT_ID}" >> .env
-        echo "VITE_AZURE_AD_TENANT_ID=${AZURE_TENANT_ID}" >> .env
-        npm install
-        npm run build
-      displayName: 'Build Agile Chat Web App'
+          - script: |
+              cd $(AGILE_WEB_SRC)
+              echo "VITE_AGILECHAT_API_URL=${VITE_AGILECHAT_API_URL}" >> .env
+              echo "VITE_AZURE_AD_CLIENT_ID=${AZURE_CLIENT_ID}" >> .env
+              echo "VITE_AZURE_AD_TENANT_ID=${AZURE_TENANT_ID}" >> .env
+              npm install
+              npm run build
+            displayName: 'Build AI-One Web App'
 
-    - task: ArchiveFiles@2
-      inputs:
-        rootFolderOrFile: '$(agileWebSrc)/dist'
-        includeRootFolder: true
-        archiveType: 'zip'
-        archiveFile: '$(Build.ArtifactStagingDirectory)/release.zip'
-      displayName: 'Create ZIP artifact'
+          - task: ArchiveFiles@2
+            inputs:
+              rootFolderOrFile: '$(AGILE_WEB_SRC)/dist'
+              includeRootFolder: true
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/release.zip'
+            displayName: 'Create ZIP artifact'
 
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish Agile Chat Web App Artifact'
-      inputs:
-        targetPath: '$(Build.ArtifactStagingDirectory)/release.zip'
-        artifact: 'agile-chat-web'
-        publishLocation: 'pipeline'
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish AI-One Web App Artifact'
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)/release.zip'
+              artifact: 'agile-chat-web'
+              publishLocation: 'pipeline'
 
-# Deploy Stage
-- stage: DeployDev
-  displayName: 'Deploy Web Infrastructure and Application - Dev'
-  condition: eq(variables['environment'], 'dev')
-  variables:
-    - group: dev
-  dependsOn: Build
-  jobs:
-    - deployment: DeployJob
-      environment: 'dev'
-      displayName: 'Deploy to Azure'
-      pool:
-        vmImage: 'ubuntu-latest'
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-              - checkout: self
-                fetchDepth: 1
-                persistCredentials: true
+  - template: templates/deploy-frontend-template.yml
+    parameters:
+      environment: dev
+      stageName: DeployFrontendDev
+      serviceConnection: $(SERVICE_CONNECTION_DEV)
+      uiWebAppName: ${{ parameters.uiWebAppName }}
+      azureBicepMain: $(AZURE_BICEP_WEB)
+      dependsOn: Build
+      deployInfra: ${{ parameters.deployInfra }}
 
-              - task: DownloadPipelineArtifact@2
-                displayName: 'Download Agile Chat Web App Artifact'
-                inputs:
-                  artifact: 'agile-chat-web'
-                  path: '$(Build.ArtifactStagingDirectory)'
+  - template: templates/deploy-frontend-template.yml
+    parameters:
+      environment: tst
+      stageName: DeployFrontendTst
+      serviceConnection: $(SERVICE_CONNECTION_TST)
+      uiWebAppName: ${{ parameters.uiWebAppName }}
+      azureBicepMain: $(AZURE_BICEP_WEB)
+      dependsOn: DeployFrontendDev
+      deployInfra: ${{ parameters.deployInfra }}
 
-              - task: AzureCLI@2
-                displayName: 'Validate Web Infrastructure (Bicep What-If) - Dev'
-                inputs:
-                  azureSubscription: $(SERVICE_CONNECTION_NAME_DEV)
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  inlineScript: |
-                    az deployment group validate \
-                      --resource-group $(AZURE_RESOURCE_GROUP) \
-                      --template-file ./infra/frontend/webapp.bicep \
-                      --parameters ./infra/frontend/${{ parameters.environment }}.bicepparam environmentName=${{ parameters.environment }}
+  - template: templates/deploy-frontend-template.yml
+    parameters:
+      environment: uat
+      stageName: DeployFrontendUat
+      serviceConnection: $(SERVICE_CONNECTION_UAT)
+      uiWebAppName: ${{ parameters.uiWebAppName }}
+      azureBicepMain: $(AZURE_BICEP_WEB)
+      dependsOn: DeployFrontendTst
+      deployInfra: ${{ parameters.deployInfra }}
 
-              - task: AzureCLI@2
-                displayName: 'Deploy Web Infrastructure (Bicep Create) - Dev'
-                inputs:
-                  azureSubscription: $(SERVICE_CONNECTION_NAME_DEV)
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  inlineScript: |
-                    az deployment group create \
-                      --resource-group $(AZURE_RESOURCE_GROUP) \
-                      --template-file ./infra/frontend/webapp.bicep \
-                      --parameters ./infra/frontend/${{ parameters.environment }}.bicepparam environmentName=${{ parameters.environment }}
-
-              - task: AzureWebApp@1
-                displayName: 'Deploy Agile Chat Web App - Dev'
-                inputs:
-                  appType: webAppLinux
-                  azureSubscription: $(SERVICE_CONNECTION_NAME_DEV)
-                  appName: ${{ parameters.uiWebAppName }}
-                  package: '$(Build.ArtifactStagingDirectory)/release.zip'
-                  runtimeStack: 'NODE|18-lts'
+  - template: templates/deploy-frontend-template.yml
+    parameters:
+      environment: prod
+      stageName: DeployFrontendProd
+      serviceConnection: $(SERVICE_CONNECTION_PROD)
+      uiWebAppName: ${{ parameters.uiWebAppName }}
+      azureBicepMain: $(AZURE_BICEP_WEB)
+      dependsOn: DeployFrontendUat
+      deployInfra: ${{ parameters.deployInfra }}

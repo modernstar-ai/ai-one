@@ -55,9 +55,35 @@ module filePrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = i
   }
 }
 
+module tablePrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
+  name: 'private-dns-table-deployment'
+  params: {
+    name: 'privatelink.table.${environment().suffixes.storage}'
+    virtualNetworkLinks: [
+      {
+        virtualNetworkResourceId: virtualNetworkResourceId
+      }
+    ]
+    tags: tags
+  }
+}
+
+module queuePrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
+  name: 'private-dns-queue-deployment'
+  params: {
+    name: 'privatelink.queue.${environment().suffixes.storage}'
+    virtualNetworkLinks: [
+      {
+        virtualNetworkResourceId: virtualNetworkResourceId
+      }
+    ]
+    tags: tags
+  }
+}
+
 module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
   name: take('${take(toLower(name), 24)}-storage-account-deployment', 64)
-  dependsOn: [blobPrivateDnsZone, filePrivateDnsZone]
+  dependsOn: [blobPrivateDnsZone, filePrivateDnsZone, tablePrivateDnsZone, queuePrivateDnsZone]
   params: {
     name: name
     location: location
@@ -72,7 +98,8 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
     // allowCrossTenantReplication: false
     minimumTlsVersion: 'TLS1_2'
     networkAcls: {
-      defaultAction: 'Allow'
+      defaultAction: networkIsolation ? 'Deny' : 'Allow'
+      bypass: 'AzureServices'
     }
     supportsHttpsTrafficOnly: true
     diagnosticSettings: [
@@ -86,9 +113,11 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
           {
             privateDnsZoneGroup: {
               privateDnsZoneGroupConfigs: [
-                {
-                  privateDnsZoneResourceId: blobPrivateDnsZone.outputs.resourceId
-                }
+                blobPrivateDnsZone != null
+                  ? {
+                      privateDnsZoneResourceId: blobPrivateDnsZone.outputs.resourceId
+                    }
+                  : null
               ]
             }
             service: 'blob'
@@ -97,12 +126,40 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
           {
             privateDnsZoneGroup: {
               privateDnsZoneGroupConfigs: [
-                {
-                  privateDnsZoneResourceId: filePrivateDnsZone.outputs.resourceId
-                }
+                filePrivateDnsZone != null
+                  ? {
+                      privateDnsZoneResourceId: filePrivateDnsZone.outputs.resourceId
+                    }
+                  : null
               ]
             }
             service: 'file'
+            subnetResourceId: virtualNetworkSubnetResourceId
+          }
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                tablePrivateDnsZone != null
+                  ? {
+                      privateDnsZoneResourceId: tablePrivateDnsZone.outputs.resourceId
+                    }
+                  : null
+              ]
+            }
+            service: 'table'
+            subnetResourceId: virtualNetworkSubnetResourceId
+          }
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                queuePrivateDnsZone != null
+                  ? {
+                      privateDnsZoneResourceId: queuePrivateDnsZone.outputs.resourceId
+                    }
+                  : null
+              ]
+            }
+            service: 'queue'
             subnetResourceId: virtualNetworkSubnetResourceId
           }
         ]

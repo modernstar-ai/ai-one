@@ -7,5 +7,6 @@ public enum ChatType
 {
     Thread,
     Message,
-    Citation
+    Citation,
+    File
 }

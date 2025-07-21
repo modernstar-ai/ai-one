@@ -1,0 +1,62 @@
+parameters:
+- name: environment
+  type: string
+- name: serviceConnection
+  type: string
+- name: azureBicepMain
+  type: string
+- name: stageName
+  type: string
+- name: dependsOn
+  type: object
+- name: parameterFilePath
+  type: string
+
+stages:
+  - stage: ${{ parameters.stageName }}
+    displayName: 'Deploy ${{ parameters.environment }} environment'
+    condition: eq(variables['environment'], '${{ parameters.environment }}')
+    variables:
+      - group: ${{ parameters.environment }}
+    dependsOn: ${{ parameters.dependsOn }}
+    jobs:
+      - job: DeployInfra${{ parameters.environment }}
+        displayName: 'Deploy Infrastructure'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+            fetchDepth: 1
+            persistCredentials: true
+
+          - task: AzureCLI@2
+            displayName: 'Bicep What-If Analysis'
+            inputs:
+              azureSubscription: ${{ parameters.serviceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az deployment group what-if \
+                  --name bicep-whatif-${{ parameters.environment }} \
+                  --resource-group $(AZURE_RESOURCE_GROUP) \
+                  --template-file ${{ parameters.azureBicepMain }} \
+                  --parameters ${{ parameters.parameterFilePath }} environmentName=${{ parameters.environment }}
+
+          - task: AzureCLI@2
+            displayName: 'Bicep Deplouy'
+            inputs:
+              azureSubscription: ${{ parameters.serviceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az deployment group create \
+                  --name deployment-${{ parameters.environment }} \
+                  --resource-group $(AZURE_RESOURCE_GROUP) \
+                  --template-file ${{ parameters.azureBicepMain }} \
+                  --parameters ${{ parameters.parameterFilePath }} environmentName=${{ parameters.environment }}
+
+          - script: |
+              echo "✅ Infrastructure Deployment: Completed"
+              echo "📋 Environment: ${{ parameters.environment }}"
+              echo "📋 Resource Group: $(AZURE_RESOURCE_GROUP)"
+            displayName: 'Print Deployment Summary'

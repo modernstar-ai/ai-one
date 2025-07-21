@@ -6,5 +6,6 @@ namespace Agile.Chat.Domain.Assistants.ValueObjects;
 public enum AssistantType
 {
     Chat,
-    Search
+    Search,
+    Agent
 }

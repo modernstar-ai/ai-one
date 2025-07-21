@@ -1,4 +1,6 @@
 ﻿namespace Agile.Framework.Common.EnvironmentVariables.Models;
+
+using System.Text.Json.Serialization;
 using static Agile.Framework.Common.EnvironmentVariables.Constants;
 
 public class AppSettingsConfig
@@ -10,4 +12,13 @@ public class AppSettingsConfig
     public bool ModelSelectionFeatureEnabled { get; set; } = true;
     public bool AllowModelSelectionDefaultValue { get; set; } = true;
     public string DefaultTextModelId { get; set; } = TextModels.Gpt4o;
+    public FilePreviewType FilePreviewType { get; set; } = FilePreviewType.Preview;
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum FilePreviewType
+{
+    None,
+    Preview,
+    Download
 }

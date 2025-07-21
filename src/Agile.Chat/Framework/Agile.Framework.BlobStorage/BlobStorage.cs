@@ -15,7 +15,8 @@ namespace Agile.Framework.BlobStorage;
 [Export(typeof(IBlobStorage), ServiceLifetime.Singleton)]
 public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) : IBlobStorage
 {
-    private readonly BlobContainerClient _container = client.GetBlobContainerClient(Constants.BlobContainerName);
+    private readonly BlobContainerClient _indexContainer = client.GetBlobContainerClient(Constants.BlobIndexContainerName);
+    private readonly BlobContainerClient _threadContainer = client.GetBlobContainerClient(Constants.BlobThreadContainerName);
 
     public async Task<(Stream, BlobDownloadDetails)> DownloadAsync(string url)
     {
@@ -57,7 +58,7 @@ public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) 
 
         var sasBuilder = new BlobSasBuilder
         {
-            BlobContainerName = Constants.BlobContainerName,
+            BlobContainerName = Constants.BlobIndexContainerName,
             ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(1),
             ContentDisposition = "inline" // Set this to override on download,
         };
@@ -72,9 +73,21 @@ public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) 
         var folderPath = string.IsNullOrWhiteSpace(folderName) ? fileName : $"{folderName}/{fileName}";
         var fullPath = $"{indexName}/{folderPath}";
 
-        BlobClient blobClient = _container.GetBlobClient(fullPath);
+        BlobClient blobClient = _indexContainer.GetBlobClient(fullPath);
 
         logger.LogInformation("Uploading {FileName} to Index {IndexName} with folder {FolderName}", fileName, indexName, folderName);
+        var resp = await blobClient.UploadAsync(stream, new BlobHttpHeaders() { ContentType = contentType });
+        logger.LogInformation("Finished upload with response {@Response}", resp.Value);
+        return $"https://{blobClient.Uri.Host}{blobClient.Uri.LocalPath}";
+    }
+    
+    public async Task<string> UploadThreadFileAsync(Stream stream, string contentType, string fileName, string threadId)
+    {
+        var fullPath = $"{threadId}/{fileName}";
+
+        BlobClient blobClient = _threadContainer.GetBlobClient(fullPath);
+
+        logger.LogInformation("Uploading {FileName} to Thread {ThreadId}", fileName, threadId);
         var resp = await blobClient.UploadAsync(stream, new BlobHttpHeaders() { ContentType = contentType });
         logger.LogInformation("Finished upload with response {@Response}", resp.Value);
         return $"https://{blobClient.Uri.Host}{blobClient.Uri.LocalPath}";
@@ -86,15 +99,34 @@ public class BlobStorage(BlobServiceClient client, ILogger<BlobStorage> logger) 
         var fullPath = $"{indexName}/{folderPath}";
 
         logger.LogInformation("Deleting file: {FileName} with Index: {IndexName} with folder: {FolderName}", fileName, indexName, folderName);
-        var resp = await _container.DeleteBlobIfExistsAsync(fullPath, DeleteSnapshotsOption.IncludeSnapshots);
+        var resp = await _indexContainer.DeleteBlobIfExistsAsync(fullPath, DeleteSnapshotsOption.IncludeSnapshots);
         logger.LogInformation("Finished deleting file with response: {Response}", resp.Value);
+    }
+    
+    public async Task DeleteThreadFileAsync(string fileName, string threadId)
+    {
+        var fullPath = $"{threadId}/{fileName}";
+
+        logger.LogInformation("Deleting file: {FileName} with thread: {ThreadId}", fileName, threadId);
+        var resp = await _threadContainer.DeleteBlobIfExistsAsync(fullPath, DeleteSnapshotsOption.IncludeSnapshots);
+        logger.LogInformation("Finished deleting file with response: {Response}", resp.Value);
+    }
+    
+    public async Task DeleteThreadFilesAsync(string threadId)
+    {
+        await foreach (var blobItem in _threadContainer.GetBlobsAsync(prefix: threadId))
+        {
+            var blobClient = _threadContainer.GetBlobClient(blobItem.Name);
+            await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
+            logger.LogInformation("Deleted file: {FileName} with thread: {ThreadId}", blobItem.Name, threadId);
+        }
     }
 
     public async Task DeleteIndexFilesAsync(string indexName)
     {
-        await foreach (var blobItem in _container.GetBlobsAsync(prefix: indexName))
+        await foreach (var blobItem in _indexContainer.GetBlobsAsync(prefix: indexName))
         {
-            var blobClient = _container.GetBlobClient(blobItem.Name);
+            var blobClient = _indexContainer.GetBlobClient(blobItem.Name);
             await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
             logger.LogInformation("Deleted file: {FileName} with Index: {IndexName}", blobItem.Name, indexName);
         }

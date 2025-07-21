@@ -2,40 +2,22 @@ name: Deploy Network Infrastructure
 on:
   workflow_dispatch:
     inputs:
-      project_name:
-        description: "Enter the Name of the project"
-        type: string
-        default: "ag-aione-v3"
-        required: true
-      environment_name:
+      environment:
         description: "Select the application environment name - used to name resources"
         type: choice
-        default: "uat"
+        default: "dev"
         options:
           - "dev"
           - "tst"
           - "uat"
           - "prod"
         required: true
-      azure_location:
-        description: "Select the Azure deployment location"
-        type: choice
-        default: "australiaeast"
-        options:
-          - "australiaeast"
-          - "australiasoutheast"
-        required: true
 env:
   AZURE_BICEP_MAIN: "./infra/networking/main.bicep"
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-  PROJECT_NAME: ${{ inputs.project_name }}
-  AZURE_LOCATION: ${{ inputs.azure_location }}
-  # This workflow deploys the core networking infrastructure including:
-  # - Virtual Network (VNet) with multiple subnets
-  # - Network Security Groups (NSGs) for each subnet
-  # - Azure Bastion (if enabled)
-  # - Diagnostic settings for monitoring
+  PROJECT_NAME: ${{ vars.PROJECT_NAME }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
 
 # Set up permissions for deploying with secretless Azure federated credentials
 # https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
@@ -46,7 +28,7 @@ permissions:
 jobs:
   deploy-infrastructure:
     name: Deploy Networking Infrastructure
-    environment: ${{ inputs.environment_name }}
+    environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -69,10 +51,10 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
           template-file: ${{ env.AZURE_BICEP_MAIN }}
-          parameters-file: infra/networking/${{ inputs.environment_name }}.bicepparam
-          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
+          parameters-file: infra/networking/${{ inputs.environment }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
-      - name: Deploy Bicep Infrastructure
+      - name: Deploy Networking Infrastructure
         uses: azure/bicep-deploy@v2
         with:
           type: deployment
@@ -82,5 +64,5 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
           template-file: ${{ env.AZURE_BICEP_MAIN }}
-          parameters-file: infra/networking/${{ inputs.environment_name }}.bicepparam
-          parameters: '{"environmentName": "${{ inputs.environment_name }}" }'
+          parameters-file: infra/networking/${{ inputs.environment }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment }}" }'

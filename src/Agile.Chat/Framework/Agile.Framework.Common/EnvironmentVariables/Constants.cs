@@ -32,7 +32,8 @@ public static class Constants
     #endregion
 
     #region BlobStorageConstants
-    public const string BlobContainerName = "index-content";
+    public const string BlobIndexContainerName = "index-content";
+    public const string BlobThreadContainerName = "thread-content";
     #endregion
 
     #region PromptPaths
@@ -40,7 +41,6 @@ public static class Constants
     public static class Prompts
     {
         public const string ChatWithRag = "chatWithRag.prompt.yaml";
-        public const string ChatWithAzureSearchDataSource = "chatWithAzureSearchDataSource.prompt.yaml";
         public const string ChatWithSearch = "chatWithSearch.prompt.yaml";
     }
 

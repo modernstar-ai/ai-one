@@ -5,7 +5,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import SimpleHeading from '@/components/Heading-Simple';
 import MessageContent from '@/components/chat-page/message-content';
 import { ChatMessageArea } from '@/components/chat-page/chat-message-area';
-import { fetchChatThread, GetChatThreadMessages, updateChatThread } from '@/services/chatthreadservice';
+import {
+  DeleteChatThreadFile,
+  fetchChatThread,
+  GetChatThreadFiles,
+  GetChatThreadMessages,
+  updateChatThread,
+  UploadChatThreadFile
+} from '@/services/chatthreadservice';
 import { ChatThread, Message, MessageType } from '@/types/ChatThread';
 import { AxiosError } from 'axios';
 import { chat } from '@/services/chat-completions-service';
@@ -16,7 +23,7 @@ import { fetchAssistantById } from '@/services/assistantservice';
 import useStreamStore from '@/stores/stream-store';
 import { createParser, EventSourceMessage } from 'eventsource-parser';
 import { useSettingsStore } from '@/stores/settings-store';
-
+import { ChatThreadFile } from '@/types/ChatThread';
 import ChatInput from '@/components/chat-page/chat-input';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +34,7 @@ const ChatPage = () => {
 
   if (!threadId) navigate('/');
   const [thread, setThread] = useState<ChatThread | undefined>(undefined);
+  const [threadFiles, setThreadFiles] = useState<ChatThreadFile[] | undefined>(undefined);
   const [assistant, setAssistant] = useState<Assistant | undefined>(undefined);
   const { toast } = useToast();
 
@@ -48,10 +56,10 @@ const ChatPage = () => {
     setIsLoading(true);
     refreshThread().then((thread) => {
       if (thread?.assistantId) {
-        fetchAssistantById(thread.assistantId).then((assistant) => {
-          setAssistant(assistant ?? undefined);
-        });
+        refreshAssistant(thread.assistantId);
       }
+      refreshThreadFiles();
+
       GetChatThreadMessages(thread!.id)
         .then((messages) => {
           //setMessagesDb(messages);
@@ -66,6 +74,18 @@ const ChatPage = () => {
     if (!thread) navigate('/');
     setThread(thread!);
     return thread;
+  };
+
+  const refreshThreadFiles = async () => {
+    const files = await GetChatThreadFiles(threadId!);
+    setThreadFiles(files);
+  };
+
+  const refreshAssistant = async (assistantId: string) => {
+    const assistant = await fetchAssistantById(assistantId);
+    if (!assistant) navigate('/');
+    setAssistant(assistant!);
+    return assistant;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -89,6 +109,51 @@ const ChatPage = () => {
       });
       prevMessagesRef.current = newMessages;
       clearStream();
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    try {
+      setIsSending(true);
+      const file = files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+      await UploadChatThreadFile(threadId!, formData);
+      await refreshThreadFiles();
+      toast({
+        title: 'Success',
+        description: <p>File {file.name} uploaded successfully</p>,
+        variant: 'default'
+      });
+    } catch (e: any) {
+      toast({
+        title: 'Error',
+        description: <p>{e.response.data ?? e.message}</p>,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSending(false);
+      e.target.files = null;
+      (e.target as any).value = null;
+    }
+  };
+
+  const handleFileDelete = async (fileId: string) => {
+    try {
+      setIsSending(true);
+      await DeleteChatThreadFile(threadId!, fileId);
+      await refreshThreadFiles();
+    } catch (e: any) {
+      toast({
+        title: 'Error',
+        description: <p>{e.response.data ?? e.message}</p>,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -199,6 +264,10 @@ const ChatPage = () => {
         </ScrollArea>
 
         <ChatInput
+          handleFileUpload={handleFileUpload}
+          handleFileDelete={handleFileDelete}
+          thread={thread}
+          threadFiles={threadFiles}
           assistant={assistant}
           isSending={swappingModels || isSending}
           userInputRef={userInputRef}

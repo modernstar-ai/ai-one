@@ -1,22 +1,26 @@
 using './apiapp.bicep'
 
 param environmentName = 'tst'
-param projectName = readEnvironmentVariable('PROJECT_NAME', 'ag-aione')
-param location = readEnvironmentVariable('AZURE_LOCATION', 'australiaeast')
+var sharedVariables = loadJsonContent('../shared-parameters.json')
+
+param projectName = readEnvironmentVariable('PROJECT_NAME', sharedVariables.projectName)
+param location = readEnvironmentVariable('AZURE_LOCATION', sharedVariables.location)
 param tags = loadJsonContent('../tags.json')
+
 param azureTenantId = readEnvironmentVariable('AZURE_TENANT_ID')
 
 param aspCoreEnvironment = 'Test'
 param appServicePlanName = 'ag-aione-tst-app'
 param applicationInsightsName = 'ag-aione-tst-apiapp'
-param logAnalyticsWorkspaceName = 'ag-aione-tst-la'
+
+param logAnalyticsWorkspaceResourceId = '<REPLACE_WITH_YOUR_LOG_ANALYTICS_WORKSPACE_ID>'
+
 param keyVaultName = 'ag-aione-tst-kv'
-param storageName = 'agaionetststo'
 param storageAccountName = 'agaionetststo'
 param documentIntelligenceServiceName = 'ag-aione-tst-docintel'
 param documentIntelligenceEndpoint = 'https://ag-aione-tst-docintel.cognitiveservices.azure.com/'
-param openAiName = 'ag-aione-tst-aillm'
-param openAiEndpoint = 'https://ag-aione-tst-aillm.openai.azure.com/'
+param openAiName = 'ag-aione-tst-foundry'
+param openAiEndpoint = 'https://ag-aione-tst-foundry.openai.azure.com/'
 param openAiApiVersion = '2024-08-01-preview'
 param searchServiceName = 'ag-aione-tst-search'
 param serviceBusName = 'ag-aione-tst-service-bus'
@@ -25,5 +29,3 @@ param cosmosDbAccountEndpoint = 'https://ag-aione-tst-cosmos.documents.azure.com
 param eventGridName = 'ag-aione-tst-blob-eg'
 
 param allowedOrigins = ['https://ag-aione-tst-webapp.azurewebsites.net']
-
-param adminEmailAddresses = ['adam-stephensen@agile-analytics.com.au']

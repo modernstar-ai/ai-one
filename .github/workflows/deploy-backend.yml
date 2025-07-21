@@ -2,6 +2,12 @@ name: Deploy AI-One Api
 
 # Manually triggered workflow
 on:
+  push:
+    branches:
+      - development
+    paths:
+      - "infra/backend/**"
+      - "src/Agile.Chat/**"
   workflow_dispatch:
     inputs:
       environment:
@@ -17,7 +23,12 @@ on:
       apiWebAppName:
         description: "Enter the name of the Api App"
         type: string
-        default: "ms-aione-dev-apiapp"
+        default: "ag-aione-dev-apiapp"
+      deployInfra:
+        description: "Deploy API Infrastructure (set to false to skip infra deployment)"
+        type: boolean
+        default: true
+        required: false
 env:
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
@@ -34,9 +45,10 @@ permissions:
   contents: read
 
 jobs:
-  deploy-infra-and-api:
+  deploy-infra:
+    if: ${{ inputs.deployInfra == true }}
     environment: ${{ inputs.environment }}
-    name: Deploy API Infrastructure and Application
+    name: Deploy API Infrastructure
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -78,12 +90,32 @@ jobs:
           parameters-file: infra/backend/${{ inputs.environment }}.bicepparam
           parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
+  deploy-app:
+    needs: [deploy-infra]
+    if: ${{ always() && (inputs.deployInfra == false || needs.deploy-infra.result == 'success' || needs.deploy-infra.result == 'skipped') }}
+    environment: ${{ inputs.environment }}
+    name: Deploy AI-One Api to Azure Web App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
       - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: "8.0.x"
 
-      - name: Build and Publish Agile-Chat-Api
+      - name: Build and Publish AI-One Api
         run: |
           dotnet restore ${{ env.AGILE_CHAT_API_SRC }}
           dotnet build ${{ env.AGILE_CHAT_API_SRC }} --no-restore --configuration Release
@@ -91,7 +123,7 @@ jobs:
         env:
           ENVIRONMENT: ${{ github.event.inputs.environment }}
 
-      - name: Deploy Agile-Chat-Api to Azure Web App
+      - name: Deploy AI-One Api to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ github.event.inputs.apiWebAppName }}

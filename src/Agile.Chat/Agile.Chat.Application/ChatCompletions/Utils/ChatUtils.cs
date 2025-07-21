@@ -6,6 +6,7 @@ using Agile.Chat.Application.ChatCompletions.Models;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Assistants.ValueObjects;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
+using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Framework.AzureAiSearch;
 using Agile.Framework.AzureAiSearch.AiSearchConstants;
 using Agile.Framework.AzureAiSearch.Models;
@@ -70,12 +71,7 @@ public static class ChatUtils
         var messageContext = update.GetMessageContext();
         if (messageContext is { Citations.Count: > 0 })
         {
-            chatContainer.Citations.AddRange(messageContext.Citations.Select(c => new ChatContainerCitation
-            {
-                Name = c.Title,
-                Url = c.Url,
-                Content = c.Content
-            }));
+            chatContainer.Citations.AddRange(messageContext.Citations.Select((c, i) => new ChatContainerCitation(i + 1, c.Content, c.Title, c.Url)));
         }
     }
 
@@ -85,12 +81,7 @@ public static class ChatUtils
         var messageContext = (update.InnerContent as OpenAI.Chat.ChatCompletion).GetMessageContext();
         if (messageContext is { Citations.Count: > 0 })
         {
-            chatContainer.Citations.AddRange(messageContext.Citations.Select(c => new ChatContainerCitation
-            {
-                Name = c.Title,
-                Url = c.Url,
-                Content = c.Content
-            }));
+            chatContainer.Citations.AddRange(messageContext.Citations.Select((c, i) => new ChatContainerCitation(i + 1, c.Content, c.Title, c.Url)));
         }
     }
 
@@ -99,8 +90,7 @@ public static class ChatUtils
         var options = new AzureOpenAIPromptExecutionSettings()
         {
 #pragma warning disable SKEXP0010
-            FunctionChoiceBehavior = assistant?.RagType == RagType.Plugin ? FunctionChoiceBehavior.Auto() : null,
-            AzureChatDataSource = assistant?.RagType == RagType.AzureSearchChatDataSource && !string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName) ? GetAzureSearchDataSource(assistant, chatThread) : null,
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             ChatSystemPrompt = string.IsNullOrWhiteSpace(chatThread.PromptOptions.SystemPrompt) ? null : chatThread.PromptOptions.SystemPrompt,
         };
 
@@ -119,34 +109,14 @@ public static class ChatUtils
         return options;
     }
 
-#pragma warning disable AOAI001
-    private static AzureSearchChatDataSource GetAzureSearchDataSource(Assistant assistant, ChatThread chatThread)
+    public static string? GetThreadFilesString(List<ChatThreadFile> threadFiles)
     {
-        return new AzureSearchChatDataSource
-        {
-            Endpoint = new Uri(Configs.AzureSearch.Endpoint),
-            Authentication = DataSourceAuthentication.FromApiKey(Configs.AzureSearch.ApiKey),
-            IndexName = assistant.FilterOptions.IndexName,
-            SemanticConfiguration = SearchConstants.SemanticConfigurationName,
-            Filter = new SearchFilterBuilder(assistant.FilterOptions.IndexName)
-                .AddFolders(assistant.FilterOptions.Folders)
-                .AddFolders(chatThread.FilterOptions.Folders)
-                .AddTags(assistant.FilterOptions.Tags)
-                .AddTags(chatThread.FilterOptions.Tags)
-                .Build(),
-            FieldMappings = new DataSourceFieldMappings()
-            {
-                ContentFieldNames = { nameof(AzureSearchDocument.Chunk) },
-                TitleFieldName = nameof(AzureSearchDocument.Name),
-                UrlFieldName = nameof(AzureSearchDocument.Url),
-                VectorFieldNames = { nameof(AzureSearchDocument.ChunkVector), nameof(AzureSearchDocument.NameVector) },
-            },
-            QueryType = DataSourceQueryType.VectorSemanticHybrid,
-            InScope = assistant.FilterOptions.LimitKnowledgeToIndex,
-            VectorizationSource = DataSourceVectorizer.FromDeploymentName(Configs.AzureOpenAi.EmbeddingsDeploymentName),
-            Strictness = chatThread.FilterOptions.Strictness,
-            TopNDocuments = chatThread.FilterOptions.DocumentLimit,
-        };
+        if (threadFiles.Count == 0) return null;
+        
+        var citations = threadFiles.Select((file, index) =>
+            new ChatContainerCitation(index + 1, file.Content, file.Name, file.Url).ToString());
+
+        return string.Join("\n-----------------------\n", citations);
     }
 
 }
