@@ -106,6 +106,10 @@ param eventGridName string = toLower('${resourcePrefix}-blob-eg')
 
 param allowModelSelection bool = true
 
+@description('Type of file previewing')
+@allowed(['None', 'Preview', 'Download'])
+param filePreviewType string = 'Preview'
+
 param defaultTextModelId string = 'gpt-4o'
 
 param eventGridSystemTopicSubName string = toLower('${resourcePrefix}-folders-blobs-listener')
@@ -299,6 +303,10 @@ module apiAppModule '../modules/site.bicep' = {
         {
           name: 'AppSettings__DefaultTextModelId'
           value: defaultTextModelId
+        }
+		{
+          name: 'AppSettings__FilePreviewType'
+          value: filePreviewType
         }
         {
           name: 'AzureSearch__Endpoint'
