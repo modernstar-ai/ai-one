@@ -15,10 +15,9 @@ import { Citation } from '@/types/ChatThread';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Textarea } from '../ui/textarea';
 import { FileViewingDialog } from './file-viewing-dialog';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Check, CopyIcon, Loader2Icon } from 'lucide-react';
 import { FilePreviewType, useSettingsStore } from '@/stores/settings-store';
-import { getSettings } from '@/services/settings-service';
 import { getDownloadFileUrl } from '@/services/files-service';
 
 interface CitationSheetProps {
@@ -36,14 +35,6 @@ export function CitationSheet(props: CitationSheetProps) {
     }
   };
   const { settings } = useSettingsStore();
-
-  useEffect(() => {
-    if (!settings) {
-      getSettings();
-      return;
-    }
-    
-  }, [settings]);
 
   return (
     <Sheet onOpenChange={onOpen}>
