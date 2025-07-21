@@ -95,8 +95,7 @@ jobs:
           parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
   deploy-app:
-    needs: [deploy-infra]
-    if: ${{ inputs.deployInfra == false || needs.deploy-infra.result == 'success' }}
+    if: ${{ inputs.deployInfra == false || (inputs.deployInfra == true && success()) }}
     environment: ${{ inputs.environment }}
     name: Deploy AI-One Web App
     runs-on: ubuntu-latest
