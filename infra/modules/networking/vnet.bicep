@@ -55,6 +55,12 @@ param appServiceSubnet object = {
   addressPrefix: '10.3.8.0/24'
 }
 
+@description('App Service subnet V2 configuration')
+param appServiceSubnetV2 object = {
+  name: 'AppServiceSubnetV2'
+  addressPrefix: '10.3.11.0/24'
+}
+
 @description('VM subnet NSG ID')
 param vmSubnetNsgId string
 
@@ -78,6 +84,9 @@ param cognitiveServiceSubnetNsgId string
 
 @description('App Service subnet NSG ID')
 param appServiceSubnetNsgId string = 'AppServiceSubnetNsg'
+
+@description('App Service subnet V2 NSG ID')
+param appServiceSubnetV2NsgId string = 'AppServiceSubnetV2Nsg'
 
 @description('Resource tags')
 param tags object = {}
@@ -195,6 +204,18 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-03-01' = {
             }
           ]
         }
+      },
+      {
+        name: appServiceSubnetV2.name
+        properties: {
+          addressPrefix: appServiceSubnetV2.addressPrefix
+          networkSecurityGroup: {
+            id: appServiceSubnetV2NsgId
+          }
+          privateEndpointNetworkPolicies: 'Disabled'
+          privateLinkServiceNetworkPolicies: 'Disabled'
+          // No delegation by default, add if needed
+        }
       }
     ]
   }
@@ -227,6 +248,11 @@ output appServiceSubnetId string = resourceId(
   vnet.name,
   appServiceSubnet.name
 )
+output appServiceSubnetV2Id string = resourceId(
+  'Microsoft.Network/virtualNetworks/subnets',
+  vnet.name,
+  appServiceSubnetV2.name
+)
 
 // Platform subnet name outputs
 output keyVaultSubnetName string = keyVaultSubnet.name
@@ -236,3 +262,4 @@ output aiSearchSubnetName string = aiSearchSubnet.name
 output serviceBusSubnetName string = serviceBusSubnet.name
 output cognitiveServiceSubnetName string = cognitiveServiceSubnet.name
 output appServiceSubnetName string = appServiceSubnet.name
+output appServiceSubnetV2Name string = appServiceSubnetV2.name

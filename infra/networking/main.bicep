@@ -173,6 +173,7 @@ module vnet '../modules/networking/vnet.bicep' = {
     serviceBusSubnet: vnetConfig.serviceBusSubnet
     cognitiveServiceSubnet: vnetConfig.cognitiveServiceSubnet
     appServiceSubnet: vnetConfig.appServiceSubnet
+    appServiceSubnetV2: vnetConfig.appServiceSubnetV2
     vmSubnetNsgId: vmNsg.outputs.nsgId
     keyVaultSubnetNsgId: keyVaultNsg.outputs.nsgId
     storageSubnetNsgId: storageNsg.outputs.nsgId
@@ -181,6 +182,7 @@ module vnet '../modules/networking/vnet.bicep' = {
     serviceBusSubnetNsgId: serviceBusNsg.outputs.nsgId
     cognitiveServiceSubnetNsgId: cognitiveServiceNsg.outputs.nsgId
     appServiceSubnetNsgId: appServiceNsg.outputs.nsgId
+    appServiceSubnetV2NsgId: appServiceNsg.outputs.nsgId
     tags: tags
   }
 }
@@ -222,6 +224,7 @@ output aiSearchSubnetId string = vnet.outputs.aiSearchSubnetId
 output serviceBusSubnetId string = vnet.outputs.serviceBusSubnetId
 output cognitiveServiceSubnetId string = vnet.outputs.cognitiveServiceSubnetId
 output appServiceSubnetId string = vnet.outputs.appServiceSubnetId
+output appServiceSubnetV2Id string = vnet.outputs.appServiceSubnetV2Id
 output vmSubnetName string = vnet.outputs.vmSubnetName
 output keyVaultSubnetName string = vnet.outputs.keyVaultSubnetName
 output storageSubnetName string = vnet.outputs.storageSubnetName
@@ -230,6 +233,7 @@ output aiSearchSubnetName string = vnet.outputs.aiSearchSubnetName
 output serviceBusSubnetName string = vnet.outputs.serviceBusSubnetName
 output cognitiveServiceSubnetName string = vnet.outputs.cognitiveServiceSubnetName
 output appServiceSubnetName string = vnet.outputs.appServiceSubnetName
+output appServiceSubnetV2Name string = vnet.outputs.appServiceSubnetV2Name
 output vmNsgId string = vmNsg.outputs.nsgId
 output keyVaultNsgId string = keyVaultNsg.outputs.nsgId
 output storageNsgId string = storageNsg.outputs.nsgId

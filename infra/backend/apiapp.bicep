@@ -121,7 +121,7 @@ param networkIsolation bool = false
 param virtualNetworkName string = toLower('${resourcePrefix}-vnet')
 
 @description('App Service subnet name')
-param appServiceSubnetName string = 'AppServiceSubnet'
+param appServiceSubnetName string = 'AppServiceSubnetV2'
 
 param deployRoleAssignments bool = true
 
