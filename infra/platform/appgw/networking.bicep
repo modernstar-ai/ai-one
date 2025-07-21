@@ -17,9 +17,10 @@ param logAnalyticsWorkspaceResourceId string
 @description('Enable diagnostic settings')
 param enableDiagnostics bool = true
 
+@description('Address prefix for the Application Gateway subnet.')
+param appGwSubnetAddressPrefix string = '10.3.11.0/24'
+
 var appGwNsgName = 'appgw-nsg'
-// Create subnet for Application Gateway
-var appGwSubnetAddressPrefix = '10.3.12.0/24'
 
 // Create NSG for Application Gateway subnet
 module appGwNsg '../../modules/networking/nsg.bicep' = {

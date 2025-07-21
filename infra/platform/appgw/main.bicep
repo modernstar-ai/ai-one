@@ -26,6 +26,9 @@ param virtualNetworkSubnetName string = 'AppGatewaySubnet'
 @description('Resource ID of the Log Analytics workspace to use for diagnostic settings.')
 param logAnalyticsWorkspaceResourceId string = ''
 
+@description('Address prefix for the Application Gateway subnet.')
+param subnetAddressPrefix string
+
 @description('Enable diagnostic settings.')
 param enableDiagnostics bool = false
 
@@ -36,6 +39,7 @@ module networking './networking.bicep' = {
     tags: tags
     virtualNetworkName: virtualNetworkName
     virtualNetworkSubnetName: virtualNetworkSubnetName
+    appGwSubnetAddressPrefix: subnetAddressPrefix
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     enableDiagnostics: enableDiagnostics
   }
