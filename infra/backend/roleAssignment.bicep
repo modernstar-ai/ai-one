@@ -66,7 +66,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
 }
 
 resource apiAppOpenAiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(principalId, openAiResourceId, openAiUserRole.id)
+  name: guid(resourceGroup().id, principalId, openAiResourceId, openAiUserRole.id)
   scope: openAiResource
   properties: {
     roleDefinitionId: openAiUserRole.id
@@ -76,7 +76,7 @@ resource apiAppOpenAiRoleAssignment 'Microsoft.Authorization/roleAssignments@202
 }
 
 resource apiAppBlobStorageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(principalId, storageResourceId, blobDataContributorRole.id)
+  name: guid(resourceGroup().id, principalId, storageResourceId, blobDataContributorRole.id)
   scope: storageResource
   properties: {
     roleDefinitionId: blobDataContributorRole.id
@@ -86,7 +86,7 @@ resource apiAppBlobStorageRoleAssignment 'Microsoft.Authorization/roleAssignment
 }
 
 resource apiAppDocIntelligenceRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(principalId, documentIntelligenceResourceId, cognitiveServicesUserRole.id)
+  name: guid(resourceGroup().id, principalId, documentIntelligenceResourceId, cognitiveServicesUserRole.id)
   scope: documentIntelligenceResource
   properties: {
     roleDefinitionId: cognitiveServicesUserRole.id
@@ -96,7 +96,7 @@ resource apiAppDocIntelligenceRoleAssignment 'Microsoft.Authorization/roleAssign
 }
 
 resource apiAppServiceBusReceiverRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(principalId, serviceBusResourceId, serviceBusDataReceiverRole.id)
+  name: guid(resourceGroup().id, principalId, serviceBusResourceId, serviceBusDataReceiverRole.id)
   scope: serviceBusResource
   properties: {
     roleDefinitionId: serviceBusDataReceiverRole.id
@@ -106,7 +106,7 @@ resource apiAppServiceBusReceiverRoleAssignment 'Microsoft.Authorization/roleAss
 }
 
 resource apiAppServiceBusSenderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(principalId, serviceBusResourceId, serviceBusDataSenderRole.id)
+  name: guid(resourceGroup().id, principalId, serviceBusResourceId, serviceBusDataSenderRole.id)
   scope: serviceBusResource
   properties: {
     roleDefinitionId: serviceBusDataSenderRole.id
