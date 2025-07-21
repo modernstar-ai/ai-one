@@ -9,7 +9,7 @@ param tags = loadJsonContent('../tags.json')
 
 param resourcePrefix = toLower('${projectName}-${environmentName}')
 
-param deployAppGatewaySubnet = false
+param deployAppGatewaySubnet = true
 
 param vnetConfig = {
   name: toLower('${resourcePrefix}-vnet')
