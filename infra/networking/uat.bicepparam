@@ -45,7 +45,7 @@ param vnetConfig = {
     addressPrefix: '10.3.8.0/24'
   }
   appServiceSubnetV2: {
-    name: 'AppServiceSubnetV2'
+    name: 'PrivateEndpointsSubnet'
     addressPrefix: '10.3.10.0/24'
   }
   appGatewaySubnet: {

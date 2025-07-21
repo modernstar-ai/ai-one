@@ -55,9 +55,9 @@ param appServiceSubnet object = {
   addressPrefix: '10.3.8.0/24'
 }
 
-@description('App Service subnet V2 configuration')
-param appServiceSubnetV2 object = {
-  name: 'AppServiceSubnetV2'
+@description('Private Endpoints subnet configuration')
+param privateEndpointsSubnet object = {
+  name: 'PrivateEndpointsSubnet'
   addressPrefix: '10.3.10.0/24'
 }
 
@@ -89,9 +89,6 @@ param cognitiveServiceSubnetNsgId string
 
 @description('App Service subnet NSG ID')
 param appServiceSubnetNsgId string
-
-@description('App Service subnet V2 NSG ID')
-param appServiceSubnetV2NsgId string
 
 @description('App Gateway subnet configuration')
 param appGatewaySubnetNsgId string
@@ -214,12 +211,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-03-01' = {
         }
       }
       {
-        name: appServiceSubnetV2.name
+        name: privateEndpointsSubnet.name
         properties: {
-          addressPrefix: appServiceSubnetV2.addressPrefix
-          networkSecurityGroup: {
-            id: appServiceSubnetV2NsgId
-          }
+          addressPrefix: privateEndpointsSubnet.addressPrefix
           privateEndpointNetworkPolicies: 'Disabled'
           privateLinkServiceNetworkPolicies: 'Disabled'
           // No delegation by default, add if needed
@@ -267,11 +261,6 @@ output appServiceSubnetId string = resourceId(
   vnet.name,
   appServiceSubnet.name
 )
-output appServiceSubnetV2Id string = resourceId(
-  'Microsoft.Network/virtualNetworks/subnets',
-  vnet.name,
-  appServiceSubnetV2.name
-)
 
 output appGatewaySubnetId string = resourceId(
   'Microsoft.Network/virtualNetworks/subnets',
@@ -287,5 +276,5 @@ output aiSearchSubnetName string = aiSearchSubnet.name
 output serviceBusSubnetName string = serviceBusSubnet.name
 output cognitiveServiceSubnetName string = cognitiveServiceSubnet.name
 output appServiceSubnetName string = appServiceSubnet.name
-output appServiceSubnetV2Name string = appServiceSubnetV2.name
+output privateEndpointSubnetName string = privateEndpointsSubnet.name
 output appGatewaySubnetName string = appGatewaySubnet.name
