@@ -293,11 +293,11 @@ module apiAppModule '../modules/site.bicep' = {
           value: embeddingModelName
         }
         {
-          name: 'ModelSelectionFeatureEnabled'
+          name: 'AppSettings__ModelSelectionFeatureEnabled'
           value: allowModelSelection
         }
         {
-          name: 'DefaultTextModelId'
+          name: 'AppSettings__DefaultTextModelId'
           value: defaultTextModelId
         }
         {
