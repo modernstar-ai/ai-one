@@ -9,6 +9,8 @@ parameters:
     type: string
   - name: stageName
     type: string
+  - name: dependsOn
+    type: object
   - name: deployInfra
     type: boolean
     default: true
@@ -16,6 +18,7 @@ parameters:
 stages:
   - stage: ${{ parameters.stageName }}
     displayName: "Deploy ${{ parameters.environment }} environment"
+    dependsOn: ${{ parameters.dependsOn }}
     condition: eq(variables['environment'], '${{ parameters.environment }}')
     variables:
       - group: ${{ parameters.environment }}
