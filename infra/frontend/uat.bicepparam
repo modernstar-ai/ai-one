@@ -13,4 +13,4 @@ param logAnalyticsWorkspaceResourceId = '/subscriptions/9221a966-ce17-4b76-a348-
 
 param networkIsolation = true
 param virtualNetworkName = 'ag-aionev12-uat-vnet'
-param appServiceSubnetName = 'AppServiceSubnetV2'
+param appServiceSubnetName = 'AppServiceSubnet'
