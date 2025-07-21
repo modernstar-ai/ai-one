@@ -58,7 +58,7 @@ param appServiceSubnet object = {
 @description('App Service subnet V2 configuration')
 param appServiceSubnetV2 object = {
   name: 'AppServiceSubnetV2'
-  addressPrefix: '10.3.11.0/24'
+  addressPrefix: '10.3.10.0/24'
 }
 
 @description('VM subnet NSG ID')
@@ -204,7 +204,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-03-01' = {
             }
           ]
         }
-      },
+      }
       {
         name: appServiceSubnetV2.name
         properties: {
