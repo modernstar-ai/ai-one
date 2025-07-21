@@ -15,8 +15,11 @@ import { Citation } from '@/types/ChatThread';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Textarea } from '../ui/textarea';
 import { FileViewingDialog } from './file-viewing-dialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Check, CopyIcon, Loader2Icon } from 'lucide-react';
+import { FilePreviewType, useSettingsStore } from '@/stores/settings-store';
+import { getSettings } from '@/services/settings-service';
+import { getDownloadFileUrl } from '@/services/files-service';
 
 interface CitationSheetProps {
   citation: Citation;
@@ -32,6 +35,15 @@ export function CitationSheet(props: CitationSheetProps) {
       setChunk(citation.content);
     }
   };
+  const { settings } = useSettingsStore();
+
+  useEffect(() => {
+    if (!settings) {
+      getSettings();
+      return;
+    }
+    
+  }, [settings]);
 
   return (
     <Sheet onOpenChange={onOpen}>
@@ -86,10 +98,33 @@ export function CitationSheet(props: CitationSheetProps) {
             </Button>
           </div>
         </div>
-        <div className="flex flex-col items-start">
-          <Label htmlFor="link">Link</Label>
-          <FileViewingDialog citation={citation} />
-        </div>
+        {settings?.filePreviewType === FilePreviewType.Preview && (
+          <div className="flex flex-col items-start">
+            <Label htmlFor="link">Link</Label>
+            <FileViewingDialog citation={citation} />
+          </div>
+        )}
+
+        {settings?.filePreviewType === FilePreviewType.Download && (
+          <div className="flex flex-col items-start mt-4">
+            <Label htmlFor="download">Download File</Label>
+            <Button
+              variant="link"
+              className="p-0 mt-2"
+              asChild
+            >
+              <a
+                href={getDownloadFileUrl(citation.url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                download // This hints to browsers to download, but actual download depends on backend Content-Disposition headers
+              >
+                {citation.name}
+              </a>
+            </Button>
+          </div>
+        )}
+
         <div className="flex flex-col grow min-h-0">
           <Label htmlFor="content">Content</Label>
           {chunk ? (
