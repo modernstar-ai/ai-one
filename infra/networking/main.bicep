@@ -17,9 +17,6 @@ param tags object = {}
 @description('Resource prefix for naming resources')
 param resourcePrefix string = toLower('${projectName}-${environmentName}')
 
-@description('Whether to deploy the Application Gateway subnet')
-param deployAppGatewaySubnet bool = false
-
 @description('Virtual network configuration')
 param vnetConfig object = {
   name: toLower('${resourcePrefix}-vnet')
@@ -68,12 +65,10 @@ param vnetConfig object = {
       serviceName: 'Microsoft.Web/serverFarms'
     }
   }
-  appGatewaySubnet: deployAppGatewaySubnet
-    ? {
-        name: 'AppGatewaySubnet'
-        addressPrefix: '10.3.11.0/24'
-      }
-    : null
+  appGatewaySubnet: {
+    name: 'AppGatewaySubnet'
+    addressPrefix: '10.3.11.0/24'
+  }
 }
 
 @description('Network Security Group configuration')
@@ -89,7 +84,7 @@ param nsgConfig object = {
   appGatewayNsgName: toLower('${resourcePrefix}-appgw-nsg')
   eventGridNsgName: toLower('${resourcePrefix}-eventgrid-nsg')
   allowedIpAddress: ''
-} 
+}
 
 @description('Enable diagnostic settings')
 param enableDiagnostics bool = true
@@ -177,7 +172,7 @@ module appServiceNsg '../modules/networking/nsg.bicep' = {
   }
 }
 
-module appGatewayNsg '../modules/networking/nsg.bicep' = if (deployAppGatewaySubnet) {
+module appGatewayNsg '../modules/networking/nsg.bicep' = {
   name: 'appGatewayNsg'
   params: {
     location: location

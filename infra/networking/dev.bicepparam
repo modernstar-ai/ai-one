@@ -9,8 +9,6 @@ param tags = loadJsonContent('../tags.json')
 
 param resourcePrefix = toLower('${projectName}-${environmentName}')
 
-param deployAppGatewaySubnet = false
-
 param vnetConfig = {
   name: toLower('${resourcePrefix}-vnet')
   addressPrefixes: '10.0.0.0/8'
@@ -50,12 +48,10 @@ param vnetConfig = {
     name: 'AppServiceSubnetV2'
     addressPrefix: '10.3.10.0/24'
   }
-  appGatewaySubnet: deployAppGatewaySubnet
-    ? {
-        name: 'AppGatewaySubnet'
-        addressPrefix: '10.3.11.0/24'
-      }
-    : null
+  appGatewaySubnet: {
+    name: 'AppGatewaySubnet'
+    addressPrefix: '10.3.11.0/24'
+  }
 }
 
 param nsgConfig = {
@@ -67,6 +63,8 @@ param nsgConfig = {
   serviceBusNsgName: '${resourcePrefix}-servicebus-nsg'
   cognitiveServiceNsgName: '${resourcePrefix}-cognitive-nsg'
   appServiceNsgName: '${resourcePrefix}-appservice-nsg'
+  appServiceNsgV2Name: '${resourcePrefix}-appservicev2-nsg'
+  appGatewayNsgName: '${resourcePrefix}-appgateway-nsg'
   allowedIpAddress: '' // Leave empty to allow all IPs, or specify a specific IP
 }
 
