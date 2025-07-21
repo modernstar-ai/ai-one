@@ -32,4 +32,4 @@ param allowedOrigins = ['https://ag-aionev12-uat-webapp.azurewebsites.net']
 
 param networkIsolation = true
 param virtualNetworkName = 'ag-aionev12-uat-vnet'
-param appServiceSubnetName = 'AppServiceSubnet'
+param privateEndpointsSubnetName = 'PrivateEndpointsSubnet'

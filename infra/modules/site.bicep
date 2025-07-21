@@ -13,11 +13,14 @@ param logAnalyticsWorkspaceResourceId string
 @description('Resource ID of the virtual network to link the private DNS zones.')
 param virtualNetworkResourceId string = ''
 
-@description('Resource ID of the subnet for the private endpoint.')
+@description('Resource ID of the subnet for the Vnet integration.')
 param virtualNetworkSubnetResourceId string = ''
 
 @description('Specifies whether network isolation is enabled. This will create a private endpoint for the Service Bus and link the private DNS zone.')
 param networkIsolation bool = false
+
+@description('Resource ID of the subnet for the private endpoints.')
+param privateEndpointsSubnetResourceId string = ''
 
 @description('App Service Plan resource ID')
 param serverFarmResourceId string
@@ -80,7 +83,7 @@ module site 'br/public:avm/res/web/site:0.16.0' = {
                 }
               ]
             }
-            subnetResourceId: virtualNetworkSubnetResourceId
+            subnetResourceId: privateEndpointsSubnetResourceId
           }
         ]
       : []

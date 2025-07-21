@@ -121,7 +121,10 @@ param networkIsolation bool = false
 param virtualNetworkName string = toLower('${resourcePrefix}-vnet')
 
 @description('App Service subnet name')
-param appServiceSubnetName string = 'AppServiceSubnetV2'
+param appServiceSubnetName string = 'AppServiceSubnet'
+
+@description('Private Endpoints subnet name')
+param privateEndpointsSubnetName string = 'PrivateEndpointsSubnet'
 
 param deployRoleAssignments bool = true
 
@@ -160,6 +163,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' existing = if (netw
 
 var virtualNetworkResourceId = networkIsolation ? vnet.id : ''
 var appServiceSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${appServiceSubnetName}' : ''
+var privateEndpointsSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${privateEndpointsSubnetName}' : ''
 
 module apiAppModule '../modules/site.bicep' = {
   name: 'apiAppModule'
@@ -176,6 +180,7 @@ module apiAppModule '../modules/site.bicep' = {
     networkIsolation: networkIsolation
     virtualNetworkResourceId: virtualNetworkResourceId
     virtualNetworkSubnetResourceId: appServiceSubnetResourceId
+    privateEndpointsSubnetResourceId: privateEndpointsSubnetResourceId
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true
@@ -304,7 +309,7 @@ module apiAppModule '../modules/site.bicep' = {
           name: 'AppSettings__DefaultTextModelId'
           value: defaultTextModelId
         }
-		{
+        {
           name: 'AppSettings__FilePreviewType'
           value: filePreviewType
         }
