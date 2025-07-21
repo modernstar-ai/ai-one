@@ -36,15 +36,15 @@ param vnetConfig = {
     name: 'ServiceBusSubnet'
     addressPrefix: '10.3.7.0/24'
   }
-  cognitiveServiceSubnet: {
-    name: 'CognitiveServiceSubnet'
-    addressPrefix: '10.3.9.0/24'
-  }
   appServiceSubnet: {
     name: 'AppServiceSubnet'
     addressPrefix: '10.3.8.0/24'
   }
-  appServiceSubnetV2: {
+  cognitiveServiceSubnet: {
+    name: 'CognitiveServiceSubnet'
+    addressPrefix: '10.3.9.0/24'
+  }
+  privateEndpointsSubnet: {
     name: 'PrivateEndpointsSubnet'
     addressPrefix: '10.3.10.0/24'
   }

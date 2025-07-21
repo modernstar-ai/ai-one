@@ -57,8 +57,8 @@ param vnetConfig object = {
       serviceName: 'Microsoft.Web/serverFarms'
     }
   }
-  appServiceSubnetV2: {
-    name: 'AppServiceSubnetV2'
+  privateEndpointsSubnet: {
+    name: 'PrivateEndpointsSubnet'
     addressPrefix: '10.3.10.0/24'
     delegation: {
       name: 'Microsoft.Web/serverFarms'
