@@ -262,6 +262,12 @@ output appServiceSubnetId string = resourceId(
   appServiceSubnet.name
 )
 
+output privateEndpointsSubnetId string = resourceId(
+  'Microsoft.Network/virtualNetworks/subnets',
+  vnet.name,
+  privateEndpointsSubnet.name
+)
+
 output appGatewaySubnetId string = resourceId(
   'Microsoft.Network/virtualNetworks/subnets',
   vnet.name,
