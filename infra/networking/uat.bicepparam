@@ -9,6 +9,8 @@ param tags = loadJsonContent('../tags.json')
 
 param resourcePrefix = toLower('${projectName}-${environmentName}')
 
+param deployAppGatewaySubnet = false
+
 param vnetConfig = {
   name: toLower('${resourcePrefix}-vnet')
   addressPrefixes: '10.0.0.0/8'
@@ -48,6 +50,12 @@ param vnetConfig = {
     name: 'AppServiceSubnetV2'
     addressPrefix: '10.3.10.0/24'
   }
+  appGatewaySubnet: deployAppGatewaySubnet
+    ? {
+        name: 'AppGatewaySubnet'
+        addressPrefix: '10.3.11.0/24'
+      }
+    : null
 }
 
 param nsgConfig = {

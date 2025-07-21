@@ -17,6 +17,9 @@ param tags object = {}
 @description('Resource prefix for naming resources')
 param resourcePrefix string = toLower('${projectName}-${environmentName}')
 
+@description('Whether to deploy the Application Gateway subnet')
+param deployAppGatewaySubnet bool = false
+
 @description('Virtual network configuration')
 param vnetConfig object = {
   name: toLower('${resourcePrefix}-vnet')
@@ -57,6 +60,20 @@ param vnetConfig object = {
       serviceName: 'Microsoft.Web/serverFarms'
     }
   }
+  appServiceSubnetV2: {
+    name: 'AppServiceSubnetV2'
+    addressPrefix: '10.3.10.0/24'
+    delegation: {
+      name: 'Microsoft.Web/serverFarms'
+      serviceName: 'Microsoft.Web/serverFarms'
+    }
+  }
+  appGatewaySubnet: deployAppGatewaySubnet
+    ? {
+        name: 'AppGatewaySubnet'
+        addressPrefix: '10.3.11.0/24'
+      }
+    : null
 }
 
 @description('Network Security Group configuration')
