@@ -1,25 +1,20 @@
+using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.ChatCompletions.Dtos;
 using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Agile.Chat.Application.ChatThreads.Services;
+using Agile.Chat.Domain.ChatThreads.ValueObjects;
+using Agile.Chat.Domain.Assistants.ValueObjects;
 
 namespace Agile.Chat.Application.ChatCompletions.Routing;
 
 /// <summary>
 /// Routes chat-related payloads to the appropriate MediatR commands based on payload content.
 /// </summary>
-public class ChatCommandRouter
+public class ChatCommandRouter(IAssistantService assistantService, IChatThreadService chatThreadService, IMediator mediator, ILogger<ChatCommandRouter> logger)
 {
-    private readonly IMediator _mediator;
-    private readonly ILogger<ChatCommandRouter> _logger;
-
-    public ChatCommandRouter(IMediator mediator, ILogger<ChatCommandRouter> logger)
-    {
-        _mediator = mediator;
-        _logger = logger;
-    }
-
     /// <summary>
     /// Routes the incoming chat payload to the appropriate command(s) based on its content.
     /// </summary>
@@ -27,11 +22,13 @@ public class ChatCommandRouter
     /// <returns>The result from the command execution</returns>
     public async Task<IResult> RouteAsync(ChatPayload chatPayload)
     {
-        _logger.LogInformation("Routing chat payload of type: {PayloadType}", chatPayload.Type);
+        logger.LogInformation("Routing chat payload of type: {PayloadType}", chatPayload.Type);
+        var thread = await chatThreadService.GetItemByIdAsync(chatPayload.ThreadId, ChatType.Thread.ToString());
+        var assistant = await assistantService.GetItemByIdAsync(thread.AssistantId);
 
-        return chatPayload.Type switch
+        return assistant.Type switch
         {
-            ChatPayloadType.AgentMode => await HandleAgentModeChatAsync(chatPayload),
+            AssistantType.Agent => await HandleAgentModeChatAsync(chatPayload),
             _ => await HandleStandardChatAsync(chatPayload)
         };
     }
@@ -41,11 +38,11 @@ public class ChatCommandRouter
         var chatDto = new ChatDto
         {
             UserPrompt = payload.UserPrompt,
-            ThreadId = payload.ThreadId
+            ThreadId = payload.ThreadId,
         };
 
         var command = chatDto.Adapt<Commands.Chat.Command>();
-        return await _mediator.Send(command);
+        return await mediator.Send(command);
     }
 
     private async Task<IResult> HandleAgentModeChatAsync(ChatPayload payload)
@@ -57,6 +54,6 @@ public class ChatCommandRouter
         };
 
         var command = chatDto.Adapt<Commands.AgentChat.Command>();
-        return await _mediator.Send(command);
-    } 
+        return await mediator.Send(command);
+    }
 }

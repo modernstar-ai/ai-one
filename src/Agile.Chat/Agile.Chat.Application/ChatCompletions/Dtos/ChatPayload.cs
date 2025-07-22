@@ -51,7 +51,10 @@ public enum ChatPayloadType
     /// </summary>
     WithFiles = 2,
 
-    AgentMode = 3,
+    /// <summary>
+    /// Chat using agents
+    /// </summary>
+    Agent = 3,
 }
 
 /// <summary>

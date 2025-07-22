@@ -30,7 +30,7 @@ public class AssistantService(CosmosClient cosmosClient, IAzureAIAgentService az
         {
             var agentName = assistant.Name.Trim();
             var agent = await azureAIAgentService.CreateAgentAsync
-                  (agentName, assistant.Description, assistant.ModelOptions.DefaultModelId,
+                  (agentName, assistant.Description, Configs.AzureOpenAi.DeploymentName,
                   assistant.PromptOptions.SystemPrompt, assistant.PromptOptions.Temperature, assistant.PromptOptions.TopP);
 
             assistant.AddAgentConfiguration(new AgentConfiguration
