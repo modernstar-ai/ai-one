@@ -1,5 +1,4 @@
-﻿using Agile.Chat.Domain.Assistants.Aggregates;
-namespace Agile.Chat.Application.ChatCompletions.Dtos;
+﻿namespace Agile.Chat.Application.ChatCompletions.Dtos;
 
 public class ChatDto
 {

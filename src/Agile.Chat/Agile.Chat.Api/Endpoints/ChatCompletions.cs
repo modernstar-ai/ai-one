@@ -38,9 +38,9 @@ public class ChatCompletions() : CarterModule("/api")
         return await mediator.Send(command);
     }
 
-    private async Task<IResult> ChatStreamWithRouter([FromServices] ChatCommandRouter router, [FromBody] ChatPayload payload)
+    private async Task<IResult> ChatStreamWithRouter([FromServices] ChatCommandRouter router, [FromBody] ChatDto dto)
     {
-        return await router.RouteAsync(payload);
+        return await router.RouteAsync(dto);
     }
 
     private async Task<IResult> GetSupportedTextModelOptions([FromServices] IMediator mediator)

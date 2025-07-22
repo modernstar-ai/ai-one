@@ -20,39 +20,26 @@ public class ChatCommandRouter(IAssistantService assistantService, IChatThreadSe
     /// </summary>
     /// <param name="chatPayload">The chat payload to route</param>
     /// <returns>The result from the command execution</returns>
-    public async Task<IResult> RouteAsync(ChatPayload chatPayload)
+    public async Task<IResult> RouteAsync(ChatDto chatDto)
     {
-        logger.LogInformation("Routing chat payload of type: {PayloadType}", chatPayload.Type);
-        var thread = await chatThreadService.GetItemByIdAsync(chatPayload.ThreadId, ChatType.Thread.ToString());
+        var thread = await chatThreadService.GetItemByIdAsync(chatDto.ThreadId, ChatType.Thread.ToString());
         var assistant = await assistantService.GetItemByIdAsync(thread.AssistantId);
 
         return assistant.Type switch
         {
-            AssistantType.Agent => await HandleAgentModeChatAsync(chatPayload),
-            _ => await HandleStandardChatAsync(chatPayload)
+            AssistantType.Agent => await HandleAgentModeChatAsync(chatDto),
+            _ => await HandleStandardChatAsync(chatDto)
         };
     }
 
-    private async Task<IResult> HandleStandardChatAsync(ChatPayload payload)
+    private async Task<IResult> HandleStandardChatAsync(ChatDto chatDto)
     {
-        var chatDto = new ChatDto
-        {
-            UserPrompt = payload.UserPrompt,
-            ThreadId = payload.ThreadId,
-        };
-
         var command = chatDto.Adapt<Commands.Chat.Command>();
         return await mediator.Send(command);
     }
 
-    private async Task<IResult> HandleAgentModeChatAsync(ChatPayload payload)
+    private async Task<IResult> HandleAgentModeChatAsync(ChatDto chatDto)
     {
-        var chatDto = new ChatDto
-        {
-            UserPrompt = payload.UserPrompt,
-            ThreadId = payload.ThreadId
-        };
-
         var command = chatDto.Adapt<Commands.AgentChat.Command>();
         return await mediator.Send(command);
     }
