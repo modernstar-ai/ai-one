@@ -12,8 +12,14 @@ export interface AppSettings {
   allowModelSelectionDefaultValue: string;
   defaultTextModelId: string;
   modelSelectionFeatureEnabled: boolean;
+  filePreviewType: FilePreviewType;
 }
 
+export enum FilePreviewType {
+  None = 'None',
+  Preview = 'Preview',
+  Download = 'Download'
+}
 export const useSettingsStore = create<SettingsState>(() => ({
   settings: undefined
 }));

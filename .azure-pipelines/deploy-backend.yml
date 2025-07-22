@@ -17,6 +17,11 @@ parameters:
     type: string
     default: "ag-aione-dev-apiapp"
 
+  - name: deployInfra
+    displayName: "Deploy API Infrastructure (set to false to skip infra deployment)"
+    type: boolean
+    default: true
+
 variables:
   - name: environment
     value: ${{ parameters.environment }}
@@ -81,6 +86,7 @@ stages:
       agileChatApiPub: $(AGILE_CHAT_API_PUB)
       azureBicepMain: $(AZURE_BICEP_API)
       dependsOn: Build
+      deployInfra: ${{ parameters.deployInfra }}
 
   - template: templates/deploy-backend-template.yml
     parameters:
@@ -91,6 +97,7 @@ stages:
       agileChatApiPub: $(AGILE_CHAT_API_PUB)
       azureBicepMain: $(AZURE_BICEP_API)
       dependsOn: DeployBackendDev
+      deployInfra: ${{ parameters.deployInfra }}
 
   - template: templates/deploy-backend-template.yml
     parameters:
@@ -101,6 +108,7 @@ stages:
       agileChatApiPub: $(AGILE_CHAT_API_PUB)
       azureBicepMain: $(AZURE_BICEP_API)
       dependsOn: DeployBackendTst
+      deployInfra: ${{ parameters.deployInfra }}
 
   - template: templates/deploy-backend-template.yml
     parameters:
@@ -111,3 +119,4 @@ stages:
       agileChatApiPub: $(AGILE_CHAT_API_PUB)
       azureBicepMain: $(AZURE_BICEP_API)
       dependsOn: DeployBackendUat
+      deployInfra: ${{ parameters.deployInfra }}

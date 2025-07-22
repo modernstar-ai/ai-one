@@ -32,7 +32,6 @@ import { MultiInput } from '@/components/ui-extended/multi-input';
 
 import { BaseDialog } from '@/components/base/BaseDiaglog';
 import useGetTextModels from '@/hooks/use-get-textmodels';
-import { useSettingsStore } from '@/stores/settings-store';
 
 // Define the AssistantPromptOptions schema
 const AssistantPromptOptionsSchema = z.object({
@@ -105,8 +104,6 @@ export default function AssistantForm() {
   const navigate = useNavigate();
   const { indexes } = useIndexes();
 
-  const { settings } = useSettingsStore();
-
   const { data, isLoading: textmodelsLoading } = useGetTextModels();
 
   const form = useForm<FormValues>({
@@ -134,9 +131,9 @@ export default function AssistantForm() {
       },
       accessControl: permissionsAccessControlDefaultValues,
       modelOptions: {
-        allowModelSelection: settings?.modelSelectionFeatureEnabled || false,
+        allowModelSelection: data?.allowModelSelection || false,
         models: [],
-        defaultModelId: settings?.allowModelSelectionDefaultValue || 'GPT-4o'
+        defaultModelId: data?.defaultModelId || 'GPT-4o'
       }
     }
   });
@@ -203,6 +200,23 @@ export default function AssistantForm() {
 
     load();
   }, []);
+
+  // Update form when API data is loaded
+  useEffect(() => {
+    if (data && !textmodelsLoading) {
+      form.setValue('modelOptions.allowModelSelection', data.allowModelSelection || false);
+      form.setValue('modelOptions.defaultModelId', data.defaultModelId || 'GPT-4o');
+
+      // Initialize models array with API data
+      if (data.models) {
+        const modelsWithSelection = data.models.map((model) => ({
+          modelId: model.modelId,
+          isSelected: false
+        }));
+        form.setValue('modelOptions.models', modelsWithSelection);
+      }
+    }
+  }, [data, textmodelsLoading, form]);
 
   // Handle model selection changes
   // Handle model selection changes

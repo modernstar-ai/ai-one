@@ -3,7 +3,6 @@ trigger: none
 
 parameters:
 - name: environment
-  type: string
   default: dev
   displayName: 'Select the environment to deploy the Web Application infrastructure'
   values:
@@ -13,10 +12,13 @@ parameters:
   - prod
 
 - name: uiWebAppName
-  displayName: 'Enter the name of the Web App'
   type: string
   default: 'ag-aione-dev-webapp'
 
+- name: deployInfra
+  displayName: 'Deploy Web Infrastructure (true/false)'
+  type: boolean
+  default: true
 variables:
   - name: environment
     value: ${{ parameters.environment }}
@@ -36,82 +38,84 @@ variables:
     value: 'prod-service-connection'
 
 stages:
-# Build Stage
-- stage: Build
-  displayName: 'Build AI-One Web App'
-  variables:
-  - group: dev
-  jobs:
-  - job: BuildJob
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-    - checkout: self
-      fetchDepth: 1
-      persistCredentials: true
+  - stage: Build
+    displayName: 'Build AI-One Web App'
+    variables:
+      - group: ${{ parameters.environment }}
+    jobs:
+      - job: BuildJob
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+            fetchDepth: 1
+            persistCredentials: true
 
-    - task: NodeTool@0
-      inputs:
-        versionSpec: '18.x'
-      displayName: 'Install Node.js'
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '18.x'
+            displayName: 'Install Node.js'
 
-    - script: |
-        cd $(AGILE_WEB_SRC)
-        echo "VITE_AGILECHAT_API_URL=${VITE_AGILECHAT_API_URL}" >> .env
-        echo "VITE_AZURE_AD_CLIENT_ID=${AZURE_CLIENT_ID}" >> .env
-        echo "VITE_AZURE_AD_TENANT_ID=${AZURE_TENANT_ID}" >> .env
-        npm install
-        npm run build
-      displayName: 'Build AI-One Web App'
+          - script: |
+              cd $(AGILE_WEB_SRC)
+              echo "VITE_AGILECHAT_API_URL=${VITE_AGILECHAT_API_URL}" >> .env
+              echo "VITE_AZURE_AD_CLIENT_ID=${AZURE_CLIENT_ID}" >> .env
+              echo "VITE_AZURE_AD_TENANT_ID=${AZURE_TENANT_ID}" >> .env
+              npm install
+              npm run build
+            displayName: 'Build AI-One Web App'
 
-    - task: ArchiveFiles@2
-      inputs:
-        rootFolderOrFile: '$(AGILE_WEB_SRC)/dist'
-        includeRootFolder: true
-        archiveType: 'zip'
-        archiveFile: '$(Build.ArtifactStagingDirectory)/release.zip'
-      displayName: 'Create ZIP artifact'
+          - task: ArchiveFiles@2
+            inputs:
+              rootFolderOrFile: '$(AGILE_WEB_SRC)/dist'
+              includeRootFolder: true
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/release.zip'
+            displayName: 'Create ZIP artifact'
 
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish AI-One Web App Artifact'
-      inputs:
-        targetPath: '$(Build.ArtifactStagingDirectory)/release.zip'
-        artifact: 'agile-chat-web'
-        publishLocation: 'pipeline'
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish AI-One Web App Artifact'
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)/release.zip'
+              artifact: 'agile-chat-web'
+              publishLocation: 'pipeline'
 
-# Deploy Stages for all environments
-- template: templates/deploy-frontend-template.yml
-  parameters:
-    environment: dev
-    stageName: DeployFrontendDev
-    serviceConnection: $(SERVICE_CONNECTION_DEV)
-    uiWebAppName: ${{ parameters.uiWebAppName }}
-    azureBicepMain: $(AZURE_BICEP_WEB)
-    dependsOn: Build
+  - template: templates/deploy-frontend-template.yml
+    parameters:
+      environment: dev
+      stageName: DeployFrontendDev
+      serviceConnection: $(SERVICE_CONNECTION_DEV)
+      uiWebAppName: ${{ parameters.uiWebAppName }}
+      azureBicepMain: $(AZURE_BICEP_WEB)
+      dependsOn: Build
+      deployInfra: ${{ parameters.deployInfra }}
 
-- template: templates/deploy-frontend-template.yml
-  parameters:
-    environment: tst
-    stageName: DeployFrontendTst
-    serviceConnection: $(SERVICE_CONNECTION_TST)
-    uiWebAppName: ${{ parameters.uiWebAppName }}
-    azureBicepMain: $(AZURE_BICEP_WEB)
-    dependsOn: DeployFrontendDev
+  - template: templates/deploy-frontend-template.yml
+    parameters:
+      environment: tst
+      stageName: DeployFrontendTst
+      serviceConnection: $(SERVICE_CONNECTION_TST)
+      uiWebAppName: ${{ parameters.uiWebAppName }}
+      azureBicepMain: $(AZURE_BICEP_WEB)
+      dependsOn: DeployFrontendDev
+      deployInfra: ${{ parameters.deployInfra }}
 
-- template: templates/deploy-frontend-template.yml
-  parameters:
-    environment: uat
-    stageName: DeployFrontendUat
-    serviceConnection: $(SERVICE_CONNECTION_UAT)
-    uiWebAppName: ${{ parameters.uiWebAppName }}
-    azureBicepMain: $(AZURE_BICEP_WEB)
-    dependsOn: DeployFrontendTst
+  - template: templates/deploy-frontend-template.yml
+    parameters:
+      environment: uat
+      stageName: DeployFrontendUat
+      serviceConnection: $(SERVICE_CONNECTION_UAT)
+      uiWebAppName: ${{ parameters.uiWebAppName }}
+      azureBicepMain: $(AZURE_BICEP_WEB)
+      dependsOn: DeployFrontendTst
+      deployInfra: ${{ parameters.deployInfra }}
 
-- template: templates/deploy-frontend-template.yml
-  parameters:
-    environment: prod
-    stageName: DeployFrontendProd
-    serviceConnection: $(SERVICE_CONNECTION_PROD)
-    uiWebAppName: ${{ parameters.uiWebAppName }}
-    azureBicepMain: $(AZURE_BICEP_WEB)
-    dependsOn: DeployFrontendUat
+  - template: templates/deploy-frontend-template.yml
+    parameters:
+      environment: prod
+      stageName: DeployFrontendProd
+      serviceConnection: $(SERVICE_CONNECTION_PROD)
+      uiWebAppName: ${{ parameters.uiWebAppName }}
+      azureBicepMain: $(AZURE_BICEP_WEB)
+      dependsOn: DeployFrontendUat
+      deployInfra: ${{ parameters.deployInfra }}
