@@ -32,6 +32,11 @@ import { MultiInput } from '@/components/ui-extended/multi-input';
 
 import { BaseDialog } from '@/components/base/BaseDiaglog';
 import useGetTextModels from '@/hooks/use-get-textmodels';
+// import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+// import {
+//   Dialog, DialogContent, DialogDescription, DialogFooter,
+//   DialogHeader, DialogTitle, DialogTrigger
+// } from "@/components/ui/dialog";
 
 // Define the AssistantPromptOptions schema
 const AssistantPromptOptionsSchema = z.object({
@@ -105,6 +110,23 @@ export default function AssistantForm() {
   const { indexes } = useIndexes();
 
   const { data, isLoading: textmodelsLoading } = useGetTextModels();
+
+  // const [connectedAgents, setConnectedAgents] = useState<ConnectedAgent[]>([]);
+  // const [agentTypeInput, setAgentTypeInput] = useState<string>('');
+  // const [agentDescriptionInput, setAgentDescriptionInput] = useState<string>('');
+
+  // const [agentDialogOpen, setAgentDialogOpen] = useState(false);
+
+  // // Replace this with your actual list of agent options (id/name or whatever you use)
+  // const agentOptions = [
+  //   { id: "agent1", name: "Agent 1" },
+  //   { id: "agent2", name: "Agent 2" },
+  //   { id: "agent3", name: "Agent 3" },
+  // ];
+
+  // const [selectedAgent, setSelectedAgent] = useState('');
+  // // const [uniqueName, setUniqueName] = useState('');
+  // const [activationDetail, setActivationDetail] = useState('');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -356,6 +378,7 @@ export default function AssistantForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value={AssistantType.Agent}>Agent</SelectItem>
                           <SelectItem value={AssistantType.Chat}>Chat</SelectItem>
                           <SelectItem value={AssistantType.Search}>Search</SelectItem>
                         </SelectContent>
@@ -364,6 +387,59 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
+
+                {/* {form.watch('type') === AssistantType.Agent && (
+                  <>
+                    <FormItem>
+                      <FormLabel>Agent Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter Agent Name"
+                          // {...field} // Connect to your form if needed
+                        />
+                      </FormControl>
+                    </FormItem>
+                    <div className="mt-6">
+                      <FormLabel className="mb-3 block">Connected Agents</FormLabel>
+                      
+                      
+                      <Table className="mt-2">
+                        <TableHeader>
+                          <TableRow className="bg-muted/50">
+                            <TableHead>Agent Name</TableHead>
+                            <TableHead>Description</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {connectedAgents.length === 0 ? (
+                            <TableRow>
+                              <TableCell>Web Search Agent</TableCell>
+                              <TableCell>Responds with bing search</TableCell>
+                            </TableRow>
+                          ) : (
+                            connectedAgents.map((ca, idx) => (
+                              <TableRow key={idx}>
+                                <TableCell>{ca.agentType}</TableCell>
+                                <TableCell>{ca.description}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          type="button"
+                          className="font-bold"
+                          onClick={() => setAgentDialogOpen(true)}
+                        >
+                          Add Connected Agents
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )} */}
+
                 <FormField
                   control={form.control}
                   name="greeting"
@@ -720,6 +796,72 @@ export default function AssistantForm() {
                     </BaseDialog>
                   </>
                 )}
+
+                {/* <Dialog open={agentDialogOpen} onOpenChange={setAgentDialogOpen}>
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                      <DialogTitle>Add Connected Agent</DialogTitle>
+                      <DialogDescription>
+                        Specify the agent, a unique name, and activation details.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 mt-2">
+                     <div>
+                        <label className="block mb-2 text-sm font-medium">Agent</label>
+                        <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select agent" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {agentOptions.map(opt => (
+                              <SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium">Detail the steps to activate the agent</label>
+                        <textarea
+                          className="w-full border rounded-md p-2 min-h-[80px]"
+                          placeholder="Describe the specific conditions under which the agent should be activated in as much detail as possible"
+                          value={activationDetail}
+                          onChange={e => setActivationDetail(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setConnectedAgents(prev => [
+                            ...prev,
+                            {
+                              agentType: agentOptions.find(opt => opt.id === selectedAgent)?.name || selectedAgent,
+                              description: (activationDetail ? ` - ${activationDetail}` : "")
+                            }
+                          ]);
+                          setSelectedAgent('');
+                          setActivationDetail('');
+                          setAgentDialogOpen(false);
+                        }}
+                        disabled={!selectedAgent}
+                        
+                      >
+                        Add Agent
+                      </Button>
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={() => setAgentDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog> */}
+
                 <div className="flex justify-between mt-2">
                   <Button
                     type="submit"

@@ -17,9 +17,15 @@ export type Assistant = {
 
 export type InsertAssistant = Partial<Assistant>;
 
+// export interface ConnectedAgent {
+//   agentType: string;
+//   description: string;
+// }
+
 export enum AssistantType {
   Chat = 'Chat',
-  Search = 'Search'
+  Search = 'Search',
+  Agent = 'Agent'
 }
 
 export enum AssistantStatus {
