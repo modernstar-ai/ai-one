@@ -7,7 +7,7 @@ param projectName = readEnvironmentVariable('PROJECT_NAME', sharedVariables.proj
 param location = readEnvironmentVariable('AZURE_LOCATION', sharedVariables.location)
 param tags = loadJsonContent('../tags.json')
 
-param appServicePlanName = 'ag-aione-dev-app'
-param apiAppName = 'ag-aione-dev-apiapp'
-param logAnalyticsWorkspaceResourceId = '/subscriptions/9221a966-ce17-4b76-a348-887f234a827a/resourcegroups/rg-practice-ai-aione-dev/providers/microsoft.operationalinsights/workspaces/ag-aione-dev-la'
+param appServicePlanName = 'ms-aione-dev-app'
+param apiAppName = 'ms-aione-dev-apiapp'
+param logAnalyticsWorkspaceResourceId = '/subscriptions/a8d44b38-6c3d-459c-b6c5-8bc173941b44/resourcegroups/ms-rg-aione_dev1-ae/providers/microsoft.operationalinsights/workspaces/ms-aione-dev-la'
 

@@ -9,7 +9,7 @@ param tags = loadJsonContent('../../tags.json')
 
 param openAILocation = readEnvironmentVariable('AZURE_OPENAI_LOCATION', 'australiaeast')
 
-param logAnalyticsWorkspaceResourceId = '/subscriptions/9221a966-ce17-4b76-a348-887f234a827a/resourcegroups/rg-practice-ai-aione-dev/providers/microsoft.operationalinsights/workspaces/ag-aione-dev-la'
+param logAnalyticsWorkspaceResourceId = '/subscriptions/a8d44b38-6c3d-459c-b6c5-8bc173941b44/resourcegroups/ms-rg-aione_dev1-ae/providers/microsoft.operationalinsights/workspaces/ms-aione-dev-la'
 
 // OpenAI and AI Foundry configuration
 param deployAIFoundryResources = true

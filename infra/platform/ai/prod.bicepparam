@@ -8,7 +8,7 @@ param projectName = readEnvironmentVariable('PROJECT_NAME', sharedVariables.proj
 param location = readEnvironmentVariable('AZURE_LOCATION', sharedVariables.location)
 param openAILocation = readEnvironmentVariable('AZURE_OPENAI_LOCATION', sharedVariables.openAILocation)
 
-param logAnalyticsWorkspaceResourceId = '<REPLACE_WITH_YOUR_LOG_ANALYTICS_WORKSPACE_ID>'
+param logAnalyticsWorkspaceResourceId = '/subscriptions/a8d44b38-6c3d-459c-b6c5-8bc173941b44/resourcegroups/ms-rg-aione_prd1-ae/providers/microsoft.operationalinsights/workspaces/ms-aione-prod-la'
 
 // OpenAI and AI Foundry configuration
 param deployAIFoundryResources = true
