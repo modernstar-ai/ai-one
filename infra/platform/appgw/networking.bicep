@@ -95,7 +95,7 @@ module appGwSubnet '../../modules/networking/subnet.bicep' = {
   }
 }
 
-output appGwNsgId string = appGwNsg.outputs.nsgId
-output appGwNsgName string = appGwNsg.outputs.nsgName
-output appGwSubnetId string = appGwSubnet.outputs.subnetId
-output appGwSubnetName string = virtualNetworkSubnetName
+output nsgId string = appGwNsg.outputs.nsgId
+output nsgName string = appGwNsg.outputs.nsgName
+output subnetId string = appGwSubnet.outputs.subnetId
+output subnetName string = virtualNetworkSubnetName
