@@ -6,26 +6,24 @@ on:
     branches:
       - development
     paths:
-      - "infra/backend/**"
-      - "src/Agile.Chat/**"
+      - 'infra/backend/**'
+      - 'src/Agile.Chat/**'
   workflow_dispatch:
     inputs:
       environment:
-        description: "Select the environment to deploy the API infrastructure"
+        description: 'Select the environment to deploy the API infrastructure'
         type: choice
-        default: "dev"
+        default: 'dev'
         options:
-          - "dev"
-          - "tst"
-          - "uat"
-          - "prod"
+          - 'dev'
+          - 'prod'
         required: true
       apiWebAppName:
-        description: "Enter the name of the Api App"
+        description: 'Enter the name of the Api App'
         type: string
-        default: "ag-aione-dev-apiapp"
+        default: 'ms-aione-dev-apiapp'
       deployInfra:
-        description: "Deploy API Infrastructure (set to false to skip infra deployment)"
+        description: 'Deploy API Infrastructure (set to false to skip infra deployment)'
         type: boolean
         default: true
         required: false
@@ -34,9 +32,9 @@ env:
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
   PROJECT_NAME: ${{ vars.PROJECT_NAME }}
   AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
-  AZURE_BICEP_MAIN: "./infra/backend/apiapp.bicep"
-  AGILE_CHAT_API_SRC: "./src/Agile.Chat/Agile.Chat.Api"
-  AGILE_CHAT_API_PUB: "./publish/Agile.Chat/Agile.Chat.Api"
+  AZURE_BICEP_MAIN: './infra/backend/apiapp.bicep'
+  AGILE_CHAT_API_SRC: './src/Agile.Chat/Agile.Chat.Api'
+  AGILE_CHAT_API_PUB: './publish/Agile.Chat/Agile.Chat.Api'
 
 # Set up permissions for deploying with secretless Azure federated credentials
 # https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
@@ -113,7 +111,7 @@ jobs:
       - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: '8.0.x'
 
       - name: Build and Publish AI-One Api
         run: |

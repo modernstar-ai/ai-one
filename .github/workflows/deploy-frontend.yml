@@ -6,21 +6,19 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Select the environment to deploy the Web Application infrastructure"
+        description: 'Select the environment to deploy the Web Application infrastructure'
         type: choice
-        default: "dev"
+        default: 'dev'
         options:
-          - "dev"
-          - "tst"
-          - "uat"
-          - "prod"
+          - 'dev'
+          - 'prod'
         required: true
       uiWebAppName:
-        description: "Enter the name of the Web App"
+        description: 'Enter the name of the Web App'
         type: string
-        default: "ag-aione-dev-webapp"
+        default: 'ms-aione-dev-webapp'
       deployInfra:
-        description: "Deploy Web Infrastructure (set to false to skip infra deployment)"
+        description: 'Deploy Web Infrastructure (set to false to skip infra deployment)'
         type: boolean
         default: true
         required: false
@@ -28,8 +26,8 @@ on:
     branches:
       - development
     paths:
-      - "src/agile-chat-web/**"
-      - "infra/frontend/**"
+      - 'src/agile-chat-web/**'
+      - 'infra/frontend/**'
 env:
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
@@ -117,7 +115,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          node-version: '18.x'
 
       - name: Build AI-One Web App
         run: |
