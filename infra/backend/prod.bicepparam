@@ -16,7 +16,7 @@ param applicationInsightsName = 'ms-aione-prod-apiapp'
 param logAnalyticsWorkspaceResourceId = '/subscriptions/a8d44b38-6c3d-459c-b6c5-8bc173941b44/resourcegroups/ms-rg-aione_prd1-ae/providers/microsoft.operationalinsights/workspaces/ms-aione-prod-la'
 
 param keyVaultName = 'ms-aione-prod-kv'
-param storageAccountName = 'msaioneprdsto'
+param storageAccountName = 'msaioneprodsto'
 param documentIntelligenceServiceName = 'ms-aione-prod-docintel'
 param documentIntelligenceEndpoint = 'https://ms-aione-prod-docintel.cognitiveservices.azure.com/'
 param openAiName = 'ms-aione-prod-foundry'
