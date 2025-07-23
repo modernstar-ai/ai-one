@@ -40,7 +40,7 @@ app.Use((context, next) =>
 
 app.UseCors();
 
-if (app.Environment.IsDevelopment())
+if (!app.Environment.IsProduction())
 {
     app.UseSwagger(c =>
     {
@@ -56,9 +56,9 @@ if (app.Environment.IsDevelopment())
             if (!string.IsNullOrEmpty(pathBase))
             {
                 swaggerDoc.Servers = new List<Microsoft.OpenApi.Models.OpenApiServer>
-                {
+            {
                     new() { Url = $"https://{httpReq.Host}{pathBase}" }
-                };
+            };
             }
         });
     });
