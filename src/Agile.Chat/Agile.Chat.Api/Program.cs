@@ -34,9 +34,6 @@ app.Use((context, next) =>
     {
         var pathBase = prefix.FirstOrDefault() ?? "";
         context.Request.PathBase = pathBase;
-        Console.WriteLine($"Setting PathBase to: {pathBase}");
-        Console.WriteLine($"Request Path: {context.Request.Path}");
-        Console.WriteLine($"Full URL would be: {context.Request.Scheme}://{context.Request.Host}{pathBase}{context.Request.Path}");
     }
     return next();
 });
@@ -54,7 +51,7 @@ if (app.Environment.IsDevelopment())
             {
                 swaggerDoc.Info.Version = "v1";
             }
-            
+
             var pathBase = httpReq.PathBase.Value ?? "";
             if (!string.IsNullOrEmpty(pathBase))
             {
