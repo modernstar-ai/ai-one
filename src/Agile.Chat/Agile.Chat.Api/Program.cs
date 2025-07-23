@@ -32,19 +32,29 @@ app.Use((context, next) =>
 {
     if (context.Request.Headers.TryGetValue("X-Forwarded-Prefix", out var prefix))
     {
-        context.Request.PathBase = prefix.FirstOrDefault() ?? "";
+        var pathBase = prefix.FirstOrDefault() ?? "";
+        context.Request.PathBase = pathBase;
+        Console.WriteLine($"Setting PathBase to: {pathBase}");
+        Console.WriteLine($"Request Path: {context.Request.Path}");
+        Console.WriteLine($"Full URL would be: {context.Request.Scheme}://{context.Request.Host}{pathBase}{context.Request.Path}");
     }
     return next();
 });
 
 app.UseCors();
 
-if (!app.Environment.IsProduction())
+if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName.Equals("uat", StringComparison.OrdinalIgnoreCase))
 {
     app.UseSwagger(c =>
     {
         c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
         {
+            // Ensure OpenAPI version is explicitly set
+            if (swaggerDoc.Info != null)
+            {
+                swaggerDoc.Info.Version = "v1";
+            }
+            
             var pathBase = httpReq.PathBase.Value ?? "";
             if (!string.IsNullOrEmpty(pathBase))
             {
