@@ -1,18 +1,18 @@
-@description('Azure region for resource deployment')
-param location string
+@description('Primary location for all resources')
+param location string = resourceGroup().location
 
-@description('Resource tags')
-param tags object
-
-@minLength(1)
-@maxLength(12)
 @description('The name of the solution.')
+@minLength(3)
+@maxLength(12)
 param projectName string
 
+@description('The type of environment. e.g. local, dev, uat, prod.')
 @minLength(1)
 @maxLength(4)
-@description('The type of environment. e.g. local, dev, uat, prod.')
 param environmentName string
+
+@description('Tags to apply to all resources.')
+param tags object = {}
 
 @description('Azure AD Tenant ID')
 param azureTenantId string
@@ -29,14 +29,11 @@ param appServicePlanName string
 @description('Application Insights name')
 param applicationInsightsName string = toLower('${resourcePrefix}-apiapp')
 
-@description('Log Analytics Workspace name')
-param logAnalyticsWorkspaceName string
+@description('Log Analytics Workspace ID')
+param logAnalyticsWorkspaceResourceId string
 
 @description('Key Vault name')
 param keyVaultName string
-
-@description('Storage account name')
-param storageName string
 
 @description('Storage Account name (for existing resource)')
 param storageAccountName string
@@ -47,7 +44,7 @@ param documentIntelligenceServiceName string
 @description('Document Intelligence Service endpoint')
 param documentIntelligenceEndpoint string
 
-@description('OpenAI resource name')
+@description('OpenAI resource name. If using Foundry, this will be the account name.')
 param openAiName string
 
 @description('OpenAI API endpoint')
@@ -80,6 +77,9 @@ param serviceBusName string
 @description('Service Bus queue name')
 param serviceBusQueueName string = toLower('${resourcePrefix}-folders-queue')
 
+@description('Maximum message size for Service Bus queue in KB')
+param maxServiceBusQueueMessageSizeInKilobytes int = 256
+
 @description('Cosmos DB Account name')
 param cosmosDbAccountName string
 
@@ -90,9 +90,6 @@ param agileChatDatabaseName string = 'AgileChat'
 
 @description('Allowed origins for CORS')
 param allowedOrigins string[] = []
-
-@description('Admin email addresses')
-param adminEmailAddresses array
 
 @description('Enable PII Auditing')
 @allowed(['true', 'false'])
@@ -108,9 +105,25 @@ param storageServiceFoldersContainerName string = 'index-content'
 param eventGridName string = toLower('${resourcePrefix}-blob-eg')
 
 param allowModelSelection bool = true
+
+@description('Type of file previewing')
+@allowed(['None', 'Preview', 'Download'])
+param filePreviewType string = 'Preview'
+
 param defaultTextModelId string = 'gpt-4o'
 
 param eventGridSystemTopicSubName string = toLower('${resourcePrefix}-folders-blobs-listener')
+
+@description('Whether to enable network isolation for resources')
+param networkIsolation bool = false
+
+@description('Azure Virtual Network name')
+param virtualNetworkName string = toLower('${resourcePrefix}-vnet')
+
+@description('App Service subnet name')
+param appServiceSubnetName string = 'AppServiceSubnet'
+
+param deployRoleAssignments bool = true
 
 var blobContainersArray = loadJsonContent('../blob-storage-containers.json')
 var blobContainers = [
@@ -120,68 +133,12 @@ var blobContainers = [
   }
 ]
 
-resource azureopenai 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
-  name: openAiName
-}
-
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: storageAccountName
 }
 
-resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
-  name: documentIntelligenceServiceName
-}
-
-resource serviceBus 'Microsoft.ServiceBus/namespaces@2024-01-01' existing = {
-  name: serviceBusName
-}
-
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' existing = {
-  name: logAnalyticsWorkspaceName
-}
-
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' existing = {
   name: appServicePlanName
-}
-
-resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
-  name: keyVaultName
-}
-
-// Key Vault Secrets User Role
-resource keyVaultSecretsUserRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '4633458b-17de-408a-b874-0445c86b69e6'
-  scope: subscription()
-}
-
-// Cognitive Services OpenAI User Role
-resource openAiUserRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
-  scope: subscription()
-}
-
-// Cognitive Services User Role for Document Intelligence
-resource cognitiveServicesUserRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: 'a97b65f3-24c7-4388-baec-2e87135dc908'
-  scope: subscription()
-}
-
-// Storage Blob Data Contributor Role
-resource blobDataContributorRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
-  scope: subscription()
-}
-
-// Azure Service Bus Data Receiver Role
-resource serviceBusDataReceiverRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '4f6d3b9b-027b-4f4c-9142-0e5a2a2247e0'
-  scope: subscription()
-}
-
-// Azure Service Bus Data Sender Role
-resource serviceBusDataSenderRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '69a216fc-b8fb-44d8-bc22-1f3c2cd27a39'
-  scope: subscription()
 }
 
 resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2024-01-01' existing = {
@@ -197,6 +154,13 @@ resource apiAppManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities
   location: location
 }
 
+resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' existing = if (networkIsolation) {
+  name: virtualNetworkName
+}
+
+var virtualNetworkResourceId = networkIsolation ? vnet.id : ''
+var appServiceSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${appServiceSubnetName}' : ''
+
 module apiAppModule '../modules/site.bicep' = {
   name: 'apiAppModule'
   dependsOn: [
@@ -207,8 +171,11 @@ module apiAppModule '../modules/site.bicep' = {
     location: location
     tags: union(tags, { 'azd-service-name': 'agilechat-api' })
     serverFarmResourceId: appServicePlan.id
-    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspace.id
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     userAssignedIdentityId: apiAppManagedIdentity.id
+    networkIsolation: networkIsolation
+    virtualNetworkResourceId: virtualNetworkResourceId
+    virtualNetworkSubnetResourceId: appServiceSubnetResourceId
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true
@@ -233,7 +200,7 @@ module apiAppModule '../modules/site.bicep' = {
       [
         {
           name: 'BlobStorage__AccountName'
-          value: storageName
+          value: storageAccountName
         }
         {
           name: 'Audit__IncludePII'
@@ -280,24 +247,8 @@ module apiAppModule '../modules/site.bicep' = {
           value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-COSMOSDB-KEY)'
         }
         {
-          name: 'KeyVault__Name'
-          value: keyVaultName
-        }
-        {
-          name: 'KeyVault__ClientId'
-          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-CLIENT-ID)'
-        }
-        {
-          name: 'KeyVault__TenantId'
-          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-TENANT-ID)'
-        }
-        {
           name: 'ApplicationInsights__InstrumentationKey'
           value: applicationInsights.properties.InstrumentationKey
-        }
-        {
-          name: 'AdminEmailAddresses'
-          value: join(adminEmailAddresses, ',')
         }
         {
           name: 'ASPNETCORE_ENVIRONMENT'
@@ -346,12 +297,16 @@ module apiAppModule '../modules/site.bicep' = {
           value: embeddingModelName
         }
         {
-          name: 'AllowModelSelection'
+          name: 'AppSettings__ModelSelectionFeatureEnabled'
           value: allowModelSelection
         }
         {
-          name: 'DefaultTextModelId'
+          name: 'AppSettings__DefaultTextModelId'
           value: defaultTextModelId
+        }
+		{
+          name: 'AppSettings__FilePreviewType'
+          value: filePreviewType
         }
         {
           name: 'AzureSearch__Endpoint'
@@ -386,7 +341,7 @@ resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2024-01-01' = {
   name: serviceBusQueueName
   parent: serviceBusNamespace
   properties: {
-    maxMessageSizeInKilobytes: 256
+    maxMessageSizeInKilobytes: maxServiceBusQueueMessageSizeInKilobytes
     lockDuration: 'PT5M'
     maxSizeInMegabytes: 5120
     requiresDuplicateDetection: false
@@ -423,10 +378,15 @@ resource eventGrid 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2024-06-
   name: eventGridSystemTopicSubName
   parent: eventGridSystemTopic
   properties: {
-    destination: {
-      endpointType: 'ServiceBusQueue'
-      properties: {
-        resourceId: serviceBusQueue.id
+    deliveryWithResourceIdentity: {
+      destination: {
+        endpointType: 'ServiceBusQueue'
+        properties: {
+          resourceId: serviceBusQueue.id
+        }
+      }
+      identity: {
+        type: 'SystemAssigned'
       }
     }
     filter: {
@@ -456,76 +416,7 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   kind: 'web'
   properties: {
     Application_Type: 'web'
-    WorkspaceResourceId: logAnalyticsWorkspace.id
-  }
-}
-
-resource apiAppOpenAiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, azureopenai.id, openAiUserRole.id)
-  scope: azureopenai
-  properties: {
-    roleDefinitionId: openAiUserRole.id
-    principalId: apiAppManagedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource apiAppBlobStorageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, storage.id, blobDataContributorRole.id)
-  scope: storage
-  properties: {
-    roleDefinitionId: blobDataContributorRole.id
-    principalId: apiAppManagedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// resource apiAppCosmosDbContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-//   name: guid(resourceGroup().id, apiAppManagedIdentity.id, cosmosDbAccount.id, cosmosDbContributorRole.id)
-//   scope: cosmosDbAccount
-//   properties: {
-//     roleDefinitionId: cosmosDbContributorRole.id
-//     principalId: apiAppManagedIdentity.properties.principalId
-//     principalType: 'ServicePrincipal'
-//   }
-// }
-
-resource apiAppDocIntelligenceRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, documentIntelligence.id, cognitiveServicesUserRole.id)
-  scope: documentIntelligence
-  properties: {
-    roleDefinitionId: cognitiveServicesUserRole.id
-    principalId: apiAppManagedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource apiAppServiceBusReceiverRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, serviceBus.id, serviceBusDataReceiverRole.id)
-  scope: serviceBus
-  properties: {
-    roleDefinitionId: serviceBusDataReceiverRole.id
-    principalId: apiAppManagedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource apiAppServiceBusSenderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, serviceBus.id, serviceBusDataSenderRole.id)
-  scope: serviceBus
-  properties: {
-    roleDefinitionId: serviceBusDataSenderRole.id
-    principalId: apiAppManagedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-module appServiceSecretsUserRoleAssignmentModule '../modules/keyvaultRoleAssignment.bicep' = {
-  name: guid(resourceGroup().id, apiAppManagedIdentity.id, keyVault.id, keyVaultSecretsUserRole.id)
-  params: {
-    roleDefinitionId: keyVaultSecretsUserRole.id
-    principalId: apiAppManagedIdentity.properties.principalId
-    keyVaultName: keyVaultName
+    WorkspaceResourceId: logAnalyticsWorkspaceResourceId
   }
 }
 
@@ -544,5 +435,19 @@ resource blobContainersResource 'Microsoft.Storage/storageAccounts/blobServices/
   }
 ]
 
+module apiAppRoleAssignments './roleAssignment.bicep' = if (deployRoleAssignments) {
+  name: 'apiAppRoleAssignments'
+  params: {
+    principalId: apiAppManagedIdentity.properties.principalId
+    openAiResourceId: openAiName
+    storageResourceId: storageAccountName
+    documentIntelligenceResourceId: documentIntelligenceServiceName
+    serviceBusResourceId: serviceBusName
+    keyVaultResourceId: keyVaultName
+    eventGridSystemTopicPrincipalId: eventGridSystemTopic.identity.principalId
+  }
+}
+
+output apiAppName string = apiAppModule.outputs.name
 output apiAppDefaultHostName string = apiAppModule.outputs.defaultHostName
 output apiAppManagedIdentityId string = apiAppManagedIdentity.id

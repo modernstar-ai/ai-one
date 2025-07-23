@@ -11,7 +11,9 @@ public class BlobInitializer(BlobServiceClient blobServiceClient) : IAsyncInitia
 {
     public async Task InitializeAsync()
     {
-        var container = blobServiceClient.GetBlobContainerClient(Constants.BlobContainerName);
-        await container.CreateIfNotExistsAsync();
+        var indexContainer = blobServiceClient.GetBlobContainerClient(Constants.BlobIndexContainerName);
+        await indexContainer.CreateIfNotExistsAsync();
+        var threadContainer = blobServiceClient.GetBlobContainerClient(Constants.BlobThreadContainerName);
+        await threadContainer.CreateIfNotExistsAsync();
     }
 }

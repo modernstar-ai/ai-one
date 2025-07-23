@@ -1,0 +1,106 @@
+
+parameters:
+- name: environment
+  type: string
+- name: serviceConnection
+  type: string
+- name: azureBicepCore
+  type: string
+- name: azureBicepAi
+  type: string
+- name: stageName
+  type: string
+- name: dependsOn
+  type: object
+
+stages:
+  - stage: ${{ parameters.stageName }}
+    displayName: 'Deploy ${{ parameters.environment }} environment'
+    condition: eq(variables['environment'], '${{ parameters.environment }}')
+    variables:
+      - group: ${{ parameters.environment }}
+    dependsOn: ${{ parameters.dependsOn }}
+    jobs:
+      - job: DeployCoreInfra${{ parameters.environment }}
+        displayName: 'Deploy Core Infrastructure'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+            fetchDepth: 1
+            persistCredentials: true
+
+          - task: AzureCLI@2
+            displayName: 'Bicep What-If Analysis - Core Infrastructure'
+            inputs:
+              azureSubscription: ${{ parameters.serviceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az deployment group what-if \
+                  --name core-bicep-whatif-${{ parameters.environment }} \
+                  --resource-group $(AZURE_RESOURCE_GROUP) \
+                  --template-file ${{ parameters.azureBicepCore }} \
+                  --parameters ./infra/platform/core/${{ parameters.environment }}.bicepparam environmentName=${{ parameters.environment }}
+
+          - task: AzureCLI@2
+            displayName: 'Deploy Core Infrastructure'
+            inputs:
+              azureSubscription: ${{ parameters.serviceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az deployment group create \
+                  --name core-deployment-${{ parameters.environment }} \
+                  --resource-group $(AZURE_RESOURCE_GROUP) \
+                  --template-file ${{ parameters.azureBicepCore }} \
+                  --parameters ./infra/platform/core/${{ parameters.environment }}.bicepparam environmentName=${{ parameters.environment }}
+
+          - script: |
+              echo "✅ Platform Core Infrastructure Deployment: Completed"
+              echo "📋 Environment: ${{ parameters.environment }}"
+              echo "📋 Resource Group: $(AZURE_RESOURCE_GROUP)"
+            displayName: 'Print Core Infra Deployment Summary'
+
+      - job: DeployCognitiveInfra${{ parameters.environment }}
+        displayName: 'Deploy Cognitive Services Infrastructure'
+        dependsOn: DeployCoreInfra${{ parameters.environment }}
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+            fetchDepth: 1
+            persistCredentials: true
+
+          - task: AzureCLI@2
+            displayName: 'Bicep What-If Analysis - Cognitive Services Infrastructure'
+            inputs:
+              azureSubscription: ${{ parameters.serviceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az deployment group what-if \
+                  --name ai-bicep-whatif-${{ parameters.environment }} \
+                  --resource-group $(AZURE_RESOURCE_GROUP) \
+                  --template-file ${{ parameters.azureBicepAi }} \
+                  --parameters ./infra/platform/ai/${{ parameters.environment }}.bicepparam environmentName=${{ parameters.environment }}
+
+          - task: AzureCLI@2
+            displayName: 'Deploy Cognitive Services Infrastructure'
+            inputs:
+              azureSubscription: ${{ parameters.serviceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az deployment group create \
+                  --name ai-deployment-${{ parameters.environment }} \
+                  --resource-group $(AZURE_RESOURCE_GROUP) \
+                  --template-file ${{ parameters.azureBicepAi }} \
+                  --parameters ./infra/platform/ai/${{ parameters.environment }}.bicepparam environmentName=${{ parameters.environment }}
+
+          - script: |
+              echo "✅ Platform Cognitive Services Deployment: Completed"
+              echo "🎉 All platform components deployed successfully!"
+              echo "📋 Environment: ${{ parameters.environment }}"
+              echo "📋 Resource Group: $(AZURE_RESOURCE_GROUP)"
+            displayName: 'Print Cognitive Infra Deployment Summary'

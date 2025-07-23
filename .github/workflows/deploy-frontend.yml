@@ -1,31 +1,40 @@
+# Deploy AI-One Web App
 name: Deploy AI-One Web App
 
-# Manually triggered workflow
+# Triggers: manual, push to development, and relevant file changes
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Select the environment to deploy the Web Application infrastructure"
+        description: 'Select the environment to deploy the Web Application infrastructure'
         type: choice
-        default: "dev"
+        default: 'dev'
         options:
-          - "dev"
-          - "tst"
-          - "uat"
-          - "prod"
+          - 'dev'
+          - 'prod'
         required: true
       uiWebAppName:
-        description: "Enter the name of the Web App"
+        description: 'Enter the name of the Web App'
         type: string
-        default: "ms-aione-dev-webapp"
-
+        default: 'ms-aione-dev-webapp'
+      deployInfra:
+        description: 'Deploy Web Infrastructure (set to false to skip infra deployment)'
+        type: boolean
+        default: true
+        required: false
+  push:
+    branches:
+      - development
+    paths:
+      - 'src/agile-chat-web/**'
+      - 'infra/frontend/**'
 env:
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
   PROJECT_NAME: ${{ vars.PROJECT_NAME }}
   AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
-  AZURE_BICEP_MAIN: "./infra/frontend/webapp.bicep"
-  AGILE_WEB_SRC: "./src/agile-chat-web"
+  AZURE_BICEP_MAIN: ./infra/frontend/webapp.bicep
+  AGILE_WEB_SRC: ./src/agile-chat-web
   VITE_AGILECHAT_API_URL: ${{ vars.VITE_AGILECHAT_API_URL }}
   VITE_AZURE_AD_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   VITE_AZURE_AD_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
@@ -37,9 +46,10 @@ permissions:
   contents: read
 
 jobs:
-  deploy-infra-and-web:
+  deploy-infra:
+    if: ${{ inputs.deployInfra == true }}
     environment: ${{ inputs.environment }}
-    name: Deploy Web Infrastructure and Application
+    name: Deploy Web Infrastructure
     runs-on: ubuntu-latest
 
     steps:
@@ -56,7 +66,7 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Validate Web Infrastructure (Bicep What-If)
+      - name: Validate Web App Infrastructure (Bicep What-If)
         uses: azure/bicep-deploy@v2
         with:
           type: deployment
@@ -69,7 +79,7 @@ jobs:
           parameters-file: infra/frontend/${{ inputs.environment }}.bicepparam
           parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
-      - name: Deploy Web Infrastructure (Bicep Create)
+      - name: Deploy Web App Infrastructure (Bicep Create)
         uses: azure/bicep-deploy@v2
         with:
           type: deployment
@@ -82,12 +92,32 @@ jobs:
           parameters-file: infra/frontend/${{ inputs.environment }}.bicepparam
           parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
+  deploy-app:
+    needs: [deploy-infra]
+    if: ${{ always() && (inputs.deployInfra == false || needs.deploy-infra.result == 'success' || needs.deploy-infra.result == 'skipped') }}
+    environment: ${{ inputs.environment }}
+    name: Deploy AI-One Web App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          node-version: '18.x'
 
-      - name: Build Agile Chat Web App
+      - name: Build AI-One Web App
         run: |
           cd ${{ env.AGILE_WEB_SRC }}
           npm install
@@ -96,16 +126,16 @@ jobs:
       - name: Zip Web App Artifact for Deployment
         run: |
           cd ${{ env.AGILE_WEB_SRC }}
-          zip -r ../../release.zip dist
+          zip -r ../../frontend-release.zip dist
 
       - name: Upload Web App Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: release.zip
+          name: frontend-app
+          path: frontend-release.zip
 
-      - name: Deploy Agile Chat Web App to Azure Web App
+      - name: Deploy AI-One Web App to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ github.event.inputs.uiWebAppName }}
-          package: ./release.zip
+          package: ./frontend-release.zip

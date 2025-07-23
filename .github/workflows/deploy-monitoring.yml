@@ -4,17 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Select the environment to deploy the platform infrastructure"
+        description: 'Select the environment to deploy the platform infrastructure'
         type: choice
-        default: "dev"
+        default: 'dev'
         options:
-          - "dev"
-          - "tst"
-          - "uat"
-          - "prod"
+          - 'dev'
+          - 'prod'
         required: true
 env:
-  AZURE_BICEP_MAIN: "./infra/platform/monitoring/main.bicep"
+  AZURE_BICEP_MAIN: './infra/platform/monitoring/main.bicep'
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
   PROJECT_NAME: ${{ vars.PROJECT_NAME }}

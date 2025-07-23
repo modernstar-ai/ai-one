@@ -10,14 +10,13 @@ namespace Agile.Chat.Domain.Assistants.Aggregates;
 public class Assistant : AuditableAggregateRoot, IAccessControllable
 {
     [JsonConstructor]
-    private Assistant(string name, string description, AssistantType type, RagType ragType, AssistantStatus status, string greeting,
+    private Assistant(string name, string description, AssistantType type, AssistantStatus status, string greeting,
         AssistantFilterOptions filterOptions, AssistantPromptOptions promptOptions, AssistantModelOptions modelOptions, PermissionsAccessControl accessControl)
     {
         //Do validation logic and throw domain level exceptions if fails
         Name = name;
         Description = description;
         Type = type;
-        RagType = ragType;
         Status = status;
         Greeting = greeting;
         FilterOptions = filterOptions;
@@ -30,7 +29,6 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
     public string Description { get; private set; }
     public string Greeting { get; private set; }
     public AssistantType Type { get; private set; }
-    public RagType RagType { get; private set; }
     public AssistantStatus Status { get; private set; }
     public AssistantPromptOptions PromptOptions { get; private set; }
     public AssistantFilterOptions FilterOptions { get; private set; }
@@ -41,7 +39,6 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
         string description,
         string greeting,
         AssistantType type,
-        RagType ragType,
         AssistantStatus status,
         AssistantFilterOptions filterOptions,
         AssistantPromptOptions promptOptions,
@@ -49,7 +46,7 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
         PermissionsAccessControl? accessControl = null)
     {
         DomainHelpers.NormalizeAccessControl(accessControl);
-        return new Assistant(name, description, type, ragType, status, greeting, filterOptions,
+        return new Assistant(name, description, type, status, greeting, filterOptions,
             promptOptions, modelOptions, accessControl ?? new PermissionsAccessControl());
     }
 
@@ -57,7 +54,6 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
         string description,
         string greeting,
         AssistantType type,
-        RagType ragType,
         AssistantStatus status,
         AssistantFilterOptions filterOptions,
         AssistantPromptOptions promptOptions,
@@ -67,7 +63,6 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
         Name = name;
         Description = description;
         Type = type;
-        RagType = ragType;
         Status = status;
         Greeting = greeting;
         FilterOptions = filterOptions;

@@ -80,13 +80,14 @@ export function ResponsiveNavigation() {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  // Initial load
   useEffect(() => {
-    if (isLoggedIn && username && isPanelOpen) {
-      loadChatThreads(true);
+    if (isLoggedIn && username) {
+      const isMobile = window.innerWidth < 1024;
+      if (isMobile || isPanelOpen) {
+        loadChatThreads(true);
+      }
     }
-  }, [isPanelOpen]);
-
+  }, [isLoggedIn, username, isPanelOpen]);
   // Load when panel is opened
   useEffect(() => {
     if (isPanelOpen && isLoggedIn && username && !initialLoad) {

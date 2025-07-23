@@ -1,80 +1,67 @@
-# Platform Infrastructure Deploy Pipeline (converted from GitHub Actions)
 trigger: none
 
 parameters:
-- name: project_name
-  type: string
-  default: ag-aione
-  displayName: 'Enter the Name of the project'
-
-- name: environment
-  type: string
-  default: dev
-  displayName: 'Select the environment to deploy the platform infrastructure'
-  values:
-  - dev
-  - tst
-  - uat
-  - prod
-
-- name: azure_location
-  type: string
-  default: australiaeast
-  displayName: 'Select the Azure deployment location'
-  values:
-  - australiaeast
-  - australiasoutheast
+  - name: environment
+    type: string
+    default: dev
+    displayName: "Select the environment to deploy the platform infrastructure"
+    values:
+      - dev
+      - tst
+      - uat
+      - prod
 
 variables:
   - name: environment
     value: ${{ parameters.environment }}
-  - name: SERVICE_CONNECTION_NAME_DEV
-    value: 'dev-service-connection'
-  - name: azureBicepMain
-    value: './infra/platform/platform.bicep'
+  - name: AZURE_BICEP_CORE
+    value: "./infra/platform/core/main.bicep"
+  - name: AZURE_BICEP_AI
+    value: "./infra/platform/ai/main.bicep"
+
+  # Environment-specific service connections
+  - name: SERVICE_CONNECTION_DEV
+    value: "dev-service-connection"
+  - name: SERVICE_CONNECTION_TST
+    value: "tst-service-connection"
+  - name: SERVICE_CONNECTION_UAT
+    value: "uat-service-connection"
+  - name: SERVICE_CONNECTION_PROD
+    value: "prod-service-connection"
 
 stages:
+  - template: templates/deploy-platform-template.yml
+    parameters:
+      stageName: DeployPlatformDev
+      environment: dev
+      serviceConnection: $(SERVICE_CONNECTION_DEV)
+      azureBicepCore: $(AZURE_BICEP_CORE)
+      azureBicepAi: $(AZURE_BICEP_AI)
+      dependsOn: null
 
-  - stage: DeployDev
-    displayName: 'Deploy Platform Infrastructure - Dev'
-    condition: eq(variables['environment'], 'dev')
-    variables:
-      - group: dev
-    jobs:
-      - deployment: DeployPlatformDev
-        environment: 'dev'
-        pool:
-          vmImage: 'ubuntu-latest'
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - checkout: self
-                - task: AzureCLI@2
-                  displayName: 'Bicep What-If Analysis (Dev)'
-                  inputs:
-                    azureSubscription: $(SERVICE_CONNECTION_NAME_DEV)
-                    scriptType: bash
-                    scriptLocation: inlineScript
-                    inlineScript: |
-                      az deployment group what-if \
-                        --name platform-bicep-whatif-dev \
-                        --resource-group $(AZURE_RESOURCE_GROUP) \
-                        --template-file $(azureBicepMain) \
-                        --parameters ./infra/platform/dev.bicepparam environmentName=dev
-                - task: AzureCLI@2
-                  displayName: 'Deploy Bicep Infrastructure (Dev)'
-                  inputs:
-                    azureSubscription: $(SERVICE_CONNECTION_NAME_DEV)
-                    scriptType: bash
-                    scriptLocation: inlineScript
-                    inlineScript: |
-                      az deployment group create \
-                        --name platform-bicep-deploy-dev \
-                        --resource-group $(AZURE_RESOURCE_GROUP) \
-                        --template-file $(azureBicepMain) \
-                        --parameters ./infra/platform/dev.bicepparam environmentName=dev
-                - script: |
-                    echo "intOutput: $(intOutput)"
-                    echo "stringOutput: $(stringOutput)"
-                  displayName: 'Print Deployment Outputs (Dev)'
+  - template: templates/deploy-platform-template.yml
+    parameters:
+      stageName: DeployPlatformTst
+      environment: tst
+      serviceConnection: $(SERVICE_CONNECTION_TST)
+      azureBicepCore: $(AZURE_BICEP_CORE)
+      azureBicepAi: $(AZURE_BICEP_AI)
+      dependsOn: DeployPlatformDev
+
+  - template: templates/deploy-platform-template.yml
+    parameters:
+      stageName: DeployPlatformUat
+      environment: uat
+      serviceConnection: $(SERVICE_CONNECTION_UAT)
+      azureBicepCore: $(AZURE_BICEP_CORE)
+      azureBicepAi: $(AZURE_BICEP_AI)
+      dependsOn: DeployPlatformTst
+
+  - template: templates/deploy-platform-template.yml
+    parameters:
+      stageName: DeployPlatformProd
+      environment: prod
+      serviceConnection: $(SERVICE_CONNECTION_PROD)
+      azureBicepCore: $(AZURE_BICEP_CORE)
+      azureBicepAi: $(AZURE_BICEP_AI)
+      dependsOn: DeployPlatformUat

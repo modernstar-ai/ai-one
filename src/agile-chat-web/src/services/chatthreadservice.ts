@@ -1,5 +1,5 @@
 import axios from '@/error-handling/axiosSetup';
-import { ChatThread, CreateChatThread, Message, MessageOptions } from '@/types/ChatThread';
+import { ChatThread, ChatThreadFile, CreateChatThread, Message, MessageOptions } from '@/types/ChatThread';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -91,4 +91,24 @@ export async function GetChatThreadMessages(chatThreadId: string): Promise<Messa
   } catch {
     return [];
   }
+}
+
+export async function GetChatThreadFiles(chatThreadId: string): Promise<ChatThreadFile[]> {
+  const apiUrl = getApiUrl(`/Files/${chatThreadId}`);
+  try {
+    const files = await axios.get<ChatThreadFile[]>(apiUrl);
+    return files.data;
+  } catch {
+    return [];
+  }
+}
+
+export async function UploadChatThreadFile(chatThreadId: string, formData: FormData) {
+  const apiUrl = getApiUrl(`/Upload/${chatThreadId}`);
+  return axios.put(apiUrl, formData);
+}
+
+export async function DeleteChatThreadFile(threadId: string, fileId: string) {
+  const apiUrl = getApiUrl(`/${threadId}/${fileId}`);
+  return axios.delete(apiUrl);
 }

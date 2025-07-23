@@ -1,27 +1,30 @@
 name: Deploy AI-One Platform Infrastructure
 
 on:
-  # push:
-  #   branches:
-  #     - "feature/vnet"
+  push:
+    branches:
+      - development
+    paths:
+      - 'infra/platform/**'
   workflow_dispatch:
     inputs:
       environment:
-        description: "Select the environment to deploy the platform infrastructure"
+        description: 'Select the environment to deploy the platform infrastructure'
         type: choice
-        default: "dev"
+        default: 'dev'
         options:
-          - "dev"
-          - "tst"
-          - "uat"
-          - "prod"
+          - 'dev'
+          - 'prod'
         required: true
 env:
-  AZURE_BICEP_MAIN: "./infra/platform.bicep"
+  AZURE_BICEP_CORE: './infra/platform/core/main.bicep'
+  AZURE_BICEP_AI: './infra/platform/ai/main.bicep'
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
   AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
   PROJECT_NAME: ${{ vars.PROJECT_NAME }}
   AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+  AZURE_OPENAI_LOCATION: ${{ vars.AZURE_OPENAI_LOCATION }}
+
   # AZURE_RESOURCE_GROUP
   # APIM_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
   # APIM_EMBEDDINGS_ENDPOINT_OVERRIDE (optional but needed to be defined in variables as empty)
@@ -33,7 +36,7 @@ permissions:
   contents: read
 
 jobs:
-  deploy-infrastructure:
+  deploy-core-infra:
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     steps:
@@ -46,7 +49,7 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Bicep What-If Analysis
+      - name: Bicep What-If Analysis - Core Infrastructure
         uses: azure/bicep-deploy@v2
         with:
           type: deployment
@@ -55,24 +58,68 @@ jobs:
           scope: resourceGroup
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
-          template-file: ${{ env.AZURE_BICEP_MAIN }}
-          parameters-file: infra/platform/${{ inputs.environment }}.bicepparam
+          template-file: ${{ env.AZURE_BICEP_CORE }}
+          parameters-file: infra/platform/core/${{ inputs.environment }}.bicepparam
           parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
-      - name: Deploy Bicep Infrastructure
+      - name: Deploy Core Infrastructure
         uses: azure/bicep-deploy@v2
         with:
           type: deployment
           operation: create
-          name: bicep-deployment
+          name: core-deployment
           scope: resourceGroup
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
-          template-file: ${{ env.AZURE_BICEP_MAIN }}
-          parameters-file: infra/platform/${{ inputs.environment }}.bicepparam
+          template-file: ${{ env.AZURE_BICEP_CORE }}
+          parameters-file: infra/platform/core/${{ inputs.environment }}.bicepparam
           parameters: '{"environmentName": "${{ inputs.environment }}" }'
 
-      - name: Print Deployment Outputs
+  deploy-cognitive-infra:
+    needs: deploy-core-infra
+    environment: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Bicep What-If Analysis - Cognitive Services Infrastructure
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          name: bicep-deployment-validation
+          operation: validate
+          scope: resourceGroup
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ${{ env.AZURE_BICEP_AI }}
+          parameters-file: infra/platform/ai/${{ inputs.environment }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment }}" }'
+
+      - name: Deploy Cognitive Services Infrastructure
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: create
+          name: ai-deployment
+          scope: resourceGroup
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ${{ env.AZURE_BICEP_AI }}
+          parameters-file: infra/platform/ai/${{ inputs.environment }}.bicepparam
+          parameters: '{"environmentName": "${{ inputs.environment }}" }'
+
+      - name: Print Deployment Summary
         run: |
-          echo "intOutput: ${{ steps.deployment.outputs.intOutput }}"
-          echo "stringOutput: ${{ steps.deployment.outputs.stringOutput }}"
+          echo "? Platform Core Infrastructure Deployment: Completed"
+          echo "? Platform Cognitive Services Deployment: Completed"
+          echo ""
+          echo "?? All platform components deployed successfully!"
+          echo "?? Environment: ${{ inputs.environment }}"
+          echo "?? Location: ${{ vars.AZURE_LOCATION }}"

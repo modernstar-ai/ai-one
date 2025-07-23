@@ -1,8 +1,8 @@
 # AI-One Documentation
 
-- [Deployment Guide](deployment/overview.md)
-    - [Overview](deployment/overview.md)
-    - [Application Registration](deployment/app_registration.md)
-    - [Deployment Steps Using GitHub Actions](deployment/github_steps.md)
-    - [Deployment Steps Using Azure DevOps](deployment/azure_devops_steps.md)
+- [AI-One Solution Design](architecture.md)
+- [AI-One Deployment Guide](deployment.md)
+    - [Infrastructure Overview](deployment/#1-infrastructure-overview)
+    - [Prerequisites](deployment/#21-prerequisites)
+    - [Deployment Steps](deployment/#22-deployment-steps)
 

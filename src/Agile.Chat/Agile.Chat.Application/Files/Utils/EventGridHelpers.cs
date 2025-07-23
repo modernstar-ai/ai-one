@@ -23,13 +23,13 @@ public static class EventGridHelpers
         public string ContentType { get; set; }
         public long ContentLength { get; set; }
     }
-    
+
     public static (string, string) GetIndexAndFolderName(JsonNode eventGrid)
     {
         var subject = eventGrid?["subject"]?.ToString();
         if (string.IsNullOrWhiteSpace(subject))
             return (string.Empty, string.Empty);
-        
+
         // Define the regular expression to match the pattern
         string pattern = @"/blobs/([^/]+)(?:/([^/]+(?:/[^/]+)*))?/.*";
 
@@ -39,14 +39,14 @@ public static class EventGridHelpers
         // Match the path against the pattern
         var match = regex.Match(subject);
         if (!match.Success) return (string.Empty, string.Empty);
-        
+
         // Extract the INDEX_NAME and FOLDERS_HERE
         string indexName = match.Groups[1].Value; // First captured group
         string folder = match.Groups[2].Success ? match.Groups[2].Value : string.Empty;   // Second captured group
 
         return (indexName, folder);
     }
-    
+
     public static (string, Type) GetFileNameAndEventType(JsonNode eventGrid)
     {
         var subject = eventGrid?["subject"]?.ToString();
@@ -61,7 +61,27 @@ public static class EventGridHelpers
 
         return (fileName!, eventType);
     }
-    
+
+    public static string GetBlobUrl(string blobStorageEndpoint, JsonNode eventGrid)
+    {
+        var subject = eventGrid?["subject"]?.ToString();
+        if (string.IsNullOrWhiteSpace(subject))
+            return string.Empty;
+
+        // Extract container and blob path
+        var regex = new Regex(@"^/blobServices/default/containers/(?<container>[^/]+)/blobs/(?<blobPath>.+)$", RegexOptions.Compiled);
+        var match = regex.Match(subject);
+
+        if (!match.Success)
+            return string.Empty;
+
+        string containerName = match.Groups["container"].Value;
+        string blobPath = match.Groups["blobPath"].Value;
+
+        blobStorageEndpoint = blobStorageEndpoint.TrimEnd('/');
+        return $"{blobStorageEndpoint}/{containerName}/{blobPath}";
+    }
+
     public static FileMetadata GetFileCreatedMetaData(JsonNode eventObj)
     {
         return new FileMetadata
@@ -76,10 +96,10 @@ public static class EventGridHelpers
     {
         var folder = !string.IsNullOrWhiteSpace(file.FolderName) ? file.FolderName + "/" : string.Empty;
         var type = eventType == Type.BlobDeleted ? "Microsoft.Storage.BlobDeleted" : "Microsoft.Storage.BlobCreated";
-        
+
         return JsonSerializer.Serialize(new
         {
-            subject = $"/blobServices/default/containers/{Constants.BlobContainerName}/blobs/{file.IndexName}/{folder}{file.Name}",
+            subject = $"/blobServices/default/containers/{Constants.BlobIndexContainerName}/blobs/{file.IndexName}/{folder}{file.Name}",
             eventType = type,
             data = new
             {
