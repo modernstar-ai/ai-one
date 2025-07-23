@@ -43,7 +43,7 @@ app.Use((context, next) =>
 
 app.UseCors();
 
-if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName.Equals("uat", StringComparison.OrdinalIgnoreCase))
+if (app.Environment.IsDevelopment())
 {
     app.UseSwagger(c =>
     {
@@ -67,7 +67,8 @@ if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName.Equals("u
     });
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("./v1/swagger.json", "AIOne API v1");
+        c.SwaggerEndpoint("swagger/v1/swagger.json", "AIOne API v1");
+        c.RoutePrefix = "swagger";
     });
 }
 
