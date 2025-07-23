@@ -64,8 +64,7 @@ if (!app.Environment.IsProduction())
     });
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("swagger/v1/swagger.json", "AIOne API v1");
-        c.RoutePrefix = "swagger";
+        c.SwaggerEndpoint("./v1/swagger.json", "AIOne API v1");
     });
 }
 
