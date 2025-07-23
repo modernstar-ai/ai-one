@@ -13,3 +13,7 @@ param subnetAddressPrefix = '10.3.11.0/24'
 param keyVaultName = 'ag-aionev12-uat-kv'
 param sslCertificateSecretName = 'ag-aione-ssl-cert'
 param enableHttps = true
+param webAppServiceName = 'ag-aionev12-uat-webapp' // Frontend web app
+param webAppServiceDomain = '' // Leave empty to use default azurewebsites.net domain
+param apiAppServiceName = 'ag-aionev12-uat-apiapp' // Backend API app
+param apiAppServiceDomain = '' // Leave empty to use default azurewebsites.net domain

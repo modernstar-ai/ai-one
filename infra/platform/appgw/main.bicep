@@ -33,14 +33,14 @@ param logAnalyticsWorkspaceResourceId string
 param subnetAddressPrefix string
 
 @description('Enable diagnostic settings.')
-param enableDiagnostics bool = false
+param enableDiagnostics bool = true
 
 @description('Enable WAF (Web Application Firewall)')
 param enableWaf bool = true
 
 @description('WAF mode: Detection or Prevention')
 @allowed(['Detection', 'Prevention'])
-param wafMode string = 'Prevention'
+param wafMode string = 'Detection'
 
 @description('WAF rule set type')
 param wafRuleSetType string = 'OWASP'
@@ -49,25 +49,28 @@ param wafRuleSetType string = 'OWASP'
 param wafRuleSetVersion string = '3.2'
 
 @description('Key Vault name for SSL certificate')
-param keyVaultName string = ''
+param keyVaultName string
 
 @description('Name of the SSL certificate secret in Key Vault')
 param sslCertificateSecretName string
 
-@description('Enable HTTPS with Key Vault certificate')
-param enableHttps bool = false
-
 @description('Backend App Service name (private network)')
-param backendAppServiceName string = ''
+param webAppServiceName string = ''
 
 @description('Backend App Service custom domain (if using custom domain)')
-param backendAppServiceDomain string = ''
+param webAppServiceDomain string = ''
+
+@description('Backend API App Service name (private network)')
+param apiAppServiceName string = ''
+
+@description('Backend API App Service custom domain (if using custom domain)')
+param apiAppServiceDomain string = ''
 
 // Calculate a default private IP address based on the subnet
 var calculatedPrivateIP = cidrHost(subnetAddressPrefix, 4)
 
-// Reference existing Key Vault (if provided)
-resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = if (!empty(keyVaultName)) {
+// Reference existing Key Vault
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: keyVaultName
 }
 
@@ -78,8 +81,8 @@ resource appGatewayManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdenti
   tags: tags
 }
 
-// Role assignment for Key Vault Secrets User (if Key Vault is provided)
-resource keyVaultSecretsUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(keyVaultName)) {
+// Role assignment for Key Vault Secrets User
+resource keyVaultSecretsUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroup().id, keyVault.id, appGatewayManagedIdentity.id, '4633458b-17de-408a-b874-0445c86b69e6')
   scope: keyVault
   properties: {
@@ -92,8 +95,8 @@ resource keyVaultSecretsUserRoleAssignment 'Microsoft.Authorization/roleAssignme
   }
 }
 
-// Role assignment for Key Vault Certificate User (if Key Vault is provided)
-resource keyVaultCertificateUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(keyVaultName)) {
+// Role assignment for Key Vault Certificate User
+resource keyVaultCertificateUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroup().id, keyVault.id, appGatewayManagedIdentity.id, 'db79e9a7-68ee-4b58-9aeb-b90e7c24fcba')
   scope: keyVault
   properties: {
@@ -166,16 +169,46 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-09-01' =
           fileUploadLimitInMb: 100
         }
       : null
-    sslCertificates: enableHttps && !empty(keyVault.id) && !empty(sslCertificateSecretName)
-      ? [
-          {
-            name: 'ssl-certificate-from-keyvault'
-            properties: {
-              keyVaultSecretId: '${keyVault.properties.vaultUri}secrets/${sslCertificateSecretName}'
-            }
+    sslCertificates: [
+      {
+        name: 'ssl-certificate-from-keyvault'
+        properties: {
+          keyVaultSecretId: '${keyVault.properties.vaultUri}secrets/${sslCertificateSecretName}'
+        }
+      }
+    ]
+    probes: [
+      {
+        name: 'webAppHealthProbe'
+        properties: {
+          protocol: 'Https'
+          path: '/'
+          interval: 30
+          timeout: 30
+          unhealthyThreshold: 3
+          pickHostNameFromBackendHttpSettings: true
+          minServers: 0
+          match: {
+            statusCodes: ['200-399']
           }
-        ]
-      : []
+        }
+      }
+      {
+        name: 'apiAppHealthProbe'
+        properties: {
+          protocol: 'Https'
+          path: '/swagger'
+          interval: 30
+          timeout: 30
+          unhealthyThreshold: 3
+          pickHostNameFromBackendHttpSettings: true
+          minServers: 0
+          match: {
+            statusCodes: ['200-399']
+          }
+        }
+      }
+    ]
     gatewayIPConfigurations: [
       {
         name: 'appGatewayIpConfig'
@@ -222,14 +255,24 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-09-01' =
     ]
     backendAddressPools: [
       {
-        name: 'appGatewayBackendPool'
+        name: 'appGatewayAiOneWebBackendPool'
         properties: {
-          backendAddresses: !empty(backendAppServiceName)
+          backendAddresses: !empty(webAppServiceName)
             ? [
                 {
-                  fqdn: !empty(backendAppServiceDomain) 
-                    ? backendAppServiceDomain 
-                    : '${backendAppServiceName}.azurewebsites.net'
+                  fqdn: !empty(webAppServiceDomain) ? webAppServiceDomain : '${webAppServiceName}.azurewebsites.net'
+                }
+              ]
+            : []
+        }
+      }
+      {
+        name: 'appGatewayAiOneApiBackendPool'
+        properties: {
+          backendAddresses: !empty(apiAppServiceName)
+            ? [
+                {
+                  fqdn: !empty(apiAppServiceDomain) ? apiAppServiceDomain : '${apiAppServiceName}.azurewebsites.net'
                 }
               ]
             : []
@@ -238,23 +281,119 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-09-01' =
     ]
     backendHttpSettingsCollection: [
       {
-        name: 'appGatewayBackendHttpSettings'
-        properties: {
-          port: 80
-          protocol: 'Http'
-          cookieBasedAffinity: 'Disabled'
-          pickHostNameFromBackendAddress: true
-          requestTimeout: 20
-        }
-      }
-      {
-        name: 'appGatewayBackendHttpsSettings'
+        name: 'appGatewayAiOneWebBackendHttpSettings'
         properties: {
           port: 443
           protocol: 'Https'
           cookieBasedAffinity: 'Disabled'
-          pickHostNameFromBackendAddress: true
+          pickHostNameFromBackendAddress: false
+          hostName: !empty(webAppServiceDomain) ? webAppServiceDomain : '${webAppServiceName}.azurewebsites.net'
           requestTimeout: 20
+          connectionDraining: {
+            enabled: true
+            drainTimeoutInSec: 120
+          }
+          probe: {
+            id: resourceId('Microsoft.Network/applicationGateways/probes', name, 'webAppHealthProbe')
+          }
+          affinityCookieName: 'ApplicationGatewayAffinity'
+        }
+      }
+      {
+        name: 'appGatewayAiOneApiBackendHttpSettings'
+        properties: {
+          port: 443
+          protocol: 'Https'
+          cookieBasedAffinity: 'Disabled'
+          pickHostNameFromBackendAddress: false
+          hostName: !empty(apiAppServiceDomain) ? apiAppServiceDomain : '${apiAppServiceName}.azurewebsites.net'
+          requestTimeout: 30
+          connectionDraining: {
+            enabled: true
+            drainTimeoutInSec: 120
+          }
+          probe: {
+            id: resourceId('Microsoft.Network/applicationGateways/probes', name, 'apiAppHealthProbe')
+          }
+          affinityCookieName: 'ApplicationGatewayAffinity'
+        }
+      }
+    ]
+    rewriteRuleSets: [
+      {
+        name: 'webAppRewriteRuleSet'
+        properties: {
+          rewriteRules: [
+            {
+              ruleSequence: 100
+              name: 'stripWebAppPath'
+              conditions: [
+                {
+                  variable: 'var_uri_path'
+                  pattern: '^/aione/webapp/?(.*)'
+                  ignoreCase: true
+                }
+              ]
+              actionSet: {
+                urlConfiguration: {
+                  modifiedPath: '/{var_uri_path_1}'
+                  reroute: false
+                }
+                requestHeaderConfigurations: [
+                  {
+                    headerName: 'X-Forwarded-Host'
+                    headerValue: '{var_host}'
+                  }
+                  {
+                    headerName: 'X-Forwarded-Proto'
+                    headerValue: 'https'
+                  }
+                  {
+                    headerName: 'X-Original-URL'
+                    headerValue: '{var_uri_path}'
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: 'apiRewriteRuleSet'
+        properties: {
+          rewriteRules: [
+            {
+              ruleSequence: 100
+              name: 'stripApiPath'
+              conditions: [
+                {
+                  variable: 'var_uri_path'
+                  pattern: '^/aione/apiapp/?(.*)'
+                  ignoreCase: true
+                }
+              ]
+              actionSet: {
+                urlConfiguration: {
+                  modifiedPath: '/{var_uri_path_1}'
+                  reroute: false
+                }
+                requestHeaderConfigurations: [
+                  {
+                    headerName: 'X-Forwarded-Host'
+                    headerValue: '{var_host}'
+                  }
+                  {
+                    headerName: 'X-Forwarded-Proto'
+                    headerValue: 'https'
+                  }
+                  {
+                    headerName: 'X-Original-URL'
+                    headerValue: '{var_uri_path}'
+                  }
+                ]
+              }
+            }
+          ]
         }
       }
     ]
@@ -289,15 +428,13 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-09-01' =
             id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', name, 'appGatewayFrontendPortHttps')
           }
           protocol: 'Https'
-          sslCertificate: enableHttps && !empty(keyVault.id) && !empty(sslCertificateSecretName)
-            ? {
-                id: resourceId(
-                  'Microsoft.Network/applicationGateways/sslCertificates',
-                  name,
-                  'ssl-certificate-from-keyvault'
-                )
-              }
-            : null
+          sslCertificate: {
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/sslCertificates',
+              name,
+              'ssl-certificate-from-keyvault'
+            )
+          }
         }
       }
     ]
@@ -305,41 +442,125 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-09-01' =
       {
         name: 'appGatewayRoutingRule'
         properties: {
-          ruleType: 'Basic'
+          ruleType: 'PathBasedRouting'
           priority: 100
           httpListener: {
             id: resourceId('Microsoft.Network/applicationGateways/httpListeners', name, 'appGatewayHttpListener')
           }
-          backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name, 'appGatewayBackendPool')
-          }
-          backendHttpSettings: {
-            id: resourceId(
-              'Microsoft.Network/applicationGateways/backendHttpSettingsCollection',
-              name,
-              'appGatewayBackendHttpSettings'
-            )
+          urlPathMap: {
+            id: resourceId('Microsoft.Network/applicationGateways/urlPathMaps', name, 'appGatewayUrlPathMap')
           }
         }
       }
       {
         name: 'appGatewayHttpsRoutingRule'
         properties: {
-          ruleType: 'Basic'
+          ruleType: 'PathBasedRouting'
           priority: 200
           httpListener: {
             id: resourceId('Microsoft.Network/applicationGateways/httpListeners', name, 'appGatewayHttpsListener')
           }
-          backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name, 'appGatewayBackendPool')
+          urlPathMap: {
+            id: resourceId('Microsoft.Network/applicationGateways/urlPathMaps', name, 'appGatewayUrlPathMap')
           }
-          backendHttpSettings: {
+        }
+      }
+    ]
+    urlPathMaps: [
+      {
+        name: 'appGatewayUrlPathMap'
+        properties: {
+          defaultBackendAddressPool: {
+            id: resourceId(
+              'Microsoft.Network/applicationGateways/backendAddressPools',
+              name,
+              'appGatewayAiOneWebBackendPool'
+            )
+          }
+          defaultBackendHttpSettings: {
             id: resourceId(
               'Microsoft.Network/applicationGateways/backendHttpSettingsCollection',
               name,
-              'appGatewayBackendHttpsSettings'
+              'appGatewayAiOneWebBackendHttpSettings'
             )
           }
+          pathRules: [
+            {
+              name: 'apiPathRule'
+              properties: {
+                paths: ['/aione/apiapp/*']
+                backendAddressPool: {
+                  id: resourceId(
+                    'Microsoft.Network/applicationGateways/backendAddressPools',
+                    name,
+                    'appGatewayAiOneApiBackendPool'
+                  )
+                }
+                backendHttpSettings: {
+                  id: resourceId(
+                    'Microsoft.Network/applicationGateways/backendHttpSettingsCollection',
+                    name,
+                    'appGatewayAiOneApiBackendHttpSettings'
+                  )
+                }
+                rewriteRuleSet: {
+                  id: resourceId('Microsoft.Network/applicationGateways/rewriteRuleSets', name, 'apiRewriteRuleSet')
+                }
+              }
+            }
+            {
+              name: 'webAppPathRule'
+              properties: {
+                paths: ['/aione/webapp/*']
+                backendAddressPool: {
+                  id: resourceId(
+                    'Microsoft.Network/applicationGateways/backendAddressPools',
+                    name,
+                    'appGatewayAiOneWebBackendPool'
+                  )
+                }
+                backendHttpSettings: {
+                  id: resourceId(
+                    'Microsoft.Network/applicationGateways/backendHttpSettingsCollection',
+                    name,
+                    'appGatewayAiOneWebBackendHttpSettings'
+                  )
+                }
+                rewriteRuleSet: {
+                  id: resourceId('Microsoft.Network/applicationGateways/rewriteRuleSets', name, 'webAppRewriteRuleSet')
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+
+// Add diagnostic settings for Application Gateway
+resource appGatewayDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (enableDiagnostics) {
+  name: 'appGatewayDiagnostics'
+  scope: applicationGateway
+  properties: {
+    workspaceId: logAnalyticsWorkspaceResourceId
+    logs: [
+      {
+        categoryGroup: 'allLogs'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
         }
       }
     ]
