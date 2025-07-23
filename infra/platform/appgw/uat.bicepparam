@@ -12,7 +12,6 @@ param logAnalyticsWorkspaceResourceId = '/subscriptions/9221a966-ce17-4b76-a348-
 param subnetAddressPrefix = '10.3.11.0/24'
 param keyVaultName = 'ag-aionev12-uat-kv'
 param sslCertificateSecretName = 'ag-aione-ssl-cert'
-param enableHttps = true
 param webAppServiceName = 'ag-aionev12-uat-webapp' // Frontend web app
 param webAppServiceDomain = '' // Leave empty to use default azurewebsites.net domain
 param apiAppServiceName = 'ag-aionev12-uat-apiapp' // Backend API app

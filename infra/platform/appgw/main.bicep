@@ -330,7 +330,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-09-01' =
               conditions: [
                 {
                   variable: 'var_uri_path'
-                  pattern: '^/aione/webapp/?(.*)'
+                  pattern: '^/aione/webapp/(.*)'
                   ignoreCase: true
                 }
               ]
@@ -351,6 +351,10 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-09-01' =
                   {
                     headerName: 'X-Original-URL'
                     headerValue: '{var_uri_path}'
+                  }
+                  {
+                    headerName: 'X-Forwarded-Prefix'
+                    headerValue: '/aione/webapp'
                   }
                 ]
               }
@@ -368,7 +372,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-09-01' =
               conditions: [
                 {
                   variable: 'var_uri_path'
-                  pattern: '^/aione/apiapp/?(.*)'
+                  pattern: '^/aione/apiapp/(.*)'
                   ignoreCase: true
                 }
               ]
@@ -389,6 +393,14 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-09-01' =
                   {
                     headerName: 'X-Original-URL'
                     headerValue: '{var_uri_path}'
+                  }
+                  {
+                    headerName: 'X-Forwarded-Prefix'
+                    headerValue: '/aione/apiapp'
+                  }
+                  {
+                    headerName: 'X-Forwarded-For'
+                    headerValue: '{var_client_ip}'
                   }
                 ]
               }
