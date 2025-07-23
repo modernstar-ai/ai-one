@@ -11,5 +11,5 @@ param logAnalyticsWorkspaceResourceId = '/subscriptions/9221a966-ce17-4b76-a348-
 
 param subnetAddressPrefix = '10.3.11.0/24'
 param keyVaultName = 'ag-aionev12-uat-kv'
-param sslCertificateSecretName = 'agile-chat-ssl-cert'
+param sslCertificateSecretName = 'ag-aione-ssl-cert'
 param enableHttps = true

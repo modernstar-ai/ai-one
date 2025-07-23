@@ -57,6 +57,12 @@ param sslCertificateSecretName string
 @description('Enable HTTPS with Key Vault certificate')
 param enableHttps bool = false
 
+@description('Backend App Service name (private network)')
+param backendAppServiceName string = ''
+
+@description('Backend App Service custom domain (if using custom domain)')
+param backendAppServiceDomain string = ''
+
 // Calculate a default private IP address based on the subnet
 var calculatedPrivateIP = cidrHost(subnetAddressPrefix, 4)
 
@@ -165,7 +171,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-09-01' =
           {
             name: 'ssl-certificate-from-keyvault'
             properties: {
-              keyVaultSecretId: '${keyVault.id}/secrets/${sslCertificateSecretName}'
+              keyVaultSecretId: '${keyVault.properties.vaultUri}secrets/${sslCertificateSecretName}'
             }
           }
         ]
@@ -217,7 +223,17 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-09-01' =
     backendAddressPools: [
       {
         name: 'appGatewayBackendPool'
-        properties: {}
+        properties: {
+          backendAddresses: !empty(backendAppServiceName)
+            ? [
+                {
+                  fqdn: !empty(backendAppServiceDomain) 
+                    ? backendAppServiceDomain 
+                    : '${backendAppServiceName}.azurewebsites.net'
+                }
+              ]
+            : []
+        }
       }
     ]
     backendHttpSettingsCollection: [
@@ -330,5 +346,6 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-09-01' =
   }
 }
 
+output applicationGatewayId string = applicationGateway.id
 output applicationGatewayName string = applicationGateway.name
 output publicIPAddress string = publicIP.properties.ipAddress
