@@ -18,57 +18,57 @@ param logAnalyticsWorkspaceResourceId string
 param enableDiagnostics bool = true
 
 @description('Address prefix for the Application Gateway subnet.')
-param appGwSubnetAddressPrefix string = '10.3.11.0/24'
+param subnetAddressPrefix string
 
-var appGwNsgName = 'appgw-nsg'
+var nsgName = 'appgw-nsg'
 
 // Create NSG for Application Gateway subnet
 module appGwNsg '../../modules/networking/nsg.bicep' = {
   name: 'appGwNsg'
   params: {
     location: location
-    nsgName: appGwNsgName
+    nsgName: nsgName
     tags: tags
     securityRules: [
-      // {
-      //   name: 'Allow-GatewayManager'
-      //   properties: {
-      //     priority: 100
-      //     protocol: '*'
-      //     access: 'Allow'
-      //     direction: 'Inbound'
-      //     sourceAddressPrefix: 'GatewayManager'
-      //     sourcePortRange: '*'
-      //     destinationAddressPrefix: '*'
-      //     destinationPortRange: '65200-65535'
-      //   }
-      // }
-      // {
-      //   name: 'Allow-AzureLoadBalancer'
-      //   properties: {
-      //     priority: 110
-      //     protocol: '*'
-      //     access: 'Allow'
-      //     direction: 'Inbound'
-      //     sourceAddressPrefix: 'AzureLoadBalancer'
-      //     sourcePortRange: '*'
-      //     destinationAddressPrefix: '*'
-      //     destinationPortRange: '*'
-      //   }
-      // }
-      // {
-      //   name: 'Allow-Internet-In'
-      //   properties: {
-      //     priority: 120
-      //     protocol: '*'
-      //     access: 'Allow'
-      //     direction: 'Inbound'
-      //     sourceAddressPrefix: 'Internet'
-      //     sourcePortRange: '*'
-      //     destinationAddressPrefix: '*'
-      //     destinationPortRanges: ['80', '443']
-      //   }
-      // }
+      {
+        name: 'Allow-GatewayManager'
+        properties: {
+          priority: 100
+          protocol: '*'
+          access: 'Allow'
+          direction: 'Inbound'
+          sourceAddressPrefix: 'GatewayManager'
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRange: '65200-65535'
+        }
+      }
+      {
+        name: 'Allow-AzureLoadBalancer'
+        properties: {
+          priority: 110
+          protocol: '*'
+          access: 'Allow'
+          direction: 'Inbound'
+          sourceAddressPrefix: 'AzureLoadBalancer'
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRange: '*'
+        }
+      }
+      {
+        name: 'Allow-Internet-In'
+        properties: {
+          priority: 120
+          protocol: '*'
+          access: 'Allow'
+          direction: 'Inbound'
+          sourceAddressPrefix: 'Internet'
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRanges: ['80', '443']
+        }
+      }
     ]
   }
 }
@@ -88,7 +88,7 @@ module appGwSubnet '../../modules/networking/subnet.bicep' = {
   params: {
     virtualNetworkName: virtualNetworkName
     subnetName: virtualNetworkSubnetName
-    addressPrefix: appGwSubnetAddressPrefix
+    addressPrefix: subnetAddressPrefix
     networkSecurityGroupId: appGwNsg.outputs.nsgId
     privateEndpointNetworkPolicies: 'Disabled'
     privateLinkServiceNetworkPolicies: 'Disabled'

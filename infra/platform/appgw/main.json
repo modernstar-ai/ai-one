@@ -1,0 +1,950 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.36.1.42791",
+      "templateHash": "9023409307724669606"
+    }
+  },
+  "parameters": {
+    "name": {
+      "type": "string",
+      "defaultValue": "[toLower(format('{0}-appgw', parameters('resourcePrefix')))]",
+      "metadata": {
+        "description": "Name of the Application Gateway"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Primary location for all resources"
+      }
+    },
+    "projectName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 12,
+      "metadata": {
+        "description": "The name of the solution."
+      }
+    },
+    "environmentName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4,
+      "metadata": {
+        "description": "The type of environment. e.g. local, dev, uat, prod."
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Tags to apply to all resources."
+      }
+    },
+    "resourcePrefix": {
+      "type": "string",
+      "defaultValue": "[toLower(format('{0}-{1}', parameters('projectName'), parameters('environmentName')))]",
+      "metadata": {
+        "description": "Resource prefix for naming resources"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "[toLower(format('{0}-vnet', parameters('resourcePrefix')))]",
+      "metadata": {
+        "description": "Azure Virtual Network name"
+      }
+    },
+    "virtualNetworkSubnetName": {
+      "type": "string",
+      "defaultValue": "AppGatewaySubnet",
+      "metadata": {
+        "description": "Name of the subnet where App Gateway will be deployed."
+      }
+    },
+    "logAnalyticsWorkspaceResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Log Analytics workspace to use for diagnostic settings."
+      }
+    },
+    "subnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Address prefix for the Application Gateway subnet."
+      }
+    },
+    "enableDiagnostics": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable diagnostic settings."
+      }
+    },
+    "enableWaf": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable WAF (Web Application Firewall)"
+      }
+    },
+    "wafMode": {
+      "type": "string",
+      "defaultValue": "Prevention",
+      "allowedValues": [
+        "Detection",
+        "Prevention"
+      ],
+      "metadata": {
+        "description": "WAF mode: Detection or Prevention"
+      }
+    },
+    "wafRuleSetType": {
+      "type": "string",
+      "defaultValue": "OWASP",
+      "metadata": {
+        "description": "WAF rule set type"
+      }
+    },
+    "wafRuleSetVersion": {
+      "type": "string",
+      "defaultValue": "3.2",
+      "metadata": {
+        "description": "WAF rule set version"
+      }
+    },
+    "privateIPAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "Static private IP address for the Application Gateway private frontend"
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Key Vault name for SSL certificate"
+      }
+    },
+    "sslCertificateSecretName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the SSL certificate secret in Key Vault"
+      }
+    },
+    "enableHttps": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable HTTPS with Key Vault certificate"
+      }
+    }
+  },
+  "variables": {
+    "calculatedPrivateIP": "[if(not(empty(parameters('privateIPAddress'))), parameters('privateIPAddress'), cidrHost(parameters('subnetAddressPrefix'), 4))]",
+    "keyVaultResourceId": "[if(not(empty(parameters('keyVaultName'))), resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "name": "[format('{0}-identity', parameters('name'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "condition": "[not(empty(parameters('keyVaultName')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+      "name": "[guid(variables('keyVaultResourceId'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', parameters('name'))), '4633458b-17de-408a-b874-0445c86b69e6')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', parameters('name'))), '2023-01-31').principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', parameters('name')))]"
+      ]
+    },
+    {
+      "condition": "[not(empty(parameters('keyVaultName')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+      "name": "[guid(variables('keyVaultResourceId'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', parameters('name'))), 'db79e9a7-68ee-4b58-9aeb-b90e7c24fcba')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'db79e9a7-68ee-4b58-9aeb-b90e7c24fcba')]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', parameters('name'))), '2023-01-31').principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', parameters('name')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}-pip', parameters('name'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4",
+        "idleTimeoutInMinutes": 4
+      }
+    },
+    {
+      "type": "Microsoft.Network/applicationGateways",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', parameters('name'))))]": {}
+        }
+      },
+      "properties": {
+        "sku": {
+          "name": "[if(parameters('enableWaf'), 'WAF_v2', 'Standard_v2')]",
+          "tier": "[if(parameters('enableWaf'), 'WAF_v2', 'Standard_v2')]"
+        },
+        "autoscaleConfiguration": {
+          "minCapacity": 2,
+          "maxCapacity": 10
+        },
+        "webApplicationFirewallConfiguration": "[if(parameters('enableWaf'), createObject('enabled', true(), 'firewallMode', parameters('wafMode'), 'ruleSetType', parameters('wafRuleSetType'), 'ruleSetVersion', parameters('wafRuleSetVersion'), 'disabledRuleGroups', createArray(), 'requestBodyCheck', true(), 'maxRequestBodySizeInKb', 128, 'fileUploadLimitInMb', 100), null())]",
+        "sslCertificates": "[if(and(and(parameters('enableHttps'), not(empty(variables('keyVaultResourceId')))), not(empty(parameters('sslCertificateSecretName')))), createArray(createObject('name', 'ssl-certificate-from-keyvault', 'properties', createObject('keyVaultSecretId', format('{0}/secrets/{1}', variables('keyVaultResourceId'), parameters('sslCertificateSecretName'))))), createArray())]",
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "properties": {
+              "subnet": {
+                "id": "[reference(resourceId('Microsoft.Resources/deployments', 'appGwNetworking'), '2022-09-01').outputs.subnetId.value]"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "appGatewayFrontendIP",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', parameters('name')))]"
+              }
+            }
+          },
+          {
+            "name": "appGatewayPrivateFrontendIP",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('calculatedPrivateIP')]",
+              "subnet": {
+                "id": "[reference(resourceId('Microsoft.Resources/deployments', 'appGwNetworking'), '2022-09-01').outputs.subnetId.value]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "appGatewayFrontendPort",
+            "properties": {
+              "port": 80
+            }
+          },
+          {
+            "name": "appGatewayFrontendPortHttps",
+            "properties": {
+              "port": 443
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "appGatewayBackendPool",
+            "properties": {}
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "appGatewayBackendHttpSettings",
+            "properties": {
+              "port": 80,
+              "protocol": "Http",
+              "cookieBasedAffinity": "Disabled",
+              "pickHostNameFromBackendAddress": true,
+              "requestTimeout": 20
+            }
+          },
+          {
+            "name": "appGatewayBackendHttpsSettings",
+            "properties": {
+              "port": 443,
+              "protocol": "Https",
+              "cookieBasedAffinity": "Disabled",
+              "pickHostNameFromBackendAddress": true,
+              "requestTimeout": 20
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "appGatewayHttpListener",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', parameters('name'), 'appGatewayFrontendIP')]"
+              },
+              "frontendPort": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', parameters('name'), 'appGatewayFrontendPort')]"
+              },
+              "protocol": "Http"
+            }
+          },
+          {
+            "name": "appGatewayHttpsListener",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', parameters('name'), 'appGatewayFrontendIP')]"
+              },
+              "frontendPort": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', parameters('name'), 'appGatewayFrontendPortHttps')]"
+              },
+              "protocol": "Https",
+              "sslCertificate": "[if(and(and(parameters('enableHttps'), not(empty(variables('keyVaultResourceId')))), not(empty(parameters('sslCertificateSecretName')))), createObject('id', resourceId('Microsoft.Network/applicationGateways/sslCertificates', parameters('name'), 'ssl-certificate-from-keyvault')), null())]"
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "name": "appGatewayRoutingRule",
+            "properties": {
+              "ruleType": "Basic",
+              "priority": 100,
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', parameters('name'), 'appGatewayHttpListener')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', parameters('name'), 'appGatewayBackendPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', parameters('name'), 'appGatewayBackendHttpSettings')]"
+              }
+            }
+          },
+          {
+            "name": "appGatewayHttpsRoutingRule",
+            "properties": {
+              "ruleType": "Basic",
+              "priority": 200,
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', parameters('name'), 'appGatewayHttpsListener')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', parameters('name'), 'appGatewayBackendPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', parameters('name'), 'appGatewayBackendHttpsSettings')]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', parameters('name')))]",
+        "[resourceId('Microsoft.Resources/deployments', 'appGwNetworking')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', parameters('name')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "appGwNetworking",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "virtualNetworkSubnetName": {
+            "value": "[parameters('virtualNetworkSubnetName')]"
+          },
+          "subnetAddressPrefix": {
+            "value": "[parameters('subnetAddressPrefix')]"
+          },
+          "logAnalyticsWorkspaceResourceId": {
+            "value": "[parameters('logAnalyticsWorkspaceResourceId')]"
+          },
+          "enableDiagnostics": {
+            "value": "[parameters('enableDiagnostics')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.36.1.42791",
+              "templateHash": "2672090247769396925"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Specifies the location for all the Azure resources."
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Optional. Tags to be applied to the resources."
+              }
+            },
+            "virtualNetworkName": {
+              "type": "string",
+              "minLength": 1,
+              "metadata": {
+                "description": "Name of the virtual network where the Application Gateway subnet will be created."
+              }
+            },
+            "virtualNetworkSubnetName": {
+              "type": "string",
+              "defaultValue": "AppGatewaySubnet",
+              "metadata": {
+                "description": "Resource ID of the subnet for the private endpoint."
+              }
+            },
+            "logAnalyticsWorkspaceResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the Log Analytics workspace to use for diagnostic settings."
+              }
+            },
+            "enableDiagnostics": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable diagnostic settings"
+              }
+            },
+            "subnetAddressPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Address prefix for the Application Gateway subnet."
+              }
+            }
+          },
+          "variables": {
+            "nsgName": "appgw-nsg"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2022-09-01",
+              "name": "appGwNsg",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "nsgName": {
+                    "value": "[variables('nsgName')]"
+                  },
+                  "tags": {
+                    "value": "[parameters('tags')]"
+                  },
+                  "securityRules": {
+                    "value": [
+                      {
+                        "name": "Allow-GatewayManager",
+                        "properties": {
+                          "priority": 100,
+                          "protocol": "*",
+                          "access": "Allow",
+                          "direction": "Inbound",
+                          "sourceAddressPrefix": "GatewayManager",
+                          "sourcePortRange": "*",
+                          "destinationAddressPrefix": "*",
+                          "destinationPortRange": "65200-65535"
+                        }
+                      },
+                      {
+                        "name": "Allow-AzureLoadBalancer",
+                        "properties": {
+                          "priority": 110,
+                          "protocol": "*",
+                          "access": "Allow",
+                          "direction": "Inbound",
+                          "sourceAddressPrefix": "AzureLoadBalancer",
+                          "sourcePortRange": "*",
+                          "destinationAddressPrefix": "*",
+                          "destinationPortRange": "*"
+                        }
+                      },
+                      {
+                        "name": "Allow-Internet-In",
+                        "properties": {
+                          "priority": 120,
+                          "protocol": "*",
+                          "access": "Allow",
+                          "direction": "Inbound",
+                          "sourceAddressPrefix": "Internet",
+                          "sourcePortRange": "*",
+                          "destinationAddressPrefix": "*",
+                          "destinationPortRanges": [
+                            "80",
+                            "443"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.36.1.42791",
+                      "templateHash": "15483320899242023977"
+                    }
+                  },
+                  "parameters": {
+                    "location": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Azure region for resource deployment"
+                      }
+                    },
+                    "nsgName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Network Security Group name"
+                      }
+                    },
+                    "securityRules": {
+                      "type": "array",
+                      "metadata": {
+                        "description": "Security rules for the NSG"
+                      }
+                    },
+                    "tags": {
+                      "type": "object",
+                      "defaultValue": {},
+                      "metadata": {
+                        "description": "Resource tags"
+                      }
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Network/networkSecurityGroups",
+                      "apiVersion": "2024-03-01",
+                      "name": "[parameters('nsgName')]",
+                      "location": "[parameters('location')]",
+                      "tags": "[parameters('tags')]",
+                      "properties": {
+                        "securityRules": "[parameters('securityRules')]"
+                      }
+                    }
+                  ],
+                  "outputs": {
+                    "nsgId": {
+                      "type": "string",
+                      "value": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+                    },
+                    "nsgName": {
+                      "type": "string",
+                      "value": "[parameters('nsgName')]"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "condition": "[parameters('enableDiagnostics')]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2022-09-01",
+              "name": "appGwNsgDiagnostics",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "logAnalyticsWorkspaceId": {
+                    "value": "[parameters('logAnalyticsWorkspaceResourceId')]"
+                  },
+                  "targetResourceName": {
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appGwNsg'), '2022-09-01').outputs.nsgName.value]"
+                  },
+                  "resourceType": {
+                    "value": "nsg"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.36.1.42791",
+                      "templateHash": "5084294854637632403"
+                    }
+                  },
+                  "parameters": {
+                    "logAnalyticsWorkspaceId": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Log Analytics workspace ID for diagnostics"
+                      }
+                    },
+                    "targetResourceName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Target resource name for diagnostics"
+                      }
+                    },
+                    "resourceType": {
+                      "type": "string",
+                      "allowedValues": [
+                        "nsg",
+                        "vnet",
+                        "bastion",
+                        "publicip"
+                      ],
+                      "metadata": {
+                        "description": "Resource type for diagnostics configuration"
+                      }
+                    },
+                    "diagnosticSettingsName": {
+                      "type": "string",
+                      "defaultValue": "diagnosticSettings",
+                      "metadata": {
+                        "description": "Diagnostic settings name"
+                      }
+                    }
+                  },
+                  "variables": {
+                    "nsgLogs": [
+                      {
+                        "category": "NetworkSecurityGroupEvent",
+                        "enabled": true
+                      },
+                      {
+                        "category": "NetworkSecurityGroupRuleCounter",
+                        "enabled": true
+                      }
+                    ],
+                    "vnetLogs": [
+                      {
+                        "category": "VMProtectionAlerts",
+                        "enabled": true
+                      }
+                    ],
+                    "vnetMetrics": [
+                      {
+                        "category": "AllMetrics",
+                        "enabled": true
+                      }
+                    ],
+                    "bastionLogs": [
+                      {
+                        "category": "BastionAuditLogs",
+                        "enabled": true
+                      }
+                    ],
+                    "bastionMetrics": [
+                      {
+                        "category": "AllMetrics",
+                        "enabled": true
+                      }
+                    ],
+                    "publicIpLogs": [
+                      {
+                        "category": "DDoSProtectionNotifications",
+                        "enabled": true
+                      },
+                      {
+                        "category": "DDoSMitigationFlowLogs",
+                        "enabled": true
+                      },
+                      {
+                        "category": "DDoSMitigationReports",
+                        "enabled": true
+                      }
+                    ],
+                    "publicIpMetrics": [
+                      {
+                        "category": "AllMetrics",
+                        "enabled": true
+                      }
+                    ]
+                  },
+                  "resources": [
+                    {
+                      "condition": "[equals(parameters('resourceType'), 'nsg')]",
+                      "type": "Microsoft.Insights/diagnosticSettings",
+                      "apiVersion": "2021-05-01-preview",
+                      "scope": "[format('Microsoft.Network/networkSecurityGroups/{0}', parameters('targetResourceName'))]",
+                      "name": "[parameters('diagnosticSettingsName')]",
+                      "properties": {
+                        "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
+                        "logs": "[variables('nsgLogs')]"
+                      }
+                    },
+                    {
+                      "condition": "[equals(parameters('resourceType'), 'vnet')]",
+                      "type": "Microsoft.Insights/diagnosticSettings",
+                      "apiVersion": "2021-05-01-preview",
+                      "scope": "[format('Microsoft.Network/virtualNetworks/{0}', parameters('targetResourceName'))]",
+                      "name": "[parameters('diagnosticSettingsName')]",
+                      "properties": {
+                        "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
+                        "logs": "[variables('vnetLogs')]",
+                        "metrics": "[variables('vnetMetrics')]"
+                      }
+                    },
+                    {
+                      "condition": "[equals(parameters('resourceType'), 'bastion')]",
+                      "type": "Microsoft.Insights/diagnosticSettings",
+                      "apiVersion": "2021-05-01-preview",
+                      "scope": "[format('Microsoft.Network/bastionHosts/{0}', parameters('targetResourceName'))]",
+                      "name": "[parameters('diagnosticSettingsName')]",
+                      "properties": {
+                        "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
+                        "logs": "[variables('bastionLogs')]",
+                        "metrics": "[variables('bastionMetrics')]"
+                      }
+                    },
+                    {
+                      "condition": "[equals(parameters('resourceType'), 'publicip')]",
+                      "type": "Microsoft.Insights/diagnosticSettings",
+                      "apiVersion": "2021-05-01-preview",
+                      "scope": "[format('Microsoft.Network/publicIPAddresses/{0}', parameters('targetResourceName'))]",
+                      "name": "[parameters('diagnosticSettingsName')]",
+                      "properties": {
+                        "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
+                        "logs": "[variables('publicIpLogs')]",
+                        "metrics": "[variables('publicIpMetrics')]"
+                      }
+                    }
+                  ],
+                  "outputs": {
+                    "diagnosticSettingsName": {
+                      "type": "string",
+                      "value": "[parameters('diagnosticSettingsName')]"
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'appGwNsg')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2022-09-01",
+              "name": "appGwSubnet",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "virtualNetworkName": {
+                    "value": "[parameters('virtualNetworkName')]"
+                  },
+                  "subnetName": {
+                    "value": "[parameters('virtualNetworkSubnetName')]"
+                  },
+                  "addressPrefix": {
+                    "value": "[parameters('subnetAddressPrefix')]"
+                  },
+                  "networkSecurityGroupId": {
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appGwNsg'), '2022-09-01').outputs.nsgId.value]"
+                  },
+                  "privateEndpointNetworkPolicies": {
+                    "value": "Disabled"
+                  },
+                  "privateLinkServiceNetworkPolicies": {
+                    "value": "Disabled"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.36.1.42791",
+                      "templateHash": "14161182473587186973"
+                    }
+                  },
+                  "parameters": {
+                    "virtualNetworkName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Name of the virtual network."
+                      }
+                    },
+                    "subnetName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Name of the subnet."
+                      }
+                    },
+                    "addressPrefix": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Address prefix for the subnet."
+                      }
+                    },
+                    "networkSecurityGroupId": {
+                      "type": "string",
+                      "defaultValue": "",
+                      "metadata": {
+                        "description": "Resource ID of the network security group to associate with the subnet."
+                      }
+                    },
+                    "serviceEndpoints": {
+                      "type": "array",
+                      "defaultValue": [],
+                      "metadata": {
+                        "description": "Service endpoints to enable on the subnet."
+                      }
+                    },
+                    "delegations": {
+                      "type": "array",
+                      "defaultValue": [],
+                      "metadata": {
+                        "description": "Delegations for the subnet."
+                      }
+                    },
+                    "privateEndpointNetworkPolicies": {
+                      "type": "string",
+                      "defaultValue": "Enabled",
+                      "metadata": {
+                        "description": "Enable or disable private endpoint network policies."
+                      }
+                    },
+                    "privateLinkServiceNetworkPolicies": {
+                      "type": "string",
+                      "defaultValue": "Enabled",
+                      "metadata": {
+                        "description": "Enable or disable private link service network policies."
+                      }
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Network/virtualNetworks/subnets",
+                      "apiVersion": "2022-11-01",
+                      "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnetName'))]",
+                      "properties": {
+                        "addressPrefix": "[parameters('addressPrefix')]",
+                        "networkSecurityGroup": "[if(not(empty(parameters('networkSecurityGroupId'))), createObject('id', parameters('networkSecurityGroupId')), null())]",
+                        "serviceEndpoints": "[parameters('serviceEndpoints')]",
+                        "delegations": "[parameters('delegations')]",
+                        "privateEndpointNetworkPolicies": "[parameters('privateEndpointNetworkPolicies')]",
+                        "privateLinkServiceNetworkPolicies": "[parameters('privateLinkServiceNetworkPolicies')]"
+                      }
+                    }
+                  ],
+                  "outputs": {
+                    "subnetId": {
+                      "type": "string",
+                      "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                    },
+                    "subnetName": {
+                      "type": "string",
+                      "value": "[parameters('subnetName')]"
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'appGwNsg')]"
+              ]
+            }
+          ],
+          "outputs": {
+            "nsgId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appGwNsg'), '2022-09-01').outputs.nsgId.value]"
+            },
+            "nsgName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appGwNsg'), '2022-09-01').outputs.nsgName.value]"
+            },
+            "subnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appGwSubnet'), '2022-09-01').outputs.subnetId.value]"
+            },
+            "subnetName": {
+              "type": "string",
+              "value": "[parameters('virtualNetworkSubnetName')]"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "applicationGatewayId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/applicationGateways', parameters('name'))]"
+    },
+    "applicationGatewayName": {
+      "type": "string",
+      "value": "[parameters('name')]"
+    },
+    "publicIPAddress": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', parameters('name'))), '2023-09-01').ipAddress]"
+    },
+    "publicIPId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', parameters('name')))]"
+    },
+    "managedIdentityId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', parameters('name')))]"
+    },
+    "managedIdentityPrincipalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', parameters('name'))), '2023-01-31').principalId]"
+    },
+    "managedIdentityClientId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-identity', parameters('name'))), '2023-01-31').clientId]"
+    }
+  }
+}
