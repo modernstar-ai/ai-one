@@ -28,7 +28,10 @@ param cosmosDbAccountName = 'ag-aionev12-uat-cosmos'
 param cosmosDbAccountEndpoint = 'https://ag-aionev12-uat-cosmos.documents.azure.com:443/'
 param eventGridName = 'ag-aionev12-uat-blob-eg'
 
-param allowedOrigins = ['https://ag-aionev12-uat-webapp.azurewebsites.net']
+param allowedOrigins = [
+  'https://ag-aionev12-uat-webapp.azurewebsites.net'
+  'https://ag-aionev12-uat-appgw.australiaeast.cloudapp.azure.com'
+]
 
 param networkIsolation = true
 param virtualNetworkName = 'ag-aionev12-uat-vnet'

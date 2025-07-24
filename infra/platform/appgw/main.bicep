@@ -122,6 +122,9 @@ resource publicIP 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
     publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'
     idleTimeoutInMinutes: 4
+    dnsSettings: {
+      domainNameLabel: toLower('${resourcePrefix}-appgw')
+    }
   }
 }
 
@@ -582,3 +585,4 @@ resource appGatewayDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01
 output applicationGatewayId string = applicationGateway.id
 output applicationGatewayName string = applicationGateway.name
 output publicIPAddress string = publicIP.properties.ipAddress
+output defaultDomainName string = publicIP.properties.dnsSettings.fqdn
