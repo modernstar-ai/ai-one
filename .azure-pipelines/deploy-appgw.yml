@@ -1,0 +1,65 @@
+trigger: none
+
+parameters:
+  - name: environment
+    type: string
+    default: dev
+    displayName: "Select the environment to deploy the Application Gateway infrastructure"
+    values:
+      - dev
+      - tst
+      - uat
+      - prod
+
+variables:
+  - name: environment
+    value: ${{ parameters.environment }}
+  - name: AZURE_BICEP_MAIN
+    value: "./infra/platform/appgw/main.bicep"
+
+  # Environment-specific service connections
+  - name: SERVICE_CONNECTION_DEV
+    value: "dev-service-connection"
+  - name: SERVICE_CONNECTION_TST
+    value: "tst-service-connection"
+  - name: SERVICE_CONNECTION_UAT
+    value: "uat-service-connection"
+  - name: SERVICE_CONNECTION_PROD
+    value: "prod-service-connection"
+
+stages:
+  - template: templates/deploy-template.yml
+    parameters:
+      dependsOn: null
+      stageName: DeployAppGwDev
+      environment: dev
+      serviceConnection: $(SERVICE_CONNECTION_DEV)
+      azureBicepMain: $(AZURE_BICEP_MAIN)
+      parameterFilePath: "./infra/platform/appgw/dev.bicepparam"
+
+  - template: templates/deploy-template.yml
+    parameters:
+      dependsOn: DeployAppGwDev
+      stageName: DeployAppGwTst
+      environment: tst
+      serviceConnection: $(SERVICE_CONNECTION_TST)
+      azureBicepMain: $(AZURE_BICEP_MAIN)
+      parameterFilePath: "./infra/platform/appgw/tst.bicepparam"
+
+  - template: templates/deploy-template.yml
+    parameters:
+      dependsOn: DeployAppGwTst
+      stageName: DeployAppGwUat
+      environment: uat
+      serviceConnection: $(SERVICE_CONNECTION_UAT)
+      azureBicepMain: $(AZURE_BICEP_MAIN)
+      parameterFilePath: "./infra/platform/appgw/uat.bicepparam"
+
+  - template: templates/deploy-template.yml
+    parameters:
+      dependsOn: DeployAppGwUat
+      stageName: DeployAppGwProd
+      environment: prod
+      serviceConnection: $(SERVICE_CONNECTION_PROD)
+      azureBicepMain: $(AZURE_BICEP_MAIN)
+      parameterFilePath: "./infra/platform/appgw/prod.bicepparam"
