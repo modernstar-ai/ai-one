@@ -7,10 +7,10 @@ param projectName = readEnvironmentVariable('PROJECT_NAME', sharedVariables.proj
 param location = readEnvironmentVariable('AZURE_LOCATION', sharedVariables.location)
 param tags = loadJsonContent('../../tags.json')
 
-param logAnalyticsWorkspaceResourceId = '/subscriptions/9221a966-ce17-4b76-a348-887f234a827a/resourcegroups/rg-practice-ai-aione-private-dev/providers/microsoft.operationalinsights/workspaces/ag-aionev12-uat-la'
+param logAnalyticsWorkspaceResourceId = '/subscriptions/9221a966-ce17-4b76-a348-887f234a827a/resourcegroups/rg-practice-ai-aione-private-dev/providers/microsoft.operationalinsights/workspaces/ag-aionev14-uat-la'
 
 
 // Application Gateway specific parameters
 param subnetAddressPrefix = '10.3.11.0/24'
 
-param keyVaultName = 'ag-aionev12-uat-kv'
+param keyVaultName = 'ag-aionev14-uat-kv'
