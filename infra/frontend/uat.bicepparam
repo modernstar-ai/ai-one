@@ -16,3 +16,11 @@ param virtualNetworkName = 'ag-aionev12-uat-vnet'
 param appServiceSubnetName = 'AppServiceSubnet'
 param privateEndpointsSubnetName = 'PrivateEndpointsSubnet'
 param allowPrivateAccessOnly = true
+
+// Optional: Enable IP restrictions to allow access only from Application Gateway
+// Uncomment and update the IP address after deploying the Application Gateway
+// param enableIpRestrictions = true
+// param allowedIpAddresses = ['<APPLICATION_GATEWAY_PUBLIC_IP>/32']
+
+param enableIpRestrictions = true
+param allowedIpAddresses = ['68.218.105.22/32']

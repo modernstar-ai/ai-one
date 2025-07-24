@@ -28,12 +28,17 @@ param cosmosDbAccountName = 'ag-aionev12-uat-cosmos'
 param cosmosDbAccountEndpoint = 'https://ag-aionev12-uat-cosmos.documents.azure.com:443/'
 param eventGridName = 'ag-aionev12-uat-blob-eg'
 
-param allowedOrigins = [
-  'https://ag-aionev12-uat-webapp.azurewebsites.net'
-  'https://ag-aionev12-uat-appgw.australiaeast.cloudapp.azure.com'
-]
+param allowedOrigins = ['https://ag-aionev12-uat-webapp.azurewebsites.net']
 
 param networkIsolation = true
 param virtualNetworkName = 'ag-aionev12-uat-vnet'
 param privateEndpointsSubnetName = 'PrivateEndpointsSubnet'
 param allowPrivateAccessOnly = true
+
+// Optional: Enable IP restrictions to allow access only from Application Gateway
+// Uncomment and update the IP address after deploying the Application Gateway
+// param enableIpRestrictions = true
+// param allowedIpAddresses = ['<APPLICATION_GATEWAY_PUBLIC_IP>/32']
+
+param enableIpRestrictions = true
+param allowedIpAddresses = ['68.218.105.22/32']

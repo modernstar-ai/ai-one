@@ -47,6 +47,12 @@ param appServiceSubnetName string = 'AppServiceSubnet'
 @description('Private Endpoints subnet name')
 param privateEndpointsSubnetName string = 'PrivateEndpointsSubnet'
 
+@description('Optional. Enable IP restrictions for the App Service to restrict access to Application Gateway only.')
+param enableIpRestrictions bool = false
+
+@description('Optional. Array of allowed IP addresses/ranges for App Service access (e.g., Application Gateway public IP).')
+param allowedIpAddresses array = []
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' existing = {
   name: appServicePlanName
 }
@@ -89,6 +95,8 @@ module webAppModule '../modules/site.bicep' = {
     virtualNetworkResourceId: virtualNetworkResourceId
     virtualNetworkSubnetResourceId: appServiceSubnetResourceId
     privateEndpointsSubnetResourceId: privateEndpointsSubnetResourceId
+    enableIpRestrictions: enableIpRestrictions
+    allowedIpAddresses: allowedIpAddresses
     siteConfig: {
       linuxFxVersion: 'node|22-lts'
       alwaysOn: true

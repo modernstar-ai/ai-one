@@ -131,6 +131,12 @@ param privateEndpointsSubnetName string = 'PrivateEndpointsSubnet'
 
 param deployRoleAssignments bool = true
 
+@description('Optional. Enable IP restrictions for the App Service to restrict access to Application Gateway only.')
+param enableIpRestrictions bool = false
+
+@description('Optional. Array of allowed IP addresses/ranges for App Service access (e.g., Application Gateway public IP).')
+param allowedIpAddresses array = []
+
 var blobContainersArray = loadJsonContent('../blob-storage-containers.json')
 var blobContainers = [
   for name in blobContainersArray: {
@@ -185,6 +191,8 @@ module apiAppModule '../modules/site.bicep' = {
     virtualNetworkResourceId: virtualNetworkResourceId
     virtualNetworkSubnetResourceId: appServiceSubnetResourceId
     privateEndpointsSubnetResourceId: privateEndpointsSubnetResourceId
+    enableIpRestrictions: enableIpRestrictions
+    allowedIpAddresses: allowedIpAddresses
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true

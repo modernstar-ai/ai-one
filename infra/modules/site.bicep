@@ -37,6 +37,39 @@ param siteConfig object
 @description('App settings array')
 param appSettings array = []
 
+@description('Optional. Enable IP restrictions for the App Service.')
+param enableIpRestrictions bool = false
+
+@description('Optional. Array of allowed IP addresses/ranges for App Service access.')
+param allowedIpAddresses array = []
+
+@description('Optional. Default action when IP restrictions are enabled.')
+@allowed(['Allow', 'Deny'])
+param ipRestrictionDefaultAction string = 'Deny'
+
+// Build IP security restrictions array
+var ipAllowRules = [
+  for (ipAddress, index) in allowedIpAddresses: {
+    ipAddress: ipAddress
+    action: 'Allow'
+    priority: 100 + index
+    name: 'AllowedIP-${index}'
+    description: 'Allowed IP address for -${ipAddress}'
+  }
+]
+
+var ipDefaultRule = [
+  {
+    ipAddress: '0.0.0.0/0'
+    action: ipRestrictionDefaultAction
+    priority: 2147483647
+    name: 'Default'
+    description: 'Default rule'
+  }
+]
+
+var ipRestrictionsArray = enableIpRestrictions ? concat(ipAllowRules, ipDefaultRule) : []
+
 module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation && allowPrivateAccessOnly) {
   name: 'private-dns-site-deployment'
   params: {
@@ -64,6 +97,8 @@ module site 'br/public:avm/res/web/site:0.16.0' = {
     virtualNetworkSubnetId: virtualNetworkSubnetResourceId
     siteConfig: union(siteConfig, {
       appSettings: appSettings
+      ipSecurityRestrictions: ipRestrictionsArray
+      ipSecurityRestrictionsDefaultAction: enableIpRestrictions ? ipRestrictionDefaultAction : 'Allow'
     })
     diagnosticSettings: [
       {
@@ -82,7 +117,7 @@ module site 'br/public:avm/res/web/site:0.16.0' = {
               privateDnsZoneGroupConfigs: [
                 {
                   name: 'privatelink.azurewebsites.net'
-                  privateDnsZoneResourceId: privateDnsZone.outputs.resourceId
+                  privateDnsZoneResourceId: privateDnsZone!.outputs.resourceId
                 }
               ]
             }
