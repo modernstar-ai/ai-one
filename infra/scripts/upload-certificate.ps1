@@ -9,7 +9,7 @@ param(
     [string]$CertificatePassword,
     
     [Parameter(Mandatory = $false)]
-    [string]$KeyVaultName = "ag-aionev12-uat-kv",
+    [string]$KeyVaultName = "ag-aionev14-uat-kv",
     
     [Parameter(Mandatory = $false)]
     [string]$CertificateName = "agile-chat-ssl-cert",

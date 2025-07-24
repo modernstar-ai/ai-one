@@ -24,7 +24,7 @@ Creates a self-signed certificate and uploads it to Azure Key Vault.
 .\upload-certificate.ps1 `
   -CertificateFilePath "C:\path\to\your\certificate.pfx" `
   -CertificatePassword "YourCertificatePassword" `
-  -KeyVaultName "ag-aionev12-uat-kv" `
+  -KeyVaultName "ag-aionev14-uat-kv" `
   -CertificateName "agile-chat-ssl-cert" `
   -Force
 ```
@@ -35,7 +35,7 @@ Creates a self-signed certificate and uploads it to Azure Key Vault.
 # Create self-signed certificate for development/testing
 .\create-and-upload-cert.ps1 `
   -DomainName "your-domain.com" `
-  -KeyVaultName "ag-aionev12-uat-kv" `
+  -KeyVaultName "ag-aionev14-uat-kv" `
   -CertificateName "agile-chat-ssl-cert"
 ```
 
@@ -54,7 +54,7 @@ Creates a self-signed certificate and uploads it to Azure Key Vault.
 |-----------|----------|---------|-------------|
 | `CertificateFilePath` | Yes | - | Path to your PFX certificate file |
 | `CertificatePassword` | Yes | - | Password for the PFX certificate |
-| `KeyVaultName` | No | `ag-aionev12-uat-kv` | Azure Key Vault name |
+| `KeyVaultName` | No | `ag-aionev14-uat-kv` | Azure Key Vault name |
 | `CertificateName` | No | `agile-chat-ssl-cert` | Name for the certificate in Key Vault |
 | `Force` | No | `false` | Overwrite existing certificate without prompting |
 
