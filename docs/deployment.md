@@ -566,12 +566,24 @@ Bicep Parameters: `infra/frontend/[env].bicepparam`
 5. Update the `virtualNetworkName` and `virtualNetworkSubnetName` parameters to match the virtual network and subnet names where the Application Gateway will be deployed.
 6. Run the `Deploy Application Gateway` pipeline to provision the Application Gateway.
 7. Update the `VITE_AGILECHAT_API_URL` environment variable in the frontend web app to point to the Application Gateway URL. Redeploy the frontend web app to apply the changes.
-8. Configure the frontend web app and api app to use the Application Gateway as a reverse proxy. Follow the below steps to update the App Service configuration:
+8. Configure the app service to allow traffic from the Application Gateway.
+    - After deploying the Application Gateway, note the public IP address from the deployment output.
+    - Update the frontend and backend parameter files to enable IP restrictions:
+    - Redeploy the frontend and backend applications to apply the IP restrictions.
+      
+      ```bicep
+      param enableIpRestrictions = true
+      param allowedIpAddresses = ['<APPLICATION_GATEWAY_PUBLIC_IP>/32']
+      ```      
+    
+    **Alternative - Manual Configuration**: You can also configure this manually through the Azure Portal:
+
     - Navigate to the Azure Portal and select the frontend web app.
     - Under **Inbound traffic configuration**, click on the link next to **Public network access**.
     - Select **Enabled from select virtual networks and IP addresses**.
-    - Under **Site Acccess and rules**, add the IP address of the Application Gateway to the allowed IP addresses.
+    - Under **Site Access and rules**, add the IP address of the Application Gateway to the allowed IP addresses.
     - Repeat the above steps for the backend API app.
+
 9. Test the Application Gateway by accessing the frontend web app URL. The Application Gateway should route traffic to the frontend web app and backend API app.
 
 ```plaintext

@@ -53,22 +53,12 @@ var ipAllowRules = [
     ipAddress: ipAddress
     action: 'Allow'
     priority: 100 + index
-    name: 'AllowedIP-${index}'
+    name: 'AllowedIP-${ipAddress}'
     description: 'Allowed IP address for -${ipAddress}'
   }
 ]
 
-var ipDefaultRule = [
-  {
-    ipAddress: '0.0.0.0/0'
-    action: ipRestrictionDefaultAction
-    priority: 2147483647
-    name: 'Default'
-    description: 'Default rule'
-  }
-]
-
-var ipRestrictionsArray = enableIpRestrictions ? concat(ipAllowRules, ipDefaultRule) : []
+var ipRestrictionsArray = enableIpRestrictions ? ipAllowRules : []
 
 module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation && allowPrivateAccessOnly) {
   name: 'private-dns-site-deployment'
@@ -95,6 +85,7 @@ module site 'br/public:avm/res/web/site:0.16.0' = {
     httpsOnly: true
     clientAffinityEnabled: false
     virtualNetworkSubnetId: virtualNetworkSubnetResourceId
+    publicNetworkAccess: enableIpRestrictions ? 'Enabled' : null
     siteConfig: union(siteConfig, {
       appSettings: appSettings
       ipSecurityRestrictions: ipRestrictionsArray
