@@ -580,6 +580,9 @@ Bicep Parameters: `infra/frontend/[env].bicepparam`
     - Redeploy the frontend and backend applications to apply the IP restrictions.
       
       ```bicep
+      
+      param allowPrivateAccessOnly = true
+
       param enableIpRestrictions = true
       param allowedIpAddresses = ['<APPLICATION_GATEWAY_PUBLIC_IP>/32']
       ```      
