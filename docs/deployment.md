@@ -517,6 +517,10 @@ Bicep Parameters: `infra/backend/[env].bicepparam`
 | `cosmosDbAccountEndpoint`       | Endpoint for the Cosmos DB Account.                                         | `https://[projectName]-[env]-cosmos.documents.azure.com:443/` |
 | `eventGridName`                 | Name of the Event Grid resource.                                            | `[projectName]-[env]-blob-eg` |
 | `allowedOrigins`                | List of allowed origins for CORS.                                           | `['https://[projectName]-[env]-webapp.azurewebsites.net']` |
+| `networkIsolation`              | Boolean flag to enable or disable network isolation for resources. The endpoint would still be accessible from internet and the app service will be integrated with vnet. | `false` |
+| `allowPrivateAccessOnly`        | Specifies whether the app service should be accessible only through private network. | `false` |
+| `enableIpRestrictions`          | Enable IP restrictions for the App Service to restrict access to specific IP addresses/ranges. | `false` |
+| `allowedIpAddresses`            | Array of allowed IP addresses/ranges for App Service access (e.g., Application Gateway public IP). | `[]` |
 
 ### 2.2.6 Deploy Frontend Application
 
@@ -554,6 +558,10 @@ Bicep Parameters: `infra/frontend/[env].bicepparam`
 | `azureTenantId`                  | Azure Tenant ID, read from environment variables.                           |                   |
 | `appServicePlanName`             | Name of the App Service Plan.                                               | `[projectName]-[env]-app`|
 |`apiAppName`                   | Name of the API App.                                                        | `[projectName]-[env]-apiapp`|
+| `networkIsolation`              | Boolean flag to enable or disable network isolation for resources. The endpoint would still be accessible from internet and the app service will be integrated with vnet. | `false` |
+| `allowPrivateAccessOnly`        | Specifies whether the app service should be accessible only through private network. | `false` |
+| `enableIpRestrictions`          | Enable IP restrictions for the App Service to restrict access to specific IP addresses/ranges. | `false` |
+| `allowedIpAddresses`            | Array of allowed IP addresses/ranges for App Service access (e.g., Application Gateway public IP). | `[]` |
 
 ---
 
