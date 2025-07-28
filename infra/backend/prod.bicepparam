@@ -28,4 +28,4 @@ param cosmosDbAccountName = 'ms-aione-prod-cosmos'
 param cosmosDbAccountEndpoint = 'https://ms-aione-prod-cosmos.documents.azure.com:443/'
 param eventGridName = 'ms-aione-prod-blob-eg'
 
-param allowedOrigins = ['https://ms-aione-prod-webapp.azurewebsites.net']
+param allowedOrigins = ['https://ms-aione-prod-webapp.azurewebsites.net','ai.modernstar.com']
