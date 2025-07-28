@@ -7,12 +7,15 @@ using Microsoft.Extensions.Logging;
 using Agile.Chat.Application.ChatThreads.Services;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Chat.Domain.Assistants.ValueObjects;
+using Microsoft.Extensions.DependencyInjection;
+using Agile.Framework.Common.Attributes;
 
 namespace Agile.Chat.Application.ChatCompletions.Routing;
 
 /// <summary>
 /// Routes chat-related payloads to the appropriate MediatR commands based on payload content.
 /// </summary>
+[Export(typeof(ChatCommandRouter), ServiceLifetime.Scoped)]
 public class ChatCommandRouter(IAssistantService assistantService, IChatThreadService chatThreadService, IMediator mediator, ILogger<ChatCommandRouter> logger)
 {
     /// <summary>

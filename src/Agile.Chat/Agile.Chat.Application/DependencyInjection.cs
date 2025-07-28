@@ -16,7 +16,6 @@ public static class DependencyInjection
             .AddTransient(typeof(IPipelineBehavior<,>), typeof(TracingBehavior<,>))
             .AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>))
             .AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly)
-            .AddScoped<ChatCommandRouter>()
             .AddServiceBus(builder);
 
     private static IServiceCollection AddServiceBus(this IServiceCollection services, WebApplicationBuilder builder)
