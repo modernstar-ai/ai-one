@@ -35,11 +35,23 @@ param applicationInsightsName string = toLower('${resourcePrefix}-webapp')
 @description('Whether to enable network isolation for resources')
 param networkIsolation bool = false
 
+@description('Specifies whether the app service should be accessible only through private network')
+param allowPrivateAccessOnly bool = false
+
 @description('Azure Virtual Network name')
 param virtualNetworkName string = toLower('${resourcePrefix}-vnet')
 
 @description('App Service subnet name')
 param appServiceSubnetName string = 'AppServiceSubnet'
+
+@description('Private Endpoints subnet name')
+param privateEndpointsSubnetName string = 'PrivateEndpointsSubnet'
+
+@description('Optional. Enable IP restrictions for the App Service to restrict access to Application Gateway only.')
+param enableIpRestrictions bool = false
+
+@description('Optional. Array of allowed IP addresses/ranges for App Service access (e.g., Application Gateway public IP).')
+param allowedIpAddresses array = []
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' existing = {
   name: appServicePlanName
@@ -56,6 +68,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' existing = if (netw
 
 var virtualNetworkResourceId = networkIsolation ? vnet.id : ''
 var appServiceSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${appServiceSubnetName}' : ''
+var privateEndpointsSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${privateEndpointsSubnetName}' : ''
 
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: applicationInsightsName
@@ -78,8 +91,12 @@ module webAppModule '../modules/site.bicep' = {
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     userAssignedIdentityId: webAppManagedIdentity.id
     networkIsolation: networkIsolation
+    allowPrivateAccessOnly: allowPrivateAccessOnly
     virtualNetworkResourceId: virtualNetworkResourceId
     virtualNetworkSubnetResourceId: appServiceSubnetResourceId
+    privateEndpointsSubnetResourceId: privateEndpointsSubnetResourceId
+    enableIpRestrictions: enableIpRestrictions
+    allowedIpAddresses: allowedIpAddresses
     siteConfig: {
       linuxFxVersion: 'node|22-lts'
       alwaysOn: true

@@ -274,8 +274,8 @@ Based on the Customers' preference, follow the steps below to configure the CI/C
     - `AZURE_OPENAI_LOCATION`: The Azure region for Azure OpenAI resources (e.g., `australiaeast`).
     - `AZURE_RESOURCE_GROUP`: The name of the Azure resource group for the deployment.
     - `PROJECT_NAME`: The project identifier (default: `ag-aione`).
-    - `VITE_AGILECHAT_API_URL`: The API endpoint for the backend (e.g., `https://ag-aione-dev-apiapp.azurewebsites.net`). 
-        
+    - `VITE_AGILECHAT_API_URL`: The API endpoint for the backend (e.g., `https://ag-aione-dev-apiapp.azurewebsites.net`).
+
         The url is in the format `https://<projectName>-<environment>-apiapp.azurewebsites.net`.
 
     Refer to the steps for details on how to create environments and environment variables.
@@ -297,6 +297,7 @@ Based on the Customers' preference, follow the steps below to configure the CI/C
     - **Deploy AI-One Platform Infrastructure**: Provisions core platform resources, including shared services, cognitive services, and AI-related components.
     - **Deploy Backend API**: Deploys the backend API application and its supporting Azure resources.
     - **Deploy Frontend Web App**: Deploys the frontend web application.
+    - **Deploy Application Gateway (Optional)** - Deploys the Application Gateway to expose the AI-One application securely over the internet.
 
     ***GitHub***
 
@@ -311,6 +312,7 @@ Based on the Customers' preference, follow the steps below to configure the CI/C
     - **Deploy AI-One Platform Infrastructure**: `.azure-pipelines/deploy-platform.yml`
     - **Deploy Backend API**: `.azure-pipelines/deploy-backend.yml`
     - **Deploy Frontend Web App**: `.azure-pipelines/deploy-frontend.yml`
+    - **Deploy Application Gateway**: `.azure-pipelines/deploy-appgw.yml`
 
 ### 2.2.4 Deploy Log Analytics Workspace
 
@@ -515,6 +517,10 @@ Bicep Parameters: `infra/backend/[env].bicepparam`
 | `cosmosDbAccountEndpoint`       | Endpoint for the Cosmos DB Account.                                         | `https://[projectName]-[env]-cosmos.documents.azure.com:443/` |
 | `eventGridName`                 | Name of the Event Grid resource.                                            | `[projectName]-[env]-blob-eg` |
 | `allowedOrigins`                | List of allowed origins for CORS.                                           | `['https://[projectName]-[env]-webapp.azurewebsites.net']` |
+| `networkIsolation`              | Boolean flag to enable or disable network isolation for resources. The endpoint would still be accessible from internet and the app service will be integrated with vnet. | `false` |
+| `allowPrivateAccessOnly`        | Specifies whether the app service should be accessible only through private network. | `false` |
+| `enableIpRestrictions`          | Enable IP restrictions for the App Service to restrict access to specific IP addresses/ranges. | `false` |
+| `allowedIpAddresses`            | Array of allowed IP addresses/ranges for App Service access (e.g., Application Gateway public IP). | `[]` |
 
 ### 2.2.6 Deploy Frontend Application
 
@@ -552,8 +558,82 @@ Bicep Parameters: `infra/frontend/[env].bicepparam`
 | `azureTenantId`                  | Azure Tenant ID, read from environment variables.                           |                   |
 | `appServicePlanName`             | Name of the App Service Plan.                                               | `[projectName]-[env]-app`|
 |`apiAppName`                   | Name of the API App.                                                        | `[projectName]-[env]-apiapp`|
+| `networkIsolation`              | Boolean flag to enable or disable network isolation for resources. The endpoint would still be accessible from internet and the app service will be integrated with vnet. | `false` |
+| `allowPrivateAccessOnly`        | Specifies whether the app service should be accessible only through private network. | `false` |
+| `enableIpRestrictions`          | Enable IP restrictions for the App Service to restrict access to specific IP addresses/ranges. | `false` |
+| `allowedIpAddresses`            | Array of allowed IP addresses/ranges for App Service access (e.g., Application Gateway public IP). | `[]` |
 
 ---
+
+### 2.2.7 Deploy Application Gateway (Optional)
+
+1. Update the `logAnalyticsWorkspaceResourceId` parameter value to the resource ID of the Log Analytics Workspace created in the previous step. If using an existing Log Analytics Workspace, provide its resource ID.
+2. Create and upload the SSL certificate to the Key Vault. The certificate will be used for securing the Application Gateway.
+3. Update the `keyVaultName` and `sslCertificateSecretName` parameters to match the Key Vault and SSL certificate secret name.
+4. Update the `webAppServiceName` and `apiAppServiceName` parameters to match the frontend and backend app service names.
+5. Update the `virtualNetworkName` and `virtualNetworkSubnetName` parameters to match the virtual network and subnet names where the Application Gateway will be deployed.
+6. Run the `Deploy Application Gateway` pipeline to provision the Application Gateway.
+7. Update the `VITE_AGILECHAT_API_URL` environment variable in the frontend web app to point to the Application Gateway URL. Redeploy the frontend web app to apply the changes.
+8. Configure the app service to allow traffic from the Application Gateway.
+    - After deploying the Application Gateway, note the public IP address from the deployment output.
+    - Update the frontend and backend parameter files to enable IP restrictions:
+    - Redeploy the frontend and backend applications to apply the IP restrictions.
+      
+      ```bicep
+      
+      param allowPrivateAccessOnly = true
+
+      param enableIpRestrictions = true
+      param allowedIpAddresses = ['<APPLICATION_GATEWAY_PUBLIC_IP>/32']
+      ```      
+    
+    **Alternative - Manual Configuration**: You can also configure this manually through the Azure Portal:
+
+    - Navigate to the Azure Portal and select the frontend web app.
+    - Under **Inbound traffic configuration**, click on the link next to **Public network access**.
+    - Select **Enabled from select virtual networks and IP addresses**.
+    - Under **Site Access and rules**, add the IP address of the Application Gateway to the allowed IP addresses.
+    - Repeat the above steps for the backend API app.
+
+9. Test the Application Gateway by accessing the frontend web app URL. The Application Gateway should route traffic to the frontend web app and backend API app.
+
+```plaintext
+
+    infra/
+    │
+    ├── platform/
+    │   ├── appgw/
+    │   │   └── main.bicep
+    │   │   └── [env].bicepparam
+
+```
+
+Deployment Pipeline: `Deploy Application Gateway`
+
+Bicep File: `infra/platform/appgw/main.bicep`
+
+Bicep Parameters: `infra/platform/appgw/[env].bicepparam`
+
+| Parameter Name                    | Description                                                                 | Default Value                          |
+|-----------------------------------|-----------------------------------------------------------------------------|----------------------------------------|
+| `environmentName`                 | Name of the deployment environment (e.g., `dev`, `tst`, `uat`, `prod`).     |                                        |
+| `projectName`                     | Project identifier used for resource naming.                                | `ag-aione`                             |
+| `location`                        | Azure region where resources will be deployed.                              | `australiaeast`                        |
+| `tags`                            | Key-value pairs for resource tags (from `infra/tags.json`).                 |                                        |
+| `logAnalyticsWorkspaceResourceId` | Resource ID of the Log Analytics Workspace.                                 |                                        |
+| `subnetAddressPrefix`             | Address prefix for the Application Gateway subnet.                          |                                        |
+| `keyVaultName`                    | Name of the Key Vault for SSL certificate storage.                          |                                        |
+| `sslCertificateSecretName`        | Name of the SSL certificate secret in Key Vault.                            |                                        |
+| `webAppServiceName`               | Name of the frontend web app service.                                       |                                        |
+| `webAppServiceDomain`             | Custom domain for the frontend web app (leave empty for default).           | *(azurewebsites.net domain)*           |
+| `apiAppServiceName`               | Name of the backend API app service.                                        |                                        |
+| `apiAppServiceDomain`             | Custom domain for the backend API app (leave empty for default).            | *(azurewebsites.net domain)*           |
+| `virtualNetworkSubnetName`        | Name of the subnet where App Gateway will be deployed.                      | `AppGatewaySubnet`                     |
+| `enableDiagnostics`               | Enable diagnostic settings.                                                 | `true`                                 |
+| `enableWaf`                       | Enable WAF (Web Application Firewall).                                      | `true`                                 |
+| `wafMode`                         | WAF mode: Detection or Prevention.                                          | `Detection`                            |
+| `wafRuleSetType`                  | WAF rule set type.                                                          | `OWASP`                                |
+| `wafRuleSetVersion`               | WAF rule set version.                                                       | `3.2`                                  |
 
 ## 3. CI/CD Configuration
 
