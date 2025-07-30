@@ -1,15 +1,24 @@
-using Azure.Identity;
-using Azure.AI.Agents.Persistent;
-using Microsoft.Extensions.Logging;
-using Agile.Framework.Common.EnvironmentVariables;
-using Agile.Framework.Common.Attributes;
-using Microsoft.Extensions.DependencyInjection;
 using System.Text;
-using Microsoft.AspNetCore.Http;
 using System.Text.Json;
+using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.Enums;
+using Agile.Framework.Common.EnvironmentVariables;
+using Azure.AI.Agents.Persistent;
+using Azure.Identity;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-namespace Agile.Chat.Application.Services;
+namespace Agile.Chat.Application.ChatCompletions.Services;
+
+public interface IAzureAIAgentService
+{
+    Task<PersistentAgent> GetAgentAsync(string agentId);
+    Task<PersistentAgent> CreateAgentAsync<T>(string agentName, string description, string modelId, string instructions, float? temperature = null, float? topP = null, List<T> tools = default) where T: ToolDefinition;
+    Task<PersistentAgentThread> GetThreadAsync(string threadId);
+    Task<PersistentAgentThread> CreateThreadAsync();
+    Task<string> GetChatResultAsync(string userPrompt, HttpContext context, string agentId, string threadId);
+}
 
 /// <summary>
 /// Service implementation for Azure AI Agent operations.
@@ -27,7 +36,8 @@ public class AzureAIAgentService : IAzureAIAgentService
         _logger = logger;
     }
 
-    public async Task<PersistentAgent> CreateAgentAsync(string agentName, string description, string modelId, string instructions, float? temperature, float? topP)
+    public async Task<PersistentAgent> CreateAgentAsync<T>(string agentName, string description, string modelId, string instructions, float? temperature = null, float? topP = null, List<T> tools = default)
+    where T : ToolDefinition
     {
         _logger.LogDebug("Creating new agent with name: {AgentName}", agentName);
         var agentDefinition = await _projectClient.Administration.CreateAgentAsync(
@@ -35,7 +45,7 @@ public class AzureAIAgentService : IAzureAIAgentService
              name: agentName,
              description: description,
              instructions: instructions,
-             tools: [],
+             tools: tools,
              toolResources: null,
              temperature: temperature,
              topP: topP);

@@ -1,4 +1,5 @@
 ﻿using Agile.Chat.Application.Assistants.Services;
+using Agile.Chat.Application.ChatCompletions.Services;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
 using Agile.Framework.Common.Attributes;
@@ -8,7 +9,6 @@ using Agile.Framework.CosmosDb.Interfaces;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.DependencyInjection;
 using Agile.Chat.Domain.Assistants.Aggregates;
-using Agile.Chat.Application.Services;
 using Agile.Chat.Domain.Assistants.ValueObjects;
 
 namespace Agile.Chat.Application.ChatThreads.Services;

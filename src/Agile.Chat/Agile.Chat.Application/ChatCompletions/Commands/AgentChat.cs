@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.Audits.Services;
+using Agile.Chat.Application.ChatCompletions.Services;
 using Agile.Chat.Application.ChatThreads.Services;
-using Agile.Chat.Application.Services;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Audits.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Aggregates;

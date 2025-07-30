@@ -20,4 +20,6 @@ public class AssistantDto
 
     public AssistantModelOptions ModelOptions { get; set; } = new();
     public PermissionsAccessControl AccessControl { get; set; } = new();
+    
+    public List<ConnectedAgent> ConnectedAgents { get; set; } = new();
 }

@@ -1,7 +1,10 @@
 using Agile.Chat.Application.Assistants.Services;
+using Agile.Chat.Application.ChatCompletions.Services;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Assistants.ValueObjects;
 using Agile.Chat.Domain.Shared.ValueObjects;
+using Agile.Framework.Common.EnvironmentVariables;
+using Azure.AI.Agents.Persistent;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -20,9 +23,10 @@ public static class CreateAssistant
         AssistantFilterOptions FilterOptions, 
         AssistantPromptOptions PromptOptions,
         AssistantModelOptions ModelOptions,
-        PermissionsAccessControl AccessControl) : IRequest<IResult>;
+        PermissionsAccessControl AccessControl,
+        List<ConnectedAgent> ConnectedAgents) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IAssistantService assistantService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IAssistantService assistantService, IAzureAIAgentService azureAIAgentService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -39,8 +43,32 @@ public static class CreateAssistant
                 request.ModelOptions,
                 request.AccessControl);
 
-            await assistantService.AddAssistantAsync(assistant);
+            if (assistant.Type == AssistantType.Agent)
+            {
+                var agentName = assistant.Name.Trim();
+                var agent = await azureAIAgentService.CreateAgentAsync
+                (agentName, assistant.Description, Configs.AzureOpenAi.DeploymentName,
+                    assistant.PromptOptions.SystemPrompt, assistant.PromptOptions.Temperature, assistant.PromptOptions.TopP, tools: GetConnectedAgentToolDefinitions(request.ConnectedAgents));
+
+                assistant.AddAgentConfiguration(new AgentConfiguration
+                {
+                    AgentName = agentName,
+                    AgentId = agent.Id,
+                    AgentDescription = assistant.Description
+                });
+            }
+            
+            await assistantService.AddItemAsync(assistant);
             return Results.Created(assistant.Id, assistant);
+        }
+        
+        private List<ConnectedAgentToolDefinition> GetConnectedAgentToolDefinitions(List<ConnectedAgent> connectedAgents)
+        {
+            return connectedAgents.Select(connectedAgent =>
+                    new ConnectedAgentToolDefinition(
+                        new ConnectedAgentDetails(connectedAgent.AgentId, connectedAgent.AgentName, connectedAgent.ActivationDescription)
+                    ))
+                .ToList();
         }
     }
 

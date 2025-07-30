@@ -1,5 +1,4 @@
 ﻿using Agile.Chat.Application.ExtensionMethods;
-using Agile.Chat.Application.Services;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Assistants.ValueObjects;
 using Agile.Framework.Authentication.Enums;
@@ -15,35 +14,16 @@ namespace Agile.Chat.Application.Assistants.Services;
 
 public interface IAssistantService : ICosmosRepository<Assistant>
 {
-    public Task<Assistant> AddAssistantAsync(Assistant assistant);
     public Task<Assistant> GetAssistantById(string id);
     public Task<List<Assistant>> GetAllAsync();
+    
+    public Task<List<Assistant>> GetAllAgentsAsync();
 }
 
 [Export(typeof(IAssistantService), ServiceLifetime.Scoped)]
-public class AssistantService(CosmosClient cosmosClient, IAzureAIAgentService azureAIAgentService, IAssistantModelConfigService assistantModelConfigService, IRoleService roleService) :
+public class AssistantService(CosmosClient cosmosClient, IAssistantModelConfigService assistantModelConfigService, IRoleService roleService) :
     CosmosRepository<Assistant>(Constants.CosmosAssistantsContainerName, cosmosClient), IAssistantService
 {
-    public async Task<Assistant> AddAssistantAsync(Assistant assistant)
-    {
-        if (assistant.Type == AssistantType.Agent)
-        {
-            var agentName = assistant.Name.Trim();
-            var agent = await azureAIAgentService.CreateAgentAsync
-                  (agentName, assistant.Description, Configs.AzureOpenAi.DeploymentName,
-                  assistant.PromptOptions.SystemPrompt, assistant.PromptOptions.Temperature, assistant.PromptOptions.TopP);
-
-            assistant.AddAgentConfiguration(new AgentConfiguration
-            {
-                AgentName = agentName,
-                AgentId = agent.Id,
-            });
-        }
-
-        await AddItemAsync(assistant);
-        return assistant;
-    }
-
     public async Task<Assistant> GetAssistantById(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
@@ -58,6 +38,20 @@ public class AssistantService(CosmosClient cosmosClient, IAzureAIAgentService az
     public async Task<List<Assistant>> GetAllAsync()
     {
         var query = LinqQuery().OrderBy(a => a.Name).AsQueryable();
+        return await CollectAssistantResultsAsync(query);
+    }
+
+    public async Task<List<Assistant>> GetAllAgentsAsync()
+    {
+        var query = LinqQuery()
+            .Where(a => a.Type == AssistantType.Agent)
+            .OrderBy(a => a.Name)
+            .AsQueryable();
+        return await CollectAssistantResultsAsync(query);
+    }
+
+    private async Task<List<Assistant>> CollectAssistantResultsAsync(IQueryable<Assistant> query)
+    {
         List<Assistant> results = new List<Assistant>();
 
         if (roleService.IsSystemAdmin())

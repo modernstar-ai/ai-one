@@ -77,6 +77,7 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
     public void AddAgentConfiguration(AgentConfiguration agentConfiguration)
     {
         AgentConfiguration = agentConfiguration;
+        LastModified = DateTime.UtcNow;
     }
 
     public void UpdateModelOptions(AssistantModelOptions modelOptions)
