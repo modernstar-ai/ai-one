@@ -15,9 +15,13 @@ public interface IAzureAIAgentService
 {
     Task<PersistentAgent> GetAgentAsync(string agentId);
     Task<PersistentAgent> CreateAgentAsync<T>(string agentName, string description, string modelId, string instructions, float? temperature = null, float? topP = null, List<T> tools = default) where T: ToolDefinition;
+    Task<PersistentAgent> UpdateAgentAsync<T>(string agentId, string agentName, string description, string modelId,
+        string instructions, float? temperature = null, float? topP = null, List<T> tools = default)  where T: ToolDefinition;
     Task<PersistentAgentThread> GetThreadAsync(string threadId);
     Task<PersistentAgentThread> CreateThreadAsync();
     Task<string> GetChatResultAsync(string userPrompt, HttpContext context, string agentId, string threadId);
+    
+    Task DeleteAgentAsync(string? agentId);
 }
 
 /// <summary>
@@ -49,6 +53,24 @@ public class AzureAIAgentService : IAzureAIAgentService
              toolResources: null,
              temperature: temperature,
              topP: topP);
+        _logger.LogDebug("Agent created successfully. AgentId: {AgentId}", agentDefinition.Value.Id);
+        return agentDefinition;
+    }
+    
+    public async Task<PersistentAgent> UpdateAgentAsync<T>(string agentId, string agentName, string description, string modelId, string instructions, float? temperature = null, float? topP = null, List<T> tools = default)
+        where T : ToolDefinition
+    {
+        _logger.LogDebug("Creating new agent with name: {AgentName}", agentName);
+        var agentDefinition = await _projectClient.Administration.UpdateAgentAsync(
+            agentId,
+            modelId,
+            name: agentName,
+            description: description,
+            instructions: instructions,
+            tools: tools,
+            toolResources: null,
+            temperature: temperature,
+            topP: topP);
         _logger.LogDebug("Agent created successfully. AgentId: {AgentId}", agentDefinition.Value.Id);
         return agentDefinition;
     }
@@ -88,6 +110,12 @@ public class AzureAIAgentService : IAzureAIAgentService
 
         _logger.LogDebug("Message sent successfully. agentId: {AgentId}, threadId: {ThreadId}", agentId, agentThread.Id);
         return response;
+    }
+
+    public async Task DeleteAgentAsync(string? agentId)
+    {
+        if (string.IsNullOrWhiteSpace(agentId)) return;
+        await _projectClient.Administration.DeleteAgentAsync(agentId);
     }
 
     private async Task<string> InvokeAgent(string userPrompt, HttpContext context, PersistentAgent agent, PersistentAgentThread agentThread, ILogger logger)

@@ -1,6 +1,9 @@
 ﻿using Agile.Chat.Application.Assistants.Services;
+using Agile.Chat.Application.ChatCompletions.Services;
 using Agile.Chat.Domain.Assistants.ValueObjects;
 using Agile.Chat.Domain.Shared.ValueObjects;
+using Agile.Framework.Common.EnvironmentVariables;
+using Azure.AI.Agents.Persistent;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -20,9 +23,10 @@ public static class UpdateAssistantById
         AssistantFilterOptions FilterOptions,
         AssistantPromptOptions PromptOptions,
         AssistantModelOptions ModelOptions,
-        PermissionsAccessControl AccessControl) : IRequest<IResult>;
+        PermissionsAccessControl AccessControl,
+        List<ConnectedAgent> ConnectedAgents) : IRequest<IResult>;
 
-    public class Handler(ILogger<Handler> logger, IAssistantService assistantService) : IRequestHandler<Command, IResult>
+    public class Handler(ILogger<Handler> logger, IAssistantService assistantService, IAzureAIAgentService azureAIAgentService) : IRequestHandler<Command, IResult>
     {
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -30,14 +34,54 @@ public static class UpdateAssistantById
             var assistant = await assistantService.GetAssistantById(request.Id.ToString());
             if (assistant is null) return Results.NotFound();
 
+            var isPreviouslyAgent = assistant.Type == AssistantType.Agent;
+            var isCurrentlyAgent = request.Type == AssistantType.Agent;
             logger.LogInformation("Updating Assistant old values: {@Assistant}", assistant);
             assistant.Update(request.Name, request.Description, request.Greeting, request.Type, request.Status,
                 request.FilterOptions, request.PromptOptions, request.ModelOptions);
             assistant.UpdateAccessControl(request.AccessControl);
+
+            //Delete the agent from agent service if its not becoming an agent type anymore
+            if (isPreviouslyAgent && !isCurrentlyAgent)
+            {
+                await azureAIAgentService.DeleteAgentAsync(assistant.AgentConfiguration?.AgentId);
+                assistant.AddAgentConfiguration(null);
+            }
+
+            //Update an agent in agent service if it is becoming or still an agent type now
+            if (isCurrentlyAgent)
+            {
+                var agentName = assistant.Name.Trim();
+                var agent = isPreviouslyAgent
+                    ? await azureAIAgentService.UpdateAgentAsync(assistant.AgentConfiguration!.AgentId, 
+                        agentName, assistant.Description, Configs.AzureOpenAi.DeploymentName,
+                        assistant.PromptOptions.SystemPrompt, assistant.PromptOptions.Temperature, assistant.PromptOptions.TopP, tools: GetConnectedAgentToolDefinitions(request.ConnectedAgents)) 
+                    :
+                    await azureAIAgentService.CreateAgentAsync
+                (agentName, assistant.Description, Configs.AzureOpenAi.DeploymentName,
+                    assistant.PromptOptions.SystemPrompt, assistant.PromptOptions.Temperature, assistant.PromptOptions.TopP, tools: GetConnectedAgentToolDefinitions(request.ConnectedAgents));
+
+                assistant.AddAgentConfiguration(new AgentConfiguration
+                {
+                    AgentName = agentName,
+                    AgentId = agent.Id,
+                    AgentDescription = assistant.Description
+                });
+            }
+            
             await assistantService.UpdateItemByIdAsync(assistant.Id, assistant);
             logger.LogInformation("Updated Assistant Successfully: {@Assistant}", assistant);
 
             return Results.Ok();
+        }
+        
+        private List<ConnectedAgentToolDefinition> GetConnectedAgentToolDefinitions(List<ConnectedAgent> connectedAgents)
+        {
+            return connectedAgents.Select(connectedAgent =>
+                    new ConnectedAgentToolDefinition(
+                        new ConnectedAgentDetails(connectedAgent.AgentId, connectedAgent.AgentName, connectedAgent.ActivationDescription)
+                    ))
+                .ToList();
         }
     }
 
