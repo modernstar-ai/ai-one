@@ -769,7 +769,7 @@ Create the following environment variables in each environment created in the pr
 
 ## 4. Appendix
 
-### 4.1 Assign Roles to Backend API Managed Identity
+### 4.1 Assign Roles to Backend API Managed Identity from Azure Portal
 
 If the deployment was completed with `deployRoleAssignments = false` due to insufficient permissions, you'll need to manually configure the role assignments for the managed identities to enable proper service-to-service authentication.
 
@@ -868,34 +868,33 @@ The AI-One solution requires the following role assignments for the API App's ma
 9. Select **Event Grid System Topic** and find your topic
 10. Click **Select** then **Review + assign**
 
-#### PowerShell Automation Script
+### 4.2 Assign Roles to Backend API Managed Identity using PowerShell script
 
-For automated role assignment configuration, use the provided PowerShell script `infra/scripts/configure-role-assignments.ps1`.
+The role assignments can also be configured using a PowerShell script. The script `configure-role-assignments.ps1` will assign the necessary roles to the managed identities for the backend API application.
 
-**Prerequisites:**
+1. Before running the script, install the required Azure PowerShell modules. Run PowerShell as **Administrator** and execute:
 
-Before running the script, install the required Azure PowerShell modules. Run PowerShell as **Administrator** and execute:
+    ```powershell
+    # Install all required Azure PowerShell modules
+    Install-Module -Name Az.Accounts, Az.Resources, Az.ManagedServiceIdentity, Az.Storage, Az.KeyVault, Az.ServiceBus, Az.CognitiveServices, Az.EventGrid -Scope AllUsers -Repository PSGallery -Force
+    ```
 
-```powershell
-# Install all required Azure PowerShell modules
-Install-Module -Name Az.Accounts, Az.Resources, Az.ManagedServiceIdentity, Az.Storage, Az.KeyVault, Az.ServiceBus, Az.CognitiveServices, Az.EventGrid -Scope AllUsers -Repository PSGallery -Force
-```
+2. Connect to Azure using your account credentials:
 
-**Usage:**
+    ```powershell
+    # Connect to Azure (this will open a browser window for authentication)
+    Connect-AzAccount
 
-```powershell
-# Navigate to the scripts directory
-cd infra/scripts
+    # Verify you're connected to the correct subscription
+    Get-AzContext
+    ```
 
-# Configure role assignments with resource names
-.\configure-role-assignments.ps1 `
-    -SubscriptionId "9221a966-ce17-4b76-a348-887f234a827a"
-    -ResourceGroupName "rg-practice-ai-aione-dev" `
-    -ApiAppManagedIdentityName "id-ag-aione-dev-apiapp" `
-    -OpenAIServiceName "ag-aione-dev-foundry" `
-    -StorageAccountName "agaionedevsto" `
-    -DocumentIntelligenceServiceName "ag-aione-dev-docintel" `
-    -ServiceBusName "ag-aione-dev-service-bus" `
-    -KeyVaultName "ag-aione-dev-kv" `
-    -EventGridTopicName "ag-aione-dev-blob-eg"
-```
+3. Run the `configure-role-assignments.ps1` script to assign roles to the managed identities. Update the parameters with your environment details:
+
+    ```powershell
+    # Navigate to the scripts directory
+    cd infra/scripts
+
+    # Configure role assignments with resource names
+    .\configure-role-assignments.ps1 -SubscriptionId "9221a966-ce17-4b76-a348-887f234a827a" -ResourceGroupName "rg-practice-ai-aione-dev" -ApiAppManagedIdentityName "id-ag-aione-dev-apiapp" -OpenAIServiceName "ag-aione-dev-foundry" -StorageAccountName "agaionedevsto" -DocumentIntelligenceServiceName "ag-aione-dev-docintel" -ServiceBusName "ag-aione-dev-service-bus" -KeyVaultName "ag-aione-dev-kv" -EventGridTopicName "ag-aione-dev-blob-eg"
+    ```
