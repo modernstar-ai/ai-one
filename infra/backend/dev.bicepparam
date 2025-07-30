@@ -28,3 +28,5 @@ param cosmosDbAccountEndpoint = 'https://ag-aione-dev-cosmos.documents.azure.com
 param eventGridName = 'ag-aione-dev-blob-eg'
 
 param allowedOrigins = ['https://ag-aione-dev-webapp.azurewebsites.net']
+
+param deployRoleAssignments = false
