@@ -477,6 +477,12 @@ Update the parameters file to match the environment configuration of the platfor
 
 Update the `logAnalyticsWorkspaceResourceId` parameter value to the resource ID of the Log Analytics Workspace created in the previous step. If using an existing Log Analytics Workspace, provide its resource ID.
 
+> **Important:**  
+>
+> Deploying the backend application requires permission to create role assignments for its managed identity. If the service principal used for deployment does **not** have sufficient permissions, set the `deployRoleAssignments` parameter to `false` in your deployment configuration.  
+>
+> When role assignment creation is skipped, you must assign the required roles to the backend application's managed identity after deployment. Refer to the [Assign Roles to Backend API Managed Identity](#41-assign-roles-to-backend-api-managed-identity) section for details.
+
 ```plaintext
 
     infra/
@@ -517,6 +523,7 @@ Bicep Parameters: `infra/backend/[env].bicepparam`
 | `cosmosDbAccountEndpoint`       | Endpoint for the Cosmos DB Account.                                         | `https://[projectName]-[env]-cosmos.documents.azure.com:443/` |
 | `eventGridName`                 | Name of the Event Grid resource.                                            | `[projectName]-[env]-blob-eg` |
 | `allowedOrigins`                | List of allowed origins for CORS.                                           | `['https://[projectName]-[env]-webapp.azurewebsites.net']` |
+| `deployRoleAssignments`         | Boolean flag to control whether role assignments are deployed for the managed identity. | `true` |
 | `networkIsolation`              | Boolean flag to enable or disable network isolation for resources. The endpoint would still be accessible from internet and the app service will be integrated with vnet. | `false` |
 | `allowPrivateAccessOnly`        | Specifies whether the app service should be accessible only through private network. | `false` |
 | `enableIpRestrictions`          | Enable IP restrictions for the App Service to restrict access to specific IP addresses/ranges. | `false` |
@@ -578,15 +585,15 @@ Bicep Parameters: `infra/frontend/[env].bicepparam`
     - After deploying the Application Gateway, note the public IP address from the deployment output.
     - Update the frontend and backend parameter files to enable IP restrictions:
     - Redeploy the frontend and backend applications to apply the IP restrictions.
-      
+
       ```bicep
       
       param allowPrivateAccessOnly = true
 
       param enableIpRestrictions = true
       param allowedIpAddresses = ['<APPLICATION_GATEWAY_PUBLIC_IP>/32']
-      ```      
-    
+      ```
+
     **Alternative - Manual Configuration**: You can also configure this manually through the Azure Portal:
 
     - Navigate to the Azure Portal and select the frontend web app.
@@ -759,3 +766,135 @@ Create the following environment variables in each environment created in the pr
 2. Click **New pipeline** and select your repository.
 3. Choose **Existing Azure Pipelines YAML file** and select the YAML file for the pipeline you want to create.
 4. Click on **Save** to create the pipeline.
+
+## 4. Appendix
+
+### 4.1 Assign Roles to Backend API Managed Identity from Azure Portal
+
+If the deployment was completed with `deployRoleAssignments = false` due to insufficient permissions, you'll need to manually configure the role assignments for the managed identities to enable proper service-to-service authentication.
+
+#### Prerequisites
+
+- **User Access Administrator** or **Owner** role on the Azure subscription or resource group.
+
+The AI-One solution requires the following role assignments for the API App's managed identity:
+
+| Target Resource | Role | Purpose |
+|-----------------|------|---------|
+| Azure OpenAI | Cognitive Services OpenAI User | Access OpenAI models for chat and embeddings |
+| Storage Account | Storage Blob Data Contributor | Read/write access to blob containers |
+| Document Intelligence | Cognitive Services User | Process documents using AI |
+| Service Bus | Azure Service Bus Data Receiver | Receive messages from queues |
+| Service Bus | Azure Service Bus Data Sender | Send messages to queues |
+| Service Bus | Azure Service Bus Data Sender | Send blob events to the queue |
+| Key Vault | Key Vault Secrets User | Read secrets and connection strings |
+
+**1. Find the API App Managed Identity**
+
+1. Navigate to the Azure Portal and go to your resource group (e.g., `rg-practice-ai-aione-dev`)
+2. Find the managed identity resource named `id-<projectName>-<env>-apiapp` (e.g., `id-ag-aione-dev-apiapp`)
+3. Click on the managed identity and note the **Object (principal) ID**
+
+**2. Assign OpenAI Access**
+
+1. Navigate to your Azure OpenAI resource (e.g., `ag-aione-dev-foundry`)
+2. Go to **Access control (IAM)** in the left menu
+3. Click **+ Add** > **Add role assignment**
+4. On the **Role** tab, search for and select **Cognitive Services OpenAI User**
+5. Click **Next**
+6. On the **Members** tab, select **Managed identity**
+7. Click **+ Select members**
+8. Choose your subscription and **User-assigned managed identity**
+9. Select the API app managed identity (`id-ag-aione-dev-apiapp`)
+10. Click **Select** then **Review + assign**
+
+**3. Assign Storage Account Access**
+
+1. Navigate to your Storage Account (e.g., `agaionedevsto`)
+2. Go to **Access control (IAM)**
+3. Click **+ Add** > **Add role assignment**
+4. Select **Storage Blob Data Contributor** role
+5. Follow steps 6-10 from Step 2 to assign to the API app managed identity
+
+**4. Assign Document Intelligence Access**
+
+1. Navigate to your Document Intelligence resource (e.g., `ag-aione-dev-docintel`)
+2. Go to **Access control (IAM)**
+3. Click **+ Add** > **Add role assignment**
+4. Select **Cognitive Services User** role
+5. Follow steps 6-10 from Step 2 to assign to the API app managed identity
+
+**5. Assign Service Bus Access (Receiver)**
+
+1. Navigate to your Service Bus namespace (e.g., `ag-aione-dev-service-bus`)
+2. Go to **Access control (IAM)**
+3. Click **+ Add** > **Add role assignment**
+4. Select **Azure Service Bus Data Receiver** role
+5. Follow steps 6-10 from Step 2 to assign to the API app managed identity
+
+**6. Assign Service Bus Access (Sender)**
+
+1. In the same Service Bus namespace
+2. Click **+ Add** > **Add role assignment** again
+3. Select **Azure Service Bus Data Sender** role
+4. Follow steps 6-10 from Step 2 to assign to the API app managed identity
+
+**7. Assign Key Vault Access**
+
+1. Navigate to your Key Vault (e.g., `ag-aione-dev-kv`)
+2. Go to **Access control (IAM)**
+3. Click **+ Add** > **Add role assignment**
+4. Select **Key Vault Secrets User** role
+5. Follow steps 6-10 from Step 2 to assign to the API app managed identity
+
+#### Configure Event Grid System Topic Role Assignment
+
+**1. Find the Event Grid System Topic**
+
+1. Navigate to your Event Grid System Topic (e.g., `ag-aione-dev-blob-eg`)
+2. Go to **Identity** in the left menu
+3. Ensure **System assigned** identity is **On** and note the **Object (principal) ID**
+
+**2. Assign Service Bus Sender Access**
+
+1. Navigate to your Service Bus namespace (e.g., `ag-aione-dev-service-bus`)
+2. Go to **Access control (IAM)**
+3. Click **+ Add** > **Add role assignment**
+4. Select **Azure Service Bus Data Sender** role
+5. Click **Next**
+6. On the **Members** tab, select **Managed identity**
+7. Click **+ Select members**
+8. Choose your subscription and **System-assigned managed identity**
+9. Select **Event Grid System Topic** and find your topic
+10. Click **Select** then **Review + assign**
+
+### 4.2 Assign Roles to Backend API Managed Identity using PowerShell script
+
+The role assignments can also be configured using a PowerShell script. The script `configure-role-assignments.ps1` will assign the necessary roles to the managed identities for the backend API application.
+
+1. Before running the script, install the required Azure PowerShell modules. Run PowerShell as **Administrator** and execute:
+
+    ```powershell
+    # Install all required Azure PowerShell modules
+    Install-Module -Name Az.Accounts, Az.Resources, Az.ManagedServiceIdentity, Az.Storage, Az.KeyVault, Az.ServiceBus, Az.CognitiveServices, Az.EventGrid -Scope AllUsers -Repository PSGallery -Force
+    ```
+
+2. Connect to Azure using your account credentials:
+
+    ```powershell
+    # Connect to Azure (this will open a browser window for authentication)
+    Connect-AzAccount
+
+    # Verify you're connected to the correct subscription
+    Get-AzContext
+    ```
+
+3. Run the `configure-role-assignments.ps1` script to assign roles to the managed identities. Update the parameters with your environment details:
+
+    ```powershell
+    # Navigate to the scripts directory
+    cd infra/scripts
+
+    # Configure role assignments with resource names
+    .\configure-role-assignments.ps1 -SubscriptionId "12345678-1234-1234-1234-123456789012" -ResourceGroupName "rg-practice-ai-aione-dev" -ApiAppManagedIdentityName "id-ag-aione-dev-apiapp" -OpenAIServiceName "ag-aione-dev-foundry" -StorageAccountName "agaionedevsto" -DocumentIntelligenceServiceName "ag-aione-dev-docintel" -ServiceBusName "ag-aione-dev-service-bus" -KeyVaultName "ag-aione-dev-kv" -EventGridTopicName "ag-aione-dev-blob-eg"
+    ```
