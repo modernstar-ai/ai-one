@@ -32,7 +32,7 @@
 		"name": "o3-mini",
 		"sku": {
 			"name": "GlobalStandard",
-			"capacity": 500
+			"capacity": 100
 		}
 	}
 ]
