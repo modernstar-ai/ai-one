@@ -3,7 +3,9 @@ using System.Text.Json;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.Enums;
 using Agile.Framework.Common.EnvironmentVariables;
+using Azure;
 using Azure.AI.Agents.Persistent;
+using Azure.Core;
 using Azure.Identity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,7 +38,10 @@ public class AzureAIAgentService : IAzureAIAgentService
     public AzureAIAgentService(ILogger<AzureAIAgentService> logger)
     {
         var projectEndpoint = Configs.AIServices.FoundryProjectEndpoint;
-        _projectClient = new PersistentAgentsClient(projectEndpoint, new DefaultAzureCredential());
+        TokenCredential tokenCredential = Configs.GetEnvironment.Equals("Local", StringComparison.InvariantCultureIgnoreCase) ? 
+            new ClientSecretCredential(Configs.AzureAd.TenantId, Configs.AzureAd.ClientId, Configs.AzureAd.ClientSecret) : new
+            DefaultAzureCredential();
+        _projectClient = new PersistentAgentsClient(projectEndpoint, tokenCredential);
         _logger = logger;
     }
 
