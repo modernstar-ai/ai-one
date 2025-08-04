@@ -13,14 +13,10 @@ export type Assistant = {
   createdDate: Date;
   lastModified: Date;
   modelOptions: IModelOptions;
+  agentConfiguration: SelectAgentConfiguration;
 };
 
 export type InsertAssistant = Partial<Assistant>;
-
-// export interface ConnectedAgent {
-//   agentType: string;
-//   description: string;
-// }
 
 export enum AssistantType {
   Chat = 'Chat',
@@ -45,6 +41,13 @@ export interface IModelOptions {
   allowModelSelection: boolean;
   models: Model[];
   defaultModelId: string;
+}
+
+export interface SelectAgentConfiguration {
+  agentDescription?: string;
+  agentId: string;
+  agentName: string;
+  connectedAgents: string[];
 }
 
 export interface Model {

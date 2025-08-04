@@ -32,11 +32,8 @@ import { MultiInput } from '@/components/ui-extended/multi-input';
 
 import { BaseDialog } from '@/components/base/BaseDiaglog';
 import useGetTextModels from '@/hooks/use-get-textmodels';
-// import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-// import {
-//   Dialog, DialogContent, DialogDescription, DialogFooter,
-//   DialogHeader, DialogTitle, DialogTrigger
-// } from "@/components/ui/dialog";
+import useGetAgents from '@/hooks/use-get-agents';
+import { BaseSelect } from '@/components/base/BaseSelect';
 
 // Define the AssistantPromptOptions schema
 const AssistantPromptOptionsSchema = z.object({
@@ -110,23 +107,7 @@ export default function AssistantForm() {
   const { indexes } = useIndexes();
 
   const { data, isLoading: textmodelsLoading } = useGetTextModels();
-
-  // const [connectedAgents, setConnectedAgents] = useState<ConnectedAgent[]>([]);
-  // const [agentTypeInput, setAgentTypeInput] = useState<string>('');
-  // const [agentDescriptionInput, setAgentDescriptionInput] = useState<string>('');
-
-  // const [agentDialogOpen, setAgentDialogOpen] = useState(false);
-
-  // // Replace this with your actual list of agent options (id/name or whatever you use)
-  // const agentOptions = [
-  //   { id: "agent1", name: "Agent 1" },
-  //   { id: "agent2", name: "Agent 2" },
-  //   { id: "agent3", name: "Agent 3" },
-  // ];
-
-  // const [selectedAgent, setSelectedAgent] = useState('');
-  // // const [uniqueName, setUniqueName] = useState('');
-  // const [activationDetail, setActivationDetail] = useState('');
+  const { data: agents } = useGetAgents();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -387,58 +368,46 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
+                {form.getValues('type') === 'Agent' && (
+                  <div>
+                    <BaseDialog
+                      label="Configure connected agents"
+                      title="Connected Agents"
+                      disabled={false}
+                      description="Select and configure agents to connect with this assistant">
+                      <div className="space-y-6">
+                        <div>
+                          <FormLabel className="text-sm font-medium">Agent *</FormLabel>
+                          <BaseSelect
+                            placeholder="Select an agent"
+                            options={
+                              agents?.map((agent) => ({
+                                value: agent.id,
+                                label: agent.name
+                              })) || []
+                            }
+                            onChange={(value) => {
+                              console.log('Selected agent:', value);
+                              // Handle agent selection here
+                            }}
+                          />
+                        </div>
 
-                {/* {form.watch('type') === AssistantType.Agent && (
-                  <>
-                    <FormItem>
-                      <FormLabel>Agent Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter Agent Name"
-                          // {...field} // Connect to your form if needed
-                        />
-                      </FormControl>
-                    </FormItem>
-                    <div className="mt-6">
-                      <FormLabel className="mb-3 block">Connected Agents</FormLabel>
-                      
-                      
-                      <Table className="mt-2">
-                        <TableHeader>
-                          <TableRow className="bg-muted/50">
-                            <TableHead>Agent Name</TableHead>
-                            <TableHead>Description</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {connectedAgents.length === 0 ? (
-                            <TableRow>
-                              <TableCell>Web Search Agent</TableCell>
-                              <TableCell>Responds with bing search</TableCell>
-                            </TableRow>
-                          ) : (
-                            connectedAgents.map((ca, idx) => (
-                              <TableRow key={idx}>
-                                <TableCell>{ca.agentType}</TableCell>
-                                <TableCell>{ca.description}</TableCell>
-                              </TableRow>
-                            ))
-                          )}
-                        </TableBody>
-                      </Table>
+                        <div>
+                          <FormLabel className="text-sm font-medium">Activation Description *</FormLabel>
+                          <Textarea
+                            placeholder="Describe when and how this agent should be activated..."
+                            className="min-h-[100px] resize-none"
+                          />
+                        </div>
 
-                      <div className="flex gap-2 mt-2">
-                        <Button
-                          type="button"
-                          className="font-bold"
-                          onClick={() => setAgentDialogOpen(true)}
-                        >
-                          Add Connected Agents
-                        </Button>
+                        <div className="flex justify-end gap-2 pt-4 border-t">
+                          <Button size="sm">Add Agent</Button>
+                        </div>
                       </div>
-                    </div>
-                  </>
-                )} */}
+                    </BaseDialog>
+                  </div>
+                )}
 
                 <FormField
                   control={form.control}
