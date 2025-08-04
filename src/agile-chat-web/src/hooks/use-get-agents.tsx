@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { fetchAllAgents } from '@/services/agents-service';
+import { Assistant } from '@/types/Assistant';
 
 const useGetAgents = () => {
-  const [data, setData] = useState<any[] | null>(null);
+  const [data, setData] = useState<Assistant[] | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 

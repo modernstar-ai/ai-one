@@ -47,7 +47,7 @@ import * as z from 'zod';
 
 export const SelectConnectedAgentSchema = z.object({
   agentId: z.string().min(1, 'Agent ID is required'),
-  agentName: z.string().min(1, 'Agent name is required'),
+  agentName: z.string().min(1, 'Agent name is required').regex(/^[a-zA-Z_]+$/, 'Agent name must contain only letters and underscores'),
   activationDescription: z.string().min(1, 'Activation description is required')
 });
 

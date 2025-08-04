@@ -18,7 +18,15 @@ import { useToast } from '@/components/ui/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice';
-import { Assistant, AssistantStatus, AssistantType, InsertAssistant, SelectConnectedAgent, SelectConnectedAgentSchema, SelectAgentConfigurationSchema } from '@/types/Assistant';
+import {
+  Assistant,
+  AssistantStatus,
+  AssistantType,
+  InsertAssistant,
+  SelectConnectedAgent,
+  SelectConnectedAgentSchema,
+  SelectAgentConfigurationSchema
+} from '@/types/Assistant';
 import { fetchTools } from '@/services/toolservice';
 import { useIndexes } from '@/hooks/use-indexes';
 import { Loader2 } from 'lucide-react';
@@ -108,10 +116,11 @@ export default function AssistantForm() {
 
   const { data, isLoading: textmodelsLoading } = useGetTextModels();
   const { data: agents } = useGetAgents();
-  
+
   // Connected agents state
   const [connectedAgents, setConnectedAgents] = useState<SelectConnectedAgent[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>('');
+  const [agentName, setAgentName] = useState<string>('');
   const [agentDescription, setAgentDescription] = useState<string>('');
 
   const form = useForm<FormValues>({
@@ -158,14 +167,14 @@ export default function AssistantForm() {
 
   // Function to add agent to connected agents array
   const handleAddAgent = () => {
-    if (!selectedAgentId || !agentDescription.trim()) return;
-    
-    const selectedAgent = agents?.find(agent => agent.id === selectedAgentId);
+    if (!selectedAgentId || !agentName.trim() || !agentDescription.trim()) return;
+
+    const selectedAgent = agents?.find((agent) => agent.agentConfiguration.agentId === selectedAgentId);
     if (!selectedAgent) return;
 
     const newConnectedAgent: SelectConnectedAgent = {
       agentId: selectedAgentId,
-      agentName: selectedAgent.name,
+      agentName: agentName.trim(),
       activationDescription: agentDescription.trim()
     };
 
@@ -181,7 +190,7 @@ export default function AssistantForm() {
     }
 
     // Check if agent is already connected
-    if (connectedAgents.some(agent => agent.agentId === selectedAgentId)) {
+    if (connectedAgents.some((agent) => agent.agentId === selectedAgentId)) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -190,8 +199,9 @@ export default function AssistantForm() {
       return;
     }
 
-    setConnectedAgents(prev => [...prev, newConnectedAgent]);
+    setConnectedAgents((prev) => [...prev, newConnectedAgent]);
     setSelectedAgentId('');
+    setAgentName('');
     setAgentDescription('');
 
     toast({
@@ -202,7 +212,7 @@ export default function AssistantForm() {
 
   // Function to remove agent from connected agents array
   const handleRemoveAgent = (agentId: string) => {
-    setConnectedAgents(prev => prev.filter(agent => agent.agentId !== agentId));
+    setConnectedAgents((prev) => prev.filter((agent) => agent.agentId !== agentId));
   };
 
   const getTools = async () => {
@@ -298,6 +308,7 @@ export default function AssistantForm() {
     if (watchType !== AssistantType.Agent && connectedAgents.length > 0) {
       setConnectedAgents([]);
       setSelectedAgentId('');
+      setAgentName('');
       setAgentDescription('');
     }
   }, [watchType, connectedAgents.length]);
@@ -338,12 +349,7 @@ export default function AssistantForm() {
       // Sync connectedAgents state to form data
       const fileData = {
         ...values,
-        agentConfiguration: values.type === AssistantType.Agent ? {
-          agentDescription: values.description,
-          agentId: undefined, // Optional field, keep undefined
-          agentName: values.name,
-          connectedAgents: connectedAgents
-        } : undefined
+        connectedAgents: values.type === AssistantType.Agent ? connectedAgents : undefined
       } as InsertAssistant;
 
       if (fileId) {
@@ -358,19 +364,35 @@ export default function AssistantForm() {
       });
       navigate('/assistants');
     } catch (error: any) {
-      // Enhanced error handling for 400 responses
+      // Enhanced error handling for different response statuses
       let errorMessage = 'An error occurred';
 
-      if (error?.response?.status === 400) {
-        // Handle validation errors from the API
-        if (error.response.data?.errors) {
-          // If the API returns structured validation errors
-          const validationErrors = Object.values(error.response.data.errors).flat();
-          errorMessage = validationErrors.join(', ');
-        } else if (error.response.data?.message) {
-          errorMessage = error.response.data.message;
+      if (error?.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+
+        if (status === 400) {
+          // Handle validation errors from the API
+          if (data?.error?.message) {
+            // Handle OpenAI-style error format
+            errorMessage = data.error.message;
+          } else if (data?.errors) {
+            // Handle validation errors
+            const validationErrors = Object.values(data.errors).flat();
+            errorMessage = validationErrors.join(', ');
+          } else if (data?.message) {
+            errorMessage = data.message;
+          } else {
+            errorMessage = 'Validation failed. Please check your input.';
+          }
+        } else if (status === 401) {
+          errorMessage = 'Unauthorized. Please check your permissions.';
+        } else if (status === 403) {
+          errorMessage = 'Access denied. You do not have permission to perform this action.';
+        } else if (status === 500) {
+          errorMessage = 'Server error. Please try again later.';
         } else {
-          errorMessage = 'Validation failed. Please check your input.';
+          errorMessage = `Request failed with status ${status}`;
         }
       } else if (error instanceof Error) {
         errorMessage = error.message;
@@ -473,15 +495,14 @@ export default function AssistantForm() {
                           {connectedAgents.map((agent) => (
                             <span
                               key={agent.agentId}
-                              className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full break-words"
-                            >
+                              className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full break-words">
                               {agent.agentName}
                             </span>
                           ))}
                         </div>
                       )}
                     </div>
-                    
+
                     <BaseDialog
                       label={
                         <div className="flex items-center gap-2">
@@ -501,12 +522,25 @@ export default function AssistantForm() {
                             </SelectTrigger>
                             <SelectContent>
                               {agents?.map((agent) => (
-                                <SelectItem key={agent.id} value={agent.id}>
+                                <SelectItem key={agent.id} value={agent.agentConfiguration.agentId}>
                                   {agent.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
+                        </div>
+
+                        <div>
+                          <FormLabel className="text-sm font-medium">Agent Unique Name *</FormLabel>
+                          <Input
+                            placeholder="agent_name (letters and underscores only)"
+                            value={agentName}
+                            onChange={(e) => setAgentName(e.target.value)}
+                            pattern="^[a-zA-Z_]+$"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Must contain only letters and underscores
+                          </p>
                         </div>
 
                         <div>
@@ -520,12 +554,11 @@ export default function AssistantForm() {
                         </div>
 
                         <div className="flex justify-end gap-2 pt-4 border-t">
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             onClick={handleAddAgent}
-                            disabled={!selectedAgentId || !agentDescription.trim()}
-                            className="w-full sm:w-auto"
-                          >
+                            disabled={!selectedAgentId || !agentName.trim() || !agentDescription.trim()}
+                            className="w-full sm:w-auto">
                             <Plus className="h-4 w-4 mr-2" />
                             Add Agent
                           </Button>
@@ -534,20 +567,25 @@ export default function AssistantForm() {
                         {/* Display connected agents */}
                         {connectedAgents.length > 0 && (
                           <div className="pt-4 border-t">
-                            <FormLabel className="text-sm font-medium mb-3 block">Connected Agents ({connectedAgents.length})</FormLabel>
+                            <FormLabel className="text-sm font-medium mb-3 block">
+                              Connected Agents ({connectedAgents.length})
+                            </FormLabel>
                             <div className="max-h-60 overflow-y-auto space-y-3 pr-2">
                               {connectedAgents.map((agent) => (
-                                <div key={agent.agentId} className="flex flex-col sm:flex-row sm:items-start sm:justify-between p-3 border rounded-lg bg-muted/50 gap-2">
+                                <div
+                                  key={agent.agentId}
+                                  className="flex flex-col sm:flex-row sm:items-start sm:justify-between p-3 border rounded-lg bg-muted/50 gap-2">
                                   <div className="flex-1 min-w-0">
                                     <div className="font-medium text-sm break-words">{agent.agentName}</div>
-                                    <div className="text-xs text-muted-foreground mt-1 break-words">{agent.activationDescription}</div>
+                                    <div className="text-xs text-muted-foreground mt-1 break-words">
+                                      {agent.activationDescription}
+                                    </div>
                                   </div>
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleRemoveAgent(agent.agentId)}
-                                    className="self-start sm:ml-2 h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-                                  >
+                                    className="self-start sm:ml-2 h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0">
                                     <X className="h-3 w-3" />
                                   </Button>
                                 </div>
