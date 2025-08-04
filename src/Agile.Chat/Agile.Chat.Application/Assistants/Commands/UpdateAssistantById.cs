@@ -65,7 +65,8 @@ public static class UpdateAssistantById
                 {
                     AgentName = agentName,
                     AgentId = agent.Id,
-                    AgentDescription = assistant.Description
+                    AgentDescription = assistant.Description,
+                    ConnectedAgents = request.ConnectedAgents
                 });
             }
             

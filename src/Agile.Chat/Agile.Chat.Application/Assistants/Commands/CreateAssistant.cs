@@ -54,7 +54,8 @@ public static class CreateAssistant
                 {
                     AgentName = agentName,
                     AgentId = agent.Id,
-                    AgentDescription = assistant.Description
+                    AgentDescription = assistant.Description,
+                    ConnectedAgents = request.ConnectedAgents
                 });
             }
             
