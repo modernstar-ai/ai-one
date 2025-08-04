@@ -43,11 +43,28 @@ export interface IModelOptions {
   defaultModelId: string;
 }
 
+import * as z from 'zod';
+
+export const SelectConnectedAgentSchema = z.object({
+  agentId: z.string().min(1, 'Agent ID is required'),
+  agentName: z.string().min(1, 'Agent name is required'),
+  activationDescription: z.string().min(1, 'Activation description is required')
+});
+
+export type SelectConnectedAgent = z.infer<typeof SelectConnectedAgentSchema>;
+
+export const SelectAgentConfigurationSchema = z.object({
+  agentDescription: z.string().optional(),
+  agentId: z.string(),
+  agentName: z.string(),
+  connectedAgents: z.array(SelectConnectedAgentSchema)
+});
+
 export interface SelectAgentConfiguration {
   agentDescription?: string;
   agentId: string;
   agentName: string;
-  connectedAgents: string[];
+  connectedAgents: SelectConnectedAgent[];
 }
 
 export interface Model {

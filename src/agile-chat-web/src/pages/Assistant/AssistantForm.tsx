@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings } from 'lucide-react';
+import { Settings, Users, Plus, X } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent } from '@/components/ui/card';
 import { useForm } from 'react-hook-form';
@@ -18,7 +18,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice';
-import { Assistant, AssistantStatus, AssistantType, InsertAssistant } from '@/types/Assistant';
+import { Assistant, AssistantStatus, AssistantType, InsertAssistant, SelectConnectedAgent, SelectConnectedAgentSchema, SelectAgentConfigurationSchema } from '@/types/Assistant';
 import { fetchTools } from '@/services/toolservice';
 import { useIndexes } from '@/hooks/use-indexes';
 import { Loader2 } from 'lucide-react';
@@ -33,7 +33,6 @@ import { MultiInput } from '@/components/ui-extended/multi-input';
 import { BaseDialog } from '@/components/base/BaseDiaglog';
 import useGetTextModels from '@/hooks/use-get-textmodels';
 import useGetAgents from '@/hooks/use-get-agents';
-import { BaseSelect } from '@/components/base/BaseSelect';
 
 // Define the AssistantPromptOptions schema
 const AssistantPromptOptionsSchema = z.object({
@@ -92,7 +91,8 @@ const formSchema = z.object({
   promptOptions: AssistantPromptOptionsSchema,
   filterOptions: AssistantFilterOptionsSchema,
   accessControl: PermissionsAccessControlSchema,
-  modelOptions: ModelOptionsSchema
+  modelOptions: ModelOptionsSchema,
+  agentConfiguration: SelectAgentConfigurationSchema.optional()
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -108,6 +108,11 @@ export default function AssistantForm() {
 
   const { data, isLoading: textmodelsLoading } = useGetTextModels();
   const { data: agents } = useGetAgents();
+  
+  // Connected agents state
+  const [connectedAgents, setConnectedAgents] = useState<SelectConnectedAgent[]>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('');
+  const [agentDescription, setAgentDescription] = useState<string>('');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -137,12 +142,68 @@ export default function AssistantForm() {
         allowModelSelection: data?.allowModelSelection || false,
         models: [],
         defaultModelId: data?.defaultModelId || 'GPT-4o'
+      },
+      agentConfiguration: {
+        agentDescription: '',
+        agentId: '',
+        agentName: '',
+        connectedAgents: []
       }
     }
   });
 
   const { watch } = form;
   const watchAllFields = watch();
+  const watchType = watch('type');
+
+  // Function to add agent to connected agents array
+  const handleAddAgent = () => {
+    if (!selectedAgentId || !agentDescription.trim()) return;
+    
+    const selectedAgent = agents?.find(agent => agent.id === selectedAgentId);
+    if (!selectedAgent) return;
+
+    const newConnectedAgent: SelectConnectedAgent = {
+      agentId: selectedAgentId,
+      agentName: selectedAgent.name,
+      activationDescription: agentDescription.trim()
+    };
+
+    // Validate using Zod schema
+    const validation = SelectConnectedAgentSchema.safeParse(newConnectedAgent);
+    if (!validation.success) {
+      toast({
+        variant: 'destructive',
+        title: 'Validation Error',
+        description: validation.error.errors[0].message
+      });
+      return;
+    }
+
+    // Check if agent is already connected
+    if (connectedAgents.some(agent => agent.agentId === selectedAgentId)) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'This agent is already connected'
+      });
+      return;
+    }
+
+    setConnectedAgents(prev => [...prev, newConnectedAgent]);
+    setSelectedAgentId('');
+    setAgentDescription('');
+
+    toast({
+      title: 'Success',
+      description: 'Agent added successfully'
+    });
+  };
+
+  // Function to remove agent from connected agents array
+  const handleRemoveAgent = (agentId: string) => {
+    setConnectedAgents(prev => prev.filter(agent => agent.agentId !== agentId));
+  };
 
   const getTools = async () => {
     try {
@@ -181,8 +242,19 @@ export default function AssistantForm() {
             tags: file.filterOptions.tags ?? []
           },
           accessControl: file.accessControl ?? permissionsAccessControlDefaultValues,
-          modelOptions: file.modelOptions
+          modelOptions: file.modelOptions,
+          agentConfiguration: file.agentConfiguration ?? {
+            agentDescription: '',
+            agentId: '',
+            agentName: '',
+            connectedAgents: []
+          }
         });
+
+        // Populate connectedAgents state from loaded data
+        if (file.agentConfiguration?.connectedAgents) {
+          setConnectedAgents(file.agentConfiguration.connectedAgents);
+        }
       } else {
         toast({
           variant: 'destructive',
@@ -221,6 +293,15 @@ export default function AssistantForm() {
     }
   }, [data, textmodelsLoading, form]);
 
+  // Reset connected agents when type changes from Agent to something else
+  useEffect(() => {
+    if (watchType !== AssistantType.Agent && connectedAgents.length > 0) {
+      setConnectedAgents([]);
+      setSelectedAgentId('');
+      setAgentDescription('');
+    }
+  }, [watchType, connectedAgents.length]);
+
   // Handle model selection changes
   // Handle model selection changes
   const handleModelSelectionChange = (modelIndex: number, isSelected: boolean) => {
@@ -254,7 +335,16 @@ export default function AssistantForm() {
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      const fileData = values as InsertAssistant;
+      // Sync connectedAgents state to form data
+      const fileData = {
+        ...values,
+        agentConfiguration: values.type === AssistantType.Agent ? {
+          agentDescription: values.description,
+          agentId: undefined, // Optional field, keep undefined
+          agentName: values.name,
+          connectedAgents: connectedAgents
+        } : undefined
+      } as InsertAssistant;
 
       if (fileId) {
         await updateAssistant(fileData, fileId);
@@ -370,27 +460,53 @@ export default function AssistantForm() {
                 />
                 {form.getValues('type') === 'Agent' && (
                   <div>
+                    {/* Display connected agents count outside dialog */}
+                    <div className="mb-4 p-3 bg-muted/30 rounded-lg border">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-sm font-medium">
+                          {connectedAgents.length} connected agent{connectedAgents.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      {connectedAgents.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {connectedAgents.map((agent) => (
+                            <span
+                              key={agent.agentId}
+                              className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full break-words"
+                            >
+                              {agent.agentName}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
                     <BaseDialog
-                      label="Configure connected agents"
+                      label={
+                        <div className="flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          Configure connected agents
+                        </div>
+                      }
                       title="Connected Agents"
                       disabled={false}
                       description="Select and configure agents to connect with this assistant">
                       <div className="space-y-6">
                         <div>
                           <FormLabel className="text-sm font-medium">Agent *</FormLabel>
-                          <BaseSelect
-                            placeholder="Select an agent"
-                            options={
-                              agents?.map((agent) => ({
-                                value: agent.id,
-                                label: agent.name
-                              })) || []
-                            }
-                            onChange={(value) => {
-                              console.log('Selected agent:', value);
-                              // Handle agent selection here
-                            }}
-                          />
+                          <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an agent" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {agents?.map((agent) => (
+                                <SelectItem key={agent.id} value={agent.id}>
+                                  {agent.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         <div>
@@ -398,12 +514,47 @@ export default function AssistantForm() {
                           <Textarea
                             placeholder="Describe when and how this agent should be activated..."
                             className="min-h-[100px] resize-none"
+                            value={agentDescription}
+                            onChange={(e) => setAgentDescription(e.target.value)}
                           />
                         </div>
 
                         <div className="flex justify-end gap-2 pt-4 border-t">
-                          <Button size="sm">Add Agent</Button>
+                          <Button 
+                            size="sm" 
+                            onClick={handleAddAgent}
+                            disabled={!selectedAgentId || !agentDescription.trim()}
+                            className="w-full sm:w-auto"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Agent
+                          </Button>
                         </div>
+
+                        {/* Display connected agents */}
+                        {connectedAgents.length > 0 && (
+                          <div className="pt-4 border-t">
+                            <FormLabel className="text-sm font-medium mb-3 block">Connected Agents ({connectedAgents.length})</FormLabel>
+                            <div className="max-h-60 overflow-y-auto space-y-3 pr-2">
+                              {connectedAgents.map((agent) => (
+                                <div key={agent.agentId} className="flex flex-col sm:flex-row sm:items-start sm:justify-between p-3 border rounded-lg bg-muted/50 gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-sm break-words">{agent.agentName}</div>
+                                    <div className="text-xs text-muted-foreground mt-1 break-words">{agent.activationDescription}</div>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveAgent(agent.agentId)}
+                                    className="self-start sm:ml-2 h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </BaseDialog>
                   </div>
