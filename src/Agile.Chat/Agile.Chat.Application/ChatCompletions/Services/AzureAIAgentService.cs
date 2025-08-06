@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Agile.Chat.Application.ChatCompletions.Models;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.Enums;
 using Agile.Framework.Common.EnvironmentVariables;
@@ -21,7 +22,7 @@ public interface IAzureAIAgentService
         string instructions, float? temperature = null, float? topP = null, List<T> tools = default)  where T: ToolDefinition;
     Task<PersistentAgentThread> GetThreadAsync(string threadId);
     Task<PersistentAgentThread> CreateThreadAsync();
-    Task<string> GetChatResultAsync(string userPrompt, HttpContext context, string agentId, string threadId);
+    Task<string> GetChatResultAsync(string userPrompt, HttpContext context, string agentId, string threadId, AgentContainer agentContainer);
     
     Task DeleteAgentAsync(string? agentId);
 }
@@ -91,7 +92,7 @@ public class AzureAIAgentService : IAzureAIAgentService
     public async Task<PersistentAgentThread> GetThreadAsync(string threadId)
     {
         _logger.LogDebug("Getting agent thread for threadId: {ThreadId}", threadId);
-        var thread = await _projectClient.Threads.CreateThreadAsync();
+        var thread = await _projectClient.Threads.GetThreadAsync(threadId);
         _logger.LogDebug("Agent thread retrieved successfully. ThreadId: {ThreadId}", thread.Value.Id);
         return thread;
     }
@@ -104,14 +105,14 @@ public class AzureAIAgentService : IAzureAIAgentService
         return thread;
     }
 
-    public async Task<string> GetChatResultAsync(string userPrompt, HttpContext context, string agentId, string threadId)
+    public async Task<string> GetChatResultAsync(string userPrompt, HttpContext context, string agentId, string threadId, AgentContainer agentContainer)
     {
         _logger.LogDebug("Sending message to agent. agentId: {AgentId}, threadId: {ThreadId}", agentId, threadId);
 
         var agent = await GetAgentAsync(agentId);
         var agentThread = await GetThreadAsync(threadId);
 
-        var response = await InvokeAgent(userPrompt, context, agent, agentThread, _logger);
+        var response = await InvokeAgent(userPrompt, context, agent, agentThread, _logger, agentContainer);
 
         _logger.LogDebug("Message sent successfully. agentId: {AgentId}, threadId: {ThreadId}", agentId, agentThread.Id);
         return response;
@@ -123,7 +124,7 @@ public class AzureAIAgentService : IAzureAIAgentService
         await _projectClient.Administration.DeleteAgentAsync(agentId);
     }
 
-    private async Task<string> InvokeAgent(string userPrompt, HttpContext context, PersistentAgent agent, PersistentAgentThread agentThread, ILogger logger)
+    private async Task<string> InvokeAgent(string userPrompt, HttpContext context, PersistentAgent agent, PersistentAgentThread agentThread, ILogger logger, AgentContainer agentContainer)
     {
         var assistantFullResponse = new StringBuilder();
         logger.LogDebug("Invoking agent for threadId: {ThreadId}", agentThread.Id);
@@ -139,16 +140,29 @@ public class AzureAIAgentService : IAzureAIAgentService
             }
             else if (streamingUpdate is MessageContentUpdate contentUpdate)
             {
-                await WriteToResponseStreamAsync(context, ResponseType.Chat, contentUpdate.Text);
-                assistantFullResponse.Append(contentUpdate.Text);
+                if (contentUpdate.TextAnnotation is { StartIndex: not null, EndIndex: not null })
+                {
+                    agentContainer.Citations.Add(new AgentCitation(
+                        contentUpdate.TextAnnotation.ContentIndex,
+                        contentUpdate.TextAnnotation.StartIndex.Value, 
+                        contentUpdate.TextAnnotation.EndIndex.Value, 
+                        contentUpdate.TextAnnotation.Title, 
+                        contentUpdate.TextAnnotation.Url));
+                }
+                else
+                {
+                    await WriteToResponseStreamAsync(context, ResponseType.Chat, contentUpdate.Text);
+                    assistantFullResponse.Append(contentUpdate.Text);
+                }
             }
         }
 
         return assistantFullResponse.ToString();
     }
 
-    public async Task WriteToResponseStreamAsync(HttpContext context, ResponseType responseType, object payload)
+    public async Task WriteToResponseStreamAsync(HttpContext context, ResponseType responseType, object? payload)
     {
+        if (payload is null) return;
         var bytesEvent = Encoding.UTF8.GetBytes($"event: {responseType.ToString()}\n");
         var data = responseType == ResponseType.Chat ?
             JsonSerializer.Serialize(new { content = payload }) :

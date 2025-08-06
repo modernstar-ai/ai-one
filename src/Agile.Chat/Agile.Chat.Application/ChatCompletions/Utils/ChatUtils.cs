@@ -118,5 +118,28 @@ public static class ChatUtils
 
         return string.Join("\n-----------------------\n", citations);
     }
+    
+    public static string TruncateUserPrompt(string userPrompt) => userPrompt.Substring(0, Math.Min(userPrompt.Length, 39)) +
+                                                            (userPrompt.Length <= 39
+                                                                ? string.Empty
+                                                                : "...");
+    
+    public static string ToSuperscript(int number)
+    {
+        var map = new Dictionary<char, char>()
+        {
+            { '0', '⁰' },
+            { '1', '¹' },
+            { '2', '²' },
+            { '3', '³' },
+            { '4', '⁴' },
+            { '5', '⁵' },
+            { '6', '⁶' },
+            { '7', '⁷' },
+            { '8', '⁸' },
+            { '9', '⁹' }
+        };
+        return number.ToString().Select(x => map[x]).Aggregate("", (x, y) => x + y);
+    }
 
 }
