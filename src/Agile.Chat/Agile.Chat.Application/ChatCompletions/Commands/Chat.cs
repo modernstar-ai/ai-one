@@ -145,7 +145,8 @@ public static class Chat
                 if (!assistantResponse!.Contains($"[file{i + 1}]")) continue;
                 
                 assistantResponse = assistantResponse.Replace($"[file{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾");
-                var citation = new ChatContainerCitation(docIndex, 
+                var citation = new ChatContainerCitation(CitationType.FileUpload,
+                    docIndex, 
                     _chatContainer.ThreadFiles[i].Content,
                     _chatContainer.ThreadFiles[i].Name, 
                     _chatContainer.ThreadFiles[i].Url);

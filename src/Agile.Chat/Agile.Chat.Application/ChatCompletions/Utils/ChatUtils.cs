@@ -71,7 +71,7 @@ public static class ChatUtils
         var messageContext = update.GetMessageContext();
         if (messageContext is { Citations.Count: > 0 })
         {
-            chatContainer.Citations.AddRange(messageContext.Citations.Select((c, i) => new ChatContainerCitation(i + 1, c.Content, c.Title, c.Url)));
+            chatContainer.Citations.AddRange(messageContext.Citations.Select((c, i) => new ChatContainerCitation(CitationType.AzureSearch, i + 1, c.Content, c.Title, c.Url)));
         }
     }
 
@@ -81,7 +81,7 @@ public static class ChatUtils
         var messageContext = (update.InnerContent as OpenAI.Chat.ChatCompletion).GetMessageContext();
         if (messageContext is { Citations.Count: > 0 })
         {
-            chatContainer.Citations.AddRange(messageContext.Citations.Select((c, i) => new ChatContainerCitation(i + 1, c.Content, c.Title, c.Url)));
+            chatContainer.Citations.AddRange(messageContext.Citations.Select((c, i) => new ChatContainerCitation(CitationType.AzureSearch, i + 1, c.Content, c.Title, c.Url)));
         }
     }
 
@@ -114,7 +114,7 @@ public static class ChatUtils
         if (threadFiles.Count == 0) return null;
         
         var citations = threadFiles.Select((file, index) =>
-            new ChatContainerCitation(index + 1, file.Content, file.Name, file.Url).ToString());
+            new ChatContainerCitation(CitationType.FileUpload, index + 1, file.Content, file.Name, file.Url).ToString());
 
         return string.Join("\n-----------------------\n", citations);
     }

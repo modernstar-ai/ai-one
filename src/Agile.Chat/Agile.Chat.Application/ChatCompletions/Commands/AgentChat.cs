@@ -102,7 +102,7 @@ public static class AgentChat
             var citations = new List<ChatContainerCitation>();
             foreach (var citation in _agentContainer.Citations)
             {
-                citations.Add(new ChatContainerCitation(citation.ContentIndex + 1, string.Empty, citation.Name, citation.Url));
+                citations.Add(new ChatContainerCitation(CitationType.WebSearch, citation.ContentIndex + 1, string.Empty, citation.Name, citation.Url));
             }
 
             if (citations.Count > 0)
