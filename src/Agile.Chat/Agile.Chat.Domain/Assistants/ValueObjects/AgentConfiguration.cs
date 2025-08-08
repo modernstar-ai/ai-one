@@ -5,7 +5,8 @@ public class AgentConfiguration
     public string AgentId { get; set; }
     public string AgentName { get; set; }
     public string AgentDescription { get; set; }
-    
+
+    public bool EnableWebSearch { get; set; } = false;
     public List<ConnectedAgent> ConnectedAgents { get; set; } = new();
 }
 

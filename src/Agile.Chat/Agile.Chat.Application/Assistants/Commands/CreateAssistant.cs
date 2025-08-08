@@ -1,3 +1,4 @@
+using Agile.Chat.Application.Assistants.Dtos;
 using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.ChatCompletions.Services;
 using Agile.Chat.Domain.Assistants.Aggregates;
@@ -24,7 +25,7 @@ public static class CreateAssistant
         AssistantPromptOptions PromptOptions,
         AssistantModelOptions ModelOptions,
         PermissionsAccessControl AccessControl,
-        List<ConnectedAgent> ConnectedAgents) : IRequest<IResult>;
+        AgentDto AgentConfig) : IRequest<IResult>;
 
     public class Handler(ILogger<Handler> logger, IAssistantService assistantService, IAzureAIAgentService azureAIAgentService) : IRequestHandler<Command, IResult>
     {
@@ -48,14 +49,14 @@ public static class CreateAssistant
                 var agentName = assistant.Name.Trim();
                 var agent = await azureAIAgentService.CreateAgentAsync
                 (agentName, assistant.Description, Configs.AzureOpenAi.DeploymentName,
-                    assistant.PromptOptions.SystemPrompt, assistant.PromptOptions.Temperature, assistant.PromptOptions.TopP, tools: GetConnectedAgentToolDefinitions(request.ConnectedAgents));
+                    assistant.PromptOptions.SystemPrompt, assistant.PromptOptions.Temperature, assistant.PromptOptions.TopP, tools: GetConnectedAgentToolDefinitions(request.AgentConfig));
 
                 assistant.AddAgentConfiguration(new AgentConfiguration
                 {
                     AgentName = agentName,
                     AgentId = agent.Id,
                     AgentDescription = assistant.Description,
-                    ConnectedAgents = request.ConnectedAgents
+                    ConnectedAgents = request.AgentConfig.ConnectedAgents
                 });
             }
             
@@ -63,13 +64,25 @@ public static class CreateAssistant
             return Results.Created(assistant.Id, assistant);
         }
         
-        private List<ConnectedAgentToolDefinition> GetConnectedAgentToolDefinitions(List<ConnectedAgent> connectedAgents)
+        private List<ToolDefinition> GetConnectedAgentToolDefinitions(AgentDto agentConfig)
         {
-            return connectedAgents.Select(connectedAgent =>
+            var connectedAgents = agentConfig.ConnectedAgents.Select(connectedAgent =>
                     new ConnectedAgentToolDefinition(
                         new ConnectedAgentDetails(connectedAgent.AgentId, connectedAgent.AgentName, connectedAgent.ActivationDescription)
                     ))
                 .ToList();
+            
+            List<ToolDefinition> toolDefinitions = new List<ToolDefinition>();
+            if (agentConfig.EnableWebSearch)
+            {
+                var bingGroundingTool = new BingGroundingToolDefinition(new(
+                    [
+                        new BingGroundingSearchConfiguration()
+                    ]
+                    ));
+            }
+
+            return [..connectedAgents, ..toolDefinitions];
         }
     }
 
