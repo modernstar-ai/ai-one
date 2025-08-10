@@ -53,6 +53,9 @@ param openAiEndpoint string
 @description('OpenAI API version')
 param openAiApiVersion string
 
+@description('AI Foundry Project endpoint')
+param foundryProjectEndpoint string
+
 @description('APIM Azure OpenAI Endpoint')
 param apimAiEndpointOverride string = ''
 
@@ -332,6 +335,10 @@ module apiAppModule '../modules/site.bicep' = {
         {
           name: 'AzureSearch__ApiKey'
           value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-SEARCH-API-KEY)'
+        }
+        {
+          name: 'AIServices__FoundryProjectEndpoint'
+          value: foundryProjectEndpoint
         }
       ]
     )
