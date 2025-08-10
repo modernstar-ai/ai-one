@@ -1,6 +1,6 @@
 using './main.bicep'
 
-param environmentName = 'uat'
+param environmentName = 'dev'
 var sharedVariables = loadJsonContent('../../shared-parameters.json')
 
 param projectName = readEnvironmentVariable('PROJECT_NAME', sharedVariables.projectName)
@@ -9,10 +9,8 @@ param tags = loadJsonContent('../../tags.json')
 
 param logAnalyticsWorkspaceResourceId = '/subscriptions/9221a966-ce17-4b76-a348-887f234a827a/resourcegroups/rg-practice-ai-aione-private-dev/providers/microsoft.operationalinsights/workspaces/ag-aionev14-uat-la'
 
-param azureClientId = readEnvironmentVariable('AZURE_CLIENT_ID')
-param azureTenantId = readEnvironmentVariable('AZURE_TENANT_ID')
 
-param semanticSearchSku = 'standard'
-param serviceBusSku = 'Premium'
+// Application Gateway specific parameters
+param subnetAddressPrefix = '10.3.11.0/24'
 
-param networkIsolation = true
+param keyVaultName = 'ag-aionev14-uat-kv'

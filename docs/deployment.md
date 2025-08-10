@@ -274,8 +274,8 @@ Based on the Customers' preference, follow the steps below to configure the CI/C
     - `AZURE_OPENAI_LOCATION`: The Azure region for Azure OpenAI resources (e.g., `australiaeast`).
     - `AZURE_RESOURCE_GROUP`: The name of the Azure resource group for the deployment.
     - `PROJECT_NAME`: The project identifier (default: `ag-aione`).
-    - `VITE_AGILECHAT_API_URL`: The API endpoint for the backend (e.g., `https://ag-aione-dev-apiapp.azurewebsites.net`). 
-        
+    - `VITE_AGILECHAT_API_URL`: The API endpoint for the backend (e.g., `https://ag-aione-dev-apiapp.azurewebsites.net`).
+
         The url is in the format `https://<projectName>-<environment>-apiapp.azurewebsites.net`.
 
     Refer to the steps for details on how to create environments and environment variables.
@@ -297,6 +297,7 @@ Based on the Customers' preference, follow the steps below to configure the CI/C
     - **Deploy AI-One Platform Infrastructure**: Provisions core platform resources, including shared services, cognitive services, and AI-related components.
     - **Deploy Backend API**: Deploys the backend API application and its supporting Azure resources.
     - **Deploy Frontend Web App**: Deploys the frontend web application.
+    - **Deploy Application Gateway (Optional)** - Deploys the Application Gateway to expose the AI-One application securely over the internet.
 
     ***GitHub***
 
@@ -311,6 +312,7 @@ Based on the Customers' preference, follow the steps below to configure the CI/C
     - **Deploy AI-One Platform Infrastructure**: `.azure-pipelines/deploy-platform.yml`
     - **Deploy Backend API**: `.azure-pipelines/deploy-backend.yml`
     - **Deploy Frontend Web App**: `.azure-pipelines/deploy-frontend.yml`
+    - **Deploy Application Gateway**: `.azure-pipelines/deploy-appgw.yml`
 
 ### 2.2.4 Deploy Log Analytics Workspace
 
@@ -475,6 +477,12 @@ Update the parameters file to match the environment configuration of the platfor
 
 Update the `logAnalyticsWorkspaceResourceId` parameter value to the resource ID of the Log Analytics Workspace created in the previous step. If using an existing Log Analytics Workspace, provide its resource ID.
 
+> **Important:**  
+>
+> Deploying the backend application requires permission to create role assignments for its managed identity. If the service principal used for deployment does **not** have sufficient permissions, set the `deployRoleAssignments` parameter to `false` in your deployment configuration.  
+>
+> When role assignment creation is skipped, you must assign the required roles to the backend application's managed identity after deployment. Refer to the [Assign Roles to Backend API Managed Identity](#41-assign-roles-to-backend-api-managed-identity) section for details.
+
 ```plaintext
 
     infra/
@@ -515,6 +523,11 @@ Bicep Parameters: `infra/backend/[env].bicepparam`
 | `cosmosDbAccountEndpoint`       | Endpoint for the Cosmos DB Account.                                         | `https://[projectName]-[env]-cosmos.documents.azure.com:443/` |
 | `eventGridName`                 | Name of the Event Grid resource.                                            | `[projectName]-[env]-blob-eg` |
 | `allowedOrigins`                | List of allowed origins for CORS.                                           | `['https://[projectName]-[env]-webapp.azurewebsites.net']` |
+| `deployRoleAssignments`         | Boolean flag to control whether role assignments are deployed for the managed identity. | `true` |
+| `networkIsolation`              | Boolean flag to enable or disable network isolation for resources. The endpoint would still be accessible from internet and the app service will be integrated with vnet. | `false` |
+| `allowPrivateAccessOnly`        | Specifies whether the app service should be accessible only through private network. | `false` |
+| `enableIpRestrictions`          | Enable IP restrictions for the App Service to restrict access to specific IP addresses/ranges. | `false` |
+| `allowedIpAddresses`            | Array of allowed IP addresses/ranges for App Service access (e.g., Application Gateway public IP). | `[]` |
 
 ### 2.2.6 Deploy Frontend Application
 
@@ -552,8 +565,82 @@ Bicep Parameters: `infra/frontend/[env].bicepparam`
 | `azureTenantId`                  | Azure Tenant ID, read from environment variables.                           |                   |
 | `appServicePlanName`             | Name of the App Service Plan.                                               | `[projectName]-[env]-app`|
 |`apiAppName`                   | Name of the API App.                                                        | `[projectName]-[env]-apiapp`|
+| `networkIsolation`              | Boolean flag to enable or disable network isolation for resources. The endpoint would still be accessible from internet and the app service will be integrated with vnet. | `false` |
+| `allowPrivateAccessOnly`        | Specifies whether the app service should be accessible only through private network. | `false` |
+| `enableIpRestrictions`          | Enable IP restrictions for the App Service to restrict access to specific IP addresses/ranges. | `false` |
+| `allowedIpAddresses`            | Array of allowed IP addresses/ranges for App Service access (e.g., Application Gateway public IP). | `[]` |
 
 ---
+
+### 2.2.7 Deploy Application Gateway (Optional)
+
+1. Update the `logAnalyticsWorkspaceResourceId` parameter value to the resource ID of the Log Analytics Workspace created in the previous step. If using an existing Log Analytics Workspace, provide its resource ID.
+2. Create and upload the SSL certificate to the Key Vault. The certificate will be used for securing the Application Gateway.
+3. Update the `keyVaultName` and `sslCertificateSecretName` parameters to match the Key Vault and SSL certificate secret name.
+4. Update the `webAppServiceName` and `apiAppServiceName` parameters to match the frontend and backend app service names.
+5. Update the `virtualNetworkName` and `virtualNetworkSubnetName` parameters to match the virtual network and subnet names where the Application Gateway will be deployed.
+6. Run the `Deploy Application Gateway` pipeline to provision the Application Gateway.
+7. Update the `VITE_AGILECHAT_API_URL` environment variable in the frontend web app to point to the Application Gateway URL. Redeploy the frontend web app to apply the changes.
+8. Configure the app service to allow traffic from the Application Gateway.
+    - After deploying the Application Gateway, note the public IP address from the deployment output.
+    - Update the frontend and backend parameter files to enable IP restrictions:
+    - Redeploy the frontend and backend applications to apply the IP restrictions.
+
+      ```bicep
+      
+      param allowPrivateAccessOnly = true
+
+      param enableIpRestrictions = true
+      param allowedIpAddresses = ['<APPLICATION_GATEWAY_PUBLIC_IP>/32']
+      ```
+
+    **Alternative - Manual Configuration**: You can also configure this manually through the Azure Portal:
+
+    - Navigate to the Azure Portal and select the frontend web app.
+    - Under **Inbound traffic configuration**, click on the link next to **Public network access**.
+    - Select **Enabled from select virtual networks and IP addresses**.
+    - Under **Site Access and rules**, add the IP address of the Application Gateway to the allowed IP addresses.
+    - Repeat the above steps for the backend API app.
+
+9. Test the Application Gateway by accessing the frontend web app URL. The Application Gateway should route traffic to the frontend web app and backend API app.
+
+```plaintext
+
+    infra/
+    │
+    ├── platform/
+    │   ├── appgw/
+    │   │   └── main.bicep
+    │   │   └── [env].bicepparam
+
+```
+
+Deployment Pipeline: `Deploy Application Gateway`
+
+Bicep File: `infra/platform/appgw/main.bicep`
+
+Bicep Parameters: `infra/platform/appgw/[env].bicepparam`
+
+| Parameter Name                    | Description                                                                 | Default Value                          |
+|-----------------------------------|-----------------------------------------------------------------------------|----------------------------------------|
+| `environmentName`                 | Name of the deployment environment (e.g., `dev`, `tst`, `uat`, `prod`).     |                                        |
+| `projectName`                     | Project identifier used for resource naming.                                | `ag-aione`                             |
+| `location`                        | Azure region where resources will be deployed.                              | `australiaeast`                        |
+| `tags`                            | Key-value pairs for resource tags (from `infra/tags.json`).                 |                                        |
+| `logAnalyticsWorkspaceResourceId` | Resource ID of the Log Analytics Workspace.                                 |                                        |
+| `subnetAddressPrefix`             | Address prefix for the Application Gateway subnet.                          |                                        |
+| `keyVaultName`                    | Name of the Key Vault for SSL certificate storage.                          |                                        |
+| `sslCertificateSecretName`        | Name of the SSL certificate secret in Key Vault.                            |                                        |
+| `webAppServiceName`               | Name of the frontend web app service.                                       |                                        |
+| `webAppServiceDomain`             | Custom domain for the frontend web app (leave empty for default).           | *(azurewebsites.net domain)*           |
+| `apiAppServiceName`               | Name of the backend API app service.                                        |                                        |
+| `apiAppServiceDomain`             | Custom domain for the backend API app (leave empty for default).            | *(azurewebsites.net domain)*           |
+| `virtualNetworkSubnetName`        | Name of the subnet where App Gateway will be deployed.                      | `AppGatewaySubnet`                     |
+| `enableDiagnostics`               | Enable diagnostic settings.                                                 | `true`                                 |
+| `enableWaf`                       | Enable WAF (Web Application Firewall).                                      | `true`                                 |
+| `wafMode`                         | WAF mode: Detection or Prevention.                                          | `Detection`                            |
+| `wafRuleSetType`                  | WAF rule set type.                                                          | `OWASP`                                |
+| `wafRuleSetVersion`               | WAF rule set version.                                                       | `3.2`                                  |
 
 ## 3. CI/CD Configuration
 
@@ -679,3 +766,135 @@ Create the following environment variables in each environment created in the pr
 2. Click **New pipeline** and select your repository.
 3. Choose **Existing Azure Pipelines YAML file** and select the YAML file for the pipeline you want to create.
 4. Click on **Save** to create the pipeline.
+
+## 4. Appendix
+
+### 4.1 Assign Roles to Backend API Managed Identity from Azure Portal
+
+If the deployment was completed with `deployRoleAssignments = false` due to insufficient permissions, you'll need to manually configure the role assignments for the managed identities to enable proper service-to-service authentication.
+
+#### Prerequisites
+
+- **User Access Administrator** or **Owner** role on the Azure subscription or resource group.
+
+The AI-One solution requires the following role assignments for the API App's managed identity:
+
+| Target Resource | Role | Purpose |
+|-----------------|------|---------|
+| Azure OpenAI | Cognitive Services OpenAI User | Access OpenAI models for chat and embeddings |
+| Storage Account | Storage Blob Data Contributor | Read/write access to blob containers |
+| Document Intelligence | Cognitive Services User | Process documents using AI |
+| Service Bus | Azure Service Bus Data Receiver | Receive messages from queues |
+| Service Bus | Azure Service Bus Data Sender | Send messages to queues |
+| Service Bus | Azure Service Bus Data Sender | Send blob events to the queue |
+| Key Vault | Key Vault Secrets User | Read secrets and connection strings |
+
+**1. Find the API App Managed Identity**
+
+1. Navigate to the Azure Portal and go to your resource group (e.g., `rg-practice-ai-aione-dev`)
+2. Find the managed identity resource named `id-<projectName>-<env>-apiapp` (e.g., `id-ag-aione-dev-apiapp`)
+3. Click on the managed identity and note the **Object (principal) ID**
+
+**2. Assign OpenAI Access**
+
+1. Navigate to your Azure OpenAI resource (e.g., `ag-aione-dev-foundry`)
+2. Go to **Access control (IAM)** in the left menu
+3. Click **+ Add** > **Add role assignment**
+4. On the **Role** tab, search for and select **Cognitive Services OpenAI User**
+5. Click **Next**
+6. On the **Members** tab, select **Managed identity**
+7. Click **+ Select members**
+8. Choose your subscription and **User-assigned managed identity**
+9. Select the API app managed identity (`id-ag-aione-dev-apiapp`)
+10. Click **Select** then **Review + assign**
+
+**3. Assign Storage Account Access**
+
+1. Navigate to your Storage Account (e.g., `agaionedevsto`)
+2. Go to **Access control (IAM)**
+3. Click **+ Add** > **Add role assignment**
+4. Select **Storage Blob Data Contributor** role
+5. Follow steps 6-10 from Step 2 to assign to the API app managed identity
+
+**4. Assign Document Intelligence Access**
+
+1. Navigate to your Document Intelligence resource (e.g., `ag-aione-dev-docintel`)
+2. Go to **Access control (IAM)**
+3. Click **+ Add** > **Add role assignment**
+4. Select **Cognitive Services User** role
+5. Follow steps 6-10 from Step 2 to assign to the API app managed identity
+
+**5. Assign Service Bus Access (Receiver)**
+
+1. Navigate to your Service Bus namespace (e.g., `ag-aione-dev-service-bus`)
+2. Go to **Access control (IAM)**
+3. Click **+ Add** > **Add role assignment**
+4. Select **Azure Service Bus Data Receiver** role
+5. Follow steps 6-10 from Step 2 to assign to the API app managed identity
+
+**6. Assign Service Bus Access (Sender)**
+
+1. In the same Service Bus namespace
+2. Click **+ Add** > **Add role assignment** again
+3. Select **Azure Service Bus Data Sender** role
+4. Follow steps 6-10 from Step 2 to assign to the API app managed identity
+
+**7. Assign Key Vault Access**
+
+1. Navigate to your Key Vault (e.g., `ag-aione-dev-kv`)
+2. Go to **Access control (IAM)**
+3. Click **+ Add** > **Add role assignment**
+4. Select **Key Vault Secrets User** role
+5. Follow steps 6-10 from Step 2 to assign to the API app managed identity
+
+#### Configure Event Grid System Topic Role Assignment
+
+**1. Find the Event Grid System Topic**
+
+1. Navigate to your Event Grid System Topic (e.g., `ag-aione-dev-blob-eg`)
+2. Go to **Identity** in the left menu
+3. Ensure **System assigned** identity is **On** and note the **Object (principal) ID**
+
+**2. Assign Service Bus Sender Access**
+
+1. Navigate to your Service Bus namespace (e.g., `ag-aione-dev-service-bus`)
+2. Go to **Access control (IAM)**
+3. Click **+ Add** > **Add role assignment**
+4. Select **Azure Service Bus Data Sender** role
+5. Click **Next**
+6. On the **Members** tab, select **Managed identity**
+7. Click **+ Select members**
+8. Choose your subscription and **System-assigned managed identity**
+9. Select **Event Grid System Topic** and find your topic
+10. Click **Select** then **Review + assign**
+
+### 4.2 Assign Roles to Backend API Managed Identity using PowerShell script
+
+The role assignments can also be configured using a PowerShell script. The script `configure-role-assignments.ps1` will assign the necessary roles to the managed identities for the backend API application.
+
+1. Before running the script, install the required Azure PowerShell modules. Run PowerShell as **Administrator** and execute:
+
+    ```powershell
+    # Install all required Azure PowerShell modules
+    Install-Module -Name Az.Accounts, Az.Resources, Az.ManagedServiceIdentity, Az.Storage, Az.KeyVault, Az.ServiceBus, Az.CognitiveServices, Az.EventGrid -Scope AllUsers -Repository PSGallery -Force
+    ```
+
+2. Connect to Azure using your account credentials:
+
+    ```powershell
+    # Connect to Azure (this will open a browser window for authentication)
+    Connect-AzAccount
+
+    # Verify you're connected to the correct subscription
+    Get-AzContext
+    ```
+
+3. Run the `configure-role-assignments.ps1` script to assign roles to the managed identities. Update the parameters with your environment details:
+
+    ```powershell
+    # Navigate to the scripts directory
+    cd infra/scripts
+
+    # Configure role assignments with resource names
+    .\configure-role-assignments.ps1 -SubscriptionId "12345678-1234-1234-1234-123456789012" -ResourceGroupName "rg-practice-ai-aione-dev" -ApiAppManagedIdentityName "id-ag-aione-dev-apiapp" -OpenAIServiceName "ag-aione-dev-foundry" -StorageAccountName "agaionedevsto" -DocumentIntelligenceServiceName "ag-aione-dev-docintel" -ServiceBusName "ag-aione-dev-service-bus" -KeyVaultName "ag-aione-dev-kv" -EventGridTopicName "ag-aione-dev-blob-eg"
+    ```

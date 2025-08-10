@@ -57,6 +57,14 @@ param vnetConfig object = {
       serviceName: 'Microsoft.Web/serverFarms'
     }
   }
+  privateEndpointsSubnet: {
+    name: 'PrivateEndpointsSubnet'
+    addressPrefix: '10.3.10.0/24'
+    delegation: {
+      name: 'Microsoft.Web/serverFarms'
+      serviceName: 'Microsoft.Web/serverFarms'
+    }
+  }
 }
 
 @description('Network Security Group configuration')
@@ -173,6 +181,7 @@ module vnet '../modules/networking/vnet.bicep' = {
     serviceBusSubnet: vnetConfig.serviceBusSubnet
     cognitiveServiceSubnet: vnetConfig.cognitiveServiceSubnet
     appServiceSubnet: vnetConfig.appServiceSubnet
+    privateEndpointsSubnet: vnetConfig.privateEndpointsSubnet
     vmSubnetNsgId: vmNsg.outputs.nsgId
     keyVaultSubnetNsgId: keyVaultNsg.outputs.nsgId
     storageSubnetNsgId: storageNsg.outputs.nsgId
@@ -214,6 +223,7 @@ module vnetDiagnostics '../modules/networking/diagnostic-settings.bicep' = if (e
 
 output virtualNetworkId string = vnet.outputs.virtualNetworkId
 output virtualNetworkName string = vnet.outputs.virtualNetworkName
+
 output vmSubnetId string = vnet.outputs.vmSubnetId
 output keyVaultSubnetId string = vnet.outputs.keyVaultSubnetId
 output storageSubnetId string = vnet.outputs.storageSubnetId
@@ -222,6 +232,8 @@ output aiSearchSubnetId string = vnet.outputs.aiSearchSubnetId
 output serviceBusSubnetId string = vnet.outputs.serviceBusSubnetId
 output cognitiveServiceSubnetId string = vnet.outputs.cognitiveServiceSubnetId
 output appServiceSubnetId string = vnet.outputs.appServiceSubnetId
+output privateEndpointsSubnetId string = vnet.outputs.privateEndpointsSubnetId
+
 output vmSubnetName string = vnet.outputs.vmSubnetName
 output keyVaultSubnetName string = vnet.outputs.keyVaultSubnetName
 output storageSubnetName string = vnet.outputs.storageSubnetName
@@ -230,6 +242,8 @@ output aiSearchSubnetName string = vnet.outputs.aiSearchSubnetName
 output serviceBusSubnetName string = vnet.outputs.serviceBusSubnetName
 output cognitiveServiceSubnetName string = vnet.outputs.cognitiveServiceSubnetName
 output appServiceSubnetName string = vnet.outputs.appServiceSubnetName
+output privateEndpointsSubnetName string = vnet.outputs.privateEndpointSubnetName
+
 output vmNsgId string = vmNsg.outputs.nsgId
 output keyVaultNsgId string = keyVaultNsg.outputs.nsgId
 output storageNsgId string = storageNsg.outputs.nsgId

@@ -13,11 +13,17 @@ param logAnalyticsWorkspaceResourceId string
 @description('Resource ID of the virtual network to link the private DNS zones.')
 param virtualNetworkResourceId string = ''
 
-@description('Resource ID of the subnet for the private endpoint.')
+@description('Resource ID of the subnet for the Vnet integration.')
 param virtualNetworkSubnetResourceId string = ''
 
 @description('Specifies whether network isolation is enabled. This will create a private endpoint for the Service Bus and link the private DNS zone.')
 param networkIsolation bool = false
+
+@description('Specifies whether the app service should be accessible only through private network')
+param allowPrivateAccessOnly bool = false
+
+@description('Resource ID of the subnet for the private endpoints.')
+param privateEndpointsSubnetResourceId string = ''
 
 @description('App Service Plan resource ID')
 param serverFarmResourceId string
@@ -31,18 +37,41 @@ param siteConfig object
 @description('App settings array')
 param appSettings array = []
 
-// module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation) {
-//   name: 'private-dns-site-deployment'
-//   params: {
-//     name: 'privatelink.azurewebsites.net'
-//     virtualNetworkLinks: [
-//       {
-//         virtualNetworkResourceId: virtualNetworkResourceId
-//       }
-//     ]
-//     tags: tags
-//   }
-// }
+@description('Optional. Enable IP restrictions for the App Service.')
+param enableIpRestrictions bool = false
+
+@description('Optional. Array of allowed IP addresses/ranges for App Service access.')
+param allowedIpAddresses array = []
+
+@description('Optional. Default action when IP restrictions are enabled.')
+@allowed(['Allow', 'Deny'])
+param ipRestrictionDefaultAction string = 'Deny'
+
+// Build IP security restrictions array
+var ipAllowRules = [
+  for (ipAddress, index) in allowedIpAddresses: {
+    ipAddress: ipAddress
+    action: 'Allow'
+    priority: 100 + index
+    name: 'AllowedIP-${ipAddress}'
+    description: 'Allowed IP address for -${ipAddress}'
+  }
+]
+
+var ipRestrictionsArray = enableIpRestrictions ? ipAllowRules : []
+
+module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.0' = if (networkIsolation && allowPrivateAccessOnly) {
+  name: 'private-dns-site-deployment'
+  params: {
+    name: 'privatelink.azurewebsites.net'
+    virtualNetworkLinks: [
+      {
+        virtualNetworkResourceId: virtualNetworkResourceId
+      }
+    ]
+    tags: tags
+  }
+}
 
 module site 'br/public:avm/res/web/site:0.16.0' = {
   name: take('${take(toLower(name), 24)}-site-deployment', 64)
@@ -56,8 +85,11 @@ module site 'br/public:avm/res/web/site:0.16.0' = {
     httpsOnly: true
     clientAffinityEnabled: false
     virtualNetworkSubnetId: virtualNetworkSubnetResourceId
+    publicNetworkAccess: enableIpRestrictions ? 'Enabled' : null
     siteConfig: union(siteConfig, {
       appSettings: appSettings
+      ipSecurityRestrictions: ipRestrictionsArray
+      ipSecurityRestrictionsDefaultAction: enableIpRestrictions ? ipRestrictionDefaultAction : 'Allow'
     })
     diagnosticSettings: [
       {
@@ -69,21 +101,21 @@ module site 'br/public:avm/res/web/site:0.16.0' = {
       systemAssigned: !empty(userAssignedIdentityId) ? false : true
       userAssignedResourceIds: !empty(userAssignedIdentityId) ? [userAssignedIdentityId] : []
     }
-    // privateEndpoints: networkIsolation
-    //   ? [
-    //       {
-    //         privateDnsZoneGroup: {
-    //           privateDnsZoneGroupConfigs: [
-    //             {
-    //               name: 'privatelink.azurewebsites.net'
-    //               privateDnsZoneResourceId: privateDnsZone.outputs.resourceId
-    //             }
-    //           ]
-    //         }
-    //         subnetResourceId: virtualNetworkSubnetResourceId
-    //       }
-    //     ]
-    //   : []
+    privateEndpoints: (networkIsolation && allowPrivateAccessOnly)
+      ? [
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                {
+                  name: 'privatelink.azurewebsites.net'
+                  privateDnsZoneResourceId: privateDnsZone!.outputs.resourceId
+                }
+              ]
+            }
+            subnetResourceId: privateEndpointsSubnetResourceId
+          }
+        ]
+      : []
   }
 }
 
