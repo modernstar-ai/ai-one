@@ -73,14 +73,14 @@ public static class CreateAssistant
                 .ToList();
             
             List<ToolDefinition> toolDefinitions = new List<ToolDefinition>();
-            if (agentConfig.EnableWebSearch)
-            {
-                var bingGroundingTool = new BingGroundingToolDefinition(new(
-                    [
-                        new BingGroundingSearchConfiguration()
-                    ]
-                    ));
-            }
+            //if (agentConfig.EnableWebSearch)
+            //{
+            //    var bingGroundingTool = new BingGroundingToolDefinition(new(
+            //        [
+            //            new BingGroundingSearchConfiguration()
+            //        ]
+            //        ));
+            //}
 
             return [..connectedAgents, ..toolDefinitions];
         }
