@@ -31,4 +31,4 @@ param aiFoundryAccountName = 'ag-aione-dev-foundry'
 param aiFoundryProjectName = 'ag-aione-dev-prj'
 param aiFoundryProjectEndpoint = 'https://ag-aione-dev-foundry.services.ai.azure.com/api/projects/ag-aione-dev-prj'
 
-param allowedOrigins = ['https://wsu-app-dev-webapp.azurewebsites.net']
+param allowedOrigins = ['https://ag-aione-dev-webapp.azurewebsites.net']
