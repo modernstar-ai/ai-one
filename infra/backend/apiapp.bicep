@@ -54,7 +54,13 @@ param openAiEndpoint string
 param openAiApiVersion string
 
 @description('AI Foundry Project endpoint')
-param foundryProjectEndpoint string
+param aiFoundryProjectEndpoint string
+
+@description('AI Foundry Account name')
+param aiFoundryAccountName string = ''
+
+@description('AI Foundry Project name')
+param aiFoundryProjectName string = ''
 
 @description('APIM Azure OpenAI Endpoint')
 param apimAiEndpointOverride string = ''
@@ -338,7 +344,7 @@ module apiAppModule '../modules/site.bicep' = {
         }
         {
           name: 'AIServices__FoundryProjectEndpoint'
-          value: foundryProjectEndpoint
+          value: aiFoundryProjectEndpoint
         }
       ]
     )
@@ -469,6 +475,8 @@ module apiAppRoleAssignments './roleAssignment.bicep' = if (deployRoleAssignment
     serviceBusResourceId: serviceBusName
     keyVaultResourceId: keyVaultName
     eventGridSystemTopicPrincipalId: eventGridSystemTopic.identity.principalId
+    aiFoundryProjectName: aiFoundryProjectName
+    aiFoundryAccountName: aiFoundryAccountName
   }
 }
 

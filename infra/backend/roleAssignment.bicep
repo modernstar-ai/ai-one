@@ -7,6 +7,8 @@ param storageResourceId string
 param documentIntelligenceResourceId string
 param serviceBusResourceId string
 param keyVaultResourceId string
+param aiFoundryProjectName string = ''
+param aiFoundryAccountName string = ''
 
 // Role Definition IDs (public, not secrets)
 // Key Vault Secrets User Role
@@ -45,6 +47,12 @@ resource serviceBusDataSenderRole 'Microsoft.Authorization/roleDefinitions@2022-
   scope: subscription()
 }
 
+// Azure AI User Role
+resource azureAiUserRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+  name: '53ca6127-db72-4b80-b1b0-d745d6d5456d'
+  scope: subscription()
+}
+
 resource openAiResource 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
   name: openAiResourceId
 }
@@ -63,6 +71,15 @@ resource storageResource 'Microsoft.Storage/storageAccounts@2023-05-01' existing
 
 resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
   name: keyVaultResourceId
+}
+
+resource aiFoundryAccount 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing = if (!empty(aiFoundryProjectName)) {
+  name: aiFoundryAccountName
+}
+
+resource aiFoundryProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' existing = if (!empty(aiFoundryProjectName)) {
+  name: aiFoundryProjectName
+  parent: aiFoundryAccount
 }
 
 resource apiAppOpenAiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
@@ -131,6 +148,16 @@ resource eventGridSystemTopicServiceBusSenderRoleAssignment 'Microsoft.Authoriza
   properties: {
     roleDefinitionId: serviceBusDataSenderRole.id
     principalId: eventGridSystemTopicPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource apiAppAiFoundryProjectRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(aiFoundryProjectName)) {
+  name: guid(resourceGroup().id, principalId, aiFoundryProjectName, azureAiUserRole.id)
+  scope: aiFoundryProject
+  properties: {
+    roleDefinitionId: azureAiUserRole.id
+    principalId: principalId
     principalType: 'ServicePrincipal'
   }
 }

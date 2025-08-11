@@ -27,6 +27,10 @@ param serviceBusName = 'ag-aione-tst-service-bus'
 param cosmosDbAccountName = 'ag-aione-tst-cosmos'
 param cosmosDbAccountEndpoint = 'https://ag-aione-tst-cosmos.documents.azure.com:443/'
 param eventGridName = 'ag-aione-tst-blob-eg'
-param foundryProjectEndpoint = 'https://ag-aione-tst-foundry.services.ai.azure.com/api/projects/ag-aione-tst-prj'
+
+param aiFoundryAccountName = 'ag-aione-tst-foundry'
+param aiFoundryProjectName = 'ag-aione-tst-prj'
+param aiFoundryProjectEndpoint = 'https://ag-aione-tst-foundry.services.ai.azure.com/api/projects/ag-aione-tst-prj'
+
 
 param allowedOrigins = ['https://ag-aione-tst-webapp.azurewebsites.net']
