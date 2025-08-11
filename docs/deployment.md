@@ -788,6 +788,7 @@ The AI-One solution requires the following role assignments for the API App's ma
 | Service Bus | Azure Service Bus Data Sender | Send messages to queues |
 | Service Bus | Azure Service Bus Data Sender | Send blob events to the queue |
 | Key Vault | Key Vault Secrets User | Read secrets and connection strings |
+| AI Foundry Project | Azure AI User | Create and manage AI agents, threads, and messages |
 
 **1. Find the API App Managed Identity**
 
@@ -847,6 +848,15 @@ The AI-One solution requires the following role assignments for the API App's ma
 4. Select **Key Vault Secrets User** role
 5. Follow steps 6-10 from Step 2 to assign to the API app managed identity
 
+**8. Assign AI Foundry Project Access**
+
+1. Navigate to your AI Foundry project through the Azure Portal
+2. Go to **Access control (IAM)**
+3. Click **+ Add** > **Add role assignment**
+4. Select **Azure AI User** role
+5. Follow steps 6-10 from Step 2 to assign to the API app managed identity
+
+
 #### Configure Event Grid System Topic Role Assignment
 
 **1. Find the Event Grid System Topic**
@@ -896,5 +906,5 @@ The role assignments can also be configured using a PowerShell script. The scrip
     cd infra/scripts
 
     # Configure role assignments with resource names
-    .\configure-role-assignments.ps1 -SubscriptionId "12345678-1234-1234-1234-123456789012" -ResourceGroupName "rg-practice-ai-aione-dev" -ApiAppManagedIdentityName "id-ag-aione-dev-apiapp" -OpenAIServiceName "ag-aione-dev-foundry" -StorageAccountName "agaionedevsto" -DocumentIntelligenceServiceName "ag-aione-dev-docintel" -ServiceBusName "ag-aione-dev-service-bus" -KeyVaultName "ag-aione-dev-kv" -EventGridTopicName "ag-aione-dev-blob-eg"
+    .\configure-role-assignments.ps1 -SubscriptionId "12345678-1234-1234-1234-123456789012" -ResourceGroupName "rg-practice-ai-aione-dev" -ApiAppManagedIdentityName "id-ag-aione-dev-apiapp" -OpenAIServiceName "ag-aione-dev-foundry" -StorageAccountName "agaionedevsto" -DocumentIntelligenceServiceName "ag-aione-dev-docintel" -ServiceBusName "ag-aione-dev-service-bus" -KeyVaultName "ag-aione-dev-kv" -EventGridTopicName "ag-aione-dev-blob-eg" -AiFoundryAccountName "ag-aione-dev-foundry" -AiFoundryProjectName "ag-aione-dev-prj"
     ```
