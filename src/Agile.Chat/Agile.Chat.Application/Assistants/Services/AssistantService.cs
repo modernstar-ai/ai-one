@@ -16,6 +16,8 @@ public interface IAssistantService : ICosmosRepository<Assistant>
 {
     public Task<Assistant> GetAssistantById(string id);
     public Task<List<Assistant>> GetAllAsync();
+    
+    public Task<List<Assistant>> GetAllAgentsAsync();
 }
 
 [Export(typeof(IAssistantService), ServiceLifetime.Scoped)]
@@ -36,6 +38,20 @@ public class AssistantService(CosmosClient cosmosClient, IAssistantModelConfigSe
     public async Task<List<Assistant>> GetAllAsync()
     {
         var query = LinqQuery().OrderBy(a => a.Name).AsQueryable();
+        return await CollectAssistantResultsAsync(query);
+    }
+
+    public async Task<List<Assistant>> GetAllAgentsAsync()
+    {
+        var query = LinqQuery()
+            .Where(a => a.Type == AssistantType.Agent)
+            .OrderBy(a => a.Name)
+            .AsQueryable();
+        return await CollectAssistantResultsAsync(query);
+    }
+
+    private async Task<List<Assistant>> CollectAssistantResultsAsync(IQueryable<Assistant> query)
+    {
         List<Assistant> results = new List<Assistant>();
 
         if (roleService.IsSystemAdmin())

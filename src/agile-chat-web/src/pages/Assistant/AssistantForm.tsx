@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings } from 'lucide-react';
+import { Settings, Users, Plus, X } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent } from '@/components/ui/card';
 import { useForm } from 'react-hook-form';
@@ -18,7 +18,14 @@ import { useToast } from '@/components/ui/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 import { createAssistant, fetchAssistantById, updateAssistant } from '@/services/assistantservice';
-import { Assistant, AssistantStatus, AssistantType, InsertAssistant } from '@/types/Assistant';
+import {
+  Assistant,
+  AssistantStatus,
+  AssistantType,
+  SelectConnectedAgent,
+  SelectConnectedAgentSchema,
+  SelectAgentConfigurationSchema
+} from '@/types/Assistant';
 import { fetchTools } from '@/services/toolservice';
 import { useIndexes } from '@/hooks/use-indexes';
 import { Loader2 } from 'lucide-react';
@@ -32,6 +39,8 @@ import { MultiInput } from '@/components/ui-extended/multi-input';
 
 import { BaseDialog } from '@/components/base/BaseDiaglog';
 import useGetTextModels from '@/hooks/use-get-textmodels';
+import useGetAgents from '@/hooks/use-get-agents';
+import { useSettingsStore } from '@/stores/settings-store';
 
 // Define the AssistantPromptOptions schema
 const AssistantPromptOptionsSchema = z.object({
@@ -90,7 +99,8 @@ const formSchema = z.object({
   promptOptions: AssistantPromptOptionsSchema,
   filterOptions: AssistantFilterOptionsSchema,
   accessControl: PermissionsAccessControlSchema,
-  modelOptions: ModelOptionsSchema
+  modelOptions: ModelOptionsSchema,
+  agentConfiguration: SelectAgentConfigurationSchema.optional()
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -105,6 +115,15 @@ export default function AssistantForm() {
   const { indexes } = useIndexes();
 
   const { data, isLoading: textmodelsLoading } = useGetTextModels();
+  const { data: agents } = useGetAgents();
+
+  // Connected agents state
+  const [connectedAgents, setConnectedAgents] = useState<SelectConnectedAgent[]>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('');
+  const [agentName, setAgentName] = useState<string>('');
+  const [agentDescription, setAgentDescription] = useState<string>('');
+
+  const bingDeployed = useSettingsStore((s) => s.settings?.bingDeployed);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -134,12 +153,79 @@ export default function AssistantForm() {
         allowModelSelection: data?.allowModelSelection || false,
         models: [],
         defaultModelId: data?.defaultModelId || 'GPT-4o'
+      },
+      agentConfiguration: {
+        agentDescription: '',
+        agentId: '',
+        agentName: '',
+        connectedAgents: [],
+        bingConfig: {
+          enableWebSearch: false,
+          webResultsCount: 5
+        }
       }
     }
   });
 
   const { watch } = form;
   const watchAllFields = watch();
+  const watchType = watch('type');
+  const watchEnableWebSearch = watch('agentConfiguration.bingConfig.enableWebSearch');
+
+  //Update agents formState
+  useEffect(() => {
+    form.setValue('agentConfiguration.connectedAgents', connectedAgents);
+  }, [connectedAgents]);
+
+  // Function to add agent to connected agents array
+  const handleAddAgent = () => {
+    if (!selectedAgentId || !agentName.trim() || !agentDescription.trim()) return;
+
+    const selectedAgent = agents?.find((agent) => agent.agentConfiguration.agentId === selectedAgentId);
+    if (!selectedAgent) return;
+
+    const newConnectedAgent: SelectConnectedAgent = {
+      agentId: selectedAgentId,
+      agentName: agentName.trim(),
+      activationDescription: agentDescription.trim()
+    };
+
+    // Validate using Zod schema
+    const validation = SelectConnectedAgentSchema.safeParse(newConnectedAgent);
+    if (!validation.success) {
+      toast({
+        variant: 'destructive',
+        title: 'Validation Error',
+        description: validation.error.errors[0].message
+      });
+      return;
+    }
+
+    // Check if agent is already connected
+    if (connectedAgents.some((agent) => agent.agentId === selectedAgentId)) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'This agent is already connected'
+      });
+      return;
+    }
+
+    setConnectedAgents((prev) => [...prev, newConnectedAgent]);
+    setSelectedAgentId('');
+    setAgentName('');
+    setAgentDescription('');
+
+    toast({
+      title: 'Success',
+      description: 'Agent added successfully'
+    });
+  };
+
+  // Function to remove agent from connected agents array
+  const handleRemoveAgent = (agentId: string) => {
+    setConnectedAgents((prev) => prev.filter((agent) => agent.agentId !== agentId));
+  };
 
   const getTools = async () => {
     try {
@@ -178,8 +264,23 @@ export default function AssistantForm() {
             tags: file.filterOptions.tags ?? []
           },
           accessControl: file.accessControl ?? permissionsAccessControlDefaultValues,
-          modelOptions: file.modelOptions
+          modelOptions: file.modelOptions,
+          agentConfiguration: file.agentConfiguration ?? {
+            agentDescription: '',
+            agentId: '',
+            agentName: '',
+            connectedAgents: [],
+            bingConfig: {
+              enableWebSearch: false,
+              webResultsCount: 5
+            }
+          }
         });
+
+        // Populate connectedAgents state from loaded data
+        if (file.agentConfiguration?.connectedAgents) {
+          setConnectedAgents(file.agentConfiguration.connectedAgents);
+        }
       } else {
         toast({
           variant: 'destructive',
@@ -218,6 +319,17 @@ export default function AssistantForm() {
     }
   }, [data, textmodelsLoading, form]);
 
+  // Reset connected agents when type changes from Agent to something else
+  useEffect(() => {
+    if (watchType !== AssistantType.Agent && connectedAgents.length > 0) {
+      setConnectedAgents([]);
+      setSelectedAgentId('');
+      setAgentName('');
+      setAgentDescription('');
+      form.resetField('agentConfiguration.bingConfig');
+    }
+  }, [watchType, connectedAgents.length]);
+
   // Handle model selection changes
   // Handle model selection changes
   const handleModelSelectionChange = (modelIndex: number, isSelected: boolean) => {
@@ -251,7 +363,9 @@ export default function AssistantForm() {
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      const fileData = values as InsertAssistant;
+      const fileData = {
+        ...values
+      } as Assistant;
 
       if (fileId) {
         await updateAssistant(fileData, fileId);
@@ -265,19 +379,35 @@ export default function AssistantForm() {
       });
       navigate('/assistants');
     } catch (error: any) {
-      // Enhanced error handling for 400 responses
+      // Enhanced error handling for different response statuses
       let errorMessage = 'An error occurred';
 
-      if (error?.response?.status === 400) {
-        // Handle validation errors from the API
-        if (error.response.data?.errors) {
-          // If the API returns structured validation errors
-          const validationErrors = Object.values(error.response.data.errors).flat();
-          errorMessage = validationErrors.join(', ');
-        } else if (error.response.data?.message) {
-          errorMessage = error.response.data.message;
+      if (error?.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+
+        if (status === 400) {
+          // Handle validation errors from the API
+          if (data?.error?.message) {
+            // Handle OpenAI-style error format
+            errorMessage = data.error.message;
+          } else if (data?.errors) {
+            // Handle validation errors
+            const validationErrors = Object.values(data.errors).flat();
+            errorMessage = validationErrors.join(', ');
+          } else if (data?.message) {
+            errorMessage = data.message;
+          } else {
+            errorMessage = 'Validation failed. Please check your input.';
+          }
+        } else if (status === 401) {
+          errorMessage = 'Unauthorized. Please check your permissions.';
+        } else if (status === 403) {
+          errorMessage = 'Access denied. You do not have permission to perform this action.';
+        } else if (status === 500) {
+          errorMessage = 'Server error. Please try again later.';
         } else {
-          errorMessage = 'Validation failed. Please check your input.';
+          errorMessage = `Request failed with status ${status}`;
         }
       } else if (error instanceof Error) {
         errorMessage = error.message;
@@ -356,6 +486,7 @@ export default function AssistantForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value={AssistantType.Agent}>Agent</SelectItem>
                           <SelectItem value={AssistantType.Chat}>Chat</SelectItem>
                           <SelectItem value={AssistantType.Search}>Search</SelectItem>
                         </SelectContent>
@@ -364,6 +495,166 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
+                {form.getValues('type') === 'Agent' && (
+                  <div>
+                    {/* Display connected agents count outside dialog */}
+                    <div className="mb-4 p-3 bg-muted/30 rounded-lg border">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-sm font-medium">
+                          {connectedAgents.length} connected agent{connectedAgents.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      {connectedAgents.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {connectedAgents.map((agent) => (
+                            <span
+                              key={agent.agentId}
+                              className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full break-words">
+                              {agent.agentName}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <BaseDialog
+                      label={
+                        <div className="flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          Configure connected agents
+                        </div>
+                      }
+                      title="Connected Agents"
+                      disabled={false}
+                      description="Select and configure agents to connect with this assistant">
+                      <div className="space-y-6">
+                        <div>
+                          <FormLabel className="text-sm font-medium">Agent *</FormLabel>
+                          <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an agent" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {agents?.map((agent) => (
+                                <SelectItem key={agent.id} value={agent.agentConfiguration.agentId}>
+                                  {agent.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <FormLabel className="text-sm font-medium">Agent Unique Name *</FormLabel>
+                          <Input
+                            placeholder="agent_name (letters and underscores only)"
+                            value={agentName}
+                            onChange={(e) => setAgentName(e.target.value)}
+                            pattern="^[a-zA-Z_]+$"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Must contain only letters and underscores
+                          </p>
+                        </div>
+
+                        <div>
+                          <FormLabel className="text-sm font-medium">Activation Description *</FormLabel>
+                          <Textarea
+                            placeholder="Describe when and how this agent should be activated..."
+                            className="min-h-[100px] resize-none"
+                            value={agentDescription}
+                            onChange={(e) => setAgentDescription(e.target.value)}
+                          />
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-4 border-t">
+                          <Button
+                            size="sm"
+                            onClick={handleAddAgent}
+                            disabled={!selectedAgentId || !agentName.trim() || !agentDescription.trim()}
+                            className="w-full sm:w-auto">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Agent
+                          </Button>
+                        </div>
+
+                        {/* Display connected agents */}
+                        {connectedAgents.length > 0 && (
+                          <div className="pt-4 border-t">
+                            <FormLabel className="text-sm font-medium mb-3 block">
+                              Connected Agents ({connectedAgents.length})
+                            </FormLabel>
+                            <div className="max-h-60 overflow-y-auto space-y-3 pr-2">
+                              {connectedAgents.map((agent) => (
+                                <div
+                                  key={agent.agentId}
+                                  className="flex flex-col sm:flex-row sm:items-start sm:justify-between p-3 border rounded-lg bg-muted/50 gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-sm break-words">{agent.agentName}</div>
+                                    <div className="text-xs text-muted-foreground mt-1 break-words">
+                                      {agent.activationDescription}
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveAgent(agent.agentId)}
+                                    className="self-start sm:ml-2 h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0">
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </BaseDialog>
+                  </div>
+                )}
+
+                {bingDeployed && watchType === AssistantType.Agent && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="agentConfiguration.bingConfig.enableWebSearch"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-y-0">
+                          <FormLabel htmlFor="container-select" className="my-auto">
+                            Enable Web Search
+                          </FormLabel>
+                          <FormControl>
+                            <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {watchEnableWebSearch && (
+                      <FormField
+                        control={form.control}
+                        name="agentConfiguration.bingConfig.webResultsCount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Web Results Count</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                type="number"
+                                placeholder="Enter a number between 1 and 50"
+                                min={1}
+                                max={50}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </>
+                )}
+
                 <FormField
                   control={form.control}
                   name="greeting"
@@ -409,109 +700,156 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.indexName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel htmlFor="container-select">Container</FormLabel>
-                      <FormControl>
-                        <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger id="container-select" aria-labelledby="container-label">
-                              <SelectValue placeholder="Select Container" />
-                            </SelectTrigger>
-                          </FormControl>
 
-                          <SelectContent>
-                            {indexes?.map((index) => (
-                              <SelectItem key={index.id} value={index.name}>
-                                {index.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.limitKnowledgeToIndex"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-y-0">
-                      <FormLabel htmlFor="container-select" className="my-auto">
-                        Limit Assistant knowledge to container only
-                      </FormLabel>
-                      <FormControl>
-                        <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.allowInThreadFileUploads"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-y-0">
-                      <FormLabel htmlFor="container-select" className="my-auto">
-                        Allow in thread file uploads
-                      </FormLabel>
-                      <FormControl>
-                        <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.folders"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Folder Filters</FormLabel>
-                      <FormControl>
-                        <MultiInput {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.tags"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tag Filters</FormLabel>
-                      <FormControl>
-                        <MultiInput {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.documentLimit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Document Limit</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          placeholder="Enter a number between 0 and 1000"
-                          min={0}
-                          max={1000}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {watchType !== AssistantType.Agent && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.indexName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="container-select">Container</FormLabel>
+                          <FormControl>
+                            <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger id="container-select" aria-labelledby="container-label">
+                                  <SelectValue placeholder="Select Container" />
+                                </SelectTrigger>
+                              </FormControl>
+
+                              <SelectContent>
+                                {indexes?.map((index) => (
+                                  <SelectItem key={index.id} value={index.name}>
+                                    {index.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.limitKnowledgeToIndex"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-y-0">
+                          <FormLabel htmlFor="container-select" className="my-auto">
+                            Limit Assistant knowledge to container only
+                          </FormLabel>
+                          <FormControl>
+                            <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.allowInThreadFileUploads"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-y-0">
+                          <FormLabel htmlFor="container-select" className="my-auto">
+                            Allow in thread file uploads
+                          </FormLabel>
+                          <FormControl>
+                            <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.folders"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Folder Filters</FormLabel>
+                          <FormControl>
+                            <MultiInput {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.tags"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tag Filters</FormLabel>
+                          <FormControl>
+                            <MultiInput {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.documentLimit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Document Limit</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              placeholder="Enter a number between 0 and 1000"
+                              min={0}
+                              max={1000}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.strictness"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel id="strictness-label">Strictness</FormLabel>
+                          <FormControl>
+                            <Slider
+                              value={[field.value ?? 0]}
+                              min={1}
+                              max={5}
+                              step={1}
+                              onValueChange={(value) => {
+                                field.onChange(value[0]);
+                              }}
+                              aria-label="strictness slider"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                          <div id="strictness-value">Strictness: {field.value}</div>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="promptOptions.maxTokens"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Max Response (tokens)</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              placeholder="Enter a number, by default value will be set to 800 tokens"
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+
                 <FormField
                   control={form.control}
                   name="promptOptions.temperature"
@@ -553,47 +891,6 @@ export default function AssistantForm() {
                       </FormControl>
                       <FormMessage />
                       <div id="topP-value">Selected Top P: {field.value}</div>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="promptOptions.maxTokens"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Max Response (tokens)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          placeholder="Enter a number, by default value will be set to 800 tokens"
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.strictness"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel id="strictness-label">Strictness</FormLabel>
-                      <FormControl>
-                        <Slider
-                          value={[field.value ?? 0]}
-                          min={1}
-                          max={5}
-                          step={1}
-                          onValueChange={(value) => {
-                            field.onChange(value[0]);
-                          }}
-                          aria-label="strictness slider"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                      <div id="strictness-value">Strictness: {field.value}</div>
                     </FormItem>
                   )}
                 />
@@ -720,6 +1017,72 @@ export default function AssistantForm() {
                     </BaseDialog>
                   </>
                 )}
+
+                {/* <Dialog open={agentDialogOpen} onOpenChange={setAgentDialogOpen}>
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                      <DialogTitle>Add Connected Agent</DialogTitle>
+                      <DialogDescription>
+                        Specify the agent, a unique name, and activation details.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 mt-2">
+                     <div>
+                        <label className="block mb-2 text-sm font-medium">Agent</label>
+                        <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select agent" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {agentOptions.map(opt => (
+                              <SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium">Detail the steps to activate the agent</label>
+                        <textarea
+                          className="w-full border rounded-md p-2 min-h-[80px]"
+                          placeholder="Describe the specific conditions under which the agent should be activated in as much detail as possible"
+                          value={activationDetail}
+                          onChange={e => setActivationDetail(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setConnectedAgents(prev => [
+                            ...prev,
+                            {
+                              agentType: agentOptions.find(opt => opt.id === selectedAgent)?.name || selectedAgent,
+                              description: (activationDetail ? ` - ${activationDetail}` : "")
+                            }
+                          ]);
+                          setSelectedAgent('');
+                          setActivationDetail('');
+                          setAgentDialogOpen(false);
+                        }}
+                        disabled={!selectedAgent}
+                        
+                      >
+                        Add Agent
+                      </Button>
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={() => setAgentDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog> */}
+
                 <div className="flex justify-between mt-2">
                   <Button
                     type="submit"

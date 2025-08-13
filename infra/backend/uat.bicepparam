@@ -28,6 +28,10 @@ param cosmosDbAccountName = 'ag-aionev14-uat-cosmos'
 param cosmosDbAccountEndpoint = 'https://ag-aionev14-uat-cosmos.documents.azure.com:443/'
 param eventGridName = 'ag-aionev14-uat-blob-eg'
 
+param aiFoundryAccountName = 'ag-aionev14-uat-foundry'
+param aiFoundryProjectName = 'ag-aionev14-uat-prj'
+param aiFoundryProjectEndpoint = 'https://ag-aionev14-uat-foundry.services.ai.azure.com/api/projects/ag-aionev14-uat-prj'
+
 param allowedOrigins = ['https://ag-aionev14-uat-webapp.azurewebsites.net']
 
 param networkIsolation = true

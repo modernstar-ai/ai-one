@@ -36,8 +36,14 @@
 .PARAMETER EventGridTopicName
     The name of the Event Grid system topic.
 
+.PARAMETER AiFoundryAccountName
+    The name of the AI Foundry account.
+
+.PARAMETER AiFoundryProjectName
+    The name of the AI Foundry project.
+
 .EXAMPLE
-    .\configure-role-assignments.ps1 -SubscriptionId "12345678-1234-1234-1234-123456789012" -ResourceGroupName "rg-practice-ai-aione-dev" -ApiAppManagedIdentityName "id-ag-aione-dev-apiapp" -OpenAIServiceName "ag-aione-dev-foundry" -StorageAccountName "agaionedevsto" -DocumentIntelligenceServiceName "ag-aione-dev-docintel" -ServiceBusName "ag-aione-dev-service-bus" -KeyVaultName "ag-aione-dev-kv" -EventGridTopicName "ag-aione-dev-blob-eg"
+    .\configure-role-assignments.ps1 -SubscriptionId "12345678-1234-1234-1234-123456789012" -ResourceGroupName "rg-practice-ai-aione-dev" -ApiAppManagedIdentityName "id-ag-aione-dev-apiapp" -OpenAIServiceName "ag-aione-dev-foundry" -StorageAccountName "agaionedevsto" -DocumentIntelligenceServiceName "ag-aione-dev-docintel" -ServiceBusName "ag-aione-dev-service-bus" -KeyVaultName "ag-aione-dev-kv" -EventGridTopicName "ag-aione-dev-blob-eg" -AiFoundryAccountName "ag-aione-dev-foundry" -AiFoundryProjectName "ag-aione-dev-prj"
 #>
 
 [CmdletBinding()]
@@ -67,7 +73,13 @@ param(
     [string]$KeyVaultName,
     
     [Parameter(Mandatory = $true)]
-    [string]$EventGridTopicName
+    [string]$EventGridTopicName,
+    
+    [Parameter(Mandatory = $true)]
+    [string]$AiFoundryAccountName,
+    
+    [Parameter(Mandatory = $true)]
+    [string]$AiFoundryProjectName
 )
 
 # Error handling
@@ -81,6 +93,7 @@ $RoleDefinitions = @{
     "ServiceBusDataReceiver" = "4f6d3b9b-027b-4f4c-9142-0e5a2a2247e0"
     "ServiceBusDataSender" = "69a216fc-b8fb-44d8-bc22-1f3c2cd27a39"
     "KeyVaultSecretsUser" = "4633458b-17de-408a-b874-0445c86b69e6"
+    "AzureAIUser" = "53ca6127-db72-4b80-b1b0-d745d6d5456d"
 }
 
 # Initialize resource names - all names are now provided as parameters
@@ -241,6 +254,31 @@ function Configure-ApiAppRoleAssignments {
             RoleId = $RoleDefinitions.KeyVaultSecretsUser
             DisplayName = "Key Vault Secrets User on $($keyVaultResource.Name)"
         }
+    }
+    
+    # AI Foundry Project
+    Write-StatusMessage "Configuring AI Foundry project role assignment..." -Type "Info"
+    
+    # Get AI Foundry account first
+    $aiFoundryAccount = Get-ResourceByName -ResourceName $AiFoundryAccountName -ResourceType "Microsoft.CognitiveServices/accounts"
+    if ($aiFoundryAccount) {
+        # Get AI Foundry project (nested resource)
+        try {
+            $aiFoundryProjectId = "$($aiFoundryAccount.ResourceId)/aiservices/$AiFoundryProjectName"
+            Write-StatusMessage "Adding Azure AI User role for AI Foundry project: $AiFoundryProjectName" -Type "Info"
+            
+            $assignments += @{
+                Resource = @{ ResourceId = $aiFoundryProjectId; Name = $AiFoundryProjectName }
+                RoleId = $RoleDefinitions.AzureAIUser
+                DisplayName = "Azure AI User on AI Foundry project $AiFoundryProjectName"
+            }
+        }
+        catch {
+            Write-StatusMessage "Error configuring AI Foundry project role: $($_.Exception.Message)" -Type "Warning"
+        }
+    }
+    else {
+        Write-StatusMessage "AI Foundry account '$AiFoundryAccountName' not found. Skipping AI Foundry role assignment." -Type "Warning"
     }
     
     # Execute role assignments

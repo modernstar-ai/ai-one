@@ -13,13 +13,13 @@ export type Assistant = {
   createdDate: Date;
   lastModified: Date;
   modelOptions: IModelOptions;
+  agentConfiguration: SelectAgentConfiguration;
 };
-
-export type InsertAssistant = Partial<Assistant>;
 
 export enum AssistantType {
   Chat = 'Chat',
-  Search = 'Search'
+  Search = 'Search',
+  Agent = 'Agent'
 }
 
 export enum AssistantStatus {
@@ -39,6 +39,47 @@ export interface IModelOptions {
   allowModelSelection: boolean;
   models: Model[];
   defaultModelId: string;
+}
+
+import * as z from 'zod';
+
+export const SelectConnectedAgentSchema = z.object({
+  agentId: z.string().min(1, 'Agent ID is required'),
+  agentName: z
+    .string()
+    .min(1, 'Agent name is required')
+    .regex(/^[a-zA-Z_]+$/, 'Agent name must contain only letters and underscores'),
+  activationDescription: z.string().min(1, 'Activation description is required')
+});
+
+export const BingConfigSchema = z.object({
+  enableWebSearch: z.boolean().default(false),
+  webResultsCount: z.number().min(1).max(50).default(5)
+});
+
+export const AgentConfigSchema = z.object({
+  connectedAgents: z.array(SelectConnectedAgentSchema).optional(),
+  bingConfig: BingConfigSchema.optional()
+});
+
+export type AgentConfig = z.infer<typeof AgentConfigSchema>;
+export type BingConfig = z.infer<typeof BingConfigSchema>;
+export type SelectConnectedAgent = z.infer<typeof SelectConnectedAgentSchema>;
+
+export const SelectAgentConfigurationSchema = z.object({
+  agentDescription: z.string().optional(),
+  agentId: z.string(),
+  agentName: z.string(),
+  connectedAgents: z.array(SelectConnectedAgentSchema),
+  bingConfig: BingConfigSchema
+});
+
+export interface SelectAgentConfiguration {
+  agentDescription?: string;
+  agentId: string;
+  agentName: string;
+  connectedAgents: SelectConnectedAgent[];
+  bingConfig: BingConfig;
 }
 
 export interface Model {

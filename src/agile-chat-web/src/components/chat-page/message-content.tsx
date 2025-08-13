@@ -78,13 +78,15 @@ const MessageContent = (props: MessageContentProps) => {
             <AccordionContent className="m-0 p-0">
               {citations && (
                 <div className="citations mb-2">
-                  {citations.map((citation, index) =>
-                    citation.name && citation.url ? (
-                      <CitationSheet citation={citation} key={message.id + index} index={index} />
-                    ) : (
-                      <li key={index}>Invalid citation data</li>
-                    )
-                  )}
+                  {citations
+                    .sort((a, b) => a.referenceNumber - b.referenceNumber)
+                    .map((citation, index) =>
+                      citation.name && citation.url ? (
+                        <CitationSheet citation={citation} key={message.id + index} />
+                      ) : (
+                        <li key={index}>Invalid citation data</li>
+                      )
+                    )}
                 </div>
               )}
             </AccordionContent>
