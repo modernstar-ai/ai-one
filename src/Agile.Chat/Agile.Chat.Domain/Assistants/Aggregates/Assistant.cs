@@ -36,7 +36,7 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
     public AssistantFilterOptions FilterOptions { get; private set; }
     public PermissionsAccessControl AccessControl { get; private set; }
     public AssistantModelOptions ModelOptions { get; private set; }
-    public AgentConfiguration AgentConfiguration { get; private set; }
+    public AgentConfiguration? AgentConfiguration { get; private set; }
 
     public static Assistant Create(string name,
         string description,
@@ -74,9 +74,10 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
         LastModified = DateTime.UtcNow;
     }
 
-    public void AddAgentConfiguration(AgentConfiguration agentConfiguration)
+    public void AddAgentConfiguration(AgentConfiguration? agentConfiguration)
     {
         AgentConfiguration = agentConfiguration;
+        LastModified = DateTime.UtcNow;
     }
 
     public void UpdateModelOptions(AssistantModelOptions modelOptions)

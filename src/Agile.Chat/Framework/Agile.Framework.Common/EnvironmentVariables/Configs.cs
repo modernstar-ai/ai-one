@@ -1,4 +1,5 @@
-﻿using Agile.Framework.Common.EnvironmentVariables.Models;
+﻿using System.ComponentModel;
+using Agile.Framework.Common.EnvironmentVariables.Models;
 using Microsoft.Extensions.Configuration;
 
 namespace Agile.Framework.Common.EnvironmentVariables;
@@ -8,6 +9,7 @@ public static class Configs
     public static void InitializeConfigs(IConfiguration configuration) => config = configuration;
     private static IConfiguration config;
 
+    public static string GetEnvironment => Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? string.Empty;
     public static BlobConfig BlobStorage => config.GetSection("BlobStorage").Get<BlobConfig>() ?? throw new NullReferenceException("BlobStorage is null");
     public static string AppInsightsConnectionString => config.GetConnectionString("APPLICATIONINSIGHTS_CONNECTION_STRING") ?? throw new NullReferenceException("APPLICATIONINSIGHTS_CONNECTION_STRING is null");
     public static AzureAdConfig AzureAd => config.GetSection("AzureAd").Get<AzureAdConfig>()! ?? throw new NullReferenceException("AzureAd is null");
@@ -21,4 +23,5 @@ public static class Configs
     public static CosmosDbConfig CosmosDb => config.GetSection("CosmosDb").Get<CosmosDbConfig>()! ?? throw new NullReferenceException("CosmosDb is null");
     public static AuditConfig Audit => config.GetSection("Audit").Get<AuditConfig>()! ?? throw new NullReferenceException("Audit is null");
     public static AppSettingsConfig AppSettings => config.GetSection("AppSettings").Get<AppSettingsConfig>()! ?? new AppSettingsConfig();
+    public static string BingConnectionId => config["BingConnectionId"] ?? throw new InvalidEnumArgumentException("BingConnectionId is not set");
 }

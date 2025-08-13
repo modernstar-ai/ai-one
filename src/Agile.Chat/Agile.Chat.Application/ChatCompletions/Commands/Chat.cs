@@ -103,17 +103,13 @@ public static class Chat
             await SaveUserAssistantCitationsMessagesAsync(assistantResponse, assistantMetadata);
 
             //If its a new chat, update the threads name, otherwise just update the last modified date
-            thread.Update(chatHistory.Count <= 1 ? TruncateUserPrompt(request.UserPrompt) :
+            thread.Update(chatHistory.Count <= 1 ? ChatUtils.TruncateUserPrompt(request.UserPrompt) :
                 thread.Name, thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions, thread.ModelOptions);
 
             await chatThreadService.UpdateItemByIdAsync(thread.Id, thread, ChatType.Thread.ToString());
             return Results.Empty;
         }
-
-        private string TruncateUserPrompt(string userPrompt) => userPrompt.Substring(0, Math.Min(userPrompt.Length, 39)) +
-                                                                (userPrompt.Length <= 39
-                                                                    ? string.Empty
-                                                                    : "...");
+        
         private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(AssistantType? assistantType, IResult result)
         {
             var assistantResponse = string.Empty;
@@ -136,9 +132,11 @@ public static class Chat
             //Regular index based citations processing
             for (var i = 0; i < _chatContainer.Citations.Count; i++)
             {
-                if (!assistantResponse!.Contains($"[doc{i + 1}]")) continue;
+                if (!assistantResponse!.Contains($"[doc{i + 1}]") && !assistantResponse!.Contains($"[docs{i + 1}]")) continue;
                 
-                assistantResponse = assistantResponse.Replace($"[doc{i + 1}]", $"⁽{ToSuperscript(docIndex)}⁾");
+                assistantResponse = assistantResponse
+                    .Replace($"[doc{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾")
+                    .Replace($"[docs{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾");
                 docIndex++;
                 referencedCitations.Add(_chatContainer.Citations[i]);
             }
@@ -146,10 +144,13 @@ public static class Chat
             //File based citations processing
             for (var i = 0; i < _chatContainer.ThreadFiles.Count; i++)
             {
-                if (!assistantResponse!.Contains($"[file{i + 1}]")) continue;
+                if (!assistantResponse!.Contains($"[file{i + 1}]") && !assistantResponse!.Contains($"[files{i + 1}]")) continue;
                 
-                assistantResponse = assistantResponse.Replace($"[file{i + 1}]", $"⁽{ToSuperscript(docIndex)}⁾");
-                var citation = new ChatContainerCitation(docIndex, 
+                assistantResponse = assistantResponse
+                    .Replace($"[file{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾")
+                    .Replace($"[files{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾");
+                var citation = new ChatContainerCitation(CitationType.FileUpload,
+                    docIndex, 
                     _chatContainer.ThreadFiles[i].Content,
                     _chatContainer.ThreadFiles[i].Name, 
                     _chatContainer.ThreadFiles[i].Url);
@@ -162,24 +163,6 @@ public static class Chat
                 metadata.Add(MetadataType.Citations, referencedCitations);
 
             return (assistantResponse!, metadata);
-        }
-
-        private string ToSuperscript(int number)
-        {
-            var map = new Dictionary<char, char>()
-            {
-                { '0', '⁰' },
-                { '1', '¹' },
-                { '2', '²' },
-                { '3', '³' },
-                { '4', '⁴' },
-                { '5', '⁵' },
-                { '6', '⁶' },
-                { '7', '⁷' },
-                { '8', '⁸' },
-                { '9', '⁹' }
-            };
-            return number.ToString().Select(x => map[x]).Aggregate("", (x, y) => x + y);
         }
 
         private async Task<IResult> GetChatResultAsync(AzureOpenAIPromptExecutionSettings chatSettings, ChatHistory chatHistory)

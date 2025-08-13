@@ -1,12 +1,16 @@
 using System.Security.Claims;
 using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.Audits.Services;
+using Agile.Chat.Application.ChatCompletions.Models;
+using Agile.Chat.Application.ChatCompletions.Services;
+using Agile.Chat.Application.ChatCompletions.Utils;
 using Agile.Chat.Application.ChatThreads.Services;
-using Agile.Chat.Application.Services;
 using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Audits.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Entities;
+using Agile.Chat.Domain.ChatThreads.ValueObjects;
+using Agile.Framework.Common.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -28,6 +32,8 @@ public static class AgentChat
         IAzureAIAgentService azureAIAgentService,
         IAuditService<Message> chatMessageAuditService) : IRequestHandler<Command, IResult>
     {
+        private AgentContainer _agentContainer;
+        
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             var requestId = Guid.NewGuid().ToString();
@@ -35,6 +41,13 @@ public static class AgentChat
 
             var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId, ChatType.Thread.ToString());
             var assistant = await assistantService.GetItemByIdAsync(thread.AssistantId);
+
+            _agentContainer = new AgentContainer()
+            {
+                Thread = thread,
+                UserPrompt = request.UserPrompt,
+                Citations = new()
+            };
 
             using (logger.BeginScope(new
             {
@@ -54,39 +67,97 @@ public static class AgentChat
             var chatHistory = chatMessages.ParseSemanticKernelChatHistory(request.UserPrompt);
 
             logger.LogDebug("Calling Azure AI Agent service");
-            var assistantResponse = await azureAIAgentService.GetChatResultAsync
+            var resp = await azureAIAgentService.GetChatResultAsync
                 (request.UserPrompt, contextAccessor.HttpContext, assistant.AgentConfiguration.AgentId,
-                thread.AgentThreadConfiguration.AgentThreadId);
+                thread.AgentThreadConfiguration.AgentThreadId,
+                _agentContainer);
+            var (assistantResponse, metadata) = GetAssistantResponseAndMetadata(resp);
 
             logger.LogDebug("Received response from Azure AI Agent service");
-            var userMessage = Message.CreateUser(thread.Id, request.UserPrompt);
-            var assistantMessage = Message.CreateAssistant(thread.Id, assistantResponse);
-
-            logger.LogDebug("Updating chat thread with new messages");
-            await Task.WhenAll([
-                chatMessageService.AddItemAsync(userMessage),
-                chatMessageService.AddItemAsync(assistantMessage)]);
-
-            logger.LogDebug("Adding messages to audit");
-            await Task.WhenAll([
-                chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage)),
-                chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage))
-            ]);
+            await SaveUserAssistantCitationsMessagesAsync(assistantResponse, metadata);
 
             logger.LogDebug("Saving chat thread updates");
-            ////If its a new chat, update the threads name, otherwise just update the last modified date
-            thread.Update(chatHistory.Count <= 1 ? TruncateUserPrompt(request.UserPrompt) :
+            //If its a new chat, update the threads name, otherwise just update the last modified date
+            thread.Update(chatHistory.Count <= 1 ? ChatUtils.TruncateUserPrompt(request.UserPrompt) :
                 thread.Name, thread.IsBookmarked, thread.PromptOptions, thread.FilterOptions, thread.ModelOptions);
 
             await chatThreadService.UpdateItemByIdAsync(thread.Id, thread, ChatType.Thread.ToString());
 
             return Results.Empty;
         }
+        
+        private (string, Dictionary<MetadataType, object>) GetAssistantResponseAndMetadata(string response)
+        {
+            var assistantResponse = response;
+            var metadata = new Dictionary<MetadataType, object>();
 
-        private string TruncateUserPrompt(string userPrompt) => userPrompt.Substring(0, Math.Min(userPrompt.Length, 39)) +
-                                                             (userPrompt.Length <= 39
-                                                                 ? string.Empty
-                                                                 : "...");
+            //We need to loop from the end to start of the string so we dont mess up the startIndex/endIndex when replacing text
+            for (var i = _agentContainer.Citations.Count - 1; i >= 0; i--)
+            {
+                var citation = _agentContainer.Citations[i];
+                var citationText = assistantResponse.Substring(citation.StartIndex, citation.EndIndex - citation.StartIndex);
+                assistantResponse = assistantResponse.Replace(citationText, $"⁽{ChatUtils.ToSuperscript(citation.ContentIndex + 1)}⁾");
+            }
+            
+            var citations = new List<ChatContainerCitation>();
+            foreach (var citation in _agentContainer.Citations)
+            {
+                citations.Add(new ChatContainerCitation(CitationType.WebSearch, citation.ContentIndex + 1, string.Empty, citation.Name, citation.Url));
+            }
+
+            if (citations.Count > 0)
+                metadata.Add(MetadataType.Citations, citations);
+
+            return (assistantResponse!, metadata);
+        }
+        
+        private async Task SaveUserAssistantCitationsMessagesAsync(string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
+        {
+            // Create messages
+            var (userMessage, assistantMessage, citationMessages) = CreateUserAssistantAndCitationMessages(assistantResponse, assistantMetadata);
+
+            // Save messages 
+            await Task.WhenAll([
+                chatMessageService.AddItemAsync(userMessage),
+                chatMessageService.AddItemAsync(assistantMessage),
+                ..citationMessages.Select(m => chatMessageService.AddItemAsync(m))]);
+
+            // Save audit logs
+            await SaveAuditLogsAsync(userMessage, assistantMessage, citationMessages);
+
+            // Write to response stream
+            await ChatUtils.WriteToResponseStreamAsync(
+                contextAccessor.HttpContext!,
+                ResponseType.DbMessages,
+                new List<Message> { userMessage, assistantMessage });
+        }
+        
+        private async Task SaveAuditLogsAsync(Message userMessage, Message assistantMessage, List<Message> citationMessages)
+        {
+            await Task.WhenAll([
+                chatMessageAuditService.AddItemAsync(Audit<Message>.Create(userMessage)),
+                chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage)),
+                ..citationMessages.Select(c => chatMessageAuditService.AddItemAsync(Audit<Message>.Create(c)))
+            ]);
+        }
+        
+        private (Message userMessage, Message assistantMessage, List<Message> citationMessages) CreateUserAssistantAndCitationMessages(string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
+        {
+            var userMessage = Message.CreateUser(_agentContainer.Thread.Id, _agentContainer.UserPrompt);
+            var assistantMessage = Message.CreateAssistant(_agentContainer.Thread.Id, assistantResponse);
+            var citationMessages = assistantMetadata?.TryGetValue(MetadataType.Citations, out var citations) ?? false ?
+                (citations as List<ChatContainerCitation>)!.Select(c => Message.CreateCitation(_agentContainer.Thread.Id, c.Content)).ToList() : [];
+
+            if (assistantMetadata != null)
+            {
+                foreach (var (key, value) in assistantMetadata)
+                {
+                    assistantMessage.AddMetadata(key, value);
+                }
+            }
+
+            return (userMessage, assistantMessage, citationMessages);
+        }
     }
 
     public class Validator : AbstractValidator<Command>

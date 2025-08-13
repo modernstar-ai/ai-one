@@ -13,6 +13,7 @@ public class AppSettingsConfig
     public bool AllowModelSelectionDefaultValue { get; set; } = true;
     public string DefaultTextModelId { get; set; } = TextModels.Gpt4o;
     public FilePreviewType FilePreviewType { get; set; } = FilePreviewType.Preview;
+    public bool BingDeployed { get; set; } = !string.IsNullOrWhiteSpace(Configs.BingConnectionId);
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]

@@ -71,7 +71,7 @@ public static class ChatUtils
         var messageContext = update.GetMessageContext();
         if (messageContext is { Citations.Count: > 0 })
         {
-            chatContainer.Citations.AddRange(messageContext.Citations.Select((c, i) => new ChatContainerCitation(i + 1, c.Content, c.Title, c.Url)));
+            chatContainer.Citations.AddRange(messageContext.Citations.Select((c, i) => new ChatContainerCitation(CitationType.AzureSearch, i + 1, c.Content, c.Title, c.Url)));
         }
     }
 
@@ -81,7 +81,7 @@ public static class ChatUtils
         var messageContext = (update.InnerContent as OpenAI.Chat.ChatCompletion).GetMessageContext();
         if (messageContext is { Citations.Count: > 0 })
         {
-            chatContainer.Citations.AddRange(messageContext.Citations.Select((c, i) => new ChatContainerCitation(i + 1, c.Content, c.Title, c.Url)));
+            chatContainer.Citations.AddRange(messageContext.Citations.Select((c, i) => new ChatContainerCitation(CitationType.AzureSearch, i + 1, c.Content, c.Title, c.Url)));
         }
     }
 
@@ -114,9 +114,32 @@ public static class ChatUtils
         if (threadFiles.Count == 0) return null;
         
         var citations = threadFiles.Select((file, index) =>
-            new ChatContainerCitation(index + 1, file.Content, file.Name, file.Url).ToString());
+            new ChatContainerCitation(CitationType.FileUpload, index + 1, file.Content, file.Name, file.Url).ToString());
 
         return string.Join("\n-----------------------\n", citations);
+    }
+    
+    public static string TruncateUserPrompt(string userPrompt) => userPrompt.Substring(0, Math.Min(userPrompt.Length, 39)) +
+                                                            (userPrompt.Length <= 39
+                                                                ? string.Empty
+                                                                : "...");
+    
+    public static string ToSuperscript(int number)
+    {
+        var map = new Dictionary<char, char>()
+        {
+            { '0', '⁰' },
+            { '1', '¹' },
+            { '2', '²' },
+            { '3', '³' },
+            { '4', '⁴' },
+            { '5', '⁵' },
+            { '6', '⁶' },
+            { '7', '⁷' },
+            { '8', '⁸' },
+            { '9', '⁹' }
+        };
+        return number.ToString().Select(x => map[x]).Aggregate("", (x, y) => x + y);
     }
 
 }
