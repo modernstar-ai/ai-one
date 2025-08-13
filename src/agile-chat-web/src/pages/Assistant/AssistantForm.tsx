@@ -40,6 +40,7 @@ import { MultiInput } from '@/components/ui-extended/multi-input';
 import { BaseDialog } from '@/components/base/BaseDiaglog';
 import useGetTextModels from '@/hooks/use-get-textmodels';
 import useGetAgents from '@/hooks/use-get-agents';
+import { useSettingsStore } from '@/stores/settings-store';
 
 // Define the AssistantPromptOptions schema
 const AssistantPromptOptionsSchema = z.object({
@@ -121,6 +122,8 @@ export default function AssistantForm() {
   const [selectedAgentId, setSelectedAgentId] = useState<string>('');
   const [agentName, setAgentName] = useState<string>('');
   const [agentDescription, setAgentDescription] = useState<string>('');
+
+  const bingDeployed = useSettingsStore((s) => s.settings?.bingDeployed);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -610,7 +613,7 @@ export default function AssistantForm() {
                   </div>
                 )}
 
-                {watchType === AssistantType.Agent && (
+                {bingDeployed && watchType === AssistantType.Agent && (
                   <>
                     <FormField
                       control={form.control}

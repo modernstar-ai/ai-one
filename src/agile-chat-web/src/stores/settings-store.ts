@@ -13,6 +13,7 @@ export interface AppSettings {
   defaultTextModelId: string;
   modelSelectionFeatureEnabled: boolean;
   filePreviewType: FilePreviewType;
+  bingDeployed: boolean;
 }
 
 export enum FilePreviewType {
