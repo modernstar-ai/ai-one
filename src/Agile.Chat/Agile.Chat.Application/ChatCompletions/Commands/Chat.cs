@@ -132,9 +132,11 @@ public static class Chat
             //Regular index based citations processing
             for (var i = 0; i < _chatContainer.Citations.Count; i++)
             {
-                if (!assistantResponse!.Contains($"[doc{i + 1}]")) continue;
+                if (!assistantResponse!.Contains($"[doc{i + 1}]") && !assistantResponse!.Contains($"[docs{i + 1}]")) continue;
                 
-                assistantResponse = assistantResponse.Replace($"[doc{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾");
+                assistantResponse = assistantResponse
+                    .Replace($"[doc{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾")
+                    .Replace($"[docs{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾");
                 docIndex++;
                 referencedCitations.Add(_chatContainer.Citations[i]);
             }
@@ -142,9 +144,11 @@ public static class Chat
             //File based citations processing
             for (var i = 0; i < _chatContainer.ThreadFiles.Count; i++)
             {
-                if (!assistantResponse!.Contains($"[file{i + 1}]")) continue;
+                if (!assistantResponse!.Contains($"[file{i + 1}]") && !assistantResponse!.Contains($"[files{i + 1}]")) continue;
                 
-                assistantResponse = assistantResponse.Replace($"[file{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾");
+                assistantResponse = assistantResponse
+                    .Replace($"[file{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾")
+                    .Replace($"[files{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾");
                 var citation = new ChatContainerCitation(CitationType.FileUpload,
                     docIndex, 
                     _chatContainer.ThreadFiles[i].Content,

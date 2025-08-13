@@ -26,9 +26,12 @@ public class ChatCommandRouter(IAssistantService assistantService, IChatThreadSe
     public async Task<IResult> RouteAsync(ChatDto chatDto)
     {
         var thread = await chatThreadService.GetItemByIdAsync(chatDto.ThreadId, ChatType.Thread.ToString());
-        var assistant = await assistantService.GetItemByIdAsync(thread.AssistantId);
+        if(thread is null) return Results.NotFound("Thread not found");
+        
+        var assistant = !string.IsNullOrWhiteSpace(thread.AssistantId) ?
+        await assistantService.GetItemByIdAsync(thread.AssistantId) : null;
 
-        return assistant.Type switch
+        return assistant?.Type switch
         {
             AssistantType.Agent => await HandleAgentModeChatAsync(chatDto),
             _ => await HandleStandardChatAsync(chatDto)
