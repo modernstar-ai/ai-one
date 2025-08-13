@@ -1,5 +1,5 @@
 import axios from '@/error-handling/axiosSetup';
-import { Assistant, InsertAssistant } from '../types/Assistant';
+import { Assistant } from '../types/Assistant';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -36,13 +36,13 @@ export async function fetchAssistantById(id: string): Promise<Assistant | null> 
 }
 
 // Create a new assistant
-export async function createAssistant(newAssistant: InsertAssistant): Promise<Assistant> {
+export async function createAssistant(newAssistant: Assistant): Promise<Assistant> {
   const apiUrl = getApiUrl('');
   const response = await axios.post<Assistant>(apiUrl, newAssistant);
   return response.data;
 }
 
-export async function updateAssistant(updatedAssistant: InsertAssistant, id: string) {
+export async function updateAssistant(updatedAssistant: Assistant, id: string) {
   const apiUrl = getApiUrl(`${id}`);
   // Ensure all required fields are included in the request
   const response = await axios.put<Assistant>(apiUrl, updatedAssistant, {
