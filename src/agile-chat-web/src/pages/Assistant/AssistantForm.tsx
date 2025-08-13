@@ -22,7 +22,6 @@ import {
   Assistant,
   AssistantStatus,
   AssistantType,
-  InsertAssistant,
   SelectConnectedAgent,
   SelectConnectedAgentSchema,
   SelectAgentConfigurationSchema
@@ -156,7 +155,11 @@ export default function AssistantForm() {
         agentDescription: '',
         agentId: '',
         agentName: '',
-        connectedAgents: []
+        connectedAgents: [],
+        bingConfig: {
+          enableWebSearch: false,
+          webResultsCount: 5
+        }
       }
     }
   });
@@ -164,6 +167,12 @@ export default function AssistantForm() {
   const { watch } = form;
   const watchAllFields = watch();
   const watchType = watch('type');
+  const watchEnableWebSearch = watch('agentConfiguration.bingConfig.enableWebSearch');
+
+  //Update agents formState
+  useEffect(() => {
+    form.setValue('agentConfiguration.connectedAgents', connectedAgents);
+  }, [connectedAgents]);
 
   // Function to add agent to connected agents array
   const handleAddAgent = () => {
@@ -257,7 +266,11 @@ export default function AssistantForm() {
             agentDescription: '',
             agentId: '',
             agentName: '',
-            connectedAgents: []
+            connectedAgents: [],
+            bingConfig: {
+              enableWebSearch: false,
+              webResultsCount: 5
+            }
           }
         });
 
@@ -310,6 +323,7 @@ export default function AssistantForm() {
       setSelectedAgentId('');
       setAgentName('');
       setAgentDescription('');
+      form.resetField('agentConfiguration.bingConfig');
     }
   }, [watchType, connectedAgents.length]);
 
@@ -346,11 +360,9 @@ export default function AssistantForm() {
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      // Sync connectedAgents state to form data
       const fileData = {
-        ...values,
-        connectedAgents: values.type === AssistantType.Agent ? connectedAgents : undefined
-      } as InsertAssistant;
+        ...values
+      } as Assistant;
 
       if (fileId) {
         await updateAssistant(fileData, fileId);
@@ -598,6 +610,48 @@ export default function AssistantForm() {
                   </div>
                 )}
 
+                {watchType === AssistantType.Agent && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="agentConfiguration.bingConfig.enableWebSearch"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-y-0">
+                          <FormLabel htmlFor="container-select" className="my-auto">
+                            Enable Web Search
+                          </FormLabel>
+                          <FormControl>
+                            <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {watchEnableWebSearch && (
+                      <FormField
+                        control={form.control}
+                        name="agentConfiguration.bingConfig.webResultsCount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Web Results Count</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                type="number"
+                                placeholder="Enter a number between 1 and 50"
+                                min={1}
+                                max={50}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </>
+                )}
+
                 <FormField
                   control={form.control}
                   name="greeting"
@@ -643,109 +697,156 @@ export default function AssistantForm() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.indexName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel htmlFor="container-select">Container</FormLabel>
-                      <FormControl>
-                        <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger id="container-select" aria-labelledby="container-label">
-                              <SelectValue placeholder="Select Container" />
-                            </SelectTrigger>
-                          </FormControl>
 
-                          <SelectContent>
-                            {indexes?.map((index) => (
-                              <SelectItem key={index.id} value={index.name}>
-                                {index.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.limitKnowledgeToIndex"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-y-0">
-                      <FormLabel htmlFor="container-select" className="my-auto">
-                        Limit Assistant knowledge to container only
-                      </FormLabel>
-                      <FormControl>
-                        <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.allowInThreadFileUploads"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-y-0">
-                      <FormLabel htmlFor="container-select" className="my-auto">
-                        Allow in thread file uploads
-                      </FormLabel>
-                      <FormControl>
-                        <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.folders"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Folder Filters</FormLabel>
-                      <FormControl>
-                        <MultiInput {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.tags"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tag Filters</FormLabel>
-                      <FormControl>
-                        <MultiInput {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.documentLimit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Document Limit</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          placeholder="Enter a number between 0 and 1000"
-                          min={0}
-                          max={1000}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {watchType !== AssistantType.Agent && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.indexName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="container-select">Container</FormLabel>
+                          <FormControl>
+                            <Select onValueChange={(value) => field.onChange(value)} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger id="container-select" aria-labelledby="container-label">
+                                  <SelectValue placeholder="Select Container" />
+                                </SelectTrigger>
+                              </FormControl>
+
+                              <SelectContent>
+                                {indexes?.map((index) => (
+                                  <SelectItem key={index.id} value={index.name}>
+                                    {index.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.limitKnowledgeToIndex"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-y-0">
+                          <FormLabel htmlFor="container-select" className="my-auto">
+                            Limit Assistant knowledge to container only
+                          </FormLabel>
+                          <FormControl>
+                            <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.allowInThreadFileUploads"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-y-0">
+                          <FormLabel htmlFor="container-select" className="my-auto">
+                            Allow in thread file uploads
+                          </FormLabel>
+                          <FormControl>
+                            <Checkbox className="p-3 ms-2" checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.folders"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Folder Filters</FormLabel>
+                          <FormControl>
+                            <MultiInput {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.tags"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tag Filters</FormLabel>
+                          <FormControl>
+                            <MultiInput {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.documentLimit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Document Limit</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              placeholder="Enter a number between 0 and 1000"
+                              min={0}
+                              max={1000}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="filterOptions.strictness"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel id="strictness-label">Strictness</FormLabel>
+                          <FormControl>
+                            <Slider
+                              value={[field.value ?? 0]}
+                              min={1}
+                              max={5}
+                              step={1}
+                              onValueChange={(value) => {
+                                field.onChange(value[0]);
+                              }}
+                              aria-label="strictness slider"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                          <div id="strictness-value">Strictness: {field.value}</div>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="promptOptions.maxTokens"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Max Response (tokens)</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              placeholder="Enter a number, by default value will be set to 800 tokens"
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+
                 <FormField
                   control={form.control}
                   name="promptOptions.temperature"
@@ -787,47 +888,6 @@ export default function AssistantForm() {
                       </FormControl>
                       <FormMessage />
                       <div id="topP-value">Selected Top P: {field.value}</div>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="promptOptions.maxTokens"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Max Response (tokens)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          placeholder="Enter a number, by default value will be set to 800 tokens"
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="filterOptions.strictness"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel id="strictness-label">Strictness</FormLabel>
-                      <FormControl>
-                        <Slider
-                          value={[field.value ?? 0]}
-                          min={1}
-                          max={5}
-                          step={1}
-                          onValueChange={(value) => {
-                            field.onChange(value[0]);
-                          }}
-                          aria-label="strictness slider"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                      <div id="strictness-value">Strictness: {field.value}</div>
                     </FormItem>
                   )}
                 />

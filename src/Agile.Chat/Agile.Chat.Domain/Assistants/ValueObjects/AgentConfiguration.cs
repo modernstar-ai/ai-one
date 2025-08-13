@@ -6,7 +6,7 @@ public class AgentConfiguration
     public string AgentName { get; set; }
     public string AgentDescription { get; set; }
 
-    public bool EnableWebSearch { get; set; } = false;
+    public BingConfig BingConfig { get; set; } = new();
     public List<ConnectedAgent> ConnectedAgents { get; set; } = new();
 }
 

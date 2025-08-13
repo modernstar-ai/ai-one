@@ -20,5 +20,5 @@ public class AssistantDto
 
     public AssistantModelOptions ModelOptions { get; set; } = new();
     public PermissionsAccessControl AccessControl { get; set; } = new();
-    public AgentDto AgentConfig { get; set; } = new();
+    public AgentConfiguration? AgentConfiguration { get; set; } = null;
 }
