@@ -23,5 +23,5 @@ public static class Configs
     public static CosmosDbConfig CosmosDb => config.GetSection("CosmosDb").Get<CosmosDbConfig>()! ?? throw new NullReferenceException("CosmosDb is null");
     public static AuditConfig Audit => config.GetSection("Audit").Get<AuditConfig>()! ?? throw new NullReferenceException("Audit is null");
     public static AppSettingsConfig AppSettings => config.GetSection("AppSettings").Get<AppSettingsConfig>()! ?? new AppSettingsConfig();
-    public static string BingConnectionId => config["BingConnectionId"] ?? throw new InvalidEnumArgumentException("BingConnectionId is not set");
+    public static string? BingConnectionId => config["BingConnectionId"];
 }
