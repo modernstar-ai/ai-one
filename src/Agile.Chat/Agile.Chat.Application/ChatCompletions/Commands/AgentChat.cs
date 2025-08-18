@@ -10,6 +10,7 @@ using Agile.Chat.Domain.Audits.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
+using Agile.Framework.AzureAiSearch;
 using Agile.Framework.Common.Enums;
 using FluentValidation;
 using MediatR;
@@ -28,11 +29,13 @@ public static class AgentChat
         IHttpContextAccessor contextAccessor,
         IAssistantService assistantService,
         IChatThreadService chatThreadService,
+        IChatThreadFileService chatThreadFileService,
         IChatMessageService chatMessageService,
         IAzureAIAgentService azureAIAgentService,
+        IAzureAiSearch azureAiSearch,
         IAuditService<Message> chatMessageAuditService) : IRequestHandler<Command, IResult>
     {
-        private AgentContainer _agentContainer;
+        private ChatContainer _agentContainer;
         
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -40,13 +43,20 @@ public static class AgentChat
             logger.LogDebug("Handler executed {Handler}", typeof(Handler).Namespace);
 
             var thread = await chatThreadService.GetItemByIdAsync(request.ThreadId, ChatType.Thread.ToString());
+            var chatMessages = await chatMessageService.GetAllMessagesAsync(thread!.Id);
+            var files = await chatThreadFileService.GetAllAsync(request.ThreadId);
             var assistant = await assistantService.GetItemByIdAsync(thread.AssistantId);
 
-            _agentContainer = new AgentContainer()
+            _agentContainer = new ChatContainer()
             {
                 Thread = thread,
+                ThreadFiles = files,
+                Messages = chatMessages,
                 UserPrompt = request.UserPrompt,
-                Citations = new()
+                Assistant = assistant,
+                AzureAiSearch = azureAiSearch,
+                Citations = new(),
+                AgentCitations = new List<AgentCitation>(),
             };
 
             using (logger.BeginScope(new
@@ -94,13 +104,13 @@ public static class AgentChat
             //We need to loop from the end to start of the string so we dont mess up the startIndex/endIndex when replacing text
             for (var i = _agentContainer.Citations.Count - 1; i >= 0; i--)
             {
-                var citation = _agentContainer.Citations[i];
+                var citation = _agentContainer.AgentCitations[i];
                 var citationText = assistantResponse.Substring(citation.StartIndex, citation.EndIndex - citation.StartIndex);
                 assistantResponse = assistantResponse.Replace(citationText, $"⁽{ChatUtils.ToSuperscript(citation.ContentIndex + 1)}⁾");
             }
             
             var citations = new List<ChatContainerCitation>();
-            foreach (var citation in _agentContainer.Citations)
+            foreach (var citation in _agentContainer.AgentCitations)
             {
                 citations.Add(new ChatContainerCitation(CitationType.WebSearch, citation.ContentIndex + 1, string.Empty, citation.Name, citation.Url));
             }
