@@ -1,4 +1,5 @@
 using System.ClientModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 using System.Text.Json;
 using Agile.Chat.Application.Assistants.Services;
@@ -49,8 +50,7 @@ public static class Chat
         IAuditService<ChatThread> chatThreadAuditService) : IRequestHandler<Command, IResult>
     {
         private ChatContainer _chatContainer = null!;
-        private IAppKernel _appKernel = null!;
-
+        
         public async Task<IResult> Handle(Command request, CancellationToken cancellationToken)
         {
             //Fetch what's needed to do chatting
@@ -62,8 +62,6 @@ public static class Chat
                 ? await assistantService.GetItemByIdAsync(thread.AssistantId)
                 : null;
 
-            AddSemanticKernel(thread.ModelOptions?.ModelId);
-
             _chatContainer = new ChatContainer
             {
                 UserPrompt = request.UserPrompt,
@@ -71,7 +69,7 @@ public static class Chat
                 Assistant = assistant,
                 AzureAiSearch = azureAiSearch,
                 Messages = chatMessages,
-                AppKernel = _appKernel,
+                AppKernel = ChatUtils.GetAppKernel(appKernelBuilder, thread.ModelOptions?.ModelId),
                 ThreadFiles = files
             };
             
@@ -79,7 +77,7 @@ public static class Chat
                 .AddSingleton<ChatContainer>(_ => _chatContainer)
                 .BuildServiceProvider();
             if (!string.IsNullOrWhiteSpace(assistant?.FilterOptions.IndexName))
-                _appKernel.AddPlugin<AzureAiSearchRag>(sp);
+                _chatContainer.AppKernel.AddPlugin<AzureAiSearchRag>(sp);
 
 
             //Execute Chat Stream
@@ -127,42 +125,12 @@ public static class Chat
                     break;
             }
 
-            var referencedCitations = new List<ChatContainerCitation>();
-            var docIndex = 1;
-            //Regular index based citations processing
-            for (var i = 0; i < _chatContainer.Citations.Count; i++)
-            {
-                if (!assistantResponse!.Contains($"[doc{i + 1}]") && !assistantResponse!.Contains($"[docs{i + 1}]")) continue;
-                
-                assistantResponse = assistantResponse
-                    .Replace($"[doc{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾")
-                    .Replace($"[docs{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾");
-                docIndex++;
-                referencedCitations.Add(_chatContainer.Citations[i]);
-            }
-            
-            //File based citations processing
-            for (var i = 0; i < _chatContainer.ThreadFiles.Count; i++)
-            {
-                if (!assistantResponse!.Contains($"[file{i + 1}]") && !assistantResponse!.Contains($"[files{i + 1}]")) continue;
-                
-                assistantResponse = assistantResponse
-                    .Replace($"[file{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾")
-                    .Replace($"[files{i + 1}]", $"⁽{ChatUtils.ToSuperscript(docIndex)}⁾");
-                var citation = new ChatContainerCitation(CitationType.FileUpload,
-                    docIndex, 
-                    _chatContainer.ThreadFiles[i].Content,
-                    _chatContainer.ThreadFiles[i].Name, 
-                    _chatContainer.ThreadFiles[i].Url);
-                
-                docIndex++;
-                referencedCitations.Add(citation);
-            }
+            var (replacedAssistantResponse, referencedCitations) = ChatUtils.ReplaceCitationText(assistantResponse ?? string.Empty, _chatContainer);
 
             if (referencedCitations.Count > 0)
                 metadata.Add(MetadataType.Citations, referencedCitations);
 
-            return (assistantResponse!, metadata);
+            return (replacedAssistantResponse!, metadata);
         }
 
         private async Task<IResult> GetChatResultAsync(AzureOpenAIPromptExecutionSettings chatSettings, ChatHistory chatHistory)
@@ -170,7 +138,7 @@ public static class Chat
             var assistantSystemPrompt = _chatContainer.Assistant?.PromptOptions.SystemPrompt;
             var assistantFilterOptions = _chatContainer.Assistant?.FilterOptions;
             
-            var indexStream = _appKernel.GetPromptFileChatStream(chatSettings,
+            var indexStream = _chatContainer.AppKernel.GetPromptFileChatStream(chatSettings,
                 Constants.ChatCompletionsPromptsPath,
                 Constants.Prompts.ChatWithRag,
                 new Dictionary<string, object?>
@@ -196,7 +164,7 @@ public static class Chat
 #pragma warning disable SKEXP0010
                 chatSettings.ResponseFormat = "json_object";
 
-                var aiResponse = await _appKernel.GetPromptFileChat(chatSettings,
+                var aiResponse = await _chatContainer.AppKernel.GetPromptFileChat(chatSettings,
                     Constants.ChatCompletionsPromptsPath,
                     Constants.Prompts.ChatWithSearch,
                     new Dictionary<string, object?>
@@ -266,27 +234,6 @@ public static class Chat
                 chatMessageAuditService.AddItemAsync(Audit<Message>.Create(assistantMessage)),
                 ..citationMessages.Select(c => chatMessageAuditService.AddItemAsync(Audit<Message>.Create(c)))
             ]);
-        }
-
-        private void AddSemanticKernel(string? chatCompletionModelId)
-        {
-            var configs = Configs.AzureOpenAi;
-            var chatEndpoint = !string.IsNullOrWhiteSpace(configs.Apim.Endpoint) ? configs.Apim.Endpoint : configs.Endpoint;
-            var embeddingsEndpoint = !string.IsNullOrWhiteSpace(configs.Apim.EmbeddingsEndpoint) ? configs.Apim.EmbeddingsEndpoint : configs.Endpoint;
-
-            ///TODO: check if the model is supported
-            var modelId = chatCompletionModelId;
-            if (string.IsNullOrWhiteSpace(modelId))
-            {
-                chatCompletionModelId = Configs.AppSettings.DefaultTextModelId;
-            }
-
-            ///TODO: currently the modelId is used as the deployment name, 
-            ///but this should be handled differently by maintaining a mapping of modelId to deploymentName 
-            var chatCompletionDeploymentName = chatCompletionModelId;
-            appKernelBuilder.AddAzureOpenAIChatCompletion(chatCompletionDeploymentName);
-            appKernelBuilder.AddAzureOpenAITextEmbeddingGeneration(configs.EmbeddingsDeploymentName!);
-            _appKernel = appKernelBuilder.Build();
         }
     }
 

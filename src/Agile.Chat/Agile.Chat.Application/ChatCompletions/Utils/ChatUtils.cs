@@ -1,4 +1,5 @@
 ﻿using System.ClientModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -7,6 +8,7 @@ using Agile.Chat.Domain.Assistants.Aggregates;
 using Agile.Chat.Domain.Assistants.ValueObjects;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Entities;
+using Agile.Framework.Ai;
 using Agile.Framework.AzureAiSearch;
 using Agile.Framework.AzureAiSearch.AiSearchConstants;
 using Agile.Framework.AzureAiSearch.Models;
@@ -140,6 +142,81 @@ public static class ChatUtils
             { '9', '⁹' }
         };
         return number.ToString().Select(x => map[x]).Aggregate("", (x, y) => x + y);
+    }
+    
+    public static IAppKernel GetAppKernel(IAppKernelBuilder builder, string? chatCompletionModelId)
+    {
+        var configs = Configs.AzureOpenAi;
+        var chatEndpoint = !string.IsNullOrWhiteSpace(configs.Apim.Endpoint) ? configs.Apim.Endpoint : configs.Endpoint;
+        var embeddingsEndpoint = !string.IsNullOrWhiteSpace(configs.Apim.EmbeddingsEndpoint) ? configs.Apim.EmbeddingsEndpoint : configs.Endpoint;
+
+        ///TODO: check if the model is supported
+        var modelId = chatCompletionModelId;
+        if (string.IsNullOrWhiteSpace(modelId))
+        {
+            chatCompletionModelId = Configs.AppSettings.DefaultTextModelId;
+        }
+
+        ///TODO: currently the modelId is used as the deployment name, 
+        ///but this should be handled differently by maintaining a mapping of modelId to deploymentName 
+        var chatCompletionDeploymentName = chatCompletionModelId;
+        builder.AddAzureOpenAIChatCompletion(chatCompletionDeploymentName);
+        builder.AddAzureOpenAITextEmbeddingGeneration(configs.EmbeddingsDeploymentName!);
+        return builder.Build();
+    }
+
+    public static (string, List<ChatContainerCitation>) ReplaceCitationText(string assistantResponse, ChatContainer chatContainer)
+    {
+        var referencedCitations = new List<ChatContainerCitation>();
+        var docIndex = 1;
+
+        var agentDocIndex = chatContainer.AgentCitations.Count;
+        //We need to loop from the end to start of the string so we dont mess up the startIndex/endIndex when replacing text
+        for (var i = chatContainer.AgentCitations.Count - 1; i >= 0; i--)
+        {
+            var citation = chatContainer.AgentCitations[i];
+            var citationText = assistantResponse.Substring(citation.StartIndex, citation.EndIndex - citation.StartIndex);
+            if (!assistantResponse.Contains(citationText)) continue;
+            
+            assistantResponse = assistantResponse.Substring(0, citation.StartIndex) + $"⁽{ToSuperscript(agentDocIndex)}⁾" + assistantResponse.Substring(citation.EndIndex);
+            referencedCitations.Add(new ChatContainerCitation(CitationType.WebSearch, agentDocIndex, string.Empty, citation.Name, citation.Url));
+            agentDocIndex--;
+            docIndex++;
+        }
+        
+        //Regular index based citations processing
+        for (var i = 0; i < chatContainer.Citations.Count; i++)
+        {
+            if (!assistantResponse!.Contains($"【doc{i + 1}】") && !assistantResponse!.Contains($"【docs{i + 1}】")) continue;
+                
+            assistantResponse = assistantResponse
+                .Replace($"【doc{i + 1}】", $"⁽{ToSuperscript(docIndex)}⁾")
+                .Replace($"【docs{i + 1}】", $"⁽{ToSuperscript(docIndex)}⁾");
+            
+            chatContainer.Citations[i].ReferenceNumber = docIndex;
+            referencedCitations.Add(chatContainer.Citations[i]);
+            docIndex++;
+        }
+            
+        //File based citations processing
+        for (var i = 0; i < chatContainer.ThreadFiles.Count; i++)
+        {
+            if (!assistantResponse!.Contains($"【file{i + 1}】") && !assistantResponse!.Contains($"【files{i + 1}】")) continue;
+                
+            assistantResponse = assistantResponse
+                .Replace($"【file{i + 1}】", $"⁽{ToSuperscript(docIndex)}⁾")
+                .Replace($"【files{i + 1}】", $"⁽{ToSuperscript(docIndex)}⁾");
+            var citation = new ChatContainerCitation(CitationType.FileUpload,
+                docIndex, 
+                chatContainer.ThreadFiles[i].Content,
+                chatContainer.ThreadFiles[i].Name, 
+                chatContainer.ThreadFiles[i].Url);
+                
+            docIndex++;
+            referencedCitations.Add(citation);
+        }
+        
+        return (assistantResponse, referencedCitations);
     }
 
 }

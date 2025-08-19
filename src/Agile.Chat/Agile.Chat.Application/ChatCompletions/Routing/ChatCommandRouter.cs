@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Agile.Chat.Application.Assistants.Services;
 using Agile.Chat.Application.ChatCompletions.Dtos;
 using Mapster;
@@ -37,7 +38,7 @@ public class ChatCommandRouter(IAssistantService assistantService, IChatThreadSe
             _ => await HandleStandardChatAsync(chatDto)
         };
     }
-
+    
     private async Task<IResult> HandleStandardChatAsync(ChatDto chatDto)
     {
         var command = chatDto.Adapt<Commands.Chat.Command>();

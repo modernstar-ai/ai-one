@@ -146,7 +146,6 @@ public class AzureAIAgentService : IAzureAIAgentService
                 .BuildServiceProvider())] : 
                 []);
         azureAgent.UseImmutableKernel = true;
-        var citationIndex = 0;
         await foreach (var resp in azureAgent.InvokeStreamingAsync(new ChatMessageContent(AuthorRole.User, userPrompt), new AzureAIAgentThread(_projectClient, threadId), new AgentInvokeOptions
                        {
                            AdditionalInstructions = hasIndex ? 
@@ -165,12 +164,10 @@ public class AzureAIAgentService : IAzureAIAgentService
                 if (item is StreamingAnnotationContent { StartIndex: not null, EndIndex: not null } annotationContent)
                 {
                     agentContainer.AgentCitations.Add(new AgentCitation(
-                        citationIndex,
                         annotationContent.StartIndex.Value, 
                         annotationContent.EndIndex.Value, 
                         annotationContent.Title!, 
                         annotationContent.ReferenceId!));
-                    citationIndex++;
                 }
             }
         }

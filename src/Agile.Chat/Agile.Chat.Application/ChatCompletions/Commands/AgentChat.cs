@@ -10,6 +10,7 @@ using Agile.Chat.Domain.Audits.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Aggregates;
 using Agile.Chat.Domain.ChatThreads.Entities;
 using Agile.Chat.Domain.ChatThreads.ValueObjects;
+using Agile.Framework.Ai;
 using Agile.Framework.AzureAiSearch;
 using Agile.Framework.Common.Enums;
 using FluentValidation;
@@ -32,6 +33,7 @@ public static class AgentChat
         IChatThreadFileService chatThreadFileService,
         IChatMessageService chatMessageService,
         IAzureAIAgentService azureAIAgentService,
+        IAppKernelBuilder appKernelBuilder,
         IAzureAiSearch azureAiSearch,
         IAuditService<Message> chatMessageAuditService) : IRequestHandler<Command, IResult>
     {
@@ -49,6 +51,7 @@ public static class AgentChat
 
             _agentContainer = new ChatContainer()
             {
+                AppKernel = ChatUtils.GetAppKernel(appKernelBuilder, thread.ModelOptions?.ModelId),
                 Thread = thread,
                 ThreadFiles = files,
                 Messages = chatMessages,
@@ -101,24 +104,12 @@ public static class AgentChat
             var assistantResponse = response;
             var metadata = new Dictionary<MetadataType, object>();
 
-            //We need to loop from the end to start of the string so we dont mess up the startIndex/endIndex when replacing text
-            for (var i = _agentContainer.Citations.Count - 1; i >= 0; i--)
-            {
-                var citation = _agentContainer.AgentCitations[i];
-                var citationText = assistantResponse.Substring(citation.StartIndex, citation.EndIndex - citation.StartIndex);
-                assistantResponse = assistantResponse.Replace(citationText, $"⁽{ChatUtils.ToSuperscript(citation.ContentIndex + 1)}⁾");
-            }
-            
-            var citations = new List<ChatContainerCitation>();
-            foreach (var citation in _agentContainer.AgentCitations)
-            {
-                citations.Add(new ChatContainerCitation(CitationType.WebSearch, citation.ContentIndex + 1, string.Empty, citation.Name, citation.Url));
-            }
+            var (finalResponse, citations) = ChatUtils.ReplaceCitationText(assistantResponse, _agentContainer);
 
             if (citations.Count > 0)
                 metadata.Add(MetadataType.Citations, citations);
 
-            return (assistantResponse!, metadata);
+            return (finalResponse!, metadata);
         }
         
         private async Task SaveUserAssistantCitationsMessagesAsync(string assistantResponse, Dictionary<MetadataType, object>? assistantMetadata)
