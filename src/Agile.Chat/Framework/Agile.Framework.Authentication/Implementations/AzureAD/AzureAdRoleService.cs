@@ -1,4 +1,4 @@
-﻿using Agile.Framework.Authentication.Enums;
+using Agile.Framework.Authentication.Enums;
 using Agile.Framework.Common.EnvironmentVariables;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Graph;
@@ -17,8 +17,9 @@ public class AzureAdRoleService(GraphServiceClient graphServiceClient, IHttpCont
         // Fetch the user's memberOf groups (all groups the user is a member of)
         var groupsReq = await graphServiceClient.Me.MemberOf.Request().GetAsync();
         // Loop through the results and display group information
-        do
+        while (true)
         {
+            if(groupsReq == null || groupsReq.Count == 0) break;
             foreach (var directoryObject in groupsReq)
             {
                 if (directoryObject is Group group)
@@ -32,8 +33,11 @@ public class AzureAdRoleService(GraphServiceClient graphServiceClient, IHttpCont
             {
                 groupsReq = await groupsReq.NextPageRequest.GetAsync();
             }
-
-        } while (groupsReq.NextPageRequest != null);
+            else
+            {
+                break;
+            }
+        }
         
         if (settings.SystemAdminGroups.Any(sysAdminGroup =>
                 groups.Contains(sysAdminGroup, StringComparer.InvariantCultureIgnoreCase)))
