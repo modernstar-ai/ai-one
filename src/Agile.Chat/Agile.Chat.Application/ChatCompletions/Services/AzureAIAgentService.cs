@@ -1,6 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using Agile.Chat.Application.ChatCompletions.Models;
+using Agile.Chat.Application.ChatCompletions.Plugins;
+using Agile.Chat.Application.ChatCompletions.Prompts;
+using Agile.Framework.Ai;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.Enums;
 using Agile.Framework.Common.EnvironmentVariables;
@@ -11,6 +15,10 @@ using Azure.Identity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Agents;
+using Microsoft.SemanticKernel.Agents.AzureAI;
+using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace Agile.Chat.Application.ChatCompletions.Services;
 
@@ -22,7 +30,7 @@ public interface IAzureAIAgentService
         string instructions, float? temperature = null, float? topP = null, List<T> tools = default)  where T: ToolDefinition;
     Task<PersistentAgentThread> GetThreadAsync(string threadId);
     Task<PersistentAgentThread> CreateThreadAsync();
-    Task<string> GetChatResultAsync(string userPrompt, HttpContext context, string agentId, string threadId, AgentContainer agentContainer);
+    Task<string> GetChatResultAsync(string userPrompt, HttpContext context, string agentId, string threadId, ChatContainer agentContainer);
     
     Task DeleteAgentAsync(string? agentId);
 }
@@ -31,6 +39,7 @@ public interface IAzureAIAgentService
 /// Service implementation for Azure AI Agent operations.
 /// </summary>
 [Export(typeof(IAzureAIAgentService), ServiceLifetime.Scoped)]
+[Experimental("SKEXP0110")]
 public class AzureAIAgentService : IAzureAIAgentService
 {
     private readonly PersistentAgentsClient _projectClient;
@@ -105,14 +114,14 @@ public class AzureAIAgentService : IAzureAIAgentService
         return thread;
     }
 
-    public async Task<string> GetChatResultAsync(string userPrompt, HttpContext context, string agentId, string threadId, AgentContainer agentContainer)
+    public async Task<string> GetChatResultAsync(string userPrompt, HttpContext context, string agentId, string threadId, ChatContainer agentContainer)
     {
         _logger.LogDebug("Sending message to agent. agentId: {AgentId}, threadId: {ThreadId}", agentId, threadId);
 
         var agent = await GetAgentAsync(agentId);
         var agentThread = await GetThreadAsync(threadId);
 
-        var response = await InvokeAgent(userPrompt, context, agent, agentThread, _logger, agentContainer);
+        var response = await InvokeAgent(userPrompt, context, agent, threadId, _logger, agentContainer);
 
         _logger.LogDebug("Message sent successfully. agentId: {AgentId}, threadId: {ThreadId}", agentId, agentThread.Id);
         return response;
@@ -123,41 +132,77 @@ public class AzureAIAgentService : IAzureAIAgentService
         if (string.IsNullOrWhiteSpace(agentId)) return;
         await _projectClient.Administration.DeleteAgentAsync(agentId);
     }
-
-    private async Task<string> InvokeAgent(string userPrompt, HttpContext context, PersistentAgent agent, PersistentAgentThread agentThread, ILogger logger, AgentContainer agentContainer)
+    
+    private async Task<string> InvokeAgent(string userPrompt, HttpContext context, PersistentAgent agent, string threadId, ILogger logger, ChatContainer agentContainer)
     {
+        var hasIndex = !string.IsNullOrWhiteSpace(agentContainer.Assistant?.FilterOptions.IndexName);
         var assistantFullResponse = new StringBuilder();
-        logger.LogDebug("Invoking agent for threadId: {ThreadId}", agentThread.Id);
-
-        await _projectClient.Messages.CreateMessageAsync(agentThread.Id, MessageRole.User, userPrompt);
-        var stream = _projectClient.Runs.CreateRunStreamingAsync(agentThread.Id, agent.Id);
-
-        await foreach (StreamingUpdate streamingUpdate in stream)
+        logger.LogDebug("Invoking agent for threadId: {ThreadId}", threadId);
+        
+        var azureAgent = new AzureAIAgent(agent, _projectClient, 
+            //Only add azure ai search plugin if assistant connected to index
+            hasIndex ? [KernelPluginFactory.CreateFromType<AzureAiSearchRag>(serviceProvider: new ServiceCollection()
+                .AddSingleton<ChatContainer>(_ => agentContainer)
+                .BuildServiceProvider())] : 
+                []);
+        azureAgent.UseImmutableKernel = true;
+        await foreach (var resp in azureAgent.InvokeStreamingAsync(new ChatMessageContent(AuthorRole.User, userPrompt), new AzureAIAgentThread(_projectClient, threadId), new AgentInvokeOptions
+                       {
+                           AdditionalInstructions = hasIndex ? 
+                           PromptBuilder.BuildChatWithRagPrompt(agentContainer.ThreadFiles)
+                           : string.Empty
+                       }))
         {
-            if (streamingUpdate.UpdateKind == StreamingUpdateReason.RunCreated)
+            foreach (var item in resp.Message.Items)
             {
-                _logger.LogDebug("Run created for agent thread: {ThreadId}", agentThread.Id);
-            }
-            else if (streamingUpdate is MessageContentUpdate contentUpdate)
-            {
-                if (contentUpdate.TextAnnotation is { StartIndex: not null, EndIndex: not null })
+                if (item is StreamingTextContent textContent)
                 {
-                    agentContainer.Citations.Add(new AgentCitation(
-                        contentUpdate.TextAnnotation.ContentIndex,
-                        contentUpdate.TextAnnotation.StartIndex.Value, 
-                        contentUpdate.TextAnnotation.EndIndex.Value, 
-                        contentUpdate.TextAnnotation.Title, 
-                        contentUpdate.TextAnnotation.Url));
+                    await WriteToResponseStreamAsync(context, ResponseType.Chat, textContent.Text);
+                    assistantFullResponse.Append(textContent.Text);
                 }
-                else
+
+                if (item is StreamingAnnotationContent { StartIndex: not null, EndIndex: not null } annotationContent)
                 {
-                    await WriteToResponseStreamAsync(context, ResponseType.Chat, contentUpdate.Text);
-                    assistantFullResponse.Append(contentUpdate.Text);
+                    agentContainer.AgentCitations.Add(new AgentCitation(
+                        annotationContent.StartIndex.Value, 
+                        annotationContent.EndIndex.Value, 
+                        annotationContent.Title!, 
+                        annotationContent.ReferenceId!));
                 }
             }
         }
 
         return assistantFullResponse.ToString();
+
+        // await _projectClient.Messages.CreateMessageAsync(agentThread.Id, MessageRole.User, userPrompt);
+        // var stream = _projectClient.Runs.CreateRunStreamingAsync(agentThread.Id, agent.Id);
+        //
+        // await foreach (StreamingUpdate streamingUpdate in stream)
+        // {
+        //     if (streamingUpdate.UpdateKind == StreamingUpdateReason.RunCreated)
+        //     {
+        //         _logger.LogDebug("Run created for agent thread: {ThreadId}", agentThread.Id);
+        //     }
+        //     else if (streamingUpdate is MessageContentUpdate contentUpdate)
+        //     {
+        //         if (contentUpdate.TextAnnotation is { StartIndex: not null, EndIndex: not null })
+        //         {
+        //             agentContainer.Citations.Add(new AgentCitation(
+        //                 contentUpdate.TextAnnotation.ContentIndex,
+        //                 contentUpdate.TextAnnotation.StartIndex.Value, 
+        //                 contentUpdate.TextAnnotation.EndIndex.Value, 
+        //                 contentUpdate.TextAnnotation.Title, 
+        //                 contentUpdate.TextAnnotation.Url));
+        //         }
+        //         else
+        //         {
+        //             await WriteToResponseStreamAsync(context, ResponseType.Chat, contentUpdate.Text);
+        //             assistantFullResponse.Append(contentUpdate.Text);
+        //         }
+        //     }
+        // }
+        //
+        // return assistantFullResponse.ToString();
     }
 
     public async Task WriteToResponseStreamAsync(HttpContext context, ResponseType responseType, object? payload)
