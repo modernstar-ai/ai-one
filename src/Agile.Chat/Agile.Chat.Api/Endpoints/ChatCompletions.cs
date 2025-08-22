@@ -5,6 +5,7 @@ using Carter;
 using Carter.OpenApi;
 using Mapster;
 using MediatR;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Agile.Chat.Api.Endpoints;
@@ -38,8 +39,10 @@ public class ChatCompletions() : CarterModule("/api")
         return await mediator.Send(command);
     }
 
-    private async Task<IResult> ChatStreamWithRouter([FromServices] ChatCommandRouter router, [FromBody] ChatDto dto)
+    private async Task<IResult> ChatStreamWithRouter([FromServices] ChatCommandRouter router, [FromServices] IHttpContextAccessor context, [FromBody] ChatDto dto)
     {
+        var syncIoFeature = context.HttpContext!.Features.Get<IHttpBodyControlFeature>();
+        syncIoFeature!.AllowSynchronousIO = true;
         return await router.RouteAsync(dto);
     }
 

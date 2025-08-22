@@ -127,7 +127,7 @@ public static class AgentChat
             await SaveAuditLogsAsync(userMessage, assistantMessage, citationMessages);
 
             // Write to response stream
-            await ChatUtils.WriteToResponseStreamAsync(
+            ChatUtils.WriteToResponseStream(
                 contextAccessor.HttpContext!,
                 ResponseType.DbMessages,
                 new List<Message> { userMessage, assistantMessage });

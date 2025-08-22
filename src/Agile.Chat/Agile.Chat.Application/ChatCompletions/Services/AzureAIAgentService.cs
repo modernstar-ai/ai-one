@@ -4,6 +4,7 @@ using System.Text.Json;
 using Agile.Chat.Application.ChatCompletions.Models;
 using Agile.Chat.Application.ChatCompletions.Plugins;
 using Agile.Chat.Application.ChatCompletions.Prompts;
+using Agile.Chat.Application.ChatCompletions.Utils;
 using Agile.Framework.Ai;
 using Agile.Framework.Common.Attributes;
 using Agile.Framework.Common.Enums;
@@ -157,7 +158,7 @@ public class AzureAIAgentService : IAzureAIAgentService
             {
                 if (item is StreamingTextContent textContent)
                 {
-                    await WriteToResponseStreamAsync(context, ResponseType.Chat, textContent.Text);
+                    ChatUtils.WriteToResponseStream(context, ResponseType.Chat, textContent.Text);
                     assistantFullResponse.Append(textContent.Text);
                 }
 
@@ -173,48 +174,5 @@ public class AzureAIAgentService : IAzureAIAgentService
         }
 
         return assistantFullResponse.ToString();
-
-        // await _projectClient.Messages.CreateMessageAsync(agentThread.Id, MessageRole.User, userPrompt);
-        // var stream = _projectClient.Runs.CreateRunStreamingAsync(agentThread.Id, agent.Id);
-        //
-        // await foreach (StreamingUpdate streamingUpdate in stream)
-        // {
-        //     if (streamingUpdate.UpdateKind == StreamingUpdateReason.RunCreated)
-        //     {
-        //         _logger.LogDebug("Run created for agent thread: {ThreadId}", agentThread.Id);
-        //     }
-        //     else if (streamingUpdate is MessageContentUpdate contentUpdate)
-        //     {
-        //         if (contentUpdate.TextAnnotation is { StartIndex: not null, EndIndex: not null })
-        //         {
-        //             agentContainer.Citations.Add(new AgentCitation(
-        //                 contentUpdate.TextAnnotation.ContentIndex,
-        //                 contentUpdate.TextAnnotation.StartIndex.Value, 
-        //                 contentUpdate.TextAnnotation.EndIndex.Value, 
-        //                 contentUpdate.TextAnnotation.Title, 
-        //                 contentUpdate.TextAnnotation.Url));
-        //         }
-        //         else
-        //         {
-        //             await WriteToResponseStreamAsync(context, ResponseType.Chat, contentUpdate.Text);
-        //             assistantFullResponse.Append(contentUpdate.Text);
-        //         }
-        //     }
-        // }
-        //
-        // return assistantFullResponse.ToString();
-    }
-
-    public async Task WriteToResponseStreamAsync(HttpContext context, ResponseType responseType, object? payload)
-    {
-        if (payload is null) return;
-        var bytesEvent = Encoding.UTF8.GetBytes($"event: {responseType.ToString()}\n");
-        var data = responseType == ResponseType.Chat ?
-            JsonSerializer.Serialize(new { content = payload }) :
-            JsonSerializer.Serialize(payload, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-        var bytesData = Encoding.UTF8.GetBytes($"data: {data}\n\n");
-        await context.Response.Body.WriteAsync(bytesEvent);
-        await context.Response.Body.WriteAsync(bytesData);
-        await context.Response.Body.FlushAsync();
     }
 }

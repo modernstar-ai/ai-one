@@ -25,16 +25,17 @@ namespace Agile.Chat.Application.ChatCompletions.Utils;
 
 public static class ChatUtils
 {
-    public static async Task WriteToResponseStreamAsync(HttpContext context, ResponseType responseType, object payload)
+    public static void WriteToResponseStream(HttpContext context, ResponseType responseType, object? payload)
     {
+        if (payload is null) return;
         var bytesEvent = Encoding.UTF8.GetBytes($"event: {responseType.ToString()}\n");
         var data = responseType == ResponseType.Chat ?
             JsonSerializer.Serialize(new { content = payload }) :
             JsonSerializer.Serialize(payload, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
         var bytesData = Encoding.UTF8.GetBytes($"data: {data}\n\n");
-        await context.Response.Body.WriteAsync(bytesEvent);
-        await context.Response.Body.WriteAsync(bytesData);
-        await context.Response.Body.FlushAsync();
+        context.Response.Body.Write(bytesEvent);
+        context.Response.Body.Write(bytesData);
+        context.Response.Body.Flush();
     }
 
     public static async Task<IResult> StreamAndGetAssistantResponseAsync(HttpContext context, IAsyncEnumerable<StreamingKernelContent> aiStreamChats, ChatContainer chatContainer)
@@ -46,7 +47,7 @@ public static class ChatUtils
             {
                 CheckForInnerCitations((tokens.InnerContent as OpenAI.Chat.StreamingChatCompletionUpdate)!, chatContainer);
 
-                await WriteToResponseStreamAsync(context, ResponseType.Chat, tokens.ToString());
+                WriteToResponseStream(context, ResponseType.Chat, tokens.ToString());
                 assistantFullResponse.Append(tokens);
             }
         }

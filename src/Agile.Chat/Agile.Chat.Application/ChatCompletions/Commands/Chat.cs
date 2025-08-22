@@ -21,6 +21,7 @@ using FluentValidation;
 using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -203,7 +204,7 @@ public static class Chat
             await SaveAuditLogsAsync(userMessage, assistantMessage, citationMessages);
 
             // Write to response stream
-            await ChatUtils.WriteToResponseStreamAsync(
+            ChatUtils.WriteToResponseStream(
                 contextAccessor.HttpContext!,
                 ResponseType.DbMessages,
                 new List<Message> { userMessage, assistantMessage });
