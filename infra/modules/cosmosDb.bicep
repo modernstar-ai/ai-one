@@ -64,7 +64,7 @@ module cosmosDb 'br/public:avm/res/document-db/database-account:0.11.0' = {
         workspaceResourceId: logAnalyticsWorkspaceResourceId
       }
     ]
-    // disableKeyBasedMetadataWriteAccess: true
+    disableKeyBasedMetadataWriteAccess: false
     disableLocalAuth: false
     minimumTlsVersion: 'Tls12'
     defaultConsistencyLevel: 'Session'
