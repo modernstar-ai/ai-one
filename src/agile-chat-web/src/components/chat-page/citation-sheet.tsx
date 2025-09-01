@@ -11,7 +11,7 @@ import {
   SheetTitle,
   SheetTrigger
 } from '@/components/ui/sheet';
-import { Citation } from '@/types/ChatThread';
+import { Citation, CitationType } from '@/types/ChatThread';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Textarea } from '../ui/textarea';
 import { FileViewingDialog } from './file-viewing-dialog';
@@ -22,10 +22,9 @@ import { getDownloadFileUrl } from '@/services/files-service';
 
 interface CitationSheetProps {
   citation: Citation;
-  index: number;
 }
 export function CitationSheet(props: CitationSheetProps) {
-  const { citation, index } = props;
+  const { citation } = props;
   const [chunk, setChunk] = useState<string | undefined>(undefined);
   const [copied, setCopied] = useState(false);
 
@@ -36,29 +35,31 @@ export function CitationSheet(props: CitationSheetProps) {
   };
   const { settings } = useSettingsStore();
 
-  return (
-    <Sheet onOpenChange={onOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <SheetTrigger asChild>
-            <Button variant="outline" className="mr-2">
-              {index + 1}
-            </Button>
-          </SheetTrigger>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{citation.name}</p>
-        </TooltipContent>
-      </Tooltip>
-      <SheetContent className="flex flex-col h-full">
-        <SheetHeader>
-          <SheetTitle>Citation</SheetTitle>
-          <SheetDescription>Source of information</SheetDescription>
-        </SheetHeader>
-        <div className="flex flex-col items-start">
-          <Label htmlFor="name">Name</Label>
-          <Input readOnly={true} id="name" value={citation.name} className="mt-2" />
-        </div>
+  const getCitationContent = () => {
+    switch (citation.citationType) {
+      case CitationType.WebSearch:
+        return getWebSearchContent();
+      default:
+        return getDefaultCitationContent();
+    }
+  };
+
+  const getWebSearchContent = () => {
+    return (
+      <div className="flex flex-col items-start truncate">
+        <Label htmlFor="link">Link</Label>
+        <Button className="flex w-full m-0 p-0" variant="link">
+          <a target="_blank" href={citation.url} className="truncate">
+            {citation.url}
+          </a>
+        </Button>
+      </div>
+    );
+  };
+
+  const getDefaultCitationContent = () => {
+    return (
+      <>
         <div className="flex flex-col items-start">
           <Label htmlFor="path" className="mb-2">
             Folder Path
@@ -99,11 +100,7 @@ export function CitationSheet(props: CitationSheetProps) {
         {settings?.filePreviewType === FilePreviewType.Download && (
           <div className="flex flex-col items-start mt-4">
             <Label htmlFor="download">Download File</Label>
-            <Button
-              variant="link"
-              className="p-0 mt-2"
-              asChild
-            >
+            <Button variant="link" className="p-0 mt-2" asChild>
               <a
                 href={getDownloadFileUrl(citation.url)}
                 target="_blank"
@@ -124,8 +121,37 @@ export function CitationSheet(props: CitationSheetProps) {
             <Loader2Icon className="flex self-center animate-spin" />
           )}
         </div>
+      </>
+    );
+  };
 
-        <SheetFooter>
+  return (
+    <Sheet onOpenChange={onOpen}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="mr-2">
+              {citation.referenceNumber}
+            </Button>
+          </SheetTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{citation.name}</p>
+        </TooltipContent>
+      </Tooltip>
+      <SheetContent className="flex flex-col h-full">
+        <SheetHeader>
+          <SheetTitle>Citation</SheetTitle>
+          <SheetDescription>Source of information</SheetDescription>
+        </SheetHeader>
+        <div className="flex flex-col items-start">
+          <Label htmlFor="name">Name</Label>
+          <Input readOnly={true} id="name" value={citation.name} className="mt-2" />
+        </div>
+
+        {getCitationContent()}
+
+        <SheetFooter className="mt-auto">
           <SheetClose asChild>
             <Button type="submit">Close</Button>
           </SheetClose>

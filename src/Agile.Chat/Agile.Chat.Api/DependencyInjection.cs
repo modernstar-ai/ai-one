@@ -4,6 +4,7 @@ using Agile.Chat.Api.Exceptions;
 using Agile.Framework.Common.Attributes;
 using Carter;
 using Mapster;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 
@@ -24,16 +25,16 @@ public static class DependencyInjection
     }
 
     private static IServiceCollection AddCorsRules(this IServiceCollection services) =>
-        services.AddCors(x => x.AddDefaultPolicy(options => 
+        services.AddCors(x => x.AddDefaultPolicy(options =>
             options
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowAnyOrigin()));
-    
+
     private static IServiceCollection AddGlobalExceptionHandling(this IServiceCollection services) =>
         services.AddExceptionHandler<GlobalExceptionHandler>()
             .AddProblemDetails();
-    
+
     private static IServiceCollection AddSwagger(this IServiceCollection services) =>
         services.AddSwaggerGen(options =>
         {
@@ -77,7 +78,7 @@ public static class DependencyInjection
         var entryAssembly = Assembly.GetEntryAssembly();
         if (entryAssembly is null || string.IsNullOrEmpty(entryAssembly.FullName))
             throw new ArgumentException("entryAssembly cannot be null.");
-            
+
         var assembliesToCheck = new Queue<Assembly>();
         var loadedAssemblies = new Dictionary<string, Assembly>();
 
@@ -106,7 +107,7 @@ public static class DependencyInjection
 
         return services;
     }
-    
+
     private static void RegisterServices(Assembly assembly, IServiceCollection services)
     {
         foreach (var type in assembly.GetTypes())
@@ -139,5 +140,55 @@ public static class DependencyInjection
             }
         }
     }
-    
+
+    public static void EnableProxyHeaders(this IApplicationBuilder app)
+    {
+        // Configure forwarded headers and path base for Application Gateway
+        app.UseForwardedHeaders(new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor |
+                              ForwardedHeaders.XForwardedProto |
+                              ForwardedHeaders.XForwardedHost
+        });
+
+        // Handle path base from Application Gateway X-Forwarded-Prefix header
+        app.Use((context, next) =>
+        {
+            if (context.Request.Headers.TryGetValue("X-Forwarded-Prefix", out var prefix))
+            {
+                var pathBase = prefix.FirstOrDefault() ?? "";
+                context.Request.PathBase = pathBase;
+            }
+            return next();
+        });
+    }
+
+    public static void ConfigureSwagger(this IApplicationBuilder app)
+    {
+        app.UseSwagger(c =>
+        {
+            c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
+            {
+                // Ensure OpenAPI version is explicitly set
+                if (swaggerDoc.Info != null)
+                {
+                    swaggerDoc.Info.Version = "v1";
+                }
+
+                var pathBase = httpReq.PathBase.Value ?? "";
+                if (!string.IsNullOrEmpty(pathBase))
+                {
+                    swaggerDoc.Servers = new List<OpenApiServer>
+            {
+                    new() { Url = $"https://{httpReq.Host}{pathBase}" }
+            };
+                }
+            });
+        });
+
+        app.UseSwaggerUI(c =>
+        {
+            c.SwaggerEndpoint("./v1/swagger.json", "AIOne API v1");
+        });
+    }
 }

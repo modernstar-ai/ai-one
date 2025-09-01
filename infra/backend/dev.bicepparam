@@ -27,4 +27,8 @@ param cosmosDbAccountName = 'ms-aione-dev-cosmos'
 param cosmosDbAccountEndpoint = 'https://ms-aione-dev-cosmos.documents.azure.com:443/'
 param eventGridName = 'ms-aione-dev-blob-eg'
 
+param aiFoundryAccountName = 'ms-aione-dev-foundry'
+param aiFoundryProjectName = 'ms-aione-dev-prj'
+param aiFoundryProjectEndpoint = 'https://ms-aione-dev-foundry.services.ai.azure.com/api/projects/ms-aione-dev-prj'
+
 param allowedOrigins = ['https://ms-aione-dev-webapp.azurewebsites.net','https://ai-dev.modernstar.com']

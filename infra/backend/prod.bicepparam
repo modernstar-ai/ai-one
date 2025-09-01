@@ -28,4 +28,8 @@ param cosmosDbAccountName = 'ms-aione-prod-cosmos'
 param cosmosDbAccountEndpoint = 'https://ms-aione-prod-cosmos.documents.azure.com:443/'
 param eventGridName = 'ms-aione-prod-blob-eg'
 
+param aiFoundryAccountName = 'ms-aione-prod-foundry'
+param aiFoundryProjectName = 'ms-aione-prod-prj'
+param aiFoundryProjectEndpoint = 'https://ms-aione-prod-foundry.services.ai.azure.com/api/projects/ms-aione-prod-prj'
+
 param allowedOrigins = ['https://ms-aione-prod-webapp.azurewebsites.net','https://ai.modernstar.com']

@@ -1,5 +1,5 @@
 import axios from '@/error-handling/axiosSetup';
-import { Assistant, InsertAssistant } from '../types/Assistant';
+import { Assistant } from '../types/Assistant';
 
 function getApiUrl(endpoint: string): string {
   const rootApiUrl = import.meta.env.VITE_AGILECHAT_API_URL as string;
@@ -36,35 +36,25 @@ export async function fetchAssistantById(id: string): Promise<Assistant | null> 
 }
 
 // Create a new assistant
-export async function createAssistant(newAssistant: InsertAssistant): Promise<Assistant | null> {
+export async function createAssistant(newAssistant: Assistant): Promise<Assistant> {
   const apiUrl = getApiUrl('');
-  try {
-    const response = await axios.post<Assistant>(apiUrl, newAssistant);
-    return response.data;
-  } catch (error) {
-    console.error('Error creating assistant:', error);
-    return null;
-  }
+  const response = await axios.post<Assistant>(apiUrl, newAssistant);
+  return response.data;
 }
 
-export async function updateAssistant(updatedAssistant: InsertAssistant, id: string) {
+export async function updateAssistant(updatedAssistant: Assistant, id: string) {
   const apiUrl = getApiUrl(`${id}`);
-  try {
-    // Ensure all required fields are included in the request
-    const response = await axios.put<Assistant>(apiUrl, updatedAssistant, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (response.status == 204) {
-      return updatedAssistant;
-    } else {
-      return response.data;
+  // Ensure all required fields are included in the request
+  const response = await axios.put<Assistant>(apiUrl, updatedAssistant, {
+    headers: {
+      'Content-Type': 'application/json'
     }
-  } catch (error) {
-    console.error(`Error updating assistant with ID ${updatedAssistant.id}:`, error);
-    return null;
+  });
+
+  if (response.status == 204) {
+    return updatedAssistant;
+  } else {
+    return response.data;
   }
 }
 

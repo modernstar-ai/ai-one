@@ -19,4 +19,5 @@ public class ChatContainer
     public IAzureAiSearch AzureAiSearch { get; set; }
     public List<Message> Messages { get; set; } = new();
     public List<ChatContainerCitation> Citations { get; set; } = new();
+    public List<AgentCitation> AgentCitations { get; set; } = new();
 }
