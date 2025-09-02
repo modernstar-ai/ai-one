@@ -382,7 +382,7 @@ resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2024-01-01' = {
     duplicateDetectionHistoryTimeWindow: 'PT10M'
     maxDeliveryCount: 5
     status: 'Active'
-    autoDeleteOnIdle: 'PT5M'
+    //autoDeleteOnIdle: 'PT5M'
     enablePartitioning: false
     enableExpress: false
   }
