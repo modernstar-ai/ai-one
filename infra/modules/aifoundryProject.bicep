@@ -10,9 +10,6 @@ param tags object = {}
 @description('Name of the AI Foundry Account.')
 param aiFoundryServicesName string
 
-@description('AI Foundry SKU.')
-param aiFoundrySku string = 'S0'
-
 @description('Name of the customers existing CosmosDB Resource')
 param cosmosDBname string
 

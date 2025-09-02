@@ -1,8 +1,7 @@
-﻿using Agile.Chat.Application.Events;
+﻿using Agile.Chat.Application.ChatCompletions.Routing;
+using Agile.Chat.Application.Events;
 using Agile.Framework;
-using Agile.Framework.Common.EnvironmentVariables;
 using Agile.Framework.Mediator.Pipelines;
-using Azure.Messaging.ServiceBus;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Builder;

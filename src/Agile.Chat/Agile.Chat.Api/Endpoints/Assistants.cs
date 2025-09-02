@@ -21,6 +21,7 @@ public class Assistants() : CarterModule("/api")
 
         //GET
         assistants.MapGet("/", GetAssistants);
+        assistants.MapGet("/agents", GetAssistantAgents);
         assistants.MapGet("/{id:guid}", GetAssistantById);
         //POST
         assistants.MapPost("/", CreateAssistant);
@@ -33,6 +34,13 @@ public class Assistants() : CarterModule("/api")
     private async Task<IResult> GetAssistants([FromServices] IMediator mediator)
     {
         var query = new GetAssistants.Query();
+        var result = await mediator.Send(query);
+        return result;
+    }
+    
+    private async Task<IResult> GetAssistantAgents([FromServices] IMediator mediator)
+    {
+        var query = new GetAssistantAgents.Query();
         var result = await mediator.Send(query);
         return result;
     }

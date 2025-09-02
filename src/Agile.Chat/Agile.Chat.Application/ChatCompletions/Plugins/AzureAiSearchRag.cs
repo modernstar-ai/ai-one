@@ -47,7 +47,7 @@ public class AzureAiSearchRag(ChatContainer container)
 
         foreach (var item in documents)
         {
-            var doc = new ChatContainerCitation(count + 1, item.Chunk, item.Name, item.Url);
+            var doc = new ChatContainerCitation(CitationType.AzureSearch, count + 1, item.Chunk, item.Name, item.Url);
             result.Add(doc);
             count++;
         }

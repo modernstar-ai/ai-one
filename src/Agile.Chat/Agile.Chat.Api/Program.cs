@@ -17,15 +17,13 @@ builder.Services
 
 var app = builder.Build();
 await app.InitializeServicesAsync();
+
+app.EnableProxyHeaders();
 app.UseCors();
 
 if (!app.Environment.IsProduction())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint($"/swagger/v1/swagger.json", "v1");
-    });
+    app.ConfigureSwagger();
 }
 
 app.UseAuthentication();

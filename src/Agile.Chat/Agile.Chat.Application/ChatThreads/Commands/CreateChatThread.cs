@@ -48,7 +48,7 @@ public static class CreateChatThread
                 assistant is null ? request.ModelOptions : assistant.ModelOptions.ParseChatThreadModelOptions(),
                 request.AssistantId);
 
-            await chatThreadService.AddItemAsync(chatThread);
+            await chatThreadService.AddChatThreadAsync(assistant, chatThread);
             await chatThreadAuditService.AddItemAsync(Audit<ChatThread>.Create(chatThread));
             logger.LogInformation("Inserted ChatThread {@ChatThread} successfully", chatThread);
 

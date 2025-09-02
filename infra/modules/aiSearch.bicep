@@ -68,7 +68,7 @@ module aiSearch 'br/public:avm/res/search/search-service:0.10.0' = {
     publicNetworkAccess: networkIsolation ? 'Disabled' : 'Enabled'
     sku: skuName
     partitionCount: 1
-    replicaCount: 3
+    replicaCount: 1
     roleAssignments: roleAssignments
     diagnosticSettings: [
       {

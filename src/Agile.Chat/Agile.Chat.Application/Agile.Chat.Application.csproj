@@ -7,12 +7,14 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Azure.AI.Agents.Persistent" Version="1.0.0" />
 		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
 		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
 		<PackageReference Include="Mapster" Version="7.4.0" />
 		<PackageReference Include="MediatR" Version="12.5.0" />
 		<PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.6" />
+		<PackageReference Include="Microsoft.SemanticKernel.Agents.AzureAI" Version="1.60.0-preview" />
 		<PackageReference Include="Polly" Version="8.6.1" />
 	</ItemGroup>
 
@@ -32,6 +34,7 @@
 		<Folder Include="Audits\Commands\" />
 		<Folder Include="ChatCompletions\Plugins\" />
 		<Folder Include="ChatCompletions\Services\" />
+		<Folder Include="Commands\" />
 		<Folder Include="Tools\" />
 	</ItemGroup>
 
