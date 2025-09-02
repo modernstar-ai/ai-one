@@ -85,6 +85,14 @@ export interface Citation {
   name: string;
   content: string;
   url: string;
+  referenceNumber: number;
+  citationType: CitationType;
+}
+
+export enum CitationType {
+  WebSearch = 'WebSearch',
+  AzureSearch = 'AzureSearch',
+  FileUpload = 'FileUpload'
 }
 
 export interface SearchProcess {

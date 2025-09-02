@@ -36,13 +36,17 @@ param vnetConfig = {
     name: 'ServiceBusSubnet'
     addressPrefix: '10.3.7.0/24'
   }
+  appServiceSubnet: {
+    name: 'AppServiceSubnet'
+    addressPrefix: '10.3.8.0/24'
+  }
   cognitiveServiceSubnet: {
     name: 'CognitiveServiceSubnet'
     addressPrefix: '10.3.9.0/24'
   }
-  appServiceSubnet: {
-    name: 'AppServiceSubnet'
-    addressPrefix: '10.3.8.0/24'
+  privateEndpointsSubnet: {
+    name: 'PrivateEndpointsSubnet'
+    addressPrefix: '10.3.10.0/24'
   }
 }
 
@@ -60,4 +64,4 @@ param nsgConfig = {
 
 // Log Analytics workspace configuration for diagnostics
 param enableDiagnostics = false
-param logAnalyticsWorkspaceResourceId = '/subscriptions/9221a966-ce17-4b76-a348-887f234a827a/resourcegroups/rg-practice-ai-aione-private-dev/providers/microsoft.operationalinsights/workspaces/ag-aionev12-uat-la'
+param logAnalyticsWorkspaceResourceId = '/subscriptions/9221a966-ce17-4b76-a348-887f234a827a/resourcegroups/rg-practice-ai-aione-private-dev/providers/microsoft.operationalinsights/workspaces/ag-aionev14-uat-la'

@@ -11,7 +11,8 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
 {
     [JsonConstructor]
     private Assistant(string name, string description, AssistantType type, AssistantStatus status, string greeting,
-        AssistantFilterOptions filterOptions, AssistantPromptOptions promptOptions, AssistantModelOptions modelOptions, PermissionsAccessControl accessControl)
+        AssistantFilterOptions filterOptions, AssistantPromptOptions promptOptions, AssistantModelOptions modelOptions,
+        PermissionsAccessControl accessControl, AgentConfiguration agentConfiguration = null)
     {
         //Do validation logic and throw domain level exceptions if fails
         Name = name;
@@ -23,6 +24,7 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
         PromptOptions = promptOptions;
         ModelOptions = modelOptions;
         AccessControl = accessControl;
+        AgentConfiguration = agentConfiguration;
     }
 
     public string Name { get; private set; }
@@ -34,6 +36,7 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
     public AssistantFilterOptions FilterOptions { get; private set; }
     public PermissionsAccessControl AccessControl { get; private set; }
     public AssistantModelOptions ModelOptions { get; private set; }
+    public AgentConfiguration? AgentConfiguration { get; private set; }
 
     public static Assistant Create(string name,
         string description,
@@ -68,6 +71,12 @@ public class Assistant : AuditableAggregateRoot, IAccessControllable
         FilterOptions = filterOptions;
         PromptOptions = promptOptions;
         ModelOptions = modelOptions;
+        LastModified = DateTime.UtcNow;
+    }
+
+    public void AddAgentConfiguration(AgentConfiguration? agentConfiguration)
+    {
+        AgentConfiguration = agentConfiguration;
         LastModified = DateTime.UtcNow;
     }
 

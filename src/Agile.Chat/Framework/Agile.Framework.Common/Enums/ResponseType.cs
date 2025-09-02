@@ -6,5 +6,6 @@ namespace Agile.Framework.Common.Enums;
 public enum ResponseType
 {
     Chat,
-    DbMessages
+    DbMessages,
+    Debug
 }

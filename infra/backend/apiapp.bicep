@@ -53,6 +53,15 @@ param openAiEndpoint string
 @description('OpenAI API version')
 param openAiApiVersion string
 
+@description('AI Foundry Project endpoint')
+param aiFoundryProjectEndpoint string
+
+@description('AI Foundry Account name')
+param aiFoundryAccountName string = ''
+
+@description('AI Foundry Project name')
+param aiFoundryProjectName string = ''
+
 @description('APIM Azure OpenAI Endpoint')
 param apimAiEndpointOverride string = ''
 
@@ -117,13 +126,25 @@ param eventGridSystemTopicSubName string = toLower('${resourcePrefix}-folders-bl
 @description('Whether to enable network isolation for resources')
 param networkIsolation bool = false
 
+@description('Specifies whether the app service should be accessible only through private network')
+param allowPrivateAccessOnly bool = false
+
 @description('Azure Virtual Network name')
 param virtualNetworkName string = toLower('${resourcePrefix}-vnet')
 
 @description('App Service subnet name')
 param appServiceSubnetName string = 'AppServiceSubnet'
 
+@description('Private Endpoints subnet name')
+param privateEndpointsSubnetName string = 'PrivateEndpointsSubnet'
+
 param deployRoleAssignments bool = true
+
+@description('Optional. Enable IP restrictions for the App Service to restrict access to Application Gateway only.')
+param enableIpRestrictions bool = false
+
+@description('Optional. Array of allowed IP addresses/ranges for App Service access (e.g., Application Gateway public IP).')
+param allowedIpAddresses array = []
 
 var blobContainersArray = loadJsonContent('../blob-storage-containers.json')
 var blobContainers = [
@@ -160,6 +181,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' existing = if (netw
 
 var virtualNetworkResourceId = networkIsolation ? vnet.id : ''
 var appServiceSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${appServiceSubnetName}' : ''
+var privateEndpointsSubnetResourceId = networkIsolation ? '${vnet.id}/subnets/${privateEndpointsSubnetName}' : ''
 
 module apiAppModule '../modules/site.bicep' = {
   name: 'apiAppModule'
@@ -174,8 +196,12 @@ module apiAppModule '../modules/site.bicep' = {
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     userAssignedIdentityId: apiAppManagedIdentity.id
     networkIsolation: networkIsolation
+    allowPrivateAccessOnly: allowPrivateAccessOnly
     virtualNetworkResourceId: virtualNetworkResourceId
     virtualNetworkSubnetResourceId: appServiceSubnetResourceId
+    privateEndpointsSubnetResourceId: privateEndpointsSubnetResourceId
+    enableIpRestrictions: enableIpRestrictions
+    allowedIpAddresses: allowedIpAddresses
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: true
@@ -304,7 +330,7 @@ module apiAppModule '../modules/site.bicep' = {
           name: 'AppSettings__DefaultTextModelId'
           value: defaultTextModelId
         }
-		{
+        {
           name: 'AppSettings__FilePreviewType'
           value: filePreviewType
         }
@@ -315,6 +341,10 @@ module apiAppModule '../modules/site.bicep' = {
         {
           name: 'AzureSearch__ApiKey'
           value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=AZURE-SEARCH-API-KEY)'
+        }
+        {
+          name: 'AIServices__FoundryProjectEndpoint'
+          value: aiFoundryProjectEndpoint
         }
       ]
     )
@@ -352,7 +382,7 @@ resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2024-01-01' = {
     duplicateDetectionHistoryTimeWindow: 'PT10M'
     maxDeliveryCount: 5
     status: 'Active'
-    autoDeleteOnIdle: 'PT5M'
+    //autoDeleteOnIdle: 'PT5M'
     enablePartitioning: false
     enableExpress: false
   }
@@ -445,6 +475,8 @@ module apiAppRoleAssignments './roleAssignment.bicep' = if (deployRoleAssignment
     serviceBusResourceId: serviceBusName
     keyVaultResourceId: keyVaultName
     eventGridSystemTopicPrincipalId: eventGridSystemTopic.identity.principalId
+    aiFoundryProjectName: aiFoundryProjectName
+    aiFoundryAccountName: aiFoundryAccountName
   }
 }
 
