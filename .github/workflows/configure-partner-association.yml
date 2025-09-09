@@ -34,12 +34,45 @@ jobs:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+
+      - name: Verify Permissions
+        shell: pwsh
+        run: |
+          $requiredRole = "Managed Service Identity Operator"
+          $roles = az role assignment list --assignee ${{ vars.AZURE_CLIENT_ID }} --output json | ConvertFrom-Json
+          $hasRequiredRole = $roles | Where-Object { $_.roleDefinitionName -eq $requiredRole }
+
+          if (-not $hasRequiredRole) {
+            Write-Host "::error::Missing required role: $requiredRole"
+            Write-Host "::error::Current assigned roles:"
+            az role assignment list --assignee ${{ vars.AZURE_CLIENT_ID }} --output table
+            Write-Host "::error::To fix this, run the following command:"
+            Write-Host "::error::az role assignment create --assignee ${{ vars.AZURE_CLIENT_ID }} --role '$requiredRole' --scope /subscriptions/${{ vars.AZURE_SUBSCRIPTION_ID }}"
+            exit 1
+          }
+          Write-Host "✅ Required permissions verified"
 
       - name: Set Partner Association
         shell: pwsh
         run: |
-          ./infra/scripts/set-partner-association.ps1 `
-            -SubscriptionId "${{ vars.AZURE_SUBSCRIPTION_ID }}"
+          try {
+            ./infra/scripts/set-partner-association.ps1 `
+              -SubscriptionId "${{ vars.AZURE_SUBSCRIPTION_ID }}"
+          }
+          catch {
+            $errorMessage = $_.Exception.Message
+            if ($errorMessage -like "*ManagementPartnerNotFound*") {
+              Write-Host "::error::Partner Association Failed: Service Principal lacks required permissions"
+              Write-Host "::error::Required Role: Managed Service Identity Operator"
+              Write-Host "::error::Required API Permission: Microsoft Graph > Application.ReadWrite.All"
+              Write-Host "::error::To fix this:"
+              Write-Host "::error::1. Add 'Managed Service Identity Operator' role to service principal"
+              Write-Host "::error::2. Grant admin consent for Microsoft Graph permissions"
+              exit 1
+            }
+            throw $_
+          }
 
       - name: Print Configuration Summary
         run: |
