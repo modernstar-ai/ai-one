@@ -1,0 +1,49 @@
+name: Configure Partner Association
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select the environment'
+        type: choice
+        default: 'dev'
+        options:
+          - 'dev'
+          - 'tst'
+          - 'uat'
+          - 'prod'
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  configure-partner-association:
+    name: Configure Partner Association
+    environment: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set Partner Association
+        shell: pwsh
+        run: |
+          ./infra/scripts/set-partner-association.ps1 `
+            -SubscriptionId "${{ vars.AZURE_SUBSCRIPTION_ID }}"
+
+      - name: Print Configuration Summary
+        run: |
+          echo "✅ Partner Association Configuration: Completed"
+          echo ""
+          echo "📋 Environment: ${{ inputs.environment }}"
+          echo "📋 Subscription: ${{ vars.AZURE_SUBSCRIPTION_ID }}"
